@@ -14,16 +14,21 @@
         }
         #game-container {
             width: 100%; max-width: 750px; background: #1a1a1a;
-            border: 2px solid #333; border-radius: 8px; overflow: hidden;
+            border: 2px solid #333; border-radius: 8px; overflow: visible;
             position: relative;
         }
-        canvas { display: block; background: #1e272c; width: 100%; height: auto; }
+        
+        #top-nav {
+            background: #000; padding: 6px 12px; display: flex; justify-content: space-between; border-bottom: 1px solid #333;
+        }
+        
+        canvas { display: block; background: #1e272c; width: 100%; height: auto; border-radius: 0 0 0 0; }
         
         #control-bar {
             display: flex; justify-content: space-between; align-items: center;
             background: #111; padding: 10px; border-bottom: 2px solid #333; font-size: 13px;
         }
-        #menu-panel { padding: 12px; background: #222; position: relative; }
+        #menu-panel { padding: 12px; background: #222; position: relative; border-radius: 0 0 8px 8px; }
         
         .stats-hud {
             display: flex; justify-content: space-between; padding: 8px;
@@ -119,6 +124,8 @@
 
         @keyframes toastFadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes toastFadeOut { from { opacity: 1; } to { opacity: 0; } }
+        
+        #toast-container { position: absolute; top: 45px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 8000; gap: 5px; width: 90%; max-width: 400px; }
 
         @media (max-width: 600px) {
             .grid-layout { grid-template-columns: 1fr; }
@@ -131,14 +138,32 @@
             .live-drop-cols { flex-direction: column; }
             .live-drop-cols > div { width: 100%; margin-bottom: 10px; }
             #control-bar { flex-direction: column; gap: 8px; }
+            #toast-container { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); }
         }
     </style>
 </head>
 <body>
 
     <div id="game-container">
-        <div id="toast-container" style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 8000; gap: 5px; width: 90%;"></div>
+        
+        <!-- Top Navigation (Dungeons & Global Header) -->
+        <div id="top-nav">
+            <div style="position: relative;">
+                <button onclick="toggleDungeonMenu()" style="background: #2c3e50; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">🏰 Activities ▼</button>
+                <div id="dungeon-menu" style="display: none; position: absolute; top: 35px; left: 0; background: #151515; border: 1px solid #444; border-radius: 6px; padding: 12px; width: 240px; z-index: 10000; box-shadow: 0 4px 15px rgba(0,0,0,0.9);">
+                    <div style="color: #f1c40f; font-weight: bold; margin-bottom: 5px; font-size: 14px;">🏰 Equipment Dungeon</div>
+                    <div style="font-size: 11px; color: #aaa; margin-bottom: 12px; line-height: 1.4;">Fight through 5 deep cave waves. Huge drop rates. The final boss guarantees a Rare+ item.</div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 10px; background: #111; padding: 6px; border-radius: 4px; border: 1px dashed #333;">
+                        <span>Keys: <span id="dungeon-keys-text" style="color: #2ecc71; font-weight: bold;">3</span>/3</span>
+                        <span id="dungeon-timer-text" style="color: #aaa; font-weight: bold;">(Full)</span>
+                    </div>
+                    <button onclick="enterDungeon()" style="width: 100%; background: #8e44ad; color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; transition: 0.2s;">Enter (1 Key)</button>
+                </div>
+            </div>
+            <div style="font-size: 13px; color: #7f8c8d; font-weight: bold; align-self: center; letter-spacing: 1px;">Postknight Slayer</div>
+        </div>
 
+        <div id="toast-container"></div>
         <div id="game-tooltip" class="tooltip-base"></div>
         <div id="etc-tooltip" class="tooltip-base"></div>
         <div id="log-item-tooltip" class="tooltip-base"></div>
@@ -156,7 +181,7 @@
 
         <div class="stats-hud">
             <div>Stage: <span id="hud-stage" style="color:#3498db;">1-1</span></div>
-            <div>Prog: <span id="hud-progress" style="color:#f1c40f;">0/10</span></div>
+            <div>Prog: <span id="hud-progress" style="color:#f1c40f;">0/7</span></div>
             <div>Buff: <span id="hud-buff" style="color:#aaa;">None</span></div>
             <div>Bag: <span id="hud-bag" style="color:#2ecc71;">0/20</span></div>
             <div>HP: <span id="hud-hp" style="color:#e74c3c;">100/100</span></div>
@@ -168,8 +193,8 @@
         <div id="menu-panel">
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab('gear')">Equipment</button>
-                <button class="tab-btn" onclick="switchTab('stats')">Stats</button>
                 <button class="tab-btn" onclick="switchTab('inv')">Sacks</button>
+                <button class="tab-btn" onclick="switchTab('stats')">Stats</button>
                 <button class="tab-btn" onclick="switchTab('forge')">Forge</button>
                 <button class="tab-btn" onclick="switchTab('market')">Market</button>
                 <button class="tab-btn" onclick="switchTab('feed')">Logs</button>
@@ -191,6 +216,15 @@
                         <div id="slot-art3" class="slots-card artifact-slot" onmousemove="showSlotTooltip(event, 'art3')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'art3')"><i>[Artifact Slot 3]</i></div>
                     </div>
                 </div>
+            </div>
+            
+            <div id="tab-inv" class="tab-content">
+                <div class="sub-tabs">
+                    <button id="sub-tab-eq" class="sub-tab-btn active" onclick="switchSubTab('EQUIP')">Equipment (<span id="btn-bag-count">0</span>/<span id="btn-bag-max">20</span>)</button>
+                    <button id="sub-tab-etc" class="sub-tab-btn" onclick="switchSubTab('ETC')">ETC Items</button>
+                </div>
+                <div id="bag-equip" class="bag-container"></div>
+                <div id="bag-etc" class="bag-container" style="display:none;"></div>
             </div>
 
             <div id="tab-stats" class="tab-content">
@@ -240,15 +274,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div id="tab-inv" class="tab-content">
-                <div class="sub-tabs">
-                    <button id="sub-tab-eq" class="sub-tab-btn active" onclick="switchSubTab('EQUIP')">Equipment (<span id="btn-bag-count">0</span>/<span id="btn-bag-max">20</span>)</button>
-                    <button id="sub-tab-etc" class="sub-tab-btn" onclick="switchSubTab('ETC')">ETC Items</button>
-                </div>
-                <div id="bag-equip" class="bag-container"></div>
-                <div id="bag-etc" class="bag-container" style="display:none;"></div>
             </div>
             
             <div id="tab-forge" class="tab-content">
@@ -313,8 +338,9 @@ window.onload = function() {
         baseIdleSpeed: 60, baseActiveSpeed: 15,
         baseDrop: 1.0, baseQuality: 1.0, baseGold: 1.0,
         baseCritChance: 0.05, baseCritDamage: 1.50, baseBlock: 0.0, baseParry: 0.0,
-        currentHp: 100, coins: 0, stage: 1, killCount: 0, totalLifetimeKills: 0, targetsRequired: 10,
-        isBossMode: false, isFarmingLoop: false, isUberBoss: false, frenzyTimer: 0, adrenalineTimer: 0
+        currentHp: 100, coins: 0, stage: 1, killCount: 0, totalLifetimeKills: 0, targetsRequired: 7,
+        isBossMode: false, isFarmingLoop: false, isUberBoss: false, frenzyTimer: 0, adrenalineTimer: 0,
+        isDungeonMode: false, dungeonWave: 1, dungeonKeys: 3, nextKeyTime: 0
     };
 
     let equippedSlots = {
@@ -340,22 +366,20 @@ window.onload = function() {
     let state = { autoAttack: true, efficiency: 0.5, currentSubTab: 'EQUIP' };
     let isGamePaused = false;
     let reviveTimer = 0;
-    let lastAutoSave = Date.now();
 
     window.saveGame = function() {
         let saveData = { playerStats, equippedSlots, inventory, idCounter, logsHistory, frozenItemDb, lastSaveTime: Date.now() };
-        localStorage.setItem('postknight_save_v4', JSON.stringify(saveData));
+        localStorage.setItem('postknight_save_v5', JSON.stringify(saveData));
     };
 
     setInterval(() => {
         window.saveGame();
-        lastAutoSave = Date.now();
     }, 60000);
 
     window.addEventListener('beforeunload', window.saveGame);
 
     window.loadGame = function() {
-        let data = localStorage.getItem('postknight_save_v4');
+        let data = localStorage.getItem('postknight_save_v5');
         if (data) {
             try {
                 let parsed = JSON.parse(data);
@@ -366,18 +390,31 @@ window.onload = function() {
                 logsHistory = parsed.logsHistory || logsHistory;
                 frozenItemDb = parsed.frozenItemDb || frozenItemDb;
                 
+                // Force target requirement sync
+                if (!playerStats.isDungeonMode) playerStats.targetsRequired = 7;
+                
                 let box = document.getElementById('log-box');
                 box.innerHTML = logsHistory.join("<br><br>");
                 
                 if (parsed.lastSaveTime) {
                     let now = Date.now();
                     let offlineMs = now - parsed.lastSaveTime;
+                    
+                    // Offline Key Regen Math
+                    if (playerStats.dungeonKeys < 3) {
+                        let msSinceNextKey = now - playerStats.nextKeyTime;
+                        if (msSinceNextKey >= 0) {
+                            let keysEarned = 1 + Math.floor(msSinceNextKey / 3600000);
+                            playerStats.dungeonKeys = Math.min(3, playerStats.dungeonKeys + keysEarned);
+                            playerStats.nextKeyTime = now + (3600000 - (msSinceNextKey % 3600000));
+                        }
+                    }
+                    
                     if (offlineMs > 60000) { 
                         let offlineSeconds = Math.floor(offlineMs / 1000);
                         if (offlineSeconds > 28800) offlineSeconds = 28800; // 8 hour cap
                         
                         let p = resolvePlayerStats();
-                        // Enforce 1 kill per minute locally for offline calculation
                         let timePerKill = 60; 
                         let simulatedKills = Math.floor(offlineSeconds / timePerKill);
                         
@@ -386,11 +423,18 @@ window.onload = function() {
                             let goldEarned = Math.floor(simulatedKills * baseCoin * p.gold);
                             
                             let dropsEarned = 0;
+                            let dKeyDrop = 0;
+                            let gachaKeyDrop = 0;
+                            
                             for(let i=0; i<simulatedKills; i++) {
                                 if (Math.random() < (0.045 * p.drop * state.efficiency)) dropsEarned++;
+                                if (Math.random() < 0.01 && playerStats.dungeonKeys + dKeyDrop < 3) dKeyDrop++;
+                                if (Math.random() < 0.005) gachaKeyDrop++; 
                             }
                             
                             playerStats.coins += goldEarned;
+                            if (dKeyDrop > 0) playerStats.dungeonKeys = Math.min(3, playerStats.dungeonKeys + dKeyDrop);
+                            if (gachaKeyDrop > 0) addEtcDrop("Gacha Key", gachaKeyDrop);
                             
                             let actualItems = 0;
                             let scraps = 0;
@@ -406,21 +450,23 @@ window.onload = function() {
                             }
                             if (scraps > 0) addEtcDrop("Iron Scrap", scraps);
                             
-                            pushLog(`<span style='color:#3498db; font-weight:bold;'>[OFFLINE GAINS] Gone for ${Math.floor(offlineSeconds/60)} mins. Simulated Kills: ${simulatedKills}. Gold: +${goldEarned}. Items: +${actualItems}. Scraps (Equip Bag Full): +${scraps}.</span>`);
-                            alert(`Offline Progress (Capped at 8 hrs)\n\nTime Offline: ${Math.floor(offlineSeconds/60)} mins\nKills Simulated: ${simulatedKills}\nGold Earned: ${goldEarned}\nItems Found: ${actualItems}\nScraps Gained (Equip Bag Full): ${scraps}`);
+                            setTimeout(() => {
+                                pushLog(`<span style='color:#3498db; font-weight:bold;'>[OFFLINE GAINS] Gone for ${Math.floor(offlineSeconds/60)} mins. Kills: ${simulatedKills}. Gold: +${goldEarned}. Items: +${actualItems}. Scraps: +${scraps}. Gacha Keys: +${gachaKeyDrop}</span>`);
+                                alert(`Offline Progress (Capped at 8 hrs)\n\nTime Offline: ${Math.floor(offlineSeconds/60)} mins\nKills Simulated: ${simulatedKills}\nGold Earned: ${goldEarned}\nItems Found: ${actualItems}\nGacha Keys Found: ${gachaKeyDrop}\nScraps Gained (Equip Bag Full): ${scraps}`);
+                            }, 500);
                         }
                     }
                 }
-                pushLog(`<span style='color:#3498db; font-weight:bold;'>[SYSTEM] Local save loaded successfully.</span>`);
+                setTimeout(() => {
+                    pushLog(`<span style='color:#3498db; font-weight:bold;'>[SYSTEM] Local save loaded successfully.</span>`);
+                }, 500);
             } catch(e) { console.error("Save load failed", e); }
         }
     };
 
-    // Scenery Initialization
-    for(let i=0; i<12; i++) {
+    for(let i=0; i<10; i++) {
         bgScenery.push({ x: Math.random() * canvas.width, y: 180, type: Math.random() > 0.5 ? 'tree' : 'bush', size: Math.random() * 0.5 + 0.5 });
     }
-    
     let flowerColors = ["#f1c40f", "#e74c3c", "#9b59b6", "#3498db", "#ffffff", "#ff7979"];
     for(let i=0; i<25; i++) {
         let fgType = Math.random();
@@ -432,6 +478,38 @@ window.onload = function() {
             color: flowerColors[Math.floor(Math.random() * flowerColors.length)]
         });
     }
+
+    window.toggleDungeonMenu = function() {
+        let menu = document.getElementById('dungeon-menu');
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    };
+
+    window.enterDungeon = function() {
+        if (playerStats.dungeonKeys < 1) {
+            pushHeaderToast("Not enough keys!", "#e74c3c");
+            return;
+        }
+        if (!confirm("Spend 1 Key to enter the Equipment Dungeon?")) return;
+        
+        playerStats.dungeonKeys--;
+        if (playerStats.dungeonKeys === 2) playerStats.nextKeyTime = Date.now() + 3600000;
+        
+        playerStats.isDungeonMode = true;
+        playerStats.dungeonWave = 1;
+        playerStats.killCount = 0;
+        playerStats.targetsRequired = 7;
+        playerStats.isBossMode = false;
+        playerStats.isUberBoss = false;
+        mob = null;
+        
+        let p = resolvePlayerStats();
+        playerStats.currentHp = p.maxHp;
+        
+        pushLog("<span style='color:#8e44ad; font-weight:bold;'>[DUNGEON] Descended into the Equipment Dungeon!</span>");
+        document.getElementById('dungeon-menu').style.display = 'none';
+        updateUI();
+        window.saveGame();
+    };
 
     window.toggleAuto = function() {
         state.autoAttack = !state.autoAttack;
@@ -557,14 +635,31 @@ window.onload = function() {
 
     function processEnemySpawn() {
         let scale = 1 + (playerStats.stage * 0.15);
-        if (playerStats.isBossMode) {
-            let label = playerStats.isUberBoss ? "ENRAGED RIFT GUARDIAN" : "STAGE BOSS";
-            let baseBossHp = 55 * scale * (playerStats.isUberBoss ? 1.5 : 1);
-            mob = { x: 750, y: 100, w: 40, h: 80, type: "boss", hp: Math.floor(baseBossHp), maxHp: Math.floor(baseBossHp), damage: Math.floor((4 + (5 * scale)) * 5.5), flashTimer: 0, isStopped: false };
-            pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[${label}]</span> blocked your transit route!`);
+        if (playerStats.isDungeonMode) {
+            if (playerStats.killCount >= playerStats.targetsRequired) {
+                if (playerStats.dungeonWave < 5) {
+                    let label = "CAVE MINIBOSS (Wave " + playerStats.dungeonWave + ")";
+                    let hp = 40 * scale;
+                    mob = { x: 750, y: 120, w: 30, h: 50, type: "dungeon_miniboss", hp: Math.floor(hp), maxHp: Math.floor(hp), damage: Math.floor((3 + (5 * scale)) * 5.5), flashTimer: 0, isStopped: false };
+                } else {
+                    let label = "DUNGEON OVERLORD";
+                    let hp = 80 * scale;
+                    mob = { x: 750, y: 90, w: 50, h: 90, type: "dungeon_boss", hp: Math.floor(hp), maxHp: Math.floor(hp), damage: Math.floor((5 + (6 * scale)) * 5.5), flashTimer: 0, isStopped: false };
+                }
+            } else {
+                let isBat = Math.random() > 0.5;
+                mob = { x: 750, y: isBat ? 100 : 160, w: 25, h: 25, type: isBat ? "bat" : "crawler", hp: Math.floor(18 * scale), maxHp: Math.floor(18 * scale), damage: Math.floor((2 + (2 * scale)) * 5.5), flashTimer: 0, isStopped: false };
+            }
         } else {
-            let isBandit = Math.random() > 0.6;
-            mob = { x: 750, y: isBandit ? 145 : 160, w: isBandit ? 20 : 30, h: isBandit ? 45 : 25, type: isBandit ? "bandit" : "slime", hp: Math.floor(16 * scale), maxHp: Math.floor(16 * scale), damage: Math.floor((1 + (2 * scale)) * 5.5), flashTimer: 0, isStopped: false };
+            if (playerStats.isBossMode) {
+                let label = playerStats.isUberBoss ? "ENRAGED RIFT GUARDIAN" : "STAGE BOSS";
+                let baseBossHp = 55 * scale * (playerStats.isUberBoss ? 1.5 : 1);
+                mob = { x: 750, y: 100, w: 40, h: 80, type: "boss", hp: Math.floor(baseBossHp), maxHp: Math.floor(baseBossHp), damage: Math.floor((4 + (5 * scale)) * 5.5), flashTimer: 0, isStopped: false };
+                pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[${label}]</span> blocked your transit route!`);
+            } else {
+                let isBandit = Math.random() > 0.6;
+                mob = { x: 750, y: isBandit ? 145 : 160, w: isBandit ? 20 : 30, h: isBandit ? 45 : 25, type: isBandit ? "bandit" : "slime", hp: Math.floor(16 * scale), maxHp: Math.floor(16 * scale), damage: Math.floor((1 + (2 * scale)) * 5.5), flashTimer: 0, isStopped: false };
+            }
         }
     }
 
@@ -572,7 +667,9 @@ window.onload = function() {
         let colors = []; let count = 15;
         if (type === "slime") colors = ["#2ecc71", "#145a32", "#1e8449"];
         else if (type === "bandit") colors = ["#c0392b", "#922b21", "#e67e22", "#d35400"];
-        else if (type === "boss") { colors = playerStats.isUberBoss ? ["#9b59b6", "#1abc9c", "#e74c3c", "#f1c40f"] : ["#8B4513", "#228B22", "#e74c3c", "#5c4033"]; count = 35; }
+        else if (type === "bat") colors = ["#5b2c6f", "#17202a", "#8e44ad"];
+        else if (type === "crawler") colors = ["#a04000", "#d35400", "#e67e22"];
+        else if (type === "boss" || type === "dungeon_miniboss" || type === "dungeon_boss") { colors = playerStats.isUberBoss ? ["#9b59b6", "#1abc9c", "#e74c3c", "#f1c40f"] : ["#8B4513", "#228B22", "#e74c3c", "#5c4033"]; count = 35; }
         colors.push("#f1c40f", "#f39c12");
         for (let i = 0; i < count; i++) {
             particles.push({ x: x + (Math.random() * 15), y: y + (Math.random() * 20), vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.7) * 7, radius: Math.random() * 3 + 1.5, color: colors[Math.floor(Math.random() * colors.length)], alpha: 1, life: Math.random() * 25 + 15 });
@@ -714,6 +811,10 @@ window.onload = function() {
     };
 
     window.summonUberBoss = function() {
+        if (playerStats.isDungeonMode) {
+            pushHeaderToast("Cannot summon inside a Dungeon!", "#e74c3c");
+            return;
+        }
         if (playerStats.isUberBoss || playerStats.isBossMode) {
             pushHeaderToast("Already in Boss Combat!", "#e74c3c");
             return;
@@ -742,7 +843,11 @@ window.onload = function() {
         window.saveGame();
     };
 
-    function generateEquipment(chosenType, statLinesCount, stageScale, sourceName, silent = false) {
+    function generateEquipment(chosenType, statLinesCount, stageScale, sourceName, silent = false, minStars = 0) {
+        if (chosenType !== "artifact" && statLinesCount < minStars) {
+            statLinesCount = minStars;
+        }
+        
         let item = { 
             id: idCounter++, name: "", type: chosenType, statsRolled: statLinesCount, temperLevel: 0,
             atk: 0, maxHp: 0, def: 0, moveSpeed: 0, critChance: 0, critDamage: 0, block: 0, parry: 0, dropRate: 0, quality: 0, goldMulti: 0,
@@ -828,7 +933,7 @@ window.onload = function() {
         }
     }
 
-    function rollEquipmentDrop(isBossKill, silent = false) {
+    function rollEquipmentDrop(isBossKill, silent = false, minStars = 0) {
         let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
         if (inventory.EQUIP.length >= maxBag) {
             if(!silent) {
@@ -849,15 +954,23 @@ window.onload = function() {
         let luckMultiplier = p.qly; 
         let roll = Math.random() * 100;
         
-        if (roll < (0.02 * luckMultiplier)) statLinesCount = 5; 
-        else if (roll < (0.18 * luckMultiplier)) statLinesCount = 4;
-        else if (roll < (0.80 * luckMultiplier)) statLinesCount = 3; 
-        else if (roll < (4.00 * luckMultiplier)) statLinesCount = 2; 
-        else if (roll < (15.00 * luckMultiplier)) statLinesCount = 1; 
-        else statLinesCount = 0;
+        if (minStars === 1) {
+            if (roll < (0.5 * luckMultiplier)) statLinesCount = 5; 
+            else if (roll < (5.0 * luckMultiplier)) statLinesCount = 4;
+            else if (roll < (25.0 * luckMultiplier)) statLinesCount = 3; 
+            else if (roll < (60.0 * luckMultiplier)) statLinesCount = 2; 
+            else statLinesCount = 1; 
+        } else {
+            if (roll < (0.02 * luckMultiplier)) statLinesCount = 5; 
+            else if (roll < (0.18 * luckMultiplier)) statLinesCount = 4;
+            else if (roll < (0.80 * luckMultiplier)) statLinesCount = 3; 
+            else if (roll < (4.00 * luckMultiplier)) statLinesCount = 2; 
+            else if (roll < (15.00 * luckMultiplier)) statLinesCount = 1; 
+            else statLinesCount = 0;
+        }
 
         let stageScale = Math.floor((playerStats.stage - 1) / 10) + 1; 
-        generateEquipment(chosenType, statLinesCount, stageScale, isBossKill ? "Boss" : "Route", silent);
+        generateEquipment(chosenType, statLinesCount, stageScale, isBossKill ? "Boss" : "Route", silent, minStars);
     }
 
     function rollGachaDrop() {
@@ -1012,7 +1125,8 @@ window.onload = function() {
                 <div style="color:#aaa; font-size:11px;">Current Multiplier: x${(p.drop * eff).toFixed(2)} ${eff < 1 ? "(Auto-Farm Penalty Active)" : ""}<br><br>
                 <b>Exact Chances:</b><br>
                 • Mob Drop: ${(4.5 * p.drop * eff).toFixed(2)}%<br>
-                • Boss Drop: ${(25.0 * p.drop * eff).toFixed(2)}%</div>
+                • Boss Drop: ${(25.0 * p.drop * eff).toFixed(2)}%<br>
+                • Dungeon Mob: ${(10.0 * p.drop * eff).toFixed(2)}%</div>
             </div>`;
             tt.style.borderColor = "#2ecc71";
         } else if (statType === 'qly') {
@@ -1037,6 +1151,35 @@ window.onload = function() {
             <div style="color:#aaa; font-size:11px;">${desc}</div>
         </div>`;
         tt.style.borderColor = "#bdc3c7"; tt.style.display = "block"; window.positionTooltip(e, tt);
+    };
+
+    window.showGachaTooltip = function(e) {
+        let p = resolvePlayerStats();
+        let qly = p.qly;
+        
+        let mythic = (0.5 * qly);
+        let leg = (2.0 * qly) - mythic;
+        let epic = (10.0 * qly) - (2.0 * qly);
+        let magic = (30.0 * qly) - (10.0 * qly);
+        let rare = 100 - (30.0 * qly);
+
+        let tt = document.getElementById('game-tooltip');
+        tt.innerHTML = `
+            <div style="padding: 10px; width: 250px; box-sizing: border-box;">
+                <div class="tt-title" style="color:#f1c40f;">🎰 Vending Machine Rates</div>
+                <div class="tt-subtitle">Gacha Rarity Distribution</div>
+                <div class="tt-stat-line" style="color:#3498db;">• 1★ Rare: ${Math.max(0, rare).toFixed(2)}%</div>
+                <div class="tt-stat-line" style="color:#9b59b6;">• 2★ Magic: ${Math.max(0, magic).toFixed(2)}%</div>
+                <div class="tt-stat-line" style="color:#e67e22;">• 3★ Epic: ${Math.max(0, epic).toFixed(2)}%</div>
+                <div class="tt-stat-line" style="color:#f1c40f;">• 4★ Legendary: ${Math.max(0, leg).toFixed(2)}%</div>
+                <div class="tt-stat-line" style="color:#e74c3c;">• 5★ Mythic: ${Math.max(0, mythic).toFixed(2)}%</div>
+                <div class="tt-stat-line" style="color:#1abc9c; margin-top:4px;">• Bonus: 1% flat chance for Unique Artifact!</div>
+                <div class="tt-subtitle" style="margin-top:6px; border-top:1px solid #333; padding-top:4px;">Guaranteed 1★ to 5★ gear. Influenced by Drop Quality.</div>
+            </div>
+        `;
+        tt.style.borderColor = "#f1c40f";
+        tt.style.display = "block"; 
+        window.positionTooltip(e, tt);
     };
 
     window.positionTooltip = function(e, tt) {
@@ -1209,7 +1352,8 @@ window.onload = function() {
     }
 
     function handleMobDeath() {
-        let p = resolvePlayerStats(); let isBoss = (mob.type === "boss");
+        let p = resolvePlayerStats(); 
+        let isBoss = (mob.type === "boss" || mob.type === "dungeon_miniboss" || mob.type === "dungeon_boss");
         
         let baseCoin = isBoss ? 10 * playerStats.stage : Math.floor(1 + (playerStats.stage * 0.5));
         let coinYield = Math.ceil(baseCoin * p.gold);
@@ -1218,19 +1362,37 @@ window.onload = function() {
 
         effects.push({ x: mob.x + 35, y: mob.y + 25, text: "+" + coinYield + "g", color: "#f1c40f", life: 25 });
         
-        let baseDropRate = isBoss ? 0.25 : 0.045; 
-        if (Math.random() < (baseDropRate * p.drop * state.efficiency)) { rollEquipmentDrop(isBoss); }
+        if (playerStats.isDungeonMode) {
+            if (mob.type === "dungeon_boss") {
+                if (Math.random() < 0.75) rollEquipmentDrop(true, false, 1);
+                else rollEquipmentDrop(true, false, 0);
+            } else if (mob.type === "dungeon_miniboss") {
+                if (Math.random() < 0.30) rollEquipmentDrop(true, false, 0);
+            } else {
+                if (Math.random() < 0.10) rollEquipmentDrop(false, false, 0);
+            }
+        } else {
+            let baseDropRate = isBoss ? 0.25 : 0.045; 
+            if (Math.random() < (baseDropRate * p.drop * state.efficiency)) { rollEquipmentDrop(isBoss); }
+        }
         
         if (playerStats.isUberBoss) {
             addEtcDrop("Gacha Key", 1);
             pushToast("Gacha Key", null, "#f1c40f", true, 1);
-        } else if (isBoss && Math.random() < 0.05) { 
+        } else if (mob.type === "boss" && Math.random() < 0.05) { 
             addEtcDrop("Ancient Core", 1);
             pushToast("Ancient Core", null, "#9b59b6", true, 1);
-        } else if (!isBoss && Math.random() < 0.03) { 
-            let etcItemName = mob.type === "bandit" ? "Iron Scrap" : "Sticky Gel";
-            addEtcDrop(etcItemName); 
-            effects.push({ x: mob.x + 10, y: mob.y + 10, text: "+1 " + etcItemName, color: "#bdc3c7", life: 35 });
+        } else if (!isBoss) { 
+            if (Math.random() < 0.03) {
+                let etcItemName = mob.type === "bandit" ? "Iron Scrap" : "Sticky Gel";
+                addEtcDrop(etcItemName); 
+                effects.push({ x: mob.x + 10, y: mob.y + 10, text: "+1 " + etcItemName, color: "#bdc3c7", life: 35 });
+            }
+            if (Math.random() < 0.01 && playerStats.dungeonKeys < 3) {
+                playerStats.dungeonKeys++;
+                if (playerStats.dungeonKeys < 3) playerStats.nextKeyTime = Date.now() + 3600000;
+                pushToast("Dungeon Key", null, "#8e44ad", true, 1);
+            }
         }
         
         playerStats.totalLifetimeKills++;
@@ -1240,7 +1402,22 @@ window.onload = function() {
             pushLog(`<strong style='color:#e67e22;'>[BERSERKER RAGE]</strong> 100% Critical Frenzy Unleashed!`);
         }
         
-        if (isBoss) { 
+        if (playerStats.isDungeonMode) {
+            if (mob.type === "dungeon_miniboss") {
+                playerStats.dungeonWave++;
+                playerStats.killCount = 0;
+                pushLog(`<span style='color:#8e44ad; font-weight:bold;'>[DUNGEON] Wave ${playerStats.dungeonWave} begins!</span>`);
+            } else if (mob.type === "dungeon_boss") {
+                playerStats.isDungeonMode = false;
+                playerStats.killCount = 0;
+                playerStats.targetsRequired = 7;
+                pushLog(`<span style='color:#8e44ad; font-weight:bold;'>[DUNGEON CLEARED] Returning to the surface.</span>`);
+                playerStats.currentHp = p.maxHp; 
+                window.saveGame();
+            } else {
+                playerStats.killCount++;
+            }
+        } else if (isBoss) { 
             if (!playerStats.isUberBoss) {
                 playerStats.stage++; 
                 pushLog(`<span style='color:#2ecc71; font-weight:bold;'>[AREA CLEARED] Fully restored! Advancing to Stage ${playerStats.stage}.</span>`);
@@ -1265,7 +1442,9 @@ window.onload = function() {
         playerStats.isBossMode = false; 
         playerStats.isFarmingLoop = false; 
         playerStats.isUberBoss = false; 
+        playerStats.isDungeonMode = false;
         playerStats.killCount = 0; 
+        playerStats.targetsRequired = 7;
         mob = null;
         let p = resolvePlayerStats(); playerStats.currentHp = p.maxHp; updateUI();
         pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[DEFEATED] Progress reset. Stage restarted!</span>`);
@@ -1340,18 +1519,26 @@ window.onload = function() {
 
     function updateUI() {
         let p = resolvePlayerStats(); 
-        document.getElementById('hud-stage').innerText = `1-${playerStats.stage}`;
         
         let progressEl = document.getElementById('hud-progress');
-        if (playerStats.isBossMode) {
-            progressEl.innerText = playerStats.isUberBoss ? "⚡ RIFT BOSS!" : "🎯 BOSS READY!";
-            progressEl.style.color = playerStats.isUberBoss ? "#9b59b6" : "#e74c3c";
-        } else if (playerStats.isFarmingLoop) {
-            progressEl.innerText = "💀 FARMING MODE";
-            progressEl.style.color = "#7f8c8d";
+        if (playerStats.isDungeonMode) {
+            document.getElementById('hud-stage').innerText = `Dungeon`;
+            document.getElementById('hud-stage').style.color = "#8e44ad";
+            progressEl.innerText = `Wave ${playerStats.dungeonWave}/5 (${playerStats.killCount}/${playerStats.targetsRequired})`;
+            progressEl.style.color = "#8e44ad";
         } else {
-            progressEl.innerText = `${playerStats.killCount} / ${playerStats.targetsRequired}`;
-            progressEl.style.color = "#f1c40f";
+            document.getElementById('hud-stage').innerText = `1-${playerStats.stage}`;
+            document.getElementById('hud-stage').style.color = "#3498db";
+            if (playerStats.isBossMode) {
+                progressEl.innerText = playerStats.isUberBoss ? "⚡ RIFT BOSS!" : "🎯 BOSS READY!";
+                progressEl.style.color = playerStats.isUberBoss ? "#9b59b6" : "#e74c3c";
+            } else if (playerStats.isFarmingLoop) {
+                progressEl.innerText = "💀 FARMING MODE";
+                progressEl.style.color = "#7f8c8d";
+            } else {
+                progressEl.innerText = `${playerStats.killCount} / ${playerStats.targetsRequired}`;
+                progressEl.style.color = "#f1c40f";
+            }
         }
 
         let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
@@ -1435,6 +1622,28 @@ window.onload = function() {
 
     function update() {
         if (isGamePaused) return;
+        
+        let now = Date.now();
+        if (playerStats.dungeonKeys < 3) {
+            if (!playerStats.nextKeyTime || playerStats.nextKeyTime < now - 3600000) {
+                playerStats.nextKeyTime = now + 3600000;
+            } else if (now >= playerStats.nextKeyTime) {
+                playerStats.dungeonKeys++;
+                if (playerStats.dungeonKeys < 3) playerStats.nextKeyTime = now + 3600000;
+            }
+        }
+        
+        let timerEl = document.getElementById('dungeon-timer-text');
+        let keysEl = document.getElementById('dungeon-keys-text');
+        if (playerStats.dungeonKeys < 3) {
+            let msLeft = playerStats.nextKeyTime - now;
+            let mins = Math.floor(msLeft / 60000);
+            let secs = Math.floor((msLeft % 60000) / 1000);
+            timerEl.innerText = `(${mins}m ${secs}s)`;
+        } else {
+            timerEl.innerText = "(Full)";
+        }
+        keysEl.innerText = playerStats.dungeonKeys;
 
         let p = resolvePlayerStats();
         let scrollSpeed = p.moveSpeed * 0.3;
@@ -1450,14 +1659,14 @@ window.onload = function() {
             processEnemySpawn(); 
             groundScroll = (groundScroll + scrollSpeed) % canvas.width; 
             bgScenery.forEach(s => { s.x -= scrollSpeed * 0.6; if(s.x < -50) s.x = canvas.width + Math.random() * 50; });
-            fgScenery.forEach(s => { s.x -= scrollSpeed; if(s.x < -60) s.x = canvas.width + Math.random() * 50; });
+            fgScenery.forEach(s => { s.x -= scrollSpeed * 1.5; if(s.x < -60) s.x = canvas.width + Math.random() * 50; });
         } else {
             if (mob.x > (hero.x + hero.w + 30)) { 
                 mob.x -= (4 + scrollSpeed); 
                 mob.isStopped = false; 
                 groundScroll = (groundScroll + scrollSpeed) % canvas.width; 
                 bgScenery.forEach(s => { s.x -= scrollSpeed * 0.6; if(s.x < -50) s.x = canvas.width + Math.random() * 50; });
-                fgScenery.forEach(s => { s.x -= scrollSpeed; if(s.x < -60) s.x = canvas.width + Math.random() * 50; });
+                fgScenery.forEach(s => { s.x -= scrollSpeed * 1.5; if(s.x < -60) s.x = canvas.width + Math.random() * 50; });
             } else {
                 mob.isStopped = true; 
                 if (logicClock % p.idleAttackSpeed === 0) {
@@ -1494,48 +1703,76 @@ window.onload = function() {
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        let skyGrad = ctx.createLinearGradient(0, 0, 0, 180);
-        skyGrad.addColorStop(0, playerStats.isBossMode ? "#1a0b1c" : "#2b5876");
-        skyGrad.addColorStop(1, playerStats.isBossMode ? "#000000" : "#4e4376");
-        ctx.fillStyle = skyGrad; 
-        ctx.fillRect(0, 0, canvas.width, 180);
+        if (playerStats.isDungeonMode) {
+            let caveGrad = ctx.createLinearGradient(0, 0, 0, 180);
+            caveGrad.addColorStop(0, "#0b0c10");
+            caveGrad.addColorStop(1, "#1c2833");
+            ctx.fillStyle = caveGrad; 
+            ctx.fillRect(0, 0, canvas.width, 180);
 
-        ctx.fillStyle = playerStats.isBossMode ? "#1a0b1c" : "#212f3d";
-        ctx.beginPath(); ctx.moveTo(0, 180); ctx.lineTo(150, 80); ctx.lineTo(300, 180); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(200, 180); ctx.lineTo(400, 50); ctx.lineTo(600, 180); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(500, 180); ctx.lineTo(650, 90); ctx.lineTo(800, 180); ctx.fill();
+            ctx.fillStyle = "#17202a";
+            ctx.beginPath(); ctx.moveTo(0, 180); ctx.lineTo(150, 40); ctx.lineTo(300, 180); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(200, 180); ctx.lineTo(400, 20); ctx.lineTo(600, 180); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(500, 180); ctx.lineTo(650, 60); ctx.lineTo(800, 180); ctx.fill();
 
-        ctx.fillStyle = "#3e2723"; ctx.fillRect(0, 180, canvas.width, 70);
-        
-        ctx.fillStyle = "#4e342e";
-        for(let i=0; i<canvas.width+80; i+=80) { 
-            let gx = i - (groundScroll % 80);
-            ctx.fillRect(gx, 200, 25, 4);
-            ctx.fillRect(gx + 35, 215, 15, 3); 
-            ctx.fillRect(gx + 10, 235, 20, 5); 
-            ctx.fillRect(gx + 60, 225, 8, 3);
-        }
-
-        ctx.fillStyle = "#2ecc71"; ctx.fillRect(0, 180, canvas.width, 8);
-        ctx.fillStyle = "#27ae60"; ctx.fillRect(0, 188, canvas.width, 6);
-        
-        bgScenery.forEach(s => {
-            if (s.type === 'tree') {
-                let tx = s.x, ty = s.y - 40 * s.size, ts = s.size;
-                ctx.fillStyle = "#5c4033"; ctx.fillRect(tx - 6*ts, ty, 12*ts, 40 * ts);
-                ctx.fillStyle = "#3e2723"; ctx.fillRect(tx + 2*ts, ty, 4*ts, 40 * ts); 
-                
-                ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(tx, ty - 10*ts, 22 * ts, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.arc(tx - 8*ts, ty - 5*ts, 18 * ts, 0, Math.PI*2); ctx.fill(); 
-                ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(tx + 8*ts, ty - 5*ts, 18 * ts, 0, Math.PI*2); ctx.fill(); 
-                ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(tx, ty - 15*ts, 15 * ts, 0, Math.PI*2); ctx.fill(); 
-            } else {
-                let bx = s.x, by = s.y, bs = s.size;
-                ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(bx, by - 8 * bs, 14 * bs, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.arc(bx + 10 * bs, by - 6 * bs, 10 * bs, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(bx - 10 * bs, by - 6 * bs, 10 * bs, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = "#2c3e50"; ctx.fillRect(0, 180, canvas.width, 70);
+            ctx.fillStyle = "#34495e"; ctx.fillRect(0, 180, canvas.width, 8);
+            
+            ctx.fillStyle = "#1c2833";
+            for(let i=0; i<canvas.width+80; i+=80) { 
+                let gx = i - (groundScroll % 80);
+                ctx.fillRect(gx, 200, 20, 5);
+                ctx.fillRect(gx + 30, 220, 15, 4); 
+                ctx.fillRect(gx + 10, 240, 25, 3); 
             }
-        });
+
+            bgScenery.forEach(s => {
+                ctx.fillStyle = "#17202a";
+                ctx.beginPath(); ctx.moveTo(s.x - 15*s.size, 180); ctx.lineTo(s.x, 180 - 60*s.size); ctx.lineTo(s.x + 15*s.size, 180); ctx.fill();
+            });
+        } else {
+            let skyGrad = ctx.createLinearGradient(0, 0, 0, 180);
+            skyGrad.addColorStop(0, playerStats.isBossMode ? "#1a0b1c" : "#2b5876");
+            skyGrad.addColorStop(1, playerStats.isBossMode ? "#000000" : "#4e4376");
+            ctx.fillStyle = skyGrad; 
+            ctx.fillRect(0, 0, canvas.width, 180);
+
+            ctx.fillStyle = playerStats.isBossMode ? "#1a0b1c" : "#212f3d";
+            ctx.beginPath(); ctx.moveTo(0, 180); ctx.lineTo(150, 80); ctx.lineTo(300, 180); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(200, 180); ctx.lineTo(400, 50); ctx.lineTo(600, 180); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(500, 180); ctx.lineTo(650, 90); ctx.lineTo(800, 180); ctx.fill();
+
+            ctx.fillStyle = "#3e2723"; ctx.fillRect(0, 180, canvas.width, 70);
+            ctx.fillStyle = "#4e342e";
+            for(let i=0; i<canvas.width+80; i+=80) { 
+                let gx = i - (groundScroll % 80);
+                ctx.fillRect(gx, 200, 25, 4);
+                ctx.fillRect(gx + 35, 215, 15, 3); 
+                ctx.fillRect(gx + 10, 235, 20, 5); 
+                ctx.fillRect(gx + 60, 225, 8, 3);
+            }
+
+            ctx.fillStyle = "#2ecc71"; ctx.fillRect(0, 180, canvas.width, 8);
+            ctx.fillStyle = "#27ae60"; ctx.fillRect(0, 188, canvas.width, 6);
+            
+            bgScenery.forEach(s => {
+                if (s.type === 'tree') {
+                    let tx = s.x, ty = s.y - 40 * s.size, ts = s.size;
+                    ctx.fillStyle = "#5c4033"; ctx.fillRect(tx - 6*ts, ty, 12*ts, 40 * ts);
+                    ctx.fillStyle = "#3e2723"; ctx.fillRect(tx + 2*ts, ty, 4*ts, 40 * ts); 
+                    
+                    ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(tx, ty - 10*ts, 22 * ts, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.arc(tx - 8*ts, ty - 5*ts, 18 * ts, 0, Math.PI*2); ctx.fill(); 
+                    ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(tx + 8*ts, ty - 5*ts, 18 * ts, 0, Math.PI*2); ctx.fill(); 
+                    ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(tx, ty - 15*ts, 15 * ts, 0, Math.PI*2); ctx.fill(); 
+                } else {
+                    let bx = s.x, by = s.y, bs = s.size;
+                    ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(bx, by - 8 * bs, 14 * bs, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.arc(bx + 10 * bs, by - 6 * bs, 10 * bs, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(bx - 10 * bs, by - 6 * bs, 10 * bs, 0, Math.PI*2); ctx.fill();
+                }
+            });
+        }
 
         let hx = hero.x; let hy = hero.y;
         ctx.fillStyle = playerStats.frenzyTimer > 0 ? "#e67e22" : "#3498db";
@@ -1549,43 +1786,49 @@ window.onload = function() {
         }
 
         if (mob) {
-            ctx.fillStyle = mob.flashTimer > 0 ? "#fff" : (mob.type === "boss" ? "#5c4033" : mob.type === "bandit" ? "#c0392b" : "#006400");
+            ctx.fillStyle = mob.flashTimer > 0 ? "#fff" : (mob.type === "boss" || mob.type === "dungeon_boss" || mob.type === "dungeon_miniboss" ? "#5c4033" : (mob.type === "bat" ? "#5b2c6f" : (mob.type === "crawler" ? "#a04000" : (mob.type === "bandit" ? "#c0392b" : "#006400"))));
             
             if (mob.type === "slime") {
                 let hop = mob.isStopped ? 0 : Math.abs(Math.sin(Date.now() / 150)) * 15;
                 let sx = mob.x, sy = mob.y + mob.h - hop, sw = mob.w;
-                ctx.beginPath();
-                ctx.moveTo(sx, sy);
-                ctx.quadraticCurveTo(sx, sy - mob.h, sx + sw/2, sy - mob.h);
-                ctx.quadraticCurveTo(sx + sw, sy - mob.h, sx + sw, sy);
-                ctx.lineTo(sx, sy);
-                ctx.fill();
-                ctx.fillStyle = "rgba(255,255,255,0.4)";
-                ctx.beginPath(); ctx.arc(sx + sw*0.7, sy - mob.h*0.6, 2, 0, Math.PI*2); ctx.fill();
-            } else if (mob.type === "boss") {
-                ctx.fillStyle = "#8B4513";
+                ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx, sy - mob.h, sx + sw/2, sy - mob.h); ctx.quadraticCurveTo(sx + sw, sy - mob.h, sx + sw, sy); ctx.lineTo(sx, sy); ctx.fill();
+                ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.beginPath(); ctx.arc(sx + sw*0.7, sy - mob.h*0.6, 2, 0, Math.PI*2); ctx.fill();
+            } else if (mob.type === "boss" || mob.type === "dungeon_boss") {
+                ctx.fillStyle = playerStats.isDungeonMode ? "#2c3e50" : "#8B4513";
                 ctx.fillRect(mob.x, mob.y, mob.w, mob.h);
-                
                 ctx.beginPath(); ctx.moveTo(mob.x, mob.y+mob.h); ctx.lineTo(mob.x-10, mob.y+mob.h+5); ctx.lineTo(mob.x, mob.y+mob.h-5); ctx.fill();
                 ctx.beginPath(); ctx.moveTo(mob.x+mob.w, mob.y+mob.h); ctx.lineTo(mob.x+mob.w+10, mob.y+mob.h+5); ctx.lineTo(mob.x+mob.w, mob.y+mob.h-5); ctx.fill();
                 
-                ctx.fillStyle = mob.flashTimer > 0 ? "#fff" : "#228B22"; 
+                ctx.fillStyle = mob.flashTimer > 0 ? "#fff" : (playerStats.isDungeonMode ? "#5d6d7e" : "#228B22"); 
                 ctx.beginPath(); ctx.arc(mob.x + mob.w/2, mob.y, 35, 0, Math.PI*2); ctx.fill();
                 ctx.beginPath(); ctx.arc(mob.x - 5, mob.y + 15, 25, 0, Math.PI*2); ctx.fill();
                 ctx.beginPath(); ctx.arc(mob.x + mob.w + 5, mob.y + 15, 25, 0, Math.PI*2); ctx.fill();
 
                 if (mob.flashTimer === 0) {
-                    ctx.fillStyle = "#000";
+                    ctx.fillStyle = playerStats.isDungeonMode ? "#e74c3c" : "#000";
                     ctx.beginPath(); ctx.ellipse(mob.x + 12, mob.y + 25, 3, 6, 0, 0, Math.PI*2); ctx.fill();
                     ctx.beginPath(); ctx.ellipse(mob.x + mob.w - 12, mob.y + 25, 3, 6, 0, 0, Math.PI*2); ctx.fill();
                     ctx.beginPath(); ctx.ellipse(mob.x + mob.w/2, mob.y + 45, 6, 8, 0, 0, Math.PI*2); ctx.fill();
                 }
                 
-                ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(mob.x + mob.w/2 - 12, mob.y + 8, 6, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = "#5c4033"; ctx.fillRect(mob.x + mob.w/2 - 13, mob.y + 1, 2, 4);
-                
-                ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(mob.x + mob.w/2 + 15, mob.y - 2, 5, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = "#5c4033"; ctx.fillRect(mob.x + mob.w/2 + 14, mob.y - 7, 2, 4);
+                if (!playerStats.isDungeonMode) {
+                    ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(mob.x + mob.w/2 - 12, mob.y + 8, 6, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = "#5c4033"; ctx.fillRect(mob.x + mob.w/2 - 13, mob.y + 1, 2, 4);
+                    ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(mob.x + mob.w/2 + 15, mob.y - 2, 5, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = "#5c4033"; ctx.fillRect(mob.x + mob.w/2 + 14, mob.y - 7, 2, 4);
+                }
+            } else if (mob.type === "bat") {
+                let hover = Math.sin(Date.now() / 100) * 5;
+                ctx.beginPath(); ctx.arc(mob.x + 10, mob.y + hover + 10, 10, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(mob.x, mob.y + hover + 10); ctx.lineTo(mob.x - 15, mob.y + hover - 5); ctx.lineTo(mob.x + 5, mob.y + hover + 15); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(mob.x + 20, mob.y + hover + 10); ctx.lineTo(mob.x + 35, mob.y + hover - 5); ctx.lineTo(mob.x + 15, mob.y + hover + 15); ctx.fill();
+                ctx.fillStyle = "#e74c3c"; ctx.fillRect(mob.x+6, mob.y+hover+8, 2, 2); ctx.fillRect(mob.x+12, mob.y+hover+8, 2, 2);
+            } else if (mob.type === "crawler") {
+                ctx.beginPath(); ctx.arc(mob.x + 15, mob.y + 20, 8, 0, Math.PI*2); ctx.fill();
+                ctx.fillRect(mob.x, mob.y+20, 30, 5);
+                ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(mob.x+5, mob.y+20); ctx.lineTo(mob.x-5, mob.y+15); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(mob.x+25, mob.y+20); ctx.lineTo(mob.x+35, mob.y+15); ctx.stroke();
             } else {
                 ctx.fillRect(mob.x, mob.y, 20, 20);
                 ctx.fillRect(mob.x + 2, mob.y + 20, 16, 25);
@@ -1593,42 +1836,44 @@ window.onload = function() {
                 ctx.fillStyle = "#ecf0f1"; ctx.fillRect(mob.x - 20, mob.y + 23, 10, 3);
             }
 
-            let barW = mob.type === "boss" ? 50 : mob.w;
-            let barX = mob.type === "boss" ? mob.x - 7 : mob.x;
+            let barW = (mob.type === "boss" || mob.type === "dungeon_boss") ? 50 : mob.w;
+            let barX = (mob.type === "boss" || mob.type === "dungeon_boss") ? mob.x - 7 : mob.x;
             ctx.fillStyle = "#e74c3c"; ctx.fillRect(barX, mob.y - 12, barW, 6);
             ctx.fillStyle = "#f1c40f"; ctx.fillRect(barX, mob.y - 12, Math.max(0, (mob.hp / mob.maxHp) * barW), 6);
             ctx.strokeStyle = "#111"; ctx.lineWidth = 1; ctx.strokeRect(barX, mob.y - 12, barW, 6);
         }
 
-        fgScenery.forEach(s => {
-            let sx = s.x, sy = s.y, ss = s.size;
-            if (s.type === 'grass') {
-                ctx.fillStyle = "#2ecc71";
-                ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx-5*ss, sy-10*ss, sx-8*ss, sy-15*ss); ctx.lineTo(sx-4*ss, sy); ctx.fill();
-                ctx.beginPath(); ctx.moveTo(sx+2*ss, sy); ctx.quadraticCurveTo(sx+5*ss, sy-12*ss, sx+2*ss, sy-18*ss); ctx.lineTo(sx+6*ss, sy); ctx.fill();
-                ctx.beginPath(); ctx.moveTo(sx+8*ss, sy); ctx.quadraticCurveTo(sx+12*ss, sy-8*ss, sx+15*ss, sy-12*ss); ctx.lineTo(sx+10*ss, sy); ctx.fill();
-            } else if (s.type === 'flower') {
-                ctx.fillStyle = "#27ae60"; 
-                ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx+3*ss, sy-10*ss, sx+1*ss, sy-18*ss); ctx.lineWidth=2; ctx.stroke();
-                ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.ellipse(sx+4*ss, sy-8*ss, 4*ss, 2*ss, Math.PI/4, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.ellipse(sx-2*ss, sy-12*ss, 4*ss, 2*ss, -Math.PI/4, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = s.color;
-                let px = sx+1*ss, py = sy-18*ss;
-                for(let p=0; p<5; p++) {
-                    ctx.beginPath(); ctx.arc(px + Math.cos(p*Math.PI*2/5)*4*ss, py + Math.sin(p*Math.PI*2/5)*4*ss, 3*ss, 0, Math.PI*2); ctx.fill();
+        if (!playerStats.isDungeonMode) {
+            fgScenery.forEach(s => {
+                let sx = s.x, sy = s.y, ss = s.size;
+                if (s.type === 'grass') {
+                    ctx.fillStyle = "#2ecc71";
+                    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx-5*ss, sy-10*ss, sx-8*ss, sy-15*ss); ctx.lineTo(sx-4*ss, sy); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(sx+2*ss, sy); ctx.quadraticCurveTo(sx+5*ss, sy-12*ss, sx+2*ss, sy-18*ss); ctx.lineTo(sx+6*ss, sy); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(sx+8*ss, sy); ctx.quadraticCurveTo(sx+12*ss, sy-8*ss, sx+15*ss, sy-12*ss); ctx.lineTo(sx+10*ss, sy); ctx.fill();
+                } else if (s.type === 'flower') {
+                    ctx.fillStyle = "#27ae60"; 
+                    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx+3*ss, sy-10*ss, sx+1*ss, sy-18*ss); ctx.lineWidth=2; ctx.stroke();
+                    ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.ellipse(sx+4*ss, sy-8*ss, 4*ss, 2*ss, Math.PI/4, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.ellipse(sx-2*ss, sy-12*ss, 4*ss, 2*ss, -Math.PI/4, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = s.color;
+                    let px = sx+1*ss, py = sy-18*ss;
+                    for(let p=0; p<5; p++) {
+                        ctx.beginPath(); ctx.arc(px + Math.cos(p*Math.PI*2/5)*4*ss, py + Math.sin(p*Math.PI*2/5)*4*ss, 3*ss, 0, Math.PI*2); ctx.fill();
+                    }
+                    ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(px, py, 2.5*ss, 0, Math.PI*2); ctx.fill();
+                } else if (s.type === 'bush') {
+                    ctx.fillStyle = "#145a32"; ctx.beginPath(); ctx.arc(sx, sy, 14*ss, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = "#1e8449"; 
+                    ctx.beginPath(); ctx.arc(sx-8*ss, sy-4*ss, 10*ss, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(sx+10*ss, sy-2*ss, 11*ss, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(sx+2*ss, sy-8*ss, 12*ss, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = "#27ae60"; 
+                    ctx.beginPath(); ctx.arc(sx-4*ss, sy-10*ss, 6*ss, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(sx+6*ss, sy-8*ss, 5*ss, 0, Math.PI*2); ctx.fill();
                 }
-                ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(px, py, 2.5*ss, 0, Math.PI*2); ctx.fill();
-            } else if (s.type === 'bush') {
-                ctx.fillStyle = "#145a32"; ctx.beginPath(); ctx.arc(sx, sy, 14*ss, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = "#1e8449"; 
-                ctx.beginPath(); ctx.arc(sx-8*ss, sy-4*ss, 10*ss, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(sx+10*ss, sy-2*ss, 11*ss, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(sx+2*ss, sy-8*ss, 12*ss, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = "#27ae60"; 
-                ctx.beginPath(); ctx.arc(sx-4*ss, sy-10*ss, 6*ss, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(sx+6*ss, sy-8*ss, 5*ss, 0, Math.PI*2); ctx.fill();
-            }
-        });
+            });
+        }
 
         if (reviveTimer > 0) {
             ctx.save();
