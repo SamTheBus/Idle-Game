@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Postknight Slayer: Player Stats Dashboard</title>
+    <style>
+        body {
+            background-color: #121212; color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 10px;
+            display: flex; flex-direction: column; align-items: center;
+            -webkit-user-select: none; user-select: none;
+        }
+        #game-container {
+            width: 100%; max-width: 750px; background: #1a1a1a;
+            border: 2px solid #333; border-radius: 8px; overflow: hidden;
+            position: relative;
+        }
+        canvas { display: block; background: #1e272c; width: 100%; height: auto; }
+        #control-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #111; padding: 10px; border-bottom: 2px solid #333; font-size: 13px;
+        }
+        #menu-panel { padding: 12px; background: #222; position: relative; }
+        .stats-hud {
+            display: flex; justify-content: space-between; padding: 8px;
+            background: #0f0f0f; border-radius: 4px; margin-bottom: 10px;
+            font-weight: bold; font-size: 12px;
+        }
+        .tabs { display: flex; gap: 2px; margin-bottom: 12px; }
+        .tab-btn {
+            flex: 1; background: #333; color: #aaa; border: none; padding: 8px 2px;
+            cursor: pointer; font-weight: bold; border-radius: 4px 4px 0 0; font-size: 11px;
+        }
+        .tab-btn.active { background: #e67e22; color: white; }
+        .tab-content {
+            background: #2a2a2a; padding: 10px; border-radius: 4px; min-height: 250px;
+            display: none;
+        }
+        .tab-content.active { display: block; }
+        .grid-layout { display: grid; grid-template-columns: 240px 1fr; gap: 12px; }
+        .paper-doll { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
+        .slots-card {
+            background: #151515; border: 1px dashed #444; border-radius: 4px;
+            padding: 6px; font-size: 11px; min-height: 40px; display: flex;
+            flex-direction: column; justify-content: center; position: relative;
+            cursor: help;
+        }
+        .slots-card.equipped { border-style: solid; background: #1b2a35; }
+        .slots-card.artifact-slot.equipped { background: #251b35; }
+        .slots-card.locked { background: #2c1a1a; border-color: #c0392b !important; color: #e74c3c; font-weight: bold; cursor: not-allowed; }
+        .bag-container { background: #111; border-radius: 4px; padding: 8px; height: 220px; overflow-y: auto; }
+        .bag-item {
+            background: #333; padding: 6px; margin-bottom: 6px; border-radius: 3px;
+            font-size: 12px; display: flex; justify-content: space-between; align-items: center;
+            position: relative; cursor: help;
+        }
+        .btn-action {
+            background: #2ecc71; color: white; border: none; padding: 4px 6px;
+            font-size: 10px; font-weight: bold; border-radius: 3px; cursor: pointer;
+        }
+        .btn-action.un { background: #e74c3c; }
+        .btn-action.forge { background: #e67e22; margin-top: 5px; width: 100%; padding: 6px; font-size: 12px; }
+        .btn-toggle {
+            background: #2980b9; color: white; border: none; padding: 6px 10px;
+            border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px;
+        }
+        .btn-toggle.active { background: #2ecc71; }
+        .sub-tabs { display: flex; gap: 5px; margin-bottom: 8px; }
+        .sub-tab-btn {
+            background: #444; color: #ccc; border: none; padding: 4px 10px;
+            font-size: 11px; border-radius: 3px; cursor: pointer; font-weight: bold;
+        }
+        .sub-tab-btn.active { background: #3498db; color: white; }
+
+        @keyframes pulseBtn { 0% { background: #c0392b; } 50% { background: #e74c3c; } 100% { background: #c0392b; } }
+        .btn-pulse { animation: pulseBtn 1.5s infinite; border: 1px solid #e74c3c; }
+
+        .forge-grid { display: grid; grid-template-columns: 240px 1fr; gap: 12px; }
+        .forge-panel { background: #111; padding: 10px; border-radius: 4px; border: 1px solid #444; }
+        .market-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .market-card { background: #151515; border: 1px solid #444; padding: 12px; border-radius: 6px; text-align: center; cursor: pointer; }
+
+        #game-tooltip, #etc-tooltip, #log-item-tooltip, #stat-tooltip {
+            position: absolute; display: none; background: #0b0f12; color: #fff;
+            border: 2px solid #3498db; border-radius: 6px;
+            font-size: 11px; line-height: 1.4; z-index: 9999;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.7); pointer-events: none;
+        }
+        .tt-title { font-weight: bold; font-size: 12px; margin-bottom: 4px; border-bottom: 1px solid #333; padding-bottom: 2px; }
+        .tt-subtitle { color: #aaa; font-style: italic; margin-bottom: 6px; font-size: 10px; }
+        .tt-stat-line { color: #ecf0f1; font-family: monospace; margin-bottom: 2px; }
+        .tt-trait { color: #f1c40f; font-weight: bold; margin-top: 5px; border-top: 1px dashed #444; padding-top: 4px; }
+        
+        #log-box { height: 220px; overflow-y: auto; background: #111; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 11px; line-height: 1.5; }
+        .log-item-link { cursor: help; text-decoration: underline; text-decoration-style: dashed; }
+        
+        #death-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 250px;
+            background: rgba(192, 57, 43, 0.85); color: white; display: none;
+            justify-content: center; align-items: center; flex-direction: column;
+            z-index: 5000; text-shadow: 2px 2px 5px black; pointer-events: none;
+        }
+        .stat-hover { cursor: help; border-bottom: 1px dotted #888; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="game-tooltip"></div>
+        <div id="etc-tooltip"></div>
+        <div id="log-item-tooltip"></div>
+        <div id="stat-tooltip"></div>
+        
+        <div id="death-overlay">
+            <div style="font-size: 42px; font-weight: bold;">DEFEATED</div>
+            <div style="font-size: 16px; margin-top: 10px;">Resetting to beginning of stage...</div>
+        </div>
+
+        <div id="control-bar">
+            <div style="color: #aaa;">Spacebar or Click Canvas to Slash!</div>
+            <button id="toggle-auto" class="btn-toggle active" onclick="toggleAuto()">Auto: ON</button>
+        </div>
+
+        <div class="stats-hud">
+            <div>Stage: <span id="hud-stage" style="color:#3498db;">1-1</span></div>
+            <div>Prog: <span id="hud-progress" style="color:#f1c40f;">0/10</span></div>
+            <div>Buff: <span id="hud-buff" style="color:#aaa;">None</span></div>
+            <div>HP: <span id="hud-hp" style="color:#e74c3c;">100/100</span></div>
+            <div>💰: <span id="hud-coins" style="color:#f1c40f;">0</span></div>
+        </div>
+        
+        <canvas id="gameCanvas" width="750" height="250"></canvas>
+        
+        <div id="menu-panel">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('gear')">Equipment</button>
+                <button class="tab-btn" onclick="switchTab('stats')">Stats</button>
+                <button class="tab-btn" onclick="switchTab('inv')">Sacks</button>
+                <button class="tab-btn" onclick="switchTab('forge')">Forge</button>
+                <button class="tab-btn" onclick="switchTab('market')">Market</button>
+                <button class="tab-btn" onclick="switchTab('feed')">Logs</button>
+            </div>
+
+            <div id="tab-gear" class="tab-content active">
+                <div style="display:flex; flex-direction:column; align-items:center;">
+                    <button id="btn-rechallenge" class="btn-pulse" style="color:white; width:100%; max-width:300px; padding:8px; margin-bottom:12px; border-radius:4px; font-weight:bold; cursor:pointer; display:none;" onclick="rechallengeBoss()">⚔️ RECHALLENGE STAGE</button>
+                    <div class="paper-doll">
+                        <div id="slot-weapon" class="slots-card" onmousemove="showSlotTooltip(event, 'weapon')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'weapon')"><i>[Empty Weapon]</i></div>
+                        <div id="slot-subweapon" class="slots-card" onmousemove="showSlotTooltip(event, 'subweapon')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'subweapon')"><i>[Empty Sub-weapon]</i></div>
+                        <div id="slot-helmet" class="slots-card" onmousemove="showSlotTooltip(event, 'helmet')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'helmet')"><i>[Empty Helmet]</i></div>
+                        <div id="slot-chest" class="slots-card" onmousemove="showSlotTooltip(event, 'chest')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'chest')"><i>[Empty Chest Armor]</i></div>
+                        <div id="slot-leggings" class="slots-card" onmousemove="showSlotTooltip(event, 'leggings')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'leggings')"><i>[Empty Leggings]</i></div>
+                        <div id="slot-overall" class="slots-card" onmousemove="showSlotTooltip(event, 'overall')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'overall')"><i>[Empty Overall Suit]</i></div>
+                        <div id="slot-boots" class="slots-card" onmousemove="showSlotTooltip(event, 'boots')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'boots')"><i>[Empty Boots]</i></div>
+                        <div id="slot-art1" class="slots-card artifact-slot" onmousemove="showSlotTooltip(event, 'art1')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'art1')"><i>[Artifact Slot 1]</i></div>
+                        <div id="slot-art2" class="slots-card artifact-slot" onmousemove="showSlotTooltip(event, 'art2')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'art2')"><i>[Artifact Slot 2]</i></div>
+                        <div id="slot-art3" class="slots-card artifact-slot" onmousemove="showSlotTooltip(event, 'art3')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'art3')"><i>[Artifact Slot 3]</i></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-stats" class="tab-content">
+                <div class="grid-layout">
+                    <div style="font-size: 11px; background: #111; padding: 8px; border-radius: 4px; line-height: 1.5;">
+                        <h4 style="margin: 0 0 5px 0; color:#e67e22; font-size:12px;">Attributes Matrix</h4>
+                        <div>⚔️ Attack: <span id="stat-atk" style="font-weight:bold;">10</span></div>
+                        <div>❤️ Max HP: <span id="stat-mhp" style="font-weight:bold;">100</span></div>
+                        <div>🛡️ Defense: <span id="stat-def" style="font-weight:bold;">0</span></div>
+                        <div>👟 Move Speed: <span id="stat-mov" style="font-weight:bold;">10</span></div>
+                        <div style="margin: 4px 0; border-bottom: 1px dashed #333;"></div>
+                        <div>⏱️ Idle Atk Spd: <span id="stat-ias" class="stat-hover" style="font-weight:bold; color: #3498db;" onmousemove="showStatHoverTooltip(event, 'ias')" onmouseleave="hideTooltip()">60f</span></div>
+                        <div>⚡ Active Atk Spd: <span id="stat-aas" class="stat-hover" style="font-weight:bold; color: #e74c3c;" onmousemove="showStatHoverTooltip(event, 'aas')" onmouseleave="hideTooltip()">15f</span></div>
+                        <div>🔄 Idle DPS: <span id="stat-idps" style="font-weight:bold; color: #9b59b6;">0.0</span></div>
+                        <div style="margin: 4px 0; border-bottom: 1px dashed #333;"></div>
+                        <div>✨ Crit Chance: <span id="stat-crt" style="font-weight:bold; color: #e67e22;">5%</span></div>
+                        <div>💥 Crit Multi: <span id="stat-crd" style="font-weight:bold; color: #f1c40f;">150%</span></div>
+                        <div>🛡️ Block Rate: <span id="stat-blk" style="font-weight:bold; color: #3498db;">0%</span></div>
+                        <div>⚡ Parry Rate: <span id="stat-pry" style="font-weight:bold; color: #e74c3c;">0%</span></div>
+                        <div style="margin: 4px 0; border-bottom: 1px dashed #333;"></div>
+                        <div>🍀 Drop Rate: <span id="stat-drp" class="stat-hover" style="font-weight:bold; color: #2ecc71;" onmousemove="showStatHoverTooltip(event, 'drp')" onmouseleave="hideTooltip()">+0%</span></div>
+                        <div>💎 Drop Quality: <span id="stat-qly" class="stat-hover" style="font-weight:bold; color: #9b59b6;" onmousemove="showStatHoverTooltip(event, 'qly')" onmouseleave="hideTooltip()">+0%</span></div>
+                        <div>🟡 Gold Multi: <span id="stat-gld" style="font-weight:bold; color: #f1c40f;">x1.0</span></div>
+                    </div>
+                    <div style="font-size: 11px; background: #151515; padding: 12px; border: 1px solid #444; border-radius: 4px;">
+                        <h3 style="margin-top:0; color:#3498db; font-size:14px; border-bottom:1px solid #333; padding-bottom:4px;">Live Drop Analytics</h3>
+                        <p style="color:#aaa; font-style:italic; margin-bottom:8px;">Your Drop Rate and Drop Quality stats dynamically alter these tables.</p>
+                        
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                            <div style="width:48%;">
+                                <div style="color:#2ecc71; font-weight:bold; margin-bottom:4px;">Route Drop Chances</div>
+                                <div>Standard Mob: <span id="live-rate-mob" style="color:#fff;">4.5%</span></div>
+                                <div>Stage Boss: <span id="live-rate-boss" style="color:#fff;">25.0%</span></div>
+                                <div style="margin-top:6px; color:#1abc9c; font-weight:bold;">Artifact Drop Rates</div>
+                                <div>Stage Boss: <span style="color:#fff;">5.0%</span></div>
+                                <div>Uber Boss: <span style="color:#fff;">30.0%</span></div>
+                            </div>
+                            <div style="width:48%;">
+                                <div style="color:#3498db; font-weight:bold; margin-bottom:4px;">Live Rarity Distribution</div>
+                                <div style="color:#ffffff;">• 0★ Common: <span id="live-0">80.00%</span></div>
+                                <div style="color:#3498db;">• 1★ Rare: <span id="live-1">15.00%</span></div>
+                                <div style="color:#9b59b6;">• 2★ Magic: <span id="live-2">4.00%</span></div>
+                                <div style="color:#e67e22;">• 3★ Epic: <span id="live-3">0.80%</span></div>
+                                <div style="color:#f1c40f;">• 4★ Legendary: <span id="live-4">0.18%</span></div>
+                                <div style="color:#e74c3c;">• 5★ Mythic: <span id="live-5">0.02%</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-inv" class="tab-content">
+                <div class="sub-tabs">
+                    <button id="sub-tab-eq" class="sub-tab-btn active" onclick="switchSubTab('EQUIP')">Equipment</button>
+                    <button id="sub-tab-etc" class="sub-tab-btn" onclick="switchSubTab('ETC')">ETC Items</button>
+                </div>
+                <div id="bag-equip" class="bag-container"></div>
+                <div id="bag-etc" class="bag-container" style="display:none;"></div>
+            </div>
+            
+            <div id="tab-forge" class="tab-content">
+                <div class="forge-grid">
+                    <div class="forge-panel" id="forge-details">
+                        <div style='color:#666;text-align:center;padding-top:80px;'>Select an item from your sack to temper.</div>
+                    </div>
+                    <div class="bag-container" id="forge-list"></div>
+                </div>
+            </div>
+
+            <div id="tab-market" class="tab-content">
+                <div class="market-grid">
+                    <div class="market-card" style="border-color: #f1c40f;" onmousemove="showGachaTooltip(event)" onmouseleave="hideTooltip()" ontouchstart="showGachaTooltip(event)">
+                        <h3 style="margin-top:0; color:#f1c40f; font-size:14px;">🎰 LUCK VENDING MACHINE</h3>
+                        <p style="font-size:11px; color:#aaa; min-height:36px;">Bypass route farming. Instantly roll a guaranteed random 1-5★ piece of standard gear.</p>
+                        <div style="font-weight:bold; color:#2ecc71; margin-bottom:10px; font-size:13px;">Cost: 1 Gacha Key</div>
+                        <button class="btn-action forge" style="background:#f1c40f; color:#111;" onclick="buyGachaCrate()">Dispense Gear</button>
+                    </div>
+                    <div class="market-card" style="border-color: #9b59b6;">
+                        <h3 style="margin-top:0; color:#9b59b6; font-size:14px;">🔮 ANCIENT ALTAR</h3>
+                        <p style="font-size:11px; color:#aaa; min-height:36px;">Sacrifice Ancient Cores to spawn an Enraged Rift Guardian. <span style="color:#1abc9c; font-weight:bold;">Unique Artifact rate boosted to 30%!</span></p>
+                        <div style="font-weight:bold; color:#9b59b6; margin-bottom:10px; font-size:13px;">Cost: 5 Ancient Cores</div>
+                        <button class="btn-action forge" style="background:#9b59b6;" onclick="summonUberBoss()">Open Reality Rift</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-feed" class="tab-content">
+                <div id="log-box"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+window.onload = function() {
+
+    // Global dictionaries & state
+    const etcDex = {
+        "Gacha Key": "Guaranteed drop from Rift Guardians. Used at the Vending Machine for a gear roll.",
+        "Ancient Core": "Extremely rare boss drop. Sacrifice 5 at the Ancient Altar to summon a Rift Guardian.",
+        "Mythic Scrap": "Used to temper items towards their maximum potential. Salvaged from Mythic gear.",
+        "Legendary Scrap": "Used for high-level tempering. Salvaged from Legendary gear.",
+        "Epic Scrap": "Used for mid-tier tempering. Salvaged from Epic gear.",
+        "Magic Scrap": "Used for basic tempering. Salvaged from Magic gear.",
+        "Rare Scrap": "Used for early tempering. Salvaged from Rare gear.",
+        "Iron Scrap": "Common tempering material. Drops occasionally from bandits.",
+        "Sticky Gel": "Vendor trash or minor craft material. Drops from slimes."
+    };
+
+    window.addEtcDrop = function(itemName, amount = 1) {
+        if (!inventory.ETC[itemName]) { inventory.ETC[itemName] = 0; }
+        inventory.ETC[itemName] += amount;
+        renderInventory();
+    };
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let playerStats = {
+        baseAtk: 10, baseMaxHp: 100, baseDef: 0, baseMoveSpeed: 10,
+        baseIdleSpeed: 60, baseActiveSpeed: 15,
+        baseDrop: 1.0, baseQuality: 1.0, baseGold: 1.0,
+        baseCritChance: 0.05, baseCritDamage: 1.50, baseBlock: 0.0, baseParry: 0.0,
+        currentHp: 100, coins: 0, stage: 1, killCount: 0, totalLifetimeKills: 0, targetsRequired: 10,
+        isBossMode: false, isFarmingLoop: false, isUberBoss: false, frenzyTimer: 0
+    };
+
+    let equippedSlots = {
+        weapon: null, subweapon: null, helmet: null, chest: null, leggings: null, overall: null, boots: null, art1: null, art2: null, art3: null
+    };
+
+    let inventory = { EQUIP: [], ETC: {} };
+    let logsHistory = [];
+    let frozenItemDb = {}; 
+    let idCounter = 0;
+    let forgeSelectedItem = null;
+
+    let hero = { x: 40, y: 155, w: 25, h: 35, attackTimer: 0, slashFrame: false };
+    let mob = null;
+    let effects = [];
+    let particles = []; 
+    let activeToasts = [];
+    let scenery = [];
+    
+    let groundScroll = 0;
+    let logicClock = 0;
+    let spacePressed = false;
+    let state = { autoAttack: true, efficiency: 0.5, currentSubTab: 'EQUIP' };
+    let isGamePaused = false;
+
+    // Save System
+    window.saveGame = function() {
+        let saveData = { playerStats, equippedSlots, inventory, idCounter, logsHistory, frozenItemDb };
+        localStorage.setItem('postknight_save_v2', JSON.stringify(saveData));
+    };
+
+    window.loadGame = function() {
+        let data = localStorage.getItem('postknight_save_v2');
+        if (data) {
+            try {
+                let parsed = JSON.parse(data);
+                playerStats = { ...playerStats, ...parsed.playerStats };
+                equippedSlots = parsed.equippedSlots || equippedSlots;
+                inventory = parsed.inventory || { EQUIP: [], ETC: {} };
+                idCounter = parsed.idCounter || idCounter;
+                logsHistory = parsed.logsHistory || logsHistory;
+                frozenItemDb = parsed.frozenItemDb || frozenItemDb;
+                
+                let box = document.getElementById('log-box');
+                box.innerHTML = logsHistory.join("<br><br>");
+                pushLog(`<span style='color:#3498db; font-weight:bold;'>[SYSTEM] Local save loaded successfully.</span>`);
+            } catch(e) { console.error("Save load failed", e); }
+        }
+    };
+
+    // Auto-save every 5 seconds
+    setInterval(window.saveGame, 5000);
+
+    // Init Scenery
+    for(let i=0; i<8; i++) {
+        scenery.push({ x: Math.random() * canvas.width, y: 150 - (Math.random() * 20), type: Math.random() > 0.5 ? 'tree' : 'bush', size: Math.random() * 0.5 + 0.5 });
+    }
+
+    window.toggleAuto = function() {
+        state.autoAttack = !state.autoAttack;
+        let btn = document.getElementById('toggle-auto');
+        btn.innerText = state.autoAttack ? "Auto: ON" : "Auto: OFF";
+        btn.className = state.autoAttack ? "btn-toggle active" : "btn-toggle";
+        state.efficiency = state.autoAttack ? 0.5 : 1.0;
+        updateUI();
+    };
+
+    window.triggerPlayerSlash = function() {
+        if (isGamePaused) return;
+        let p = resolvePlayerStats();
+        let cooldownCap = playerStats.frenzyTimer > 0 ? 4 : p.activeAttackSpeed;
+        if (hero.attackTimer > 0) return; 
+        hero.attackTimer = cooldownCap; 
+        executeHitCalculations();
+    };
+
+    window.addEventListener('keydown', function(e) { 
+        if (e.code === 'Space' && !spacePressed) { 
+            e.preventDefault(); 
+            spacePressed = true;
+            window.triggerPlayerSlash(); 
+        } 
+    });
+    window.addEventListener('keyup', function(e) {
+        if (e.code === 'Space') { spacePressed = false; }
+    });
+    canvas.addEventListener('mousedown', function(e) { e.preventDefault(); window.triggerPlayerSlash(); });
+
+    function checkArtifactTrait(traitName) {
+        return (equippedSlots.art1 && equippedSlots.art1.trait === traitName) ||
+               (equippedSlots.art2 && equippedSlots.art2.trait === traitName) ||
+               (equippedSlots.art3 && equippedSlots.art3.trait === traitName);
+    }
+
+    function resolvePlayerStats() {
+        let p = { 
+            atk: playerStats.baseAtk, maxHp: playerStats.baseMaxHp, def: playerStats.baseDef, moveSpeed: playerStats.baseMoveSpeed,
+            idleAttackSpeed: playerStats.baseIdleSpeed, activeAttackSpeed: playerStats.baseActiveSpeed,
+            drop: playerStats.baseDrop, qly: playerStats.baseQuality, gold: playerStats.baseGold,
+            critChance: playerStats.baseCritChance, critDamage: playerStats.baseCritDamage,
+            block: playerStats.baseBlock, parry: playerStats.baseParry
+        };
+        for (let key in equippedSlots) {
+            let item = equippedSlots[key];
+            if (item) {
+                p.atk += (item.atk || 0); p.maxHp += (item.maxHp || 0); p.def += (item.def || 0); p.moveSpeed += (item.moveSpeed || 0);
+                p.idleAttackSpeed += (item.idleAttackSpeed || 0); p.activeAttackSpeed += (item.activeAttackSpeed || 0);
+                p.drop += (item.dropRate || 0); p.qly += (item.quality || 0); p.gold += (item.goldMulti || 0);
+                p.critChance += (item.critChance || 0); p.critDamage += (item.critDamage || 0);
+                p.block += (item.block || 0); p.parry += (item.parry || 0);
+            }
+        }
+        if (p.idleAttackSpeed < 10) p.idleAttackSpeed = 10;
+        if (p.activeAttackSpeed < 4) p.activeAttackSpeed = 4;
+        
+        if (playerStats.frenzyTimer > 0) { p.critChance = 1.00; p.critDamage += 0.50; p.activeAttackSpeed = 4; p.idleAttackSpeed = 10; }
+        return p;
+    }
+
+    function pushLog(text, itemId = null) {
+        if (itemId !== null) {
+            let item = inventory.EQUIP.find(i => i.id === itemId);
+            if (item) {
+                frozenItemDb[itemId] = JSON.parse(JSON.stringify(item));
+                text = text.replace(item.name, `<span class="log-item-link" onmousemove="showLogTooltip(event, ${itemId})" onmouseleave="hideTooltip()">${item.name}</span>`);
+            }
+        }
+        logsHistory.unshift(text);
+        if (logsHistory.length > 50) logsHistory.pop();
+        let box = document.getElementById('log-box');
+        box.innerHTML = logsHistory.join("<br><br>");
+    }
+
+    function pushToast(name, stars, color, isEtc = false, quantity = 1) {
+        let label = isEtc ? `📦 +${quantity} Loot` : (stars === "UNIQUE" ? "⭐ UNIQUE DETECTED!" : `⚔️ ITEM FOUND (${stars}★)`);
+        let baseOffset = 30;
+        let activeCounts = activeToasts.length;
+        let yStart = baseOffset + (activeCounts * 32);
+        
+        activeToasts.push({ 
+            name: name, stars: stars, color: color, label: label, 
+            yOffset: yStart, targetY: yStart, alpha: 1, life: 150 
+        });
+    }
+    
+    function pushHeaderToast(text, color) {
+        activeToasts.push({ 
+            name: "", stars: null, color: color, label: text, 
+            yOffset: 30 + (activeToasts.length * 32), alpha: 1, life: 100, isHeader: true 
+        });
+    }
+
+    function processEnemySpawn() {
+        let scale = 1 + (playerStats.stage * 0.15);
+        if (playerStats.isBossMode) {
+            let label = playerStats.isUberBoss ? "ENRAGED RIFT GUARDIAN" : "STAGE BOSS";
+            // Bosses now deal ~5.5x damage because they hit 5.5x slower (120 frames vs 22 frames)
+            let baseBossHp = 55 * scale * (playerStats.isUberBoss ? 1.5 : 1);
+            mob = { x: 750, y: 130, w: 35, h: 60, type: "boss", hp: Math.floor(baseBossHp), maxHp: Math.floor(baseBossHp), damage: Math.floor((4 + (5 * scale)) * 5.5), flashTimer: 0, isStopped: false };
+            pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[${label}]</span> blocked your transit route!`);
+        } else {
+            let isBandit = Math.random() > 0.6;
+            mob = { x: 750, y: isBandit ? 145 : 160, w: isBandit ? 20 : 30, h: isBandit ? 45 : 25, type: isBandit ? "bandit" : "slime", hp: Math.floor(16 * scale), maxHp: Math.floor(16 * scale), damage: Math.floor((1 + (2 * scale)) * 5.5), flashTimer: 0, isStopped: false };
+        }
+    }
+
+    function spawnDeathParticles(x, y, type) {
+        let colors = []; let count = 15;
+        if (type === "slime") colors = ["#2ecc71", "#145a32", "#1e8449"];
+        else if (type === "bandit") colors = ["#c0392b", "#922b21", "#e67e22", "#d35400"];
+        else if (type === "boss") { colors = playerStats.isUberBoss ? ["#9b59b6", "#1abc9c", "#e74c3c", "#f1c40f"] : ["#5c4033", "#27ae60", "#8e44ad", "#c0392b"]; count = 35; }
+        colors.push("#f1c40f", "#f39c12");
+        for (let i = 0; i < count; i++) {
+            particles.push({ x: x + (Math.random() * 15), y: y + (Math.random() * 20), vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.7) * 7, radius: Math.random() * 3 + 1.5, color: colors[Math.floor(Math.random() * colors.length)], alpha: 1, life: Math.random() * 25 + 15 });
+        }
+    }
+
+    function getTierColor(stars) {
+        if (stars === "UNIQUE") return "#1abc9c"; 
+        if (stars === 5) return "#e74c3c"; 
+        if (stars === 4) return "#f1c40f"; 
+        if (stars === 3) return "#e67e22"; 
+        if (stars === 2) return "#9b59b6"; 
+        if (stars === 1) return "#3498db"; 
+        return "#ffffff"; 
+    }
+
+    function getTierName(stars) {
+        if (stars === "UNIQUE") return "Unique Artifact";
+        if (stars === 5) return "Mythic";
+        if (stars === 4) return "Legendary";
+        if (stars === 3) return "Epic";
+        if (stars === 2) return "Magic";
+        if (stars === 1) return "Rare";
+        return "Common";
+    }
+
+    function getScrapYieldName(stars) {
+        if (stars === "UNIQUE") return "Ancient Core";
+        if (stars === 5) return "Mythic Scrap";
+        if (stars === 4) return "Legendary Scrap";
+        if (stars === 3) return "Epic Scrap";
+        if (stars === 2) return "Magic Scrap";
+        if (stars === 1) return "Rare Scrap";
+        return "Iron Scrap";
+    }
+
+    function getMaxTemper(stars) {
+        if (stars === "UNIQUE") return 0; 
+        if (stars === 5) return 15;
+        if (stars === 4) return 12;
+        if (stars === 3) return 9;
+        if (stars === 2) return 7;
+        if (stars === 1) return 5;
+        return 3;
+    }
+
+    function getRequiredScrapForTemper(targetLevel) {
+        if (targetLevel <= 3) return "Iron Scrap";
+        if (targetLevel <= 5) return "Rare Scrap";
+        if (targetLevel <= 7) return "Magic Scrap";
+        if (targetLevel <= 9) return "Epic Scrap";
+        if (targetLevel <= 12) return "Legendary Scrap";
+        return "Mythic Scrap";
+    }
+
+    function getTemperGoldCost(item) {
+        return Math.floor(100 * Math.pow(1.4, item.temperLevel) * (item.statsRolled === "UNIQUE" ? 1 : (item.statsRolled + 1)));
+    }
+
+    window.salvageItem = function(id) {
+        window.hideTooltip();
+        let index = inventory.EQUIP.findIndex(i => i.id === id);
+        if (index === -1) return;
+        
+        let item = inventory.EQUIP[index];
+        inventory.EQUIP.splice(index, 1);
+        
+        let rolledTier = item.statsRolled;
+        
+        let scrapsGained = [];
+        let yieldAmount = Math.floor(Math.random() * 3) + 1;
+        let scrapName = getScrapYieldName(rolledTier);
+        addEtcDrop(scrapName, yieldAmount);
+        scrapsGained.push(`x${yieldAmount} ${scrapName}`);
+
+        for (let t = rolledTier - 1; t >= 0; t--) {
+            if (Math.random() < 0.60) {
+                let lowerYield = Math.floor(Math.random() * 2) + 1;
+                let lowerName = getScrapYieldName(t);
+                addEtcDrop(lowerName, lowerYield);
+                scrapsGained.push(`x${lowerYield} ${lowerName}`);
+            }
+        }
+        
+        pushLog(`<span style='color:#e74c3c;'>[SALVAGE]</span> Dismantled ${item.name} yielding: ${scrapsGained.join(", ")}`);
+        if (forgeSelectedItem && forgeSelectedItem.id === id) { forgeSelectedItem = null; renderForgeTab(); }
+        renderInventory();
+        window.saveGame();
+    };
+
+    window.buyGachaCrate = function() {
+        if (!inventory.ETC["Gacha Key"] || inventory.ETC["Gacha Key"] < 1) { 
+            pushHeaderToast("Requires 1 Gacha Key!", "#e74c3c");
+            return; 
+        }
+        inventory.ETC["Gacha Key"] -= 1;
+        if (inventory.ETC["Gacha Key"] === 0) delete inventory.ETC["Gacha Key"];
+        rollGachaDrop(); 
+        updateUI();
+        renderInventory();
+        window.saveGame();
+    };
+
+    window.summonUberBoss = function() {
+        if (playerStats.isUberBoss || playerStats.isBossMode) {
+            pushHeaderToast("Already in Boss Combat!", "#e74c3c");
+            return;
+        }
+        if (!inventory.ETC["Ancient Core"] || inventory.ETC["Ancient Core"] < 5) {
+            pushHeaderToast("Requires 5 Ancient Cores!", "#e74c3c");
+            return;
+        }
+        
+        if (!confirm("Sacrifice 5 Ancient Cores to summon the Enraged Rift Guardian?")) return;
+
+        inventory.ETC["Ancient Core"] -= 5;
+        if (inventory.ETC["Ancient Core"] === 0) delete inventory.ETC["Ancient Core"];
+        
+        playerStats.isBossMode = true;
+        playerStats.isFarmingLoop = false;
+        playerStats.isUberBoss = true; 
+        mob = null; 
+        
+        let p = resolvePlayerStats();
+        playerStats.currentHp = p.maxHp; 
+        
+        pushLog("<span style='color:#9b59b6; font-weight:bold;'>[ALTAR] A reality rift tears open! An Enraged Rift Guardian approaches!</span>");
+        updateUI();
+        renderInventory();
+        window.saveGame();
+    };
+
+    function generateEquipment(chosenType, statLinesCount, stageScale, sourceName) {
+        let item = { 
+            id: idCounter++, name: "", type: chosenType, statsRolled: statLinesCount, temperLevel: 0,
+            atk: 0, maxHp: 0, def: 0, moveSpeed: 0, critChance: 0, critDamage: 0, block: 0, parry: 0, dropRate: 0, quality: 0, goldMulti: 0,
+            activeAttackSpeed: 0, idleAttackSpeed: 0,
+            baseAtk: 0, baseMaxHp: 0, baseDef: 0, baseMoveSpeed: 0,
+            bonusAtk: 0, bonusMaxHp: 0, bonusDef: 0, bonusMoveSpeed: 0, bonusCritChance: 0, bonusCritDamage: 0, bonusBlock: 0, bonusParry: 0,
+            bonusActiveSpeed: 0, bonusIdleSpeed: 0,
+            trait: null, desc: "", breakdown: "" 
+        };
+
+        if (chosenType === "artifact") {
+            let artifactsPool = [
+                { name: "Berserker Stone", trait: "frenzy", desc: "Grants Frenzy Mode for 10s every 10 kills", breakdown: "<strong>Frenzy Buff Breakdown:</strong><br>• Attack Speed: Max Haste (4-frame cap)<br>• Crit Chance: <span style='color:#e67e22;'>100% Guaranteed</span><br>• Crit Damage: <span style='color:#f1c40f;'>+50% Extra Multiplier</span>", dropRate: 0, quality: 0, goldMulti: 0 },
+                { name: "Blood-Soaked Chalice", trait: "vampirism", desc: "Heals 10% of damage dealt on every hit", breakdown: "<strong>Vampirism Breakdown:</strong><br>• Life Steal: <span style='color:#e74c3c;'>10% of total slash damage</span> directly heals your HP pool.", dropRate: 0, quality: 0, goldMulti: 0 },
+                { name: "Philosopher's Anchor", trait: "gold_hoard", desc: "Permanent x1.50 Gold Multiplier bonus", breakdown: "<strong>Hoard Breakdown:</strong><br>• Multiplies all direct gold drops from mobs and bosses by flat <span style='color:#f1c40f;'>+50%</span>.", dropRate: 0, quality: 0, goldMulti: 0.50 },
+                { name: "Gilded Scarab", trait: "magic_find", desc: "+50% Drop Rate and +30% Drop Quality", breakdown: "<strong>Scarab Hunting Breakdown:</strong><br>• Drop Rate: <span style='color:#2ecc71;'>+50% Item Frequency</span><br>• Drop Quality: <span style='color:#9b59b6;'>+30% Higher Stat Line Probability</span>", dropRate: 0.50, quality: 0.30, goldMulti: 0 },
+                { name: "Chrono Hourglass", trait: "extend_frenzy", desc: "Extends active Frenzy window durations by 5s", breakdown: "<strong>Chronology Breakdown:</strong><br>• Forces the Berserker Stone duration tracker to expand from 10 seconds up to <span style='color:#e67e22;'>15 seconds total</span>.", dropRate: 0, quality: 0, goldMulti: 0 }
+            ];
+            let chosenArt = artifactsPool[Math.floor(Math.random() * artifactsPool.length)];
+            item.name = `⭐ UNIQUE ${chosenArt.name}`; item.trait = chosenArt.trait; item.desc = chosenArt.desc; item.breakdown = chosenArt.breakdown;
+            item.dropRate = chosenArt.dropRate; item.quality = chosenArt.quality; item.goldMulti = chosenArt.goldMulti; item.statsRolled = "UNIQUE";
+            pushLog(`<strong style='color:#1abc9c;'>⭐ UNIQUE ARTIFACT DROPPED!</strong> Extracted: <span style='color:#1abc9c;'>${item.name}</span>!`, item.id);
+        } else {
+            if (chosenType === "overall") { item.baseMaxHp = Math.ceil(40 * stageScale); }
+            else if (chosenType === "chest" || chosenType === "leggings" || chosenType === "helmet") { 
+                if (Math.random() > 0.5) item.baseMaxHp = Math.ceil(15 * stageScale); 
+                else item.baseDef = Math.ceil(2 * stageScale); 
+            }
+            else if (chosenType === "weapon" || chosenType === "subweapon") { item.baseAtk = Math.ceil(3 * stageScale); }
+            else if (chosenType === "boots") { item.baseMoveSpeed = Math.ceil(2 * stageScale); }
+
+            let pool = ["critChance", "critDamage", "block", "parry", "atk", "maxHp", "def", "moveSpeed", "activeSpd", "idleSpd"];
+            pool.sort(() => Math.random() - 0.5);
+
+            for (let i = 0; i < statLinesCount; i++) {
+                let selectedStat = pool[i % pool.length];
+                if (selectedStat === "atk") item.bonusAtk += Math.ceil(1 * stageScale); 
+                if (selectedStat === "maxHp") item.bonusMaxHp += Math.ceil(5 * stageScale); 
+                if (selectedStat === "def") item.bonusDef += Math.ceil(1 * stageScale);
+                if (selectedStat === "moveSpeed") item.bonusMoveSpeed += Math.ceil(1 * stageScale);
+                if (selectedStat === "critChance") item.bonusCritChance += parseFloat((0.02 * stageScale).toFixed(2)); 
+                if (selectedStat === "critDamage") item.bonusCritDamage += parseFloat((0.05 * stageScale).toFixed(2));
+                if (selectedStat === "block") item.bonusBlock += parseFloat((0.01 * stageScale).toFixed(2)); 
+                if (selectedStat === "parry") item.bonusParry += parseFloat((0.01 * stageScale).toFixed(2));
+                if (selectedStat === "activeSpd") item.bonusActiveSpeed -= 1; 
+                if (selectedStat === "idleSpd") item.bonusIdleSpeed -= 3;
+            }
+
+            item.atk = item.baseAtk + item.bonusAtk; item.maxHp = item.baseMaxHp + item.bonusMaxHp; 
+            item.def = item.baseDef + item.bonusDef; item.moveSpeed = item.baseMoveSpeed + item.bonusMoveSpeed;
+            item.critChance = item.bonusCritChance; item.critDamage = item.bonusCritDamage; 
+            item.block = item.bonusBlock; item.parry = item.bonusParry;
+            item.activeAttackSpeed = item.bonusActiveSpeed; item.idleAttackSpeed = item.bonusIdleSpeed;
+
+            let prefix = getTierName(item.statsRolled);
+            item.name = `${prefix} ${chosenType.toUpperCase()} (+${stageScale})`;
+            
+            if (sourceName === "Gacha") {
+                pushLog(`<strong style='color:#f1c40f;'>[GACHA]</strong> Dispensed: <span style='color:${getTierColor(item.statsRolled)};'>${item.name}</span>`, item.id);
+            } else {
+                pushLog(`<strong style='color:#ff9f43;'>BOSS KILLED!</strong> Found: <span style='color:${getTierColor(item.statsRolled)};'>${item.name}</span>`, item.id);
+            }
+        }
+
+        pushToast(item.name, item.statsRolled, getTierColor(item.statsRolled));
+        inventory.EQUIP.push(item);
+        renderInventory();
+        renderForgeTab();
+    }
+
+    function rollEquipmentDrop(isBossKill) {
+        let p = resolvePlayerStats();
+        let artifactChance = playerStats.isUberBoss ? 0.30 : 0.05;
+        let allowArtifact = isBossKill && (Math.random() < artifactChance); 
+        
+        let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+        let chosenType = allowArtifact ? "artifact" : types[Math.floor(Math.random() * types.length)];
+
+        let statLinesCount = 0;
+        let luckMultiplier = p.qly; 
+        let roll = Math.random() * 100;
+        
+        if (roll < (0.02 * luckMultiplier)) statLinesCount = 5; 
+        else if (roll < (0.18 * luckMultiplier)) statLinesCount = 4;
+        else if (roll < (0.80 * luckMultiplier)) statLinesCount = 3; 
+        else if (roll < (4.00 * luckMultiplier)) statLinesCount = 2; 
+        else if (roll < (15.00 * luckMultiplier)) statLinesCount = 1; 
+        else statLinesCount = 0;
+
+        let stageScale = Math.floor((playerStats.stage - 1) / 10) + 1; 
+        generateEquipment(chosenType, statLinesCount, stageScale, isBossKill ? "Boss" : "Route");
+    }
+
+    function rollGachaDrop() {
+        let p = resolvePlayerStats();
+        let allowArtifact = (Math.random() < 0.01); 
+        let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+        let chosenType = allowArtifact ? "artifact" : types[Math.floor(Math.random() * types.length)];
+
+        let statLinesCount = 1;
+        let luckMultiplier = p.qly; 
+        let roll = Math.random() * 100;
+        
+        if (roll < (0.5 * luckMultiplier)) statLinesCount = 5; 
+        else if (roll < (2.0 * luckMultiplier)) statLinesCount = 4;
+        else if (roll < (10.0 * luckMultiplier)) statLinesCount = 3; 
+        else if (roll < (30.0 * luckMultiplier)) statLinesCount = 2; 
+        else statLinesCount = 1; 
+
+        let stageScale = Math.floor((playerStats.stage - 1) / 10) + 1;
+        generateEquipment(chosenType, statLinesCount, stageScale, "Gacha");
+    }
+
+    function generateItemCardHtml(item, compareEq = null, isCurrentlyEquipped = false) {
+        if (!item) return ""; let html = "";
+        let badge = isCurrentlyEquipped ? `<div style="background:#c0392b; color:white; text-align:center; font-weight:bold; padding:3px; margin-bottom:8px; border-radius:3px; font-size:10px; letter-spacing: 1px;">CURRENTLY EQUIPPED</div>` : ``;
+        html += badge;
+
+        let tierColor = getTierColor(item.statsRolled);
+        let titleColor = item.type === "artifact" ? "#1abc9c" : tierColor;
+        let tierName = getTierName(item.statsRolled);
+        let tierDisplay = item.statsRolled === "UNIQUE" ? "UNIQUE" : `${item.statsRolled}★ ${tierName}`;
+        let subtitle = item.type === "artifact" ? "Unique Boss Trophy Slot" : `${item.type.toUpperCase()} | <span style="color:${tierColor}; font-weight:bold;">${tierDisplay}</span>`;
+        let temperTag = item.temperLevel > 0 ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>` : "";
+
+        html += `<div class="tt-title" style="color:${titleColor};">${item.name}${temperTag}</div>`;
+        html += `<div class="tt-subtitle">${subtitle}</div>`;
+
+        if (item.type === "artifact") {
+            html += `<div class="tt-stat-line" style="color:#d2b4de; margin-bottom: 6px;">• Effect: ${item.desc}</div>`;
+            html += `<div class="tt-trait">${item.breakdown}</div>`;
+        } else {
+            html += `<div style="font-weight:bold; color:#aaa; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Current Parameters:</div>`;
+            
+            if (item.atk > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• ⚔️ Attack: ${item.atk}</div>`;
+            if (item.maxHp > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• ❤️ Max HP: ${item.maxHp}</div>`;
+            if (item.def > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 🛡️ Defense: ${item.def}</div>`;
+            if (item.moveSpeed > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 👟 Move Speed: ${item.moveSpeed}</div>`;
+            
+            if (item.critChance > 0) html += `<div class="tt-stat-line" style="color:#e67e22;">• ✨ Crit Chance: +${Math.floor(item.critChance*100)}%</div>`;
+            if (item.critDamage > 0) html += `<div class="tt-stat-line" style="color:#f1c40f;">• 💥 Crit Multi: +${Math.floor(item.critDamage*100)}%</div>`;
+            if (item.block > 0) html += `<div class="tt-stat-line" style="color:#3498db;">• 🛡️ Block Rate: +${Math.floor(item.block*100)}%</div>`;
+            if (item.parry > 0) html += `<div class="tt-stat-line" style="color:#e74c3c;">• ⚡ Parry Rate: +${Math.floor(item.parry*100)}%</div>`;
+            if (item.activeAttackSpeed < 0) html += `<div class="tt-stat-line" style="color:#2ecc71;">• ⚡ Active Atk Spd: ${item.activeAttackSpeed}f</div>`;
+            if (item.idleAttackSpeed < 0) html += `<div class="tt-stat-line" style="color:#1abc9c;">• ⏱️ Idle Atk Spd: ${item.idleAttackSpeed}f</div>`;
+            
+            if (item.statsRolled === 0 && item.temperLevel === 0) { html += `<div class="tt-stat-line" style="color:#7f8c8d; font-style:italic; margin-top:4px;">No bonus modifiers applied.</div>`; }
+        }
+
+        if (compareEq && !isCurrentlyEquipped) {
+            html += `<div style="font-weight:bold; color:#3498db; margin-top:8px; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Net Change vs. Equipped:</div>`;
+            let statsList = [
+                {key: "atk", icon: "⚔️", label: "Attack"}, {key: "maxHp", icon: "❤️", label: "Max HP"},
+                {key: "def", icon: "🛡️", label: "Defense"}, {key: "moveSpeed", icon: "👟", label: "Move Spd"},
+                {key: "critChance", isPct: true, icon: "✨", label: "Crit Rate"}, {key: "critDamage", isPct: true, icon: "💥", label: "Crit Dmg"}, 
+                {key: "block", isPct: true, icon: "🛡️", label: "Block"}, {key: "parry", isPct: true, icon: "⚡", label: "Parry"},
+                {key: "activeAttackSpeed", icon: "⚡", label: "Active Spd", inverseGood: true}, {key: "idleAttackSpeed", icon: "⏱️", label: "Idle Spd", inverseGood: true}
+            ];
+            let hasDiffs = false;
+            statsList.forEach(s => {
+                let val = item[s.key] || 0; let eqVal = compareEq[s.key] || 0; let diff = val - eqVal;
+                if (Math.abs(diff) > 0.001) {
+                    hasDiffs = true; 
+                    let isPositive = s.inverseGood ? diff < 0 : diff > 0;
+                    let color = isPositive ? "#2ecc71" : "#e74c3c"; let sign = diff > 0 ? "+" : "";
+                    let diffStr = s.isPct ? sign + Math.round(diff*100) + "%" : sign + Math.round(diff);
+                    html += `<div class="tt-stat-line" style="color:${color}; font-weight:bold;">• ${s.icon} Total ${s.label}: ${diffStr}</div>`;
+                }
+            });
+            if (!hasDiffs) html += `<div class="tt-stat-line" style="color:#7f8c8d; font-style:italic;">No net difference.</div>`;
+        }
+        return html;
+    }
+
+    function buildGeneralTooltipHtml(item, isBagItem = false) {
+        let eq = isBagItem ? getEquippedItemForComparison(item.type) : null;
+        let html = "";
+        if (eq) {
+            html += `<div style="padding: 10px; width: 250px; box-sizing: border-box; border-right: 1px solid #333;">${generateItemCardHtml(eq, null, true)}</div>`;
+            html += `<div style="padding: 10px; width: 250px; box-sizing: border-box;">${generateItemCardHtml(item, eq, false)}</div>`;
+        } else {
+            html += `<div style="padding: 10px; width: 250px; box-sizing: border-box;">${generateItemCardHtml(item, null, false)}</div>`;
+        }
+        return `<div style="display:flex;">${html}</div>`;
+    }
+
+    function getEquippedItemForComparison(type) {
+        if (type === "overall") return equippedSlots.overall || equippedSlots.chest || equippedSlots.leggings;
+        if (type === "chest" || type === "leggings") return equippedSlots[type] || equippedSlots.overall;
+        return equippedSlots[type]; 
+    }
+
+    window.showInventoryTooltip = function(e, itemId) {
+        let item = inventory.EQUIP.find(i => i.id === itemId); if (!item) return;
+        let tt = document.getElementById('game-tooltip'); tt.innerHTML = buildGeneralTooltipHtml(item, true); 
+        tt.style.borderColor = getTierColor(item.statsRolled); tt.style.display = "flex"; window.positionTooltip(e, tt);
+    };
+
+    window.showSlotTooltip = function(e, slotKey) {
+        let item = equippedSlots[slotKey]; if (!item) return;
+        let tt = document.getElementById('game-tooltip'); tt.innerHTML = buildGeneralTooltipHtml(item, false); 
+        tt.style.borderColor = getTierColor(item.statsRolled); tt.style.display = "flex"; window.positionTooltip(e, tt);
+    };
+
+    window.showLogTooltip = function(e, itemId) {
+        let item = frozenItemDb[itemId]; if (!item) return;
+        let tt = document.getElementById('log-item-tooltip'); 
+        tt.innerHTML = `<div style="padding: 10px; width: 250px; box-sizing: border-box;">${generateItemCardHtml(item, null, false)}</div>`;
+        tt.style.borderColor = getTierColor(item.statsRolled); tt.style.display = "flex"; window.positionTooltip(e, tt);
+    }
+    
+    window.showStatHoverTooltip = function(e, statType) {
+        let tt = document.getElementById('stat-tooltip');
+        let html = "";
+        let p = resolvePlayerStats();
+        
+        if (statType === 'ias') {
+            html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;">
+                <div class="tt-title" style="color:#3498db;">⏱️ Idle Attack Speed</div>
+                <div style="color:#aaa; font-size:11px;">The number of engine frames between your automatic attacks. (60 frames = 1 second).<br><br><b>Lower is faster!</b><br>Currently hitting automatically every ${(p.idleAttackSpeed/60).toFixed(2)} seconds.</div>
+            </div>`;
+            tt.style.borderColor = "#3498db";
+        } else if (statType === 'aas') {
+            html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;">
+                <div class="tt-title" style="color:#e74c3c;">⚡ Active Attack Speed</div>
+                <div style="color:#aaa; font-size:11px;">The cooldown limit in frames between your manual clicks or spacebar taps.<br><br><b>Lower is faster!</b><br>Currently capped at ${(60/p.activeAttackSpeed).toFixed(1)} attacks per second.</div>
+            </div>`;
+            tt.style.borderColor = "#e74c3c";
+        } else if (statType === 'drp') {
+            let eff = state.efficiency;
+            html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;">
+                <div class="tt-title" style="color:#2ecc71;">🍀 Drop Rate Modifier</div>
+                <div style="color:#aaa; font-size:11px;">Current Multiplier: x${(p.drop * eff).toFixed(2)} ${eff < 1 ? "(Auto-Farm Penalty Active)" : ""}<br><br>
+                <b>Exact Chances:</b><br>
+                • Mob Drop: ${(4.5 * p.drop * eff).toFixed(2)}%<br>
+                • Boss Drop: ${(25.0 * p.drop * eff).toFixed(2)}%</div>
+            </div>`;
+            tt.style.borderColor = "#2ecc71";
+        } else if (statType === 'qly') {
+            html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;">
+                <div class="tt-title" style="color:#9b59b6;">💎 Drop Quality Modifier</div>
+                <div style="color:#aaa; font-size:11px;">Current Multiplier: x${p.qly.toFixed(2)}<br><br>
+                Increases the probability that an item drop will roll with more bonus modifier lines (higher star rating).</div>
+            </div>`;
+            tt.style.borderColor = "#9b59b6";
+        }
+        
+        tt.innerHTML = html;
+        tt.style.display = "block"; 
+        window.positionTooltip(e, tt);
+    };
+
+    window.showEtcTooltip = function(e, keyName) {
+        let tt = document.getElementById('etc-tooltip');
+        let desc = etcDex[keyName] || "Unknown material.";
+        tt.innerHTML = `<div style="padding: 10px; width: 200px; box-sizing: border-box;">
+            <div class="tt-title" style="color:#bdc3c7;">📦 ${keyName}</div>
+            <div style="color:#aaa; font-size:11px;">${desc}</div>
+        </div>`;
+        tt.style.borderColor = "#bdc3c7"; tt.style.display = "block"; window.positionTooltip(e, tt);
+    };
+
+    window.showGachaTooltip = function(e) {
+        let p = resolvePlayerStats();
+        let qly = p.qly;
+        
+        let mythic = (0.5 * qly);
+        let leg = (2.0 * qly) - mythic;
+        let epic = (10.0 * qly) - (2.0 * qly);
+        let magic = (30.0 * qly) - (10.0 * qly);
+        let rare = 100 - (30.0 * qly);
+
+        let tt = document.getElementById('game-tooltip');
+        tt.innerHTML = `
+            <div style="padding: 10px; width: 250px; box-sizing: border-box;">
+                <div class="tt-title" style="color:#f1c40f;">🎰 Vending Machine Rates</div>
+                <div class="tt-subtitle">Gacha Rarity Distribution</div>
+                <div class="tt-stat-line" style="color:#3498db;">• 1★ Rare: ${Math.max(0, rare).toFixed(2)}%</div>
+                <div class="tt-stat-line" style="color:#9b59b6;">• 2★ Magic: ${Math.max(0, magic).toFixed(2)}%</div>
+                <div class="tt-stat-line" style="color:#e67e22;">• 3★ Epic: ${Math.max(0, epic).toFixed(2)}%</div>
+                <div class="tt-stat-line" style="color:#f1c40f;">• 4★ Legendary: ${Math.max(0, leg).toFixed(2)}%</div>
+                <div class="tt-stat-line" style="color:#e74c3c;">• 5★ Mythic: ${Math.max(0, mythic).toFixed(2)}%</div>
+                <div class="tt-stat-line" style="color:#1abc9c; margin-top:4px;">• Bonus: 1% flat chance for Unique Artifact!</div>
+                <div class="tt-subtitle" style="margin-top:6px; border-top:1px solid #333; padding-top:4px;">Guaranteed 1★ to 5★ gear. Influenced by Drop Quality.</div>
+            </div>
+        `;
+        tt.style.borderColor = "#f1c40f";
+        tt.style.display = "flex"; 
+        window.positionTooltip(e, tt);
+    };
+
+    window.positionTooltip = function(e, tt) {
+        let container = document.getElementById('game-container').getBoundingClientRect();
+        let clientX = e.clientX || (e.touches && e.touches[0].clientX); let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        let x = clientX - container.left + 15; let y = clientY - container.top + 15;
+        if (x + tt.offsetWidth > container.width) x = (clientX - container.left) - tt.offsetWidth - 15;
+        if (y + tt.offsetHeight > container.height) y = (clientY - container.top) - tt.offsetHeight - 15;
+        if (x < 5) x = 5; if (y < 5) y = 5;
+        tt.style.left = x + "px"; tt.style.top = y + "px";
+    };
+
+    window.hideTooltip = function() { 
+        document.getElementById('game-tooltip').style.display = "none"; 
+        document.getElementById('etc-tooltip').style.display = "none"; 
+        document.getElementById('log-item-tooltip').style.display = "none";
+        document.getElementById('stat-tooltip').style.display = "none";
+    };
+
+    window.equipItem = function(id) {
+        window.hideTooltip(); let index = inventory.EQUIP.findIndex(i => i.id === id); if (index === -1) return;
+        let item = inventory.EQUIP[index];
+        if (item.type === "overall") {
+            if (equippedSlots.chest) { inventory.EQUIP.push(equippedSlots.chest); equippedSlots.chest = null; }
+            if (equippedSlots.leggings) { inventory.EQUIP.push(equippedSlots.leggings); equippedSlots.leggings = null; }
+            if (equippedSlots.overall) { inventory.EQUIP.push(equippedSlots.overall); }
+            equippedSlots.overall = item;
+        } else if (item.type === "chest" || item.type === "leggings") {
+            if (equippedSlots.overall) { inventory.EQUIP.push(equippedSlots.overall); equippedSlots.overall = null; }
+            if (equippedSlots[item.type]) { inventory.EQUIP.push(equippedSlots[item.type]); }
+            equippedSlots[item.type] = item;
+        } else if (item.type === "artifact") {
+            if (!equippedSlots.art1) equippedSlots.art1 = item;
+            else if (!equippedSlots.art2) equippedSlots.art2 = item;
+            else { if (equippedSlots.art3) inventory.EQUIP.push(equippedSlots.art3); equippedSlots.art3 = item; }
+        } else {
+            if (equippedSlots[item.type]) inventory.EQUIP.push(equippedSlots[item.type]);
+            equippedSlots[item.type] = item;
+        }
+        inventory.EQUIP.splice(index, 1); let p = resolvePlayerStats(); playerStats.currentHp = p.maxHp; updateUI(); renderInventory(); renderForgeTab();
+        window.saveGame();
+    };
+
+    window.unequipItem = function(slotKey) {
+        window.hideTooltip(); let item = equippedSlots[slotKey]; if (!item) return;
+        equippedSlots[slotKey] = null; inventory.EQUIP.push(item); updateUI(); renderInventory(); renderForgeTab();
+        window.saveGame();
+    };
+
+    window.selectForgeItem = function(id) { forgeSelectedItem = inventory.EQUIP.find(i => i.id === id); renderForgeTab(); };
+
+    window.temperItem = function() {
+        if (!forgeSelectedItem) return;
+        let maxT = getMaxTemper(forgeSelectedItem.statsRolled); if (forgeSelectedItem.temperLevel >= maxT) return;
+        let costGold = getTemperGoldCost(forgeSelectedItem); let scrapReq = getRequiredScrapForTemper(forgeSelectedItem.temperLevel + 1);
+        
+        if (playerStats.coins < costGold) { pushLog(`<span style='color:#e74c3c;'>Not enough Gold to temper!</span>`); return; }
+        if (!inventory.ETC[scrapReq] || inventory.ETC[scrapReq] < 1) { pushLog(`<span style='color:#e74c3c;'>Not enough ${scrapReq} to temper!</span>`); return; }
+
+        playerStats.coins -= costGold; inventory.ETC[scrapReq]--;
+        if (inventory.ETC[scrapReq] === 0) delete inventory.ETC[scrapReq];
+
+        if (forgeSelectedItem.baseAtk > 0 || forgeSelectedItem.type === "weapon") forgeSelectedItem.atk += 2;
+        if (forgeSelectedItem.baseMaxHp > 0) forgeSelectedItem.maxHp += 10;
+        if (forgeSelectedItem.baseDef > 0) forgeSelectedItem.def += 1;
+        if (forgeSelectedItem.baseMoveSpeed > 0) forgeSelectedItem.moveSpeed += 1;
+
+        forgeSelectedItem.temperLevel++;
+        
+        pushLog(`<span style='color:#e67e22;'>[FORGE]</span> Successfully tempered ${forgeSelectedItem.name} to [+${forgeSelectedItem.temperLevel}]!`);
+        updateUI(); renderInventory(); renderForgeTab();
+        window.saveGame();
+    };
+
+    function renderForgeTab() {
+        let listEl = document.getElementById('forge-list'); let detailEl = document.getElementById('forge-details');
+        if (inventory.EQUIP.length === 0) {
+            listEl.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No unequipped gear to temper.</div>";
+            detailEl.innerHTML = "<div style='color:#666;text-align:center;padding-top:80px;'>Select an item from your sack to temper.</div>"; return;
+        }
+        listEl.innerHTML = inventory.EQUIP.map(item => {
+            if (item.type === "artifact") return "";
+            let nameColor = getTierColor(item.statsRolled); let temperTag = item.temperLevel > 0 ? ` [+${item.temperLevel}]` : "";
+            let bgStyle = forgeSelectedItem && forgeSelectedItem.id === item.id ? "background:#2c3e50; border-left:3px solid #3498db;" : "";
+            return `<div class="bag-item" style="cursor:pointer; ${bgStyle}" onclick="selectForgeItem(${item.id})">
+                <div><strong style="color:${nameColor};">${item.name}${temperTag}</strong><br><span style="font-size:10px;color:#aaa;">${item.type.toUpperCase()} | ${item.statsRolled}★</span></div>
+            </div>`;
+        }).join("");
+
+        if (!forgeSelectedItem) { detailEl.innerHTML = "<div style='color:#666;text-align:center;padding-top:80px;'>Select an item from your sack to temper.</div>"; return; }
+        let item = forgeSelectedItem; let maxT = getMaxTemper(item.statsRolled); let titleColor = getTierColor(item.statsRolled);
+        let temperTag = item.temperLevel > 0 ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>` : "";
+        let html = `<div style="font-weight:bold; font-size:13px; color:${titleColor}; border-bottom:1px solid #333; padding-bottom:4px; margin-bottom:10px;">${item.name}${temperTag}</div>`;
+        
+        if (item.temperLevel >= maxT) {
+            html += `<div style="color:#e74c3c; font-weight:bold; text-align:center; padding: 20px 0;">MAXIMUM TEMPER LIMIT REACHED</div>`;
+        } else {
+            let costGold = getTemperGoldCost(item); let scrapReq = getRequiredScrapForTemper(item.temperLevel + 1); let playerScrap = inventory.ETC[scrapReq] || 0;
+            let goldColor = playerStats.coins >= costGold ? "#f1c40f" : "#e74c3c"; let scrapColor = playerScrap >= 1 ? "#bdc3c7" : "#e74c3c";
+            html += `<div style="font-size:11px; margin-bottom:15px; color:#aaa;">Temper Progress: <span style="color:#fff;">${item.temperLevel} / ${maxT}</span></div>`;
+            html += `<div style="font-size:11px; color:${goldColor}; margin-bottom:3px;">• ${costGold} Gold</div>`;
+            html += `<div style="font-size:11px; color:${scrapColor}; margin-bottom:15px;">• 1x ${scrapReq} (You have: ${playerScrap})</div>`;
+            html += `<button class="btn-action forge" style="${(playerStats.coins >= costGold) && (playerScrap >= 1) ? '' : 'opacity:0.5; cursor:not-allowed;'}" onclick="temperItem()">Strike Anvil</button>`;
+        }
+        detailEl.innerHTML = html;
+    }
+
+    function handleMobDeath() {
+        let p = resolvePlayerStats(); let isBoss = (mob.type === "boss");
+        
+        let baseCoin = isBoss ? 10 * playerStats.stage : Math.floor(1 + (playerStats.stage * 0.5));
+        let coinYield = Math.ceil(baseCoin * p.gold);
+        playerStats.coins += coinYield;
+        spawnDeathParticles(mob.x + (mob.w / 2), mob.y + (mob.h / 2), mob.type);
+
+        effects.push({ x: mob.x + 35, y: mob.y + 25, text: "+" + coinYield + "g", color: "#f1c40f", life: 25 });
+        
+        let baseDropRate = isBoss ? 0.25 : 0.045; 
+        if (Math.random() < (baseDropRate * p.drop * state.efficiency)) { rollEquipmentDrop(isBoss); }
+        
+        if (playerStats.isUberBoss) {
+            addEtcDrop("Gacha Key", 1);
+            pushToast("Gacha Key", null, "#f1c40f", true, 1);
+        } else if (isBoss && Math.random() < 0.01) { 
+            addEtcDrop("Ancient Core", 1);
+            pushToast("Ancient Core", null, "#9b59b6", true, 1);
+        } else if (!isBoss && Math.random() < 0.03) { 
+            let etcItemName = mob.type === "bandit" ? "Iron Scrap" : "Sticky Gel";
+            addEtcDrop(etcItemName); 
+            effects.push({ x: mob.x + 10, y: mob.y + 10, text: "+1 " + etcItemName, color: "#bdc3c7", life: 35 });
+        }
+        
+        playerStats.totalLifetimeKills++;
+        
+        if (playerStats.totalLifetimeKills % 10 === 0 && checkArtifactTrait("frenzy")) {
+            let duration = checkArtifactTrait("extend_frenzy") ? 900 : 600; playerStats.frenzyTimer = duration;
+            pushLog(`<strong style='color:#e67e22;'>[BERSERKER RAGE]</strong> 100% Critical Frenzy Unleashed!`);
+        }
+        
+        if (isBoss) { 
+            if (!playerStats.isUberBoss) {
+                playerStats.stage++; 
+                pushLog(`<span style='color:#2ecc71; font-weight:bold;'>[AREA CLEARED] Fully restored! Advancing to Stage ${playerStats.stage}.</span>`);
+            } else {
+                pushLog(`<span style='color:#9b59b6; font-weight:bold;'>[RIFT CLOSED] The Uber Boss was defeated! Returning to farming.</span>`);
+            }
+            playerStats.killCount = 0; playerStats.isBossMode = false; playerStats.isFarmingLoop = false;
+            playerStats.isUberBoss = false; 
+            playerStats.currentHp = p.maxHp; 
+            window.saveGame();
+        } else { 
+            if (!playerStats.isFarmingLoop) { 
+                playerStats.killCount++; 
+                if (playerStats.killCount >= playerStats.targetsRequired) playerStats.isBossMode = true; 
+            } 
+        }
+        mob = null; updateUI();
+    }
+
+    function handlePlayerDefeat() {
+        isGamePaused = true;
+        playerStats.isBossMode = false; 
+        playerStats.isFarmingLoop = false; 
+        playerStats.isUberBoss = false; 
+        playerStats.killCount = 0; 
+        mob = null;
+        let p = resolvePlayerStats(); playerStats.currentHp = p.maxHp; updateUI();
+        pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[DEFEATED] Progress reset. Stage restarted!</span>`);
+        
+        let overlay = document.getElementById('death-overlay');
+        overlay.style.display = "flex";
+        setTimeout(() => { 
+            overlay.style.display = "none"; 
+            isGamePaused = false;
+            window.saveGame();
+        }, 1500);
+    }
+
+    window.rechallengeBoss = function() { 
+        playerStats.isBossMode = true; playerStats.isFarmingLoop = false; mob = null; updateUI(); 
+    };
+
+    function executeHitCalculations() {
+        if (mob && mob.x < hero.x + 65) {
+            let p = resolvePlayerStats(); let finalDamage = p.atk; let isCrit = Math.random() < p.critChance;
+            if (isCrit) finalDamage = Math.ceil(finalDamage * p.critDamage);
+            
+            mob.hp -= finalDamage; mob.flashTimer = 5;
+            effects.push({ x: mob.x + 5, y: mob.y - 10, text: isCrit ? "💥 " + finalDamage : "-" + finalDamage, color: isCrit ? "#e74c3c" : "#ecf0f1", life: 22 });
+            
+            if (checkArtifactTrait("vampirism")) {
+                let heal = Math.max(1, Math.floor(finalDamage * 0.10));
+                playerStats.currentHp = Math.min(p.maxHp, playerStats.currentHp + heal);
+                effects.push({ x: hero.x - 25, y: hero.y - 10, text: "❤️ +" + heal, color: "#2ecc71", life: 30 });
+            }
+            updateUI(); if (mob.hp <= 0) handleMobDeath();
+        }
+    }
+
+    window.switchTab = function(id) {
+        window.hideTooltip(); document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        event.target.classList.add('active'); document.getElementById('tab-' + id).classList.add('active');
+        if (id === 'forge') renderForgeTab();
+    };
+
+    function makeSlotHtml(slotKey, label) {
+        let item = equippedSlots[slotKey]; let el = document.getElementById('slot-' + slotKey);
+        if ((slotKey === 'chest' || slotKey === 'leggings') && equippedSlots.overall) { el.className = "slots-card locked"; el.innerHTML = `⚙️ LOCKED BY OVERALL`; el.style.borderColor = ""; return; }
+        if (slotKey === 'overall' && (equippedSlots.chest || equippedSlots.leggings)) { el.className = "slots-card locked"; el.innerHTML = `⚙️ LOCKED BY PIECE GEAR`; el.style.borderColor = ""; return; }
+        
+        if (!item) { el.className = "slots-card"; el.innerHTML = `<i>[Empty ${label}]</i>`; el.style.borderColor = ""; } 
+        else {
+            let isArt = slotKey.startsWith("art"); el.className = isArt ? "slots-card artifact-slot equipped" : "slots-card equipped";
+            el.style.borderColor = getTierColor(item.statsRolled);
+            let tierLabel = item.statsRolled === "UNIQUE" ? "UNIQUE" : `${item.statsRolled}★ ${getTierName(item.statsRolled)}`;
+            let temperTag = item.temperLevel > 0 ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>` : "";
+
+            if (isArt) el.innerHTML = `<strong style="font-size:10px; color:#1abc9c;">${item.name}</strong><br><span style="font-size:8px;color:#aaa;line-height:1;">${item.desc}</span><button class="btn-action un" style="margin-top:2px;padding:1px 3px;" onclick="unequipItem('${slotKey}')">Remove</button>`;
+            else {
+                let s = []; if (item.atk > 0) s.push(`⚔️${item.atk}`); if (item.maxHp > 0) s.push(`❤️${item.maxHp}`); if (item.def > 0) s.push(`🛡️${item.def}`);
+                el.innerHTML = `<strong style="font-size:10px;">${item.name}${temperTag}</strong><div style="font-size:8px; color:${getTierColor(item.statsRolled)}; font-weight:bold; margin:2px 0;">${tierLabel}</div><span style="font-size:9px;color:#bbb;">${s.join(" ")}</span><button class="btn-action un" style="margin-top:2px;padding:1px 3px;" onclick="unequipItem('${slotKey}')">Remove</button>`;
+            }
+        }
+    }
+
+    function updateUI() {
+        let p = resolvePlayerStats(); 
+        document.getElementById('hud-stage').innerText = `1-${playerStats.stage}`;
+        
+        let progressEl = document.getElementById('hud-progress');
+        if (playerStats.isBossMode) {
+            progressEl.innerText = playerStats.isUberBoss ? "⚡ RIFT BOSS!" : "🎯 BOSS READY!";
+            progressEl.style.color = playerStats.isUberBoss ? "#9b59b6" : "#e74c3c";
+        } else if (playerStats.isFarmingLoop) {
+            progressEl.innerText = "💀 FARMING MODE";
+            progressEl.style.color = "#7f8c8d";
+        } else {
+            progressEl.innerText = `${playerStats.killCount} / ${playerStats.targetsRequired} Mobs`;
+            progressEl.style.color = "#f1c40f";
+        }
+
+        document.getElementById('hud-hp').innerText = `${playerStats.currentHp}/${p.maxHp}`; document.getElementById('hud-coins').innerText = Math.floor(playerStats.coins);
+        
+        document.getElementById('stat-atk').innerText = p.atk; document.getElementById('stat-mhp').innerText = p.maxHp; 
+        document.getElementById('stat-def').innerText = p.def; document.getElementById('stat-mov').innerText = p.moveSpeed;
+        document.getElementById('stat-crt').innerText = Math.floor(p.critChance * 100) + "%"; document.getElementById('stat-crd').innerText = Math.floor(p.critDamage * 100) + "%";
+        document.getElementById('stat-blk').innerText = Math.floor(p.block * 100) + "%"; document.getElementById('stat-pry').innerText = Math.floor(p.parry * 100) + "%";
+        document.getElementById('stat-ias').innerText = p.idleAttackSpeed + "f"; document.getElementById('stat-aas').innerText = p.activeAttackSpeed + "f";
+        
+        // Calculate Idle DPS
+        let effMultiplier = 1 + (p.critChance * (p.critDamage - 1)); // Expected damage multiplier
+        let idps = (p.atk * effMultiplier) * (60 / p.idleAttackSpeed);
+        document.getElementById('stat-idps').innerText = idps.toFixed(1);
+        
+        document.getElementById('stat-drp').innerText = "+" + Math.floor((p.drop - 1) * 100) + "%"; document.getElementById('stat-qly').innerText = "+" + Math.floor((p.qly - 1) * 100) + "%";
+        document.getElementById('stat-gld').innerText = "x" + p.gold.toFixed(2); 
+        
+        let qly = p.qly;
+        let drp = p.drop * state.efficiency;
+        document.getElementById('live-rate-mob').innerText = (4.5 * drp).toFixed(2) + "%";
+        document.getElementById('live-rate-boss').innerText = (25.0 * drp).toFixed(2) + "%";
+        
+        let mythic = (0.02 * qly);
+        let leg = (0.20 * qly) - mythic;
+        let epic = (1.00 * qly) - (0.20 * qly);
+        let magic = (5.00 * qly) - (1.00 * qly);
+        let rare = (20.00 * qly) - (5.00 * qly);
+        let common = 100 - (20.00 * qly);
+
+        document.getElementById('live-5').innerText = Math.max(0, mythic).toFixed(2) + "%";
+        document.getElementById('live-4').innerText = Math.max(0, leg).toFixed(2) + "%";
+        document.getElementById('live-3').innerText = Math.max(0, epic).toFixed(2) + "%";
+        document.getElementById('live-2').innerText = Math.max(0, magic).toFixed(2) + "%";
+        document.getElementById('live-1').innerText = Math.max(0, rare).toFixed(2) + "%";
+        document.getElementById('live-0').innerText = Math.max(0, common).toFixed(2) + "%";
+
+        document.getElementById('btn-rechallenge').style.display = playerStats.isFarmingLoop ? "block" : "none";
+        
+        makeSlotHtml('weapon', 'Weapon'); makeSlotHtml('subweapon', 'Sub-weapon'); makeSlotHtml('helmet', 'Helmet');
+        makeSlotHtml('chest', 'Chest Armor'); makeSlotHtml('leggings', 'Leggings'); makeSlotHtml('overall', 'Overall Suit');
+        makeSlotHtml('boots', 'Boots'); makeSlotHtml('art1', 'Artifact 1'); makeSlotHtml('art2', 'Artifact 2'); makeSlotHtml('art3', 'Artifact 3');
+    }
+
+    function renderInventory() {
+        let eqBox = document.getElementById('bag-equip');
+        if (inventory.EQUIP.length === 0) { eqBox.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No equipment in sack.</div>"; }
+        else {
+            eqBox.innerHTML = inventory.EQUIP.map(item => {
+                let nameColor = getTierColor(item.statsRolled); let tierStr = item.statsRolled === "UNIQUE" ? "UNIQUE" : `${item.statsRolled}★ ${getTierName(item.statsRolled)}`;
+                let temperTag = item.temperLevel > 0 ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>` : "";
+                let details = item.type === "artifact" ? `<span style="font-size:10px;color:#d2b4de;font-weight:bold;">Trait: ${item.desc}</span>` : `<span style="font-size:10px;color:#aaa;">Slot: ${item.type.toUpperCase()} | <span style="color:${nameColor};font-weight:bold;">${tierStr}</span></span>`;
+                return `<div class="bag-item" onmousemove="showInventoryTooltip(event, ${item.id})" onmouseleave="hideTooltip()" ontouchstart="showInventoryTooltip(event, ${item.id})">
+                    <div><strong style="color:${nameColor};">${item.name}${temperTag}</strong><br>${details}</div>
+                    <div style="position:relative; z-index:10;">
+                        <button class="btn-action" onclick="equipItem(${item.id})">Equip</button>
+                        ${item.type !== "artifact" ? `<button class="btn-action un" style="margin-left:2px;" onclick="salvageItem(${item.id})">Salvage</button>` : ''}
+                    </div>
+                </div>`;
+            }).join("");
+        }
+        let etcBox = document.getElementById('bag-etc'); let etcKeys = Object.keys(inventory.ETC);
+        if (etcKeys.length === 0) { etcBox.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No materials collected.</div>"; }
+        else { 
+            etcBox.innerHTML = etcKeys.map(key => `<div class="bag-item" style="cursor:help;" onmousemove="showEtcTooltip(event, '${key}')" onmouseleave="hideTooltip()"><span>📦 ${key}</span><strong>x${inventory.ETC[key]}</strong></div>`).join(""); 
+        }
+    }
+
+    window.switchSubTab = function(type) {
+        window.hideTooltip(); state.currentSubTab = type;
+        document.getElementById('sub-tab-eq').className = type === 'EQUIP' ? "sub-tab-btn active" : "sub-tab-btn";
+        document.getElementById('sub-tab-etc').className = type === 'ETC' ? "sub-tab-btn active" : "sub-tab-btn";
+        document.getElementById('bag-equip').style.display = type === 'EQUIP' ? "block" : "none";
+        document.getElementById('bag-etc').style.display = type === 'ETC' ? "block" : "none";
+    };
+
+    function update() {
+        if (isGamePaused) return;
+
+        let p = resolvePlayerStats();
+        let scrollSpeed = p.moveSpeed * 0.3;
+
+        if (hero.attackTimer > 0) hero.attackTimer--; hero.slashFrame = (hero.attackTimer > 0 && hero.attackTimer < (p.activeAttackSpeed/2));
+        if (mob && mob.flashTimer > 0) mob.flashTimer--; if (playerStats.frenzyTimer > 0) playerStats.frenzyTimer--;
+        
+        logicClock++;
+        
+        for (let i = activeToasts.length - 1; i >= 0; i--) {
+            let t = activeToasts[i];
+            t.life--;
+            if (t.yOffset > t.targetY) t.yOffset -= 1.5;
+            else if (t.yOffset < t.targetY) t.yOffset += 1.5;
+            
+            if (t.life < 30) t.alpha -= 0.034;
+            if (t.life <= 0) {
+                activeToasts.splice(i, 1);
+                activeToasts.forEach((remT, idx) => { remT.targetY = 30 + (idx * 32); });
+            }
+        }
+
+        if (!mob) { 
+            processEnemySpawn(); 
+            groundScroll = (groundScroll + scrollSpeed) % canvas.width; 
+            scenery.forEach(s => { s.x -= scrollSpeed * 0.8; if(s.x < -50) s.x = canvas.width + Math.random() * 50; });
+        } else {
+            if (mob.x > (hero.x + hero.w + 30)) { 
+                mob.x -= (4 + scrollSpeed); 
+                mob.isStopped = false; 
+                groundScroll = (groundScroll + scrollSpeed) % canvas.width; 
+                scenery.forEach(s => { s.x -= scrollSpeed * 0.8; if(s.x < -50) s.x = canvas.width + Math.random() * 50; });
+            } else {
+                mob.isStopped = true; 
+                if (logicClock % p.idleAttackSpeed === 0) {
+                    if (state.autoAttack) window.triggerPlayerSlash();
+                }
+                // Enemies attack every 120 frames (2 seconds)
+                if (logicClock % 120 === 0 && mob && mob.hp > 0) {
+                    if (Math.random() < p.parry) { effects.push({ x: hero.x, y: hero.y - 15, text: "⚡ PARRY COUNTER!", color: "#9b59b6", life: 25 }); executeHitCalculations(); }
+                    else if (Math.random() < p.block) { effects.push({ x: hero.x, y: hero.y, text: "🛡️ BLOCKED", color: "#3498db", life: 20 }); }
+                    else {
+                        let netDamage = Math.max(1, mob.damage - p.def); playerStats.currentHp -= netDamage; 
+                        effects.push({ x: hero.x, y: hero.y, text: "-" + netDamage, color: "#e74c3c", life: 20 });
+                        if (playerStats.currentHp <= 0) { handlePlayerDefeat(); return; }
+                    }
+                    updateUI();
+                }
+            }
+        }
+        for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0.4; eff.life--; if (eff.life <= 0) effects.splice(i, 1); }
+        for (let i = particles.length - 1; i >= 0; i--) { let pt = particles[i]; pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.25; pt.life--; if (pt.life <= 0) particles.splice(i, 1); }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = playerStats.isBossMode ? "#3a123a" : "#1e272c"; ctx.fillRect(0, 0, canvas.width, 180);
+        
+        scenery.forEach(s => {
+            if (s.type === 'tree') {
+                ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.arc(s.x, s.y - 15, 20 * s.size, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#5c4033"; ctx.fillRect(s.x - 4, s.y, 8, 30);
+            } else {
+                ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(s.x, s.y + 10, 12 * s.size, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(s.x + 10, s.y + 12, 10 * s.size, 0, Math.PI*2); ctx.fill();
+            }
+        });
+
+        ctx.fillStyle = "#34495e"; ctx.fillRect(0, 180, canvas.width, 70);
+        ctx.fillStyle = "#2c3e50";
+        for(let i=0; i<canvas.width+40; i+=40) { ctx.fillRect(i - (groundScroll % 40), 180, 4, 70); }
+        
+        // Draw Hero Stickman/Block
+        let hx = hero.x; let hy = hero.y;
+        ctx.fillStyle = playerStats.frenzyTimer > 0 ? "#e67e22" : "#3498db";
+        ctx.fillRect(hx + 5, hy, 15, 15); // Head
+        ctx.fillRect(hx + 5, hy + 15, 15, 20); // Body
+        if (hero.slashFrame) { 
+            ctx.fillRect(hx + 15, hy + 15, 20, 5); // Arm extended
+            ctx.fillStyle = "#ecf0f1"; ctx.fillRect(hx + 35, hy + 10, 25, 5); // Sword
+        } else {
+            ctx.fillRect(hx + 10, hy + 20, 5, 15); // Arm resting
+        }
+
+        if (mob) {
+            ctx.fillStyle = mob.flashTimer > 0 ? "#fff" : (mob.type === "boss" ? "#5c4033" : mob.type === "bandit" ? "#c0392b" : "#006400");
+            
+            if (mob.type === "slime") {
+                // Hopping Slime
+                let hop = mob.isStopped ? 0 : Math.abs(Math.sin(Date.now() / 150)) * 15;
+                ctx.beginPath(); ctx.arc(mob.x + mob.w/2, mob.y + mob.h - hop, mob.w/2, Math.PI, 0); ctx.fill();
+            } else if (mob.type === "boss") {
+                // Scary Tree Boss
+                ctx.fillRect(mob.x + 10, mob.y + 20, mob.w - 20, mob.h - 20); // Trunk
+                ctx.fillStyle = mob.flashTimer > 0 ? "#fff" : "#27ae60";
+                ctx.beginPath(); ctx.arc(mob.x + mob.w/2, mob.y + 15, 25, 0, Math.PI*2); ctx.fill(); // Leaves
+                ctx.fillStyle = "#e74c3c"; // Red eyes
+                ctx.fillRect(mob.x + 12, mob.y + 10, 4, 4); ctx.fillRect(mob.x + 20, mob.y + 10, 4, 4);
+            } else {
+                // Bandit Blockman
+                ctx.fillRect(mob.x, mob.y, 20, 20); // Head
+                ctx.fillRect(mob.x + 2, mob.y + 20, 16, 25); // Body
+                ctx.fillRect(mob.x - 10, mob.y + 25, 15, 5); // Arm
+                ctx.fillStyle = "#ecf0f1"; ctx.fillRect(mob.x - 20, mob.y + 23, 10, 3); // Dagger
+            }
+
+            // High visibility Enemy HP Bar
+            let barW = mob.type === "boss" ? 50 : mob.w;
+            let barX = mob.type === "boss" ? mob.x - 7 : mob.x;
+            ctx.fillStyle = "#e74c3c"; ctx.fillRect(barX, mob.y - 12, barW, 6);
+            ctx.fillStyle = "#f1c40f"; ctx.fillRect(barX, mob.y - 12, Math.max(0, (mob.hp / mob.maxHp) * barW), 6);
+            ctx.strokeStyle = "#111"; ctx.lineWidth = 1; ctx.strokeRect(barX, mob.y - 12, barW, 6);
+        }
+
+        particles.forEach(pt => { ctx.fillStyle = pt.color; ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2); ctx.fill(); });
+        effects.forEach(eff => { ctx.fillStyle = eff.color; ctx.font = "bold 12px sans-serif"; ctx.fillText(eff.text, eff.x, eff.y); });
+
+        activeToasts.forEach(toast => {
+            ctx.save(); ctx.globalAlpha = Math.max(0, toast.alpha);
+            ctx.fillStyle = "rgba(11, 15, 18, 0.9)"; ctx.strokeStyle = toast.color; ctx.lineWidth = 2;
+            let boxWidth = 320; let boxHeight = 28; let boxX = (canvas.width / 2) - (boxWidth / 2); let boxY = toast.yOffset;
+            ctx.fillRect(boxX, boxY, boxWidth, boxHeight); ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+            ctx.fillStyle = "#ffffff"; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center";
+            if (toast.isHeader) {
+                ctx.fillText(toast.label, canvas.width / 2, boxY + 17);
+            } else {
+                ctx.fillText(`${toast.label} : ${toast.name}`, canvas.width / 2, boxY + 17);
+            }
+            ctx.restore();
+        });
+
+        let buffEl = document.getElementById('hud-buff');
+        if (playerStats.frenzyTimer > 0) {
+            let secondsLeft = (playerStats.frenzyTimer / 60).toFixed(1);
+            buffEl.innerText = `🔥 FRENZY (${secondsLeft}s)`; buffEl.style.color = "#e67e22";
+        } else {
+            buffEl.innerText = "None"; buffEl.style.color = "#aaa";
+        }
+    }
+
+    function engineCycle() { 
+        try {
+            update(); 
+            draw(); 
+            requestAnimationFrame(engineCycle); 
+        } catch (err) {
+            ctx.fillStyle = "#c0392b"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#ffffff"; ctx.font = "bold 14px monospace";
+            ctx.fillText("⚠️ ENGINE CRASH DETECTED", 20, 30);
+            ctx.font = "12px monospace"; ctx.fillText("Error: " + err.message, 20, 60);
+            if (err.stack) {
+                let stackLines = err.stack.split('\n').slice(0, 3);
+                stackLines.forEach((line, idx) => ctx.fillText(line.trim(), 20, 85 + (idx * 20)));
+            }
+        }
+    }
+
+    window.loadGame(); // Load before first render
+    updateUI(); 
+    renderInventory(); 
+    engineCycle();
+
+}; 
+</script>
+</body>
+</html>
