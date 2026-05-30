@@ -120,7 +120,6 @@
         @keyframes toastFadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes toastFadeOut { from { opacity: 1; } to { opacity: 0; } }
 
-        /* --- MOBILE RESPONSIVENESS --- */
         @media (max-width: 600px) {
             .grid-layout { grid-template-columns: 1fr; }
             .forge-grid { grid-template-columns: 1fr; }
@@ -138,7 +137,6 @@
 <body>
 
     <div id="game-container">
-        <!-- DOM Toast Container -->
         <div id="toast-container" style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 8000; gap: 5px; width: 90%;"></div>
 
         <div id="game-tooltip" class="tooltip-base"></div>
@@ -245,7 +243,7 @@
 
             <div id="tab-inv" class="tab-content">
                 <div class="sub-tabs">
-                    <button id="sub-tab-eq" class="sub-tab-btn active" onclick="switchSubTab('EQUIP')">Equipment (<span id="btn-bag-count">0</span>/20)</button>
+                    <button id="sub-tab-eq" class="sub-tab-btn active" onclick="switchSubTab('EQUIP')">Equipment (<span id="btn-bag-count">0</span>/<span id="btn-bag-max">20</span>)</button>
                     <button id="sub-tab-etc" class="sub-tab-btn" onclick="switchSubTab('ETC')">ETC Items</button>
                 </div>
                 <div id="bag-equip" class="bag-container"></div>
@@ -254,22 +252,7 @@
             
             <div id="tab-forge" class="tab-content">
                 <div class="forge-grid">
-                    <div class="forge-panel" id="forge-details">
-                        <!-- Default Forge View -->
-                        <div style='color:#aaa; text-align:center; padding-top:10px;'>
-                            <div style='color:#e67e22; font-weight:bold; font-size:14px; margin-bottom:10px;'>🔨 Tempering Guide</div>
-                            <div style='font-size:11px; line-height:1.8; background:#1a1a1a; padding:10px; border-radius:4px; border:1px solid #333; text-align:left; display:inline-block;'>
-                                <span style='color:#3498db; font-weight:bold;'>1★ Rare Gear</span> ➔ Requires Rare Scrap<br>
-                                <span style='color:#9b59b6; font-weight:bold;'>2★ Magic Gear</span> ➔ Requires Magic Scrap<br>
-                                <span style='color:#e67e22; font-weight:bold;'>3★ Epic Gear</span> ➔ Requires Epic Scrap<br>
-                                <span style='color:#f1c40f; font-weight:bold;'>4★ Legendary Gear</span> ➔ Requires Legendary Scrap<br>
-                                <span style='color:#e74c3c; font-weight:bold;'>5★ Mythic Gear</span> ➔ Requires Mythic Scrap<br>
-                                <hr style='border:none; border-top:1px dashed #444; margin:8px 0;'>
-                                <span style='color:#1abc9c; font-weight:bold;'>⭐ Unique Artifacts cannot be tempered.</span><br><br>
-                                <i style='color:#7f8c8d;'>Select an unequipped item from your sack to view its specific Gold and Scrap cost.</i>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="forge-panel" id="forge-details"></div>
                     <div class="bag-container" id="forge-list"></div>
                 </div>
             </div>
@@ -327,7 +310,7 @@ window.onload = function() {
         baseDrop: 1.0, baseQuality: 1.0, baseGold: 1.0,
         baseCritChance: 0.05, baseCritDamage: 1.50, baseBlock: 0.0, baseParry: 0.0,
         currentHp: 100, coins: 0, stage: 1, killCount: 0, totalLifetimeKills: 0, targetsRequired: 10,
-        isBossMode: false, isFarmingLoop: false, isUberBoss: false, frenzyTimer: 0
+        isBossMode: false, isFarmingLoop: false, isUberBoss: false, frenzyTimer: 0, adrenalineTimer: 0
     };
 
     let equippedSlots = {
@@ -354,23 +337,20 @@ window.onload = function() {
     let reviveTimer = 0;
     let lastAutoSave = Date.now();
 
-    // Event-Based Save System
     window.saveGame = function() {
         let saveData = { playerStats, equippedSlots, inventory, idCounter, logsHistory, frozenItemDb, lastSaveTime: Date.now() };
-        localStorage.setItem('postknight_save_v3', JSON.stringify(saveData));
+        localStorage.setItem('postknight_save_v4', JSON.stringify(saveData));
     };
 
-    // Auto-Save Interval (Every 60s fallback)
     setInterval(() => {
         window.saveGame();
         lastAutoSave = Date.now();
     }, 60000);
 
-    // Save on close
     window.addEventListener('beforeunload', window.saveGame);
 
     window.loadGame = function() {
-        let data = localStorage.getItem('postknight_save_v3');
+        let data = localStorage.getItem('postknight_save_v4');
         if (data) {
             try {
                 let parsed = JSON.parse(data);
@@ -384,7 +364,6 @@ window.onload = function() {
                 let box = document.getElementById('log-box');
                 box.innerHTML = logsHistory.join("<br><br>");
                 
-                // Offline Progress Logic
                 if (parsed.lastSaveTime) {
                     let now = Date.now();
                     let offlineMs = now - parsed.lastSaveTime;
@@ -415,8 +394,10 @@ window.onload = function() {
                             
                             let actualItems = 0;
                             let scraps = 0;
+                            let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+
                             for(let i=0; i<dropsEarned; i++) {
-                                if (inventory.EQUIP.length < 20) {
+                                if (inventory.EQUIP.length < maxBag) {
                                     rollEquipmentDrop(false, true); 
                                     actualItems++;
                                 } else {
@@ -425,8 +406,8 @@ window.onload = function() {
                             }
                             if (scraps > 0) addEtcDrop("Iron Scrap", scraps);
                             
-                            pushLog(`<span style='color:#3498db; font-weight:bold;'>[OFFLINE GAINS] Gone for ${Math.floor(offlineSeconds/60)} mins. Simulated Kills: ${simulatedKills}. Gold: +${goldEarned}. Items: +${actualItems}. Scraps (Bag Full): +${scraps}.</span>`);
-                            alert(`Offline Progress (Capped at 2 hrs)\n\nTime Offline: ${Math.floor(offlineSeconds/60)} mins\nKills Simulated: ${simulatedKills}\nGold Earned: ${goldEarned}\nItems Found: ${actualItems}\nScraps Gained (Bag Full): ${scraps}`);
+                            pushLog(`<span style='color:#3498db; font-weight:bold;'>[OFFLINE GAINS] Gone for ${Math.floor(offlineSeconds/60)} mins. Simulated Kills: ${simulatedKills}. Gold: +${goldEarned}. Items: +${actualItems}. Scraps (Equip Bag Full): +${scraps}.</span>`);
+                            alert(`Offline Progress (Capped at 2 hrs)\n\nTime Offline: ${Math.floor(offlineSeconds/60)} mins\nKills Simulated: ${simulatedKills}\nGold Earned: ${goldEarned}\nItems Found: ${actualItems}\nScraps Gained (Equip Bag Full): ${scraps}`);
                         }
                     }
                 }
@@ -435,7 +416,6 @@ window.onload = function() {
         }
     };
 
-    // Init Scenery
     for(let i=0; i<8; i++) {
         scenery.push({ x: Math.random() * canvas.width, y: 150 - (Math.random() * 20), type: Math.random() > 0.5 ? 'tree' : 'bush', size: Math.random() * 0.5 + 0.5 });
     }
@@ -484,6 +464,7 @@ window.onload = function() {
             critChance: playerStats.baseCritChance, critDamage: playerStats.baseCritDamage,
             block: playerStats.baseBlock, parry: playerStats.baseParry
         };
+        
         for (let key in equippedSlots) {
             let item = equippedSlots[key];
             if (item) {
@@ -494,16 +475,26 @@ window.onload = function() {
                 p.block += (item.block || 0); p.parry += (item.parry || 0);
             }
         }
+        
+        if (checkArtifactTrait("move_speed")) p.moveSpeed += 10;
+        if (checkArtifactTrait("defense")) p.def += 15;
+        if (checkArtifactTrait("idle_spd")) p.idleAttackSpeed -= 20;
+        if (checkArtifactTrait("active_spd")) p.activeAttackSpeed -= 3;
+        
         if (p.idleAttackSpeed < 10) p.idleAttackSpeed = 10;
         if (p.activeAttackSpeed < 4) p.activeAttackSpeed = 4;
         
         if (playerStats.frenzyTimer > 0) { p.critChance = 1.00; p.critDamage += 0.50; p.activeAttackSpeed = 4; p.idleAttackSpeed = 10; }
+        
         return p;
     }
 
     function pushLog(text, itemId = null) {
         if (itemId !== null) {
             let item = inventory.EQUIP.find(i => i.id === itemId);
+            if (!item) {
+                for (let k in equippedSlots) { if (equippedSlots[k] && equippedSlots[k].id === itemId) item = equippedSlots[k]; }
+            }
             if (item) {
                 frozenItemDb[itemId] = JSON.parse(JSON.stringify(item));
                 text = text.replace(item.name, `<span class="log-item-link" onmousemove="showLogTooltip(event, ${itemId})" ontouchstart="showLogTooltip(event, ${itemId})" onmouseleave="hideTooltip()">${item.name}</span>`);
@@ -515,7 +506,6 @@ window.onload = function() {
         box.innerHTML = logsHistory.join("<br><br>");
     }
 
-    // --- DOM Toast System ---
     function pushToast(name, stars, color, isEtc = false, quantity = 1, customText = null) {
         let container = document.getElementById('toast-container');
         let toast = document.createElement('div');
@@ -576,6 +566,17 @@ window.onload = function() {
         }
     }
 
+    function spawnTemperParticles(isSuccess) {
+        let colors = isSuccess ? ["#f1c40f", "#2ecc71", "#ffffff"] : ["#7f8c8d", "#c0392b", "#2c3e50"];
+        for(let i=0; i<50; i++) {
+            particles.push({
+                x: canvas.width / 2, y: canvas.height / 2,
+                vx: (Math.random() - 0.5) * 16, vy: (Math.random() - 0.5) * 16,
+                radius: Math.random() * 4 + 1.5, color: colors[Math.floor(Math.random() * colors.length)], alpha: 1, life: isSuccess ? 45 : 30
+            });
+        }
+    }
+
     function getTierColor(stars) {
         if (stars === "UNIQUE") return "#1abc9c"; 
         if (stars === 5) return "#e74c3c"; 
@@ -631,17 +632,26 @@ window.onload = function() {
 
     window.salvageItem = function(id) {
         window.hideTooltip();
-        let index = inventory.EQUIP.findIndex(i => i.id === id);
-        if (index === -1) return;
         
-        let item = inventory.EQUIP[index];
-        inventory.EQUIP.splice(index, 1);
+        let item = inventory.EQUIP.find(i => i.id === id);
+        let isEquipped = false;
+        let slotToClear = null;
+        
+        if (!item) {
+            for (let k in equippedSlots) {
+                if (equippedSlots[k] && equippedSlots[k].id === id) { item = equippedSlots[k]; isEquipped = true; slotToClear = k; break; }
+            }
+        }
+        if (!item) return;
+
+        if (isEquipped) { equippedSlots[slotToClear] = null; } 
+        else { inventory.EQUIP.splice(inventory.EQUIP.indexOf(item), 1); }
         
         let rolledTier = item.statsRolled;
-        
         let scrapsGained = [];
         let yieldAmount = Math.floor(Math.random() * 3) + 1;
         let scrapName = getScrapYieldName(rolledTier);
+        
         addEtcDrop(scrapName, yieldAmount);
         scrapsGained.push(`x${yieldAmount} ${scrapName}`);
 
@@ -654,7 +664,6 @@ window.onload = function() {
             }
         }
         
-        // Salvage Particles
         for(let i=0; i<30; i++) {
             particles.push({
                 x: canvas.width / 2, y: canvas.height / 2,
@@ -677,8 +686,9 @@ window.onload = function() {
             pushHeaderToast("Requires 1 Gacha Key!", "#e74c3c");
             return; 
         }
-        if (inventory.EQUIP.length >= 20) {
-            pushHeaderToast("Inventory Full (20/20)!", "#e74c3c");
+        let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+        if (inventory.EQUIP.length >= maxBag) {
+            pushHeaderToast(`Inventory Full (${maxBag}/${maxBag})!`, "#e74c3c");
             return;
         }
         
@@ -736,7 +746,15 @@ window.onload = function() {
                 { name: "Blood-Soaked Chalice", trait: "vampirism", desc: "Heals 10% of damage dealt on every hit", breakdown: "<strong>Vampirism Breakdown:</strong><br>• Life Steal: <span style='color:#e74c3c;'>10% of total slash damage</span> directly heals your HP pool.", dropRate: 0, quality: 0, goldMulti: 0 },
                 { name: "Philosopher's Anchor", trait: "gold_hoard", desc: "Permanent x1.50 Gold Multiplier bonus", breakdown: "<strong>Hoard Breakdown:</strong><br>• Multiplies all direct gold drops from mobs and bosses by flat <span style='color:#f1c40f;'>+50%</span>.", dropRate: 0, quality: 0, goldMulti: 0.50 },
                 { name: "Gilded Scarab", trait: "magic_find", desc: "+50% Drop Rate and +30% Drop Quality", breakdown: "<strong>Scarab Hunting Breakdown:</strong><br>• Drop Rate: <span style='color:#2ecc71;'>+50% Item Frequency</span><br>• Drop Quality: <span style='color:#9b59b6;'>+30% Higher Stat Line Probability</span>", dropRate: 0.50, quality: 0.30, goldMulti: 0 },
-                { name: "Chrono Hourglass", trait: "extend_frenzy", desc: "Extends active Frenzy window durations by 5s", breakdown: "<strong>Chronology Breakdown:</strong><br>• Forces the Berserker Stone duration tracker to expand from 10 seconds up to <span style='color:#e67e22;'>15 seconds total</span>.", dropRate: 0, quality: 0, goldMulti: 0 }
+                { name: "Windwalker Boots", trait: "move_speed", desc: "Grants +10 Base Movement Speed", breakdown: "<strong>Fleet Footed:</strong><br>• Flat increase to your scrolling momentum.", dropRate: 0, quality: 0, goldMulti: 0 },
+                { name: "Aegis Core", trait: "defense", desc: "Grants +15 Base Defense", breakdown: "<strong>Iron Clad:</strong><br>• Flat reduction to incoming enemy damage hits.", dropRate: 0, quality: 0, goldMulti: 0 },
+                { name: "Riposte Gauntlet", trait: "parry_strike", desc: "Parrying instantly counters for 100% damage", breakdown: "<strong>Lethal Deflection:</strong><br>• Upon a successful parry roll, instantly strike the enemy back.", dropRate: 0, quality: 0, goldMulti: 0 },
+                { name: "Phantom Blade", trait: "echo_strike", desc: "Attacks hit a second time for 50% damage", breakdown: "<strong>Echo Strike:</strong><br>• Every swing triggers a secondary phantom hit.", dropRate: 0, quality: 0, goldMulti: 0 },
+                { name: "Sloth's Blessing", trait: "idle_spd", desc: "Reduces Idle Attack delay by 20 frames", breakdown: "<strong>Lazy Haste:</strong><br>• Your auto-attacks trigger significantly faster.", dropRate: 0, quality: 0, goldMulti: 0 },
+                { name: "Zealot's Charm", trait: "active_spd", desc: "Reduces Active Attack cooldown limit", breakdown: "<strong>Feverish Swings:</strong><br>• Allows you to click or tap faster.", dropRate: 0, quality: 0, goldMulti: 0 },
+                { name: "Survivor's Adrenaline", trait: "dodge_buff", desc: "Blocking/Parrying grants +100% Dmg for 10s", breakdown: "<strong>Adrenaline Rush:</strong><br>• Successful defensive procs double your damage output temporarily.", dropRate: 0, quality: 0, goldMulti: 0 },
+                { name: "Chrono Hourglass", trait: "extend_buffs", desc: "Extends all temporary buffs by 5 seconds", breakdown: "<strong>Chronology:</strong><br>• Applies to Frenzy and Adrenaline durations.", dropRate: 0, quality: 0, goldMulti: 0 },
+                { name: "Dimensional Pouch", trait: "bag_space", desc: "Expands equipment sack capacity to 50", breakdown: "<strong>Bottomless Bag:</strong><br>• Carry more gear before having to salvage.", dropRate: 0, quality: 0, goldMulti: 0 }
             ];
             let chosenArt = artifactsPool[Math.floor(Math.random() * artifactsPool.length)];
             item.name = `⭐ UNIQUE ${chosenArt.name}`; item.trait = chosenArt.trait; item.desc = chosenArt.desc; item.breakdown = chosenArt.breakdown;
@@ -796,9 +814,10 @@ window.onload = function() {
     }
 
     function rollEquipmentDrop(isBossKill, silent = false) {
-        if (inventory.EQUIP.length >= 20) {
+        let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+        if (inventory.EQUIP.length >= maxBag) {
             if(!silent) {
-                pushHeaderToast("Bag Full! Scrap gained.", "#e74c3c");
+                pushHeaderToast(`Bag Full (${maxBag}/${maxBag})! Scrap gained.`, "#e74c3c");
                 addEtcDrop(isBossKill ? "Ancient Core" : "Iron Scrap", 1);
             }
             return;
@@ -910,11 +929,11 @@ window.onload = function() {
     function buildGeneralTooltipHtml(item, isBagItem = false) {
         let eq = isBagItem ? getEquippedItemForComparison(item.type) : null;
         let html = "";
-        if (eq) {
+        if (eq && eq.id !== item.id) {
             html += `<div style="padding: 10px; width: 250px; box-sizing: border-box; border-right: 1px solid #333;">${generateItemCardHtml(eq, null, true)}</div>`;
             html += `<div style="padding: 10px; width: 250px; box-sizing: border-box;">${generateItemCardHtml(item, eq, false)}</div>`;
         } else {
-            html += `<div style="padding: 10px; width: 250px; box-sizing: border-box;">${generateItemCardHtml(item, null, false)}</div>`;
+            html += `<div style="padding: 10px; width: 250px; box-sizing: border-box;">${generateItemCardHtml(item, null, item.isEquippedSlot != null)}</div>`;
         }
         return `<div class="tooltip-flex-container">${html}</div>`;
     }
@@ -928,6 +947,16 @@ window.onload = function() {
     window.showInventoryTooltip = function(e, itemId) {
         let item = inventory.EQUIP.find(i => i.id === itemId); if (!item) return;
         let tt = document.getElementById('game-tooltip'); tt.innerHTML = buildGeneralTooltipHtml(item, true); 
+        tt.style.borderColor = getTierColor(item.statsRolled); tt.style.display = "block"; window.positionTooltip(e, tt);
+    };
+
+    window.showForgeTooltip = function(e, itemId) {
+        let item = inventory.EQUIP.find(i => i.id === itemId); 
+        if (!item) {
+            for (let k in equippedSlots) { if(equippedSlots[k] && equippedSlots[k].id === itemId) { item = equippedSlots[k]; item.isEquippedSlot = k; break;} }
+        }
+        if (!item) return;
+        let tt = document.getElementById('game-tooltip'); tt.innerHTML = buildGeneralTooltipHtml(item, false); 
         tt.style.borderColor = getTierColor(item.statsRolled); tt.style.display = "block"; window.positionTooltip(e, tt);
     };
 
@@ -1037,8 +1066,9 @@ window.onload = function() {
     };
 
     window.unequipItem = function(slotKey) {
-        if (inventory.EQUIP.length >= 20) {
-            pushHeaderToast("Inventory Full (20/20)!", "#e74c3c");
+        let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+        if (inventory.EQUIP.length >= maxBag) {
+            pushHeaderToast(`Inventory Full (${maxBag}/${maxBag})!`, "#e74c3c");
             return;
         }
         window.hideTooltip(); let item = equippedSlots[slotKey]; if (!item) return;
@@ -1046,27 +1076,51 @@ window.onload = function() {
         window.saveGame();
     };
 
-    window.selectForgeItem = function(id) { forgeSelectedItem = inventory.EQUIP.find(i => i.id === id); renderForgeTab(); };
+    window.selectForgeItem = function(id) { 
+        let item = inventory.EQUIP.find(i => i.id === id);
+        if (!item) {
+            for (let k in equippedSlots) {
+                if (equippedSlots[k] && equippedSlots[k].id === id) { item = equippedSlots[k]; break; }
+            }
+        }
+        forgeSelectedItem = item; 
+        renderForgeTab(); 
+    };
 
     window.temperItem = function() {
         if (!forgeSelectedItem) return;
         let maxT = getMaxTemper(forgeSelectedItem.statsRolled); if (forgeSelectedItem.temperLevel >= maxT) return;
-        let costGold = getTemperGoldCost(forgeSelectedItem); let scrapReq = getRequiredScrapForTemper(forgeSelectedItem.temperLevel + 1);
+        
+        let costGold = getTemperGoldCost(forgeSelectedItem); 
+        let scrapReqAmount = 1 + Math.floor(forgeSelectedItem.temperLevel / 3);
+        let scrapReq = getRequiredScrapForTemper(forgeSelectedItem.temperLevel + 1);
         
         if (playerStats.coins < costGold) { pushLog(`<span style='color:#e74c3c;'>Not enough Gold to temper!</span>`); return; }
-        if (!inventory.ETC[scrapReq] || inventory.ETC[scrapReq] < 1) { pushLog(`<span style='color:#e74c3c;'>Not enough ${scrapReq} to temper!</span>`); return; }
+        if (!inventory.ETC[scrapReq] || inventory.ETC[scrapReq] < scrapReqAmount) { pushLog(`<span style='color:#e74c3c;'>Not enough ${scrapReq} to temper!</span>`); return; }
 
-        playerStats.coins -= costGold; inventory.ETC[scrapReq]--;
+        let failChance = forgeSelectedItem.temperLevel * 0.05; 
+        let isSuccess = Math.random() >= failChance;
+
+        playerStats.coins -= costGold; 
+        inventory.ETC[scrapReq] -= scrapReqAmount;
         if (inventory.ETC[scrapReq] === 0) delete inventory.ETC[scrapReq];
 
-        if (forgeSelectedItem.baseAtk > 0 || forgeSelectedItem.type === "weapon") forgeSelectedItem.atk += 2;
-        if (forgeSelectedItem.baseMaxHp > 0) forgeSelectedItem.maxHp += 10;
-        if (forgeSelectedItem.baseDef > 0) forgeSelectedItem.def += 1;
-        if (forgeSelectedItem.baseMoveSpeed > 0) forgeSelectedItem.moveSpeed += 1;
+        if (isSuccess) {
+            if (forgeSelectedItem.baseAtk > 0 || forgeSelectedItem.type === "weapon") forgeSelectedItem.atk += 2;
+            if (forgeSelectedItem.baseMaxHp > 0) forgeSelectedItem.maxHp += 10;
+            if (forgeSelectedItem.baseDef > 0) forgeSelectedItem.def += 1;
+            if (forgeSelectedItem.baseMoveSpeed > 0) forgeSelectedItem.moveSpeed += 1;
+            
+            forgeSelectedItem.temperLevel++;
+            pushLog(`<span style='color:#e67e22;'>[FORGE]</span> Successfully tempered ${forgeSelectedItem.name} to [+${forgeSelectedItem.temperLevel}]!`);
+            pushHeaderToast(`🔨 Success! [+${forgeSelectedItem.temperLevel}]`, "#2ecc71");
+            spawnTemperParticles(true);
+        } else {
+            pushLog(`<span style='color:#e74c3c;'>[FORGE]</span> Temper failed on ${forgeSelectedItem.name}! Materials lost. Item remains safe.`);
+            pushHeaderToast(`💥 Temper Failed!`, "#e74c3c");
+            spawnTemperParticles(false);
+        }
 
-        forgeSelectedItem.temperLevel++;
-        
-        pushLog(`<span style='color:#e67e22;'>[FORGE]</span> Successfully tempered ${forgeSelectedItem.name} to [+${forgeSelectedItem.temperLevel}]!`);
         updateUI(); renderInventory(); renderForgeTab();
         window.saveGame();
     };
@@ -1074,15 +1128,24 @@ window.onload = function() {
     function renderForgeTab() {
         let listEl = document.getElementById('forge-list'); let detailEl = document.getElementById('forge-details');
         
-        if (inventory.EQUIP.length === 0) {
-            listEl.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No unequipped gear to temper.</div>";
+        let allValidItems = [...inventory.EQUIP];
+        for(let key in equippedSlots) {
+            if(equippedSlots[key] && equippedSlots[key].type !== 'artifact') {
+                let eqClone = {...equippedSlots[key], isEquippedSlot: key};
+                allValidItems.push(eqClone);
+            }
+        }
+        
+        if (allValidItems.length === 0) {
+            listEl.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No gear to temper.</div>";
         } else {
-            listEl.innerHTML = inventory.EQUIP.map(item => {
+            listEl.innerHTML = allValidItems.map(item => {
                 if (item.type === "artifact") return "";
                 let nameColor = getTierColor(item.statsRolled); let temperTag = item.temperLevel > 0 ? ` [+${item.temperLevel}]` : "";
                 let bgStyle = forgeSelectedItem && forgeSelectedItem.id === item.id ? "background:#2c3e50; border-left:3px solid #3498db;" : "";
-                return `<div class="bag-item" style="cursor:pointer; ${bgStyle}" onclick="selectForgeItem(${item.id})">
-                    <div><strong style="color:${nameColor};">${item.name}${temperTag}</strong><br><span style="font-size:10px;color:#aaa;">${item.type.toUpperCase()} | ${item.statsRolled}★</span></div>
+                let eqBadge = item.isEquippedSlot ? `<span style="background:#c0392b; color:white; padding:1px 3px; border-radius:2px; font-size:8px;">[EQUIPPED]</span> ` : "";
+                return `<div class="bag-item" style="cursor:pointer; ${bgStyle}" onclick="selectForgeItem(${item.id})" onmousemove="showForgeTooltip(event, ${item.id})" ontouchstart="showForgeTooltip(event, ${item.id})" onmouseleave="hideTooltip()">
+                    <div>${eqBadge}<strong style="color:${nameColor};">${item.name}${temperTag}</strong><br><span style="font-size:10px;color:#aaa;">${item.type.toUpperCase()} | ${item.statsRolled}★</span></div>
                 </div>`;
             }).join("");
         }
@@ -1099,7 +1162,7 @@ window.onload = function() {
                         <span style='color:#e74c3c; font-weight:bold;'>5★ Mythic Gear</span> ➔ Requires Mythic Scrap<br>
                         <hr style='border:none; border-top:1px dashed #444; margin:8px 0;'>
                         <span style='color:#1abc9c; font-weight:bold;'>⭐ Unique Artifacts cannot be tempered.</span><br><br>
-                        <i style='color:#7f8c8d;'>Select an unequipped item from your sack to view its specific Gold and Scrap cost.</i>
+                        <i style='color:#7f8c8d;'>Select an item from the list to view its specific Gold and Scrap cost. Failure risk increases with temper level.</i>
                     </div>
                 </div>
             `;
@@ -1113,12 +1176,19 @@ window.onload = function() {
         if (item.temperLevel >= maxT) {
             html += `<div style="color:#e74c3c; font-weight:bold; text-align:center; padding: 20px 0;">MAXIMUM TEMPER LIMIT REACHED</div>`;
         } else {
-            let costGold = getTemperGoldCost(item); let scrapReq = getRequiredScrapForTemper(item.temperLevel + 1); let playerScrap = inventory.ETC[scrapReq] || 0;
-            let goldColor = playerStats.coins >= costGold ? "#f1c40f" : "#e74c3c"; let scrapColor = playerScrap >= 1 ? "#bdc3c7" : "#e74c3c";
+            let costGold = getTemperGoldCost(item); 
+            let scrapReqAmount = 1 + Math.floor(item.temperLevel / 3);
+            let scrapReq = getRequiredScrapForTemper(item.temperLevel + 1); 
+            let playerScrap = inventory.ETC[scrapReq] || 0;
+            let failChance = item.temperLevel * 5;
+            
+            let goldColor = playerStats.coins >= costGold ? "#f1c40f" : "#e74c3c"; let scrapColor = playerScrap >= scrapReqAmount ? "#bdc3c7" : "#e74c3c";
+            
             html += `<div style="font-size:11px; margin-bottom:15px; color:#aaa;">Temper Progress: <span style="color:#fff;">${item.temperLevel} / ${maxT}</span></div>`;
             html += `<div style="font-size:11px; color:${goldColor}; margin-bottom:3px;">• ${costGold} Gold</div>`;
-            html += `<div style="font-size:11px; color:${scrapColor}; margin-bottom:15px;">• 1x ${scrapReq} (You have: ${playerScrap})</div>`;
-            html += `<button class="btn-action forge" style="${(playerStats.coins >= costGold) && (playerScrap >= 1) ? '' : 'opacity:0.5; cursor:not-allowed;'}" onclick="temperItem()">Strike Anvil</button>`;
+            html += `<div style="font-size:11px; color:${scrapColor}; margin-bottom:10px;">• ${scrapReqAmount}x ${scrapReq} (You have: ${playerScrap})</div>`;
+            html += `<div style="font-size:11px; color:#e74c3c; font-weight:bold; margin-bottom:15px;">⚠️ ${failChance}% Chance to Fail (Eats materials, saves item)</div>`;
+            html += `<button class="btn-action forge" style="${(playerStats.coins >= costGold) && (playerScrap >= scrapReqAmount) ? '' : 'opacity:0.5; cursor:not-allowed;'}" onclick="temperItem()">Strike Anvil</button>`;
         }
         detailEl.innerHTML = html;
     }
@@ -1151,7 +1221,7 @@ window.onload = function() {
         playerStats.totalLifetimeKills++;
         
         if (playerStats.totalLifetimeKills % 10 === 0 && checkArtifactTrait("frenzy")) {
-            let duration = checkArtifactTrait("extend_frenzy") ? 900 : 600; playerStats.frenzyTimer = duration;
+            let duration = checkArtifactTrait("extend_buffs") ? 900 : 600; playerStats.frenzyTimer = duration;
             pushLog(`<strong style='color:#e67e22;'>[BERSERKER RAGE]</strong> 100% Critical Frenzy Unleashed!`);
         }
         
@@ -1201,11 +1271,21 @@ window.onload = function() {
 
     function executeHitCalculations() {
         if (mob && mob.x < hero.x + 65) {
-            let p = resolvePlayerStats(); let finalDamage = p.atk; let isCrit = Math.random() < p.critChance;
+            let p = resolvePlayerStats(); 
+            let finalDamage = p.atk; 
+            if (playerStats.adrenalineTimer > 0) finalDamage *= 2; 
+            
+            let isCrit = Math.random() < p.critChance;
             if (isCrit) finalDamage = Math.ceil(finalDamage * p.critDamage);
             
             mob.hp -= finalDamage; mob.flashTimer = 5;
             effects.push({ x: mob.x + 5, y: mob.y - 10, text: isCrit ? "💥 " + finalDamage : "-" + finalDamage, color: isCrit ? "#e74c3c" : "#ecf0f1", life: 22 });
+            
+            if (checkArtifactTrait("echo_strike")) {
+                let echoDmg = Math.max(1, Math.ceil(finalDamage * 0.5));
+                mob.hp -= echoDmg;
+                effects.push({ x: mob.x + 20, y: mob.y - 20, text: "👻 " + echoDmg, color: "#9b59b6", life: 20 });
+            }
             
             if (checkArtifactTrait("vampirism")) {
                 let heal = Math.max(1, Math.floor(finalDamage * 0.10));
@@ -1259,10 +1339,13 @@ window.onload = function() {
             progressEl.style.color = "#f1c40f";
         }
 
+        let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+
         document.getElementById('hud-hp').innerText = `${playerStats.currentHp}/${p.maxHp}`; document.getElementById('hud-coins').innerText = Math.floor(playerStats.coins);
-        document.getElementById('hud-bag').innerText = `${inventory.EQUIP.length}/20`;
-        document.getElementById('hud-bag').style.color = inventory.EQUIP.length >= 20 ? "#e74c3c" : "#2ecc71";
+        document.getElementById('hud-bag').innerText = `${inventory.EQUIP.length}/${maxBag}`;
+        document.getElementById('hud-bag').style.color = inventory.EQUIP.length >= maxBag ? "#e74c3c" : "#2ecc71";
         document.getElementById('btn-bag-count').innerText = inventory.EQUIP.length;
+        document.getElementById('btn-bag-max').innerText = maxBag;
         
         document.getElementById('stat-atk').innerText = p.atk; document.getElementById('stat-mhp').innerText = p.maxHp; 
         document.getElementById('stat-def').innerText = p.def; document.getElementById('stat-mov').innerText = p.moveSpeed;
@@ -1342,7 +1425,9 @@ window.onload = function() {
         let scrollSpeed = p.moveSpeed * 0.3;
 
         if (hero.attackTimer > 0) hero.attackTimer--; hero.slashFrame = (hero.attackTimer > 0 && hero.attackTimer < (p.activeAttackSpeed/2));
-        if (mob && mob.flashTimer > 0) mob.flashTimer--; if (playerStats.frenzyTimer > 0) playerStats.frenzyTimer--;
+        if (mob && mob.flashTimer > 0) mob.flashTimer--; 
+        if (playerStats.frenzyTimer > 0) playerStats.frenzyTimer--;
+        if (playerStats.adrenalineTimer > 0) playerStats.adrenalineTimer--;
         
         logicClock++;
 
@@ -1362,8 +1447,20 @@ window.onload = function() {
                     if (state.autoAttack) window.triggerPlayerSlash();
                 }
                 if (logicClock % 120 === 0 && mob && mob.hp > 0) {
-                    if (Math.random() < p.parry) { effects.push({ x: hero.x, y: hero.y - 15, text: "⚡ PARRY COUNTER!", color: "#9b59b6", life: 25 }); executeHitCalculations(); }
-                    else if (Math.random() < p.block) { effects.push({ x: hero.x, y: hero.y, text: "🛡️ BLOCKED", color: "#3498db", life: 20 }); }
+                    if (Math.random() < p.parry) { 
+                        effects.push({ x: hero.x, y: hero.y - 15, text: "⚡ PARRY COUNTER!", color: "#9b59b6", life: 25 }); 
+                        if (checkArtifactTrait("dodge_buff")) playerStats.adrenalineTimer = checkArtifactTrait("extend_buffs") ? 900 : 600;
+                        if (checkArtifactTrait("parry_strike")) {
+                            let counterDmg = p.atk * (playerStats.adrenalineTimer > 0 ? 2 : 1);
+                            mob.hp -= counterDmg;
+                            effects.push({ x: mob.x, y: mob.y, text: "⚔️ " + counterDmg, color: "#f1c40f", life: 20 });
+                            if (mob.hp <= 0) handleMobDeath();
+                        }
+                    }
+                    else if (Math.random() < p.block) { 
+                        effects.push({ x: hero.x, y: hero.y, text: "🛡️ BLOCKED", color: "#3498db", life: 20 }); 
+                        if (checkArtifactTrait("dodge_buff")) playerStats.adrenalineTimer = checkArtifactTrait("extend_buffs") ? 900 : 600;
+                    }
                     else {
                         let netDamage = Math.max(1, mob.damage - p.def); playerStats.currentHp -= netDamage; 
                         effects.push({ x: hero.x, y: hero.y, text: "-" + netDamage, color: "#e74c3c", life: 20 });
@@ -1411,7 +1508,15 @@ window.onload = function() {
             
             if (mob.type === "slime") {
                 let hop = mob.isStopped ? 0 : Math.abs(Math.sin(Date.now() / 150)) * 15;
-                ctx.beginPath(); ctx.arc(mob.x + mob.w/2, mob.y + mob.h - hop, mob.w/2, Math.PI, 0); ctx.fill();
+                let sx = mob.x, sy = mob.y + mob.h - hop, sw = mob.w;
+                ctx.beginPath();
+                ctx.moveTo(sx, sy);
+                ctx.quadraticCurveTo(sx, sy - mob.h, sx + sw/2, sy - mob.h);
+                ctx.quadraticCurveTo(sx + sw, sy - mob.h, sx + sw, sy);
+                ctx.lineTo(sx, sy);
+                ctx.fill();
+                ctx.fillStyle = "rgba(255,255,255,0.4)";
+                ctx.beginPath(); ctx.arc(sx + sw*0.7, sy - mob.h*0.6, 2, 0, Math.PI*2); ctx.fill();
             } else if (mob.type === "boss") {
                 ctx.fillRect(mob.x + 10, mob.y + 20, mob.w - 20, mob.h - 20);
                 ctx.fillStyle = mob.flashTimer > 0 ? "#fff" : "#27ae60";
@@ -1442,9 +1547,9 @@ window.onload = function() {
             
             ctx.fillStyle = grad;
             ctx.beginPath();
-            ctx.moveTo(hero.x + 12, -10); // Point top center
-            ctx.lineTo(hero.x - 60, canvas.height); // Wide bottom left
-            ctx.lineTo(hero.x + 80, canvas.height); // Wide bottom right
+            ctx.moveTo(hero.x + 12, -10); 
+            ctx.lineTo(hero.x - 60, canvas.height); 
+            ctx.lineTo(hero.x + 80, canvas.height); 
             ctx.fill();
             
             for(let i=0; i<8; i++) {
@@ -1459,6 +1564,19 @@ window.onload = function() {
 
         particles.forEach(pt => { ctx.fillStyle = pt.color; ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2); ctx.fill(); });
         effects.forEach(eff => { ctx.fillStyle = eff.color; ctx.font = "bold 12px sans-serif"; ctx.fillText(eff.text, eff.x, eff.y); });
+        
+        let buffEl = document.getElementById('hud-buff');
+        let buffs = [];
+        if (playerStats.frenzyTimer > 0) buffs.push(`🔥 FRENZY`);
+        if (playerStats.adrenalineTimer > 0) buffs.push(`⚡ ADRENALINE`);
+        
+        if (buffs.length > 0) {
+            buffEl.innerText = buffs.join(" | ");
+            buffEl.style.color = "#e67e22";
+        } else {
+            buffEl.innerText = "None";
+            buffEl.style.color = "#aaa";
+        }
     }
 
     function engineCycle() { 
