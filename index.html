@@ -80,23 +80,24 @@
         .btn-action.un { background: #e74c3c; }
         .btn-action.forge { background: #e67e22; margin-top: 5px; width: 100%; padding: 6px; font-size: 12px; }
         .btn-toggle {
-            background: #2980b9; color: white; border: none; padding: 6px 10px;
+            background: #2980b9; color: white; border: 2px solid transparent; padding: 6px 10px;
             border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px;
+            opacity: 0.6; transition: all 0.2s ease;
         }
-        .btn-toggle.active { background: #2ecc71; }
+        .btn-toggle.active { opacity: 1 !important; border-color: #ffffff !important; box-shadow: 0 0 10px rgba(255,255,255,0.2); }
         
         .sub-tabs { display: flex; gap: 5px; margin-bottom: 8px; }
-        .sub-tab-btn {
+        .sub-tabs .sub-tab-btn {
             background: #444; color: #ccc; border: none; padding: 4px 10px;
             font-size: 11px; border-radius: 3px; cursor: pointer; font-weight: bold;
         }
-        .sub-tab-btn.active { background: #3498db; color: white; }
+        .sub-tabs .sub-tab-btn.active { background: #3498db; color: white; }
 
         @keyframes pulseBtn { 0% { background: #c0392b; } 50% { background: #e74c3c; } 100% { background: #c0392b; } }
         .btn-pulse { animation: pulseBtn 1.5s infinite; border: 1px solid #e74c3c; }
         
         .market-card { background: #151515; border: 1px solid #444; padding: 12px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;}
-        .shop-row { display: flex; justify-content: space-between; align-items: center; background: #111; padding: 8px; border: 1px solid #333; margin-bottom: 4px; border-radius: 4px; text-align: left; }
+        .shop-row { display: flex; justify-content: space-between; align-items: center; background: #111; padding: 8px; border: 1px solid #333; margin-bottom: 4px; border-radius: 4px; text-align: left; position: relative; }
         .shop-row.iotd { border-color: #f1c40f; background: rgba(241, 196, 15, 0.05); }
 
         .tooltip-base {
@@ -131,11 +132,6 @@
         
         .live-drop-cols { display: flex; justify-content: space-between; margin-bottom: 10px; }
         .stat-hover { cursor: help; border-bottom: 1px dotted #888; pointer-events: auto; }
-
-        @keyframes toastFadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes toastFadeOut { from { opacity: 1; } to { opacity: 0; } }
-        
-        #toast-container { position: absolute; top: 45px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 8000; gap: 5px; width: 90%; max-width: 400px; }
 
         #altar-modal {
             display:none; position:fixed; top:10%; left:50%; transform:translateX(-50%); 
@@ -219,7 +215,6 @@
         <div id="fairy-modal">
             <div style="background:#151515; border:2px solid #ffb6c1; padding:20px; border-radius:8px; text-align:center; max-width:80%;">
                 <h2 style="color:#ffb6c1; margin-top:0;">🧚 Fairy Treasure!</h2>
-                <p style="font-size:14px; color:#ccc; margin-bottom:15px;">The fairy dropped a mysterious chest for you!</p>
                 <div id="fairy-reward-content" style="background:#111; border:1px dashed #ffb6c1; padding:15px; margin-bottom:15px; border-radius:4px;"></div>
                 <button class="btn-action" style="padding:10px 20px; font-size:14px;" onclick="closeFairyModal()">Claim & Resume</button>
             </div>
@@ -308,16 +303,16 @@
                                 <div>Standard Mob: <span id="live-rate-mob" style="color:#fff;">4.5%</span></div>
                                 <div>Stage Boss: <span id="live-rate-boss" style="color:#fff;">25.0%</span></div>
                                 <div>Dung. Miniboss: <span id="live-rate-dmini" style="color:#fff;">30.0%</span></div>
-                                <div style="margin-top:6px; color:#1abc9c; font-weight:bold;">Artifact Drop Rates</div>
-                                <div>Stage Boss: <span style="color:#fff;">5.0%</span></div>
-                                <div>Uber Boss: <span style="color:#fff;">30.0%</span></div>
+                                <div style="margin-top:6px; color:#1abc9c; font-weight:bold;">Special Item Multipliers</div>
+                                <div>Ancient Core Rate: <span id="live-rate-acore" style="color:#fff;">5.0%</span></div>
+                                <div>Dungeon Key Mod: <span style="color:#fff;">1.0%</span></div>
                             </div>
                             <div style="width:48%;">
                                 <div style="color:#3498db; font-weight:bold; margin-bottom:4px;">Market & World Events</div>
                                 <div style="color:#f1c40f;">• Gold Shop Refreshes: 4hrs</div>
                                 <div style="color:#f1c40f;">• IOTD Min Rarity: 1★+</div>
-                                <div style="color:#ffb6c1; margin-top:4px;">• Fairy Encounter: ~0.05% /tick</div>
-                                <div style="color:#ffb6c1;">• Fairy Loot: Guaranteed 1★ - 3★</div>
+                                <div style="color:#ffb6c1; margin-top:4px;">• Fairy Encounter: ~5 Minutes</div>
+                                <div style="color:#ffb6c1;">• Fairy Drops: Normal / Gold Bundle</div>
                             </div>
                         </div>
                     </div>
@@ -326,7 +321,7 @@
             
             <div id="tab-forge" class="tab-content" onscroll="hideTooltip()" ontouchmove="hideTooltip()">
                 <div style="display:flex; gap:10px; margin-bottom:10px;">
-                    <button id="btn-mode-temper" class="btn-toggle active" style="flex:1;" onclick="setForgeMode('temper')">Mode: TEMPER</button>
+                    <button id="btn-mode-temper" class="btn-toggle active" style="flex:1; background:#2980b9;" onclick="setForgeMode('temper')">Mode: TEMPER</button>
                     <button id="btn-mode-tier" class="btn-toggle" style="flex:1; background:#8e44ad;" onclick="setForgeMode('tier')">Mode: TIER UP</button>
                 </div>
                 <div class="forge-grid">
@@ -382,10 +377,10 @@ window.onload = function() {
         "Ancient Core": "Rare drop from Stage Bosses. Sacrifice 5 at the Ancient Altar to summon a Rift Guardian.",
         "Overlord's Sigil": "Guaranteed drop from the Equipment Dungeon Overlord. Used to temper Unique Artifacts.",
         "Mythic Scrap": "Used to temper or tier-up items. Salvaged from Mythic gear.",
-        "Legendary Scrap": "Used to temper or tier-up items. Salvaged from Legendary gear.",
-        "Epic Scrap": "Used to temper or tier-up items. Salvaged from Epic gear.",
-        "Magic Scrap": "Used to temper or tier-up items. Salvaged from Magic gear.",
-        "Rare Scrap": "Used to temper or tier-up items. Salvaged from Rare gear.",
+        "Legendary Scrap": "Used for high-level tempering. Salvaged from Legendary gear.",
+        "Epic Scrap": "Used for mid-tier tempering. Salvaged from Epic gear.",
+        "Magic Scrap": "Used for basic tempering. Salvaged from Magic gear.",
+        "Rare Scrap": "Used for early tempering. Salvaged from Rare gear.",
         "Iron Scrap": "Common material. Drops occasionally from standard enemies.",
         "Sticky Gel": "Minor craft material. Drops from slimes."
     };
@@ -433,7 +428,6 @@ window.onload = function() {
     };
 
     let equippedSlots = { weapon: null, subweapon: null, helmet: null, chest: null, leggings: null, overall: null, boots: null, art1: null, art2: null, art3: null };
-
     let inventory = { EQUIP: [], ETC: {} };
     let logsHistory = [];
     let frozenItemDb = {}; 
@@ -457,7 +451,6 @@ window.onload = function() {
     let isGamePaused = false;
     let reviveTimer = 0;
 
-    // --- RE-ADDED MISSING SWITCH TAB FUNCTION ---
     window.switchTab = function(id) {
         window.hideTooltip(); 
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -479,14 +472,14 @@ window.onload = function() {
 
     window.saveGame = function() {
         let saveData = { playerStats, equippedSlots, inventory, idCounter, logsHistory, frozenItemDb, lastSaveTime: Date.now() };
-        localStorage.setItem('postknight_save_v8', JSON.stringify(saveData));
+        localStorage.setItem('postknight_save_v9', JSON.stringify(saveData));
     };
 
     setInterval(() => { window.saveGame(); }, 60000);
     window.addEventListener('beforeunload', window.saveGame);
 
     window.loadGame = function() {
-        let data = localStorage.getItem('postknight_save_v8');
+        let data = localStorage.getItem('postknight_save_v9');
         if (data) {
             try {
                 let parsed = JSON.parse(data);
@@ -523,7 +516,7 @@ window.onload = function() {
                     
                     if (offlineMs > 60000) { 
                         let offlineSeconds = Math.floor(offlineMs / 1000);
-                        if (offlineSeconds > 28800) offlineSeconds = 28800; // 8 hour cap
+                        if (offlineSeconds > 28800) offlineSeconds = 28800; 
                         
                         let p = resolvePlayerStats();
                         let timePerKill = 60; 
@@ -553,7 +546,7 @@ window.onload = function() {
                             
                             setTimeout(() => {
                                 pushLog(`<span style='color:#3498db; font-weight:bold;'>[OFFLINE GAINS] Gone for ${Math.floor(offlineSeconds/60)} mins. Kills: ${simulatedKills}. Gold: +${goldEarned}. Items: +${actualItems}. Scraps: +${scraps}. Gacha Keys: +${gachaKeyDrop}</span>`);
-                                alert(`Offline Progress (Capped at 8 hrs)\n\nTime Offline: ${Math.floor(offlineSeconds/60)} mins\nKills Simulated: ${simulatedKills}\nGold Earned: ${goldEarned}\nItems Found: ${actualItems}\nGacha Keys Found: ${gachaKeyDrop}\nScraps Gained (Equip Bag Full): ${scraps}`);
+                                alert(`Offline Progress\n\nTime Offline: ${Math.floor(offlineSeconds/60)} mins\nKills Simulated: ${simulatedKills}\nGold Earned: ${goldEarned}\nItems Found: ${actualItems}\nGacha Keys Found: ${gachaKeyDrop}`);
                             }, 500);
                         }
                     }
@@ -595,7 +588,8 @@ window.onload = function() {
                 let chosenType = types[Math.floor(Math.random() * types.length)];
                 let cost = Math.floor(250 * stageScale * Math.pow(2.5, statLinesCount));
                 
-                playerStats.shopItems.push({ type: chosenType, statsRolled: statLinesCount, stageScale: stageScale, cost: cost, purchased: false, isIOTD: isIOTD });
+                // FIXED ID INDEX TRACKING
+                playerStats.shopItems.push({ id: idCounter++, type: chosenType, statsRolled: statLinesCount, stageScale: stageScale, cost: cost, purchased: false, isIOTD: isIOTD });
             }
             window.saveGame();
         }
@@ -609,9 +603,10 @@ window.onload = function() {
             let name = `${tierName} ${shopItem.type.toUpperCase()} (+${shopItem.stageScale})`;
             let costColor = playerStats.coins >= shopItem.cost ? "#f1c40f" : "#e74c3c";
             
-            return `<div class="shop-row ${shopItem.isIOTD ? 'iotd' : ''}">
+            // FIXED TOOLTIP HOVER ON MARKET BROKEN WRAPPERS
+            return `<div class="shop-row ${shopItem.isIOTD ? 'iotd' : ''}" onmousemove="showMarketTooltip(event, ${index})" onmouseleave="hideTooltip()" ontouchstart="showMarketTooltip(event, ${index})">
                     <div>${shopItem.isIOTD ? '<span style="background:#f1c40f; color:#000; font-size:9px; font-weight:bold; padding:1px 3px; border-radius:2px;">ITEM OF THE DAY</span><br>' : ''}<strong style="color:${nameColor}; font-size:12px;">${name}</strong><br><span style="font-size:10px; color:#aaa;">${shopItem.statsRolled}★ Quality</span></div>
-                    <div style="text-align:right;"><div style="color:${costColor}; font-weight:bold; font-size:11px; margin-bottom:4px;">${shopItem.cost} Gold</div><button class="btn-action" style="${shopItem.purchased || playerStats.coins < shopItem.cost ? 'opacity:0.5; cursor:not-allowed; background:#444;' : 'background:#f1c40f; color:#000;'}" onclick="buyShopItem(${index})">${shopItem.purchased ? 'SOLD' : 'BUY'}</button></div>
+                    <div style="text-align:right; position:relative; z-index:10;"><div style="color:${costColor}; font-weight:bold; font-size:11px; margin-bottom:4px;">${shopItem.cost} Gold</div><button class="btn-action" style="${shopItem.purchased || playerStats.coins < shopItem.cost ? 'opacity:0.5; cursor:not-allowed; background:#444;' : 'background:#f1c40f; color:#000;'}" onclick="buyShopItem(${index})">${shopItem.purchased ? 'SOLD' : 'BUY'}</button></div>
                 </div>`;
         }).join("");
     }
@@ -628,13 +623,32 @@ window.onload = function() {
         renderMarketShop(); updateUI(); window.saveGame();
     };
 
+    window.showMarketTooltip = function(e, index) {
+        let item = playerStats.shopItems[index]; if (!item || item.purchased) return;
+        
+        let mockItem = {
+            id: item.id, name: getTierName(item.statsRolled) + " " + item.type.toUpperCase() + " (+" + item.stageScale + ")",
+            type: item.type, statsRolled: item.statsRolled, temperLevel: 0, stageLevel: item.stageScale,
+            atk: 0, maxHp: 0, def: 0, moveSpeed: 0, critChance: 0, critDamage: 0, block: 0, parry: 0
+        };
+        
+        // Populate standard configuration metrics
+        if (item.type === "overall") { mockItem.maxHp = 40 * item.stageScale; }
+        else if (item.type === "chest" || item.type === "leggings" || item.type === "helmet") { mockItem.maxHp = 15 * item.stageScale; }
+        else if (item.type === "weapon" || item.type === "subweapon") { mockItem.atk = 3 * item.stageScale; }
+        else if (item.type === "boots") { mockItem.moveSpeed = 2 * item.stageScale; }
+
+        let tt = document.getElementById('game-tooltip'); tt.innerHTML = buildGeneralTooltipHtml(mockItem, true);
+        tt.style.borderColor = getTierColor(item.statsRolled); tt.style.display = "block"; window.positionTooltip(e, tt);
+    };
+
     window.buildAltarModal = function() {
         let listEl = document.getElementById('altar-list');
         listEl.innerHTML = ARTIFACT_POOL.map(art => {
             return `<div class="bag-item" style="cursor:help; border-left: 3px solid #1abc9c;" onclick="showDummyArtifact(event, '${art.trait}')">
                     <div><strong style="color:#1abc9c;">⭐ UNIQUE ${art.name}</strong><br><span style="font-size:10px;color:#d2b4de;">Trait: ${art.desc}</span></div>
                 </div>`;
-        }).join("");
+            }).join("");
     };
 
     window.showDummyArtifact = function(e, traitId) {
@@ -704,24 +718,43 @@ window.onload = function() {
     });
 
     document.addEventListener('pointerdown', (e) => {
-        if (!e.target.closest('#game-tooltip') && !e.target.closest('.bag-item') && !e.target.closest('.slots-card') && !e.target.closest('.stat-hover')) {
+        if (!e.target.closest('#game-tooltip') && !e.target.closest('.bag-item') && !e.target.closest('.slots-card') && !e.target.closest('.stat-hover') && !e.target.closest('.shop-row')) {
             window.hideTooltip();
         }
     });
 
     function triggerFairyLoot() {
         fairy.active = false; isGamePaused = true;
+        
+        let p = resolvePlayerStats();
         let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+
+        // FIXED ENCOUNTER PROFILE VALUE WEIGHT RULES
+        if (Math.random() < 0.40) {
+            // Drop a giant direct pile of Gold instead!
+            let goldYield = Math.floor(1500 * (Math.floor((playerStats.stage - 1) / 10) + 1) * p.gold);
+            playerStats.coins += goldYield;
+            document.getElementById('fairy-reward-content').innerHTML = `<strong style="color:#f1c40f; font-size:18px;">🌟 Golden Bounty!</strong><br><span style="font-size:13px; color:#fff;">+${goldYield} Gold pieces gathered!</span>`;
+            document.getElementById('fairy-modal').style.display = "flex";
+            return;
+        }
+
         if (inventory.EQUIP.length >= maxBag) { pushHeaderToast(`Inventory Full! Scrap gained.`, "#e74c3c"); addEtcDrop("Iron Scrap", 5); isGamePaused = false; return; }
 
         let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
         let chosenType = types[Math.floor(Math.random() * types.length)];
-        let statLinesCount = 1; let roll = Math.random() * 100;
         
-        if (roll < 5) statLinesCount = 3; else if (roll < 20) statLinesCount = 2; else statLinesCount = 1; 
+        // STANDARD WORLD PROBABILITY ENGINE RATIO RULES
+        let statLinesCount = 0; let luckMultiplier = p.qly; let roll = Math.random() * 100;
+        if (roll < (0.02 * luckMultiplier)) statLinesCount = 5; 
+        else if (roll < (0.18 * luckMultiplier)) statLinesCount = 4;
+        else if (roll < (0.80 * luckMultiplier)) statLinesCount = 3; 
+        else if (roll < (4.00 * luckMultiplier)) statLinesCount = 2; 
+        else if (roll < (15.00 * luckMultiplier)) statLinesCount = 1; 
+        else statLinesCount = 0;
 
         let stageScale = Math.floor((playerStats.stage - 1) / 10) + 1; 
-        generateEquipment(chosenType, statLinesCount, stageScale, "Fairy", true, 1);
+        generateEquipment(chosenType, statLinesCount, stageScale, "Fairy", true, 0);
         let newItem = inventory.EQUIP[inventory.EQUIP.length - 1]; 
 
         let color = getTierColor(newItem.statsRolled);
@@ -765,7 +798,6 @@ window.onload = function() {
         return p;
     }
 
-    // MAKE SURE TO KEEP THIS FUNCTION!
     function makeSlotHtml(slotKey, label) {
         let item = equippedSlots[slotKey]; let el = document.getElementById('slot-' + slotKey);
         if ((slotKey === 'chest' || slotKey === 'leggings') && equippedSlots.overall) { el.className = "slots-card locked"; el.innerHTML = `⚙️ LOCKED BY OVERALL`; el.style.borderColor = ""; return; }
@@ -821,10 +853,10 @@ window.onload = function() {
             
             if (playerStats.killCount >= playerStats.targetsRequired) {
                 if (playerStats.dungeonWave < 5) {
-                    let label = "MINIBOSS (Wave " + playerStats.dungeonWave + ")"; let hp = 30 * scale * hpScale;
+                    let hp = 30 * scale * hpScale;
                     mob = { x: 750, y: 120, w: 30, h: 50, type: "dungeon_miniboss", hp: Math.floor(hp), maxHp: Math.floor(hp), damage: Math.floor((1 + (2 * scale)) * 4.5), flashTimer: 0, isStopped: false };
                 } else {
-                    let label = "DUNGEON OVERLORD"; let hp = 60 * scale * hpScale;
+                    let hp = 60 * scale * hpScale;
                     mob = { x: 750, y: 90, w: 50, h: 90, type: "dungeon_boss", hp: Math.floor(hp), maxHp: Math.floor(hp), damage: Math.floor((2 + (3 * scale)) * 5.0), flashTimer: 0, isStopped: false };
                 }
             } else {
@@ -1219,6 +1251,9 @@ window.onload = function() {
     window.equipItem = function(id) {
         window.hideTooltip(); let index = inventory.EQUIP.findIndex(i => i.id === id); if (index === -1) return;
         let item = inventory.EQUIP[index];
+        
+        let oldMaxHp = resolvePlayerStats().maxHp;
+        
         if (item.type === "overall") {
             if (equippedSlots.chest) { inventory.EQUIP.push(equippedSlots.chest); equippedSlots.chest = null; }
             if (equippedSlots.leggings) { inventory.EQUIP.push(equippedSlots.leggings); equippedSlots.leggings = null; }
@@ -1235,15 +1270,28 @@ window.onload = function() {
             if (equippedSlots[item.type]) inventory.EQUIP.push(equippedSlots[item.type]);
             equippedSlots[item.type] = item;
         }
-        inventory.EQUIP.splice(index, 1); let p = resolvePlayerStats(); playerStats.currentHp = p.maxHp; updateUI(); renderInventory(); renderForgeTab();
-        window.saveGame();
+        inventory.EQUIP.splice(index, 1); 
+        
+        // HEALTH FIXED SCALING CALCULATION MODIFIERS
+        let newMaxHp = resolvePlayerStats().maxHp;
+        playerStats.currentHp = Math.max(1, Math.min(newMaxHp, Math.floor((playerStats.currentHp / oldMaxHp) * newMaxHp)));
+        
+        updateUI(); renderInventory(); renderForgeTab(); window.saveGame();
     };
 
     window.unequipItem = function(slotKey) {
         let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
         if (inventory.EQUIP.length >= maxBag) { pushHeaderToast(`Inventory Full!`, "#e74c3c"); return; }
         window.hideTooltip(); let item = equippedSlots[slotKey]; if (!item) return;
-        equippedSlots[slotKey] = null; inventory.EQUIP.push(item); updateUI(); renderInventory(); renderForgeTab(); window.saveGame();
+        
+        let oldMaxHp = resolvePlayerStats().maxHp;
+        equippedSlots[slotKey] = null; inventory.EQUIP.push(item); 
+        
+        // HEALTH FIXED SCALING CALCULATION MODIFIERS
+        let newMaxHp = resolvePlayerStats().maxHp;
+        playerStats.currentHp = Math.max(1, Math.min(newMaxHp, Math.floor((playerStats.currentHp / oldMaxHp) * newMaxHp)));
+        
+        updateUI(); renderInventory(); renderForgeTab(); window.saveGame();
     };
 
     window.selectForgeItem = function(id) { 
@@ -1256,7 +1304,8 @@ window.onload = function() {
         forgeMode = mode;
         document.getElementById('btn-mode-temper').className = mode === 'temper' ? "btn-toggle active" : "btn-toggle";
         document.getElementById('btn-mode-tier').className = mode === 'tier' ? "btn-toggle active" : "btn-toggle";
-        document.getElementById('btn-mode-tier').style.background = mode === 'tier' ? "#9b59b6" : "#2980b9";
+        document.getElementById('btn-mode-tier').style.background = mode === 'tier' ? "#8e44ad" : "#444";
+        document.getElementById('btn-mode-temper').style.background = mode === 'temper' ? "#2980b9" : "#444";
         renderForgeTab();
     };
 
@@ -1338,6 +1387,7 @@ window.onload = function() {
         
         if (allValidItems.length === 0) { listEl.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No gear.</div>"; } 
         else {
+            // FIXED TOOLTIP HOVER CONTAINERS IN FORGE INHERITANCE BUG
             listEl.innerHTML = allValidItems.map(item => {
                 let isArt = item.type === "artifact";
                 if (forgeMode === 'tier' && isArt) return ""; 
@@ -1346,7 +1396,7 @@ window.onload = function() {
                 let bgStyle = forgeSelectedItem && forgeSelectedItem.id === item.id ? "background:#2c3e50; border-left:3px solid #3498db;" : "";
                 let eqBadge = item.isEquippedSlot ? `<span style="background:#c0392b; color:white; padding:1px 3px; border-radius:2px; font-size:8px;">[EQUIPPED]</span> ` : "";
                 let rarityLabel = isArt ? "UNIQUE" : `${item.statsRolled}★`;
-                return `<div class="bag-item" style="cursor:pointer; ${bgStyle}" onclick="selectForgeItem(${item.id})">
+                return `<div class="bag-item" style="cursor:pointer; ${bgStyle}" onclick="selectForgeItem(${item.id})" onmousemove="showForgeTooltip(event, ${item.id})" onmouseleave="hideTooltip()" ontouchstart="showForgeTooltip(event, ${item.id})">
                     <div>${eqBadge}<strong style="color:${nameColor};">${item.name}${temperTag}</strong><br><span style="font-size:10px;color:#aaa;">${item.type.toUpperCase()} | ${rarityLabel}</span></div>
                 </div>`;
             }).join("");
@@ -1404,7 +1454,6 @@ window.onload = function() {
         let isBoss = (mob.type === "boss" || mob.type === "dungeon_miniboss" || mob.type === "dungeon_boss");
         
         let baseCoin = isBoss ? 10 * playerStats.stage : Math.floor(1 + (playerStats.stage * 0.5));
-        
         if (playerStats.isDungeonMode && playerStats.currentDungeon === 'gold') {
             baseCoin *= 5; if (mob.type === "dungeon_boss") baseCoin *= 4; 
         }
@@ -1653,7 +1702,8 @@ window.onload = function() {
         
         logicClock++;
         
-        if (!fairy.active && Math.random() < 0.0005) { fairy.active = true; fairy.x = -50; fairy.y = 30 + Math.random() * 60; }
+        // AUTOMATED FAIRY TIMING REBALANCING (~5 Minutes average loop ticks metrics)
+        if (!fairy.active && Math.random() < 0.00005) { fairy.active = true; fairy.x = -50; fairy.y = 30 + Math.random() * 60; }
         if (fairy.active) { fairy.x += 1.2; if (fairy.x > canvas.width + 50) fairy.active = false; }
 
         if (!mob) { 
@@ -1785,11 +1835,11 @@ window.onload = function() {
         ctx.fillStyle = "#2c3e50"; ctx.fillRect(0, -8 + bounce, 6, 4); 
         ctx.fillStyle = playerStats.frenzyTimer > 0 ? "#f1c40f" : "#e74c3c"; ctx.fillRect(-5, -20 + bounce, 4, 6); ctx.fillRect(-9, -16 + bounce, 8, 4); 
 
-        // --- SWORD SWING MATH FIX ---
-        ctx.translate(5, 10 + bounce);
+        // FIXED ANCHOR AND POSITION VECTORS FOR THE SWORD ATK MODEL
+        ctx.translate(2, 6 + bounce);
         if (hero.slashFrame) {
-            ctx.translate(15, -10); 
-            ctx.rotate(-Math.PI / 2); // Perfectly forward
+            ctx.translate(4, -4); 
+            ctx.rotate(-Math.PI / 2.3); 
             ctx.fillStyle = "#7f8c8d"; ctx.fillRect(-2, -2, 4, 10); 
             ctx.fillStyle = "#8e44ad"; ctx.fillRect(-5, 8, 10, 4); 
             ctx.fillStyle = "#ecf0f1"; ctx.fillRect(-2, 12, 4, 25); 
@@ -1808,8 +1858,15 @@ window.onload = function() {
             
             if (mob.type === "mob") {
                 if (t===0) {
-                    if (mob.isMelee) { ctx.fillRect(mob.x, mob.y, mob.w, mob.h); ctx.fillStyle="#e67e22"; ctx.fillRect(mob.x+2, mob.y+4, 10, 4); } 
-                    else { let hop = mob.isStopped ? 0 : Math.abs(Math.sin(Date.now() / 150)) * 15; let sx=mob.x, sy=mob.y+mob.h-hop, sw=mob.w; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx, sy-mob.h, sx+sw/2, sy-mob.h); ctx.quadraticCurveTo(sx+sw, sy-mob.h, sx+sw, sy); ctx.fill(); }
+                    // DETAILED IMMERSIVE SPATIAL BANDIT DESIGNS
+                    if (mob.isMelee) { 
+                        ctx.fillStyle = "#5d4037"; ctx.fillRect(mob.x, mob.y, mob.w, mob.h); 
+                        ctx.fillStyle = "#111111"; ctx.fillRect(mob.x - 2, mob.y - 4, mob.w + 4, 10); 
+                        ctx.fillStyle = "#795548"; ctx.fillRect(mob.x + 2, mob.y + 6, mob.w - 4, 6); 
+                        ctx.fillStyle = "#b0bec5"; ctx.fillRect(mob.x - 6, mob.y + 16, 6, 3); 
+                    } else { 
+                        let hop = mob.isStopped ? 0 : Math.abs(Math.sin(Date.now() / 150)) * 15; let sx=mob.x, sy=mob.y+mob.h-hop, sw=mob.w; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx, sy-mob.h, sx+sw/2, sy-mob.h); ctx.quadraticCurveTo(sx+sw, sy-mob.h, sx+sw, sy); ctx.fill(); 
+                    }
                 } else if (t===1) {
                     if (mob.isMelee) { ctx.fillRect(mob.x+10, mob.y, 4, 15); ctx.fillRect(mob.x+5, mob.y+15, 14, 25); } 
                     else { ctx.beginPath(); ctx.arc(mob.x+15, mob.y+15, 10, 0, Math.PI*2); ctx.fill(); ctx.fillRect(mob.x+5, mob.y+25, 20, 15); }
@@ -1833,7 +1890,9 @@ window.onload = function() {
                     ctx.beginPath(); ctx.arc(mob.x + mob.w/2, mob.y, 35, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(mob.x - 5, mob.y + 15, 25, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(mob.x + mob.w + 5, mob.y + 15, 25, 0, Math.PI*2); ctx.fill();
                     if (mob.flashTimer === 0) {
                         ctx.fillStyle = playerStats.currentDungeon === 'gold' ? "#7d3c98" : "#000";
-                        ctx.beginPath(); ctx.ellipse(mob.x + 12, mob.y + 25, 3, 6, 0, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.ellipse(mob.x + mob.w - 12, mob.y + 25, 3, 6, 0, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.ellipse(mob.x + mob.w/2, mob.y + 45, 6, 8, 0, 0, Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.ellipse(mob.x + 12, mob.y + 25, 3, 6, 0, 0, Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.ellipse(mob.x + mob.w - 12, mob.y + 25, 3, 6, 0, 0, Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.ellipse(mob.x + mob.w/2, mob.y + 45, 6, 8, 0, 0, Math.PI*2); ctx.fill();
                     }
                 } else {
                     if (t===0) {
@@ -1882,22 +1941,15 @@ window.onload = function() {
             ctx.strokeStyle = "#111"; ctx.lineWidth = 1; ctx.strokeRect(barX, mob.y - 12, barW, 6);
         }
 
-        // --- FAIRY GLOW AND WING FLAP FIX ---
         if (fairy.active) {
             let flap = Math.abs(Math.sin(Date.now() / 100)) * 8 + 2; 
             let hover = Math.sin(Date.now() / 200) * 10;
-            let fx = fairy.x;
-            let fy = fairy.y + hover;
+            let fx = fairy.x; let fy = fairy.y + hover;
 
-            ctx.save();
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = "#ffb6c1";
-            
+            ctx.save(); ctx.shadowBlur = 15; ctx.shadowColor = "#ffb6c1";
             ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
             ctx.beginPath(); ctx.ellipse(fx - 4, fy - 4, 6, flap, Math.PI/6, 0, Math.PI*2); ctx.ellipse(fx + 4, fy - 4, 6, flap, -Math.PI/6, 0, Math.PI*2); ctx.fill();
-            
-            ctx.fillStyle = "#ffb6c1"; 
-            ctx.beginPath(); ctx.arc(fx, fy, 6, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = "#ffb6c1"; ctx.beginPath(); ctx.arc(fx, fy, 6, 0, Math.PI*2); ctx.fill();
             ctx.restore();
         }
 
