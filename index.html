@@ -769,7 +769,6 @@ window.onload = function() {
             item.dropRate = chosenArt.dropRate; item.quality = chosenArt.quality; item.goldMulti = chosenArt.goldMulti; item.statsRolled = "UNIQUE";
             if(!silent) pushLog(`<strong style='color:#1abc9c;'>⭐ UNIQUE ARTIFACT DROPPED!</strong> Extracted: <span style='color:#1abc9c;'>${item.name}</span>!`, item.id);
         } else {
-            // VARIANCED BASE STATS
             if (chosenType === "overall") { item.baseMaxHp = randInt(30, 50) * stageScale; }
             else if (chosenType === "chest" || chosenType === "leggings" || chosenType === "helmet") { 
                 if (Math.random() > 0.5) item.baseMaxHp = randInt(10, 20) * stageScale; 
@@ -783,7 +782,6 @@ window.onload = function() {
 
             let rarityMult = 1 + (statLinesCount * 0.15);
 
-            // VARIANCED BONUS STATS WITH RARITY MULTIPLIER
             for (let i = 0; i < statLinesCount; i++) {
                 let selectedStat = pool[i % pool.length];
                 if (selectedStat === "atk") item.bonusAtk += Math.ceil(randInt(1, 2) * stageScale * rarityMult); 
@@ -1447,14 +1445,14 @@ window.onload = function() {
             processEnemySpawn(); 
             groundScroll = (groundScroll + scrollSpeed) % canvas.width; 
             bgScenery.forEach(s => { s.x -= scrollSpeed * 0.6; if(s.x < -50) s.x = canvas.width + Math.random() * 50; });
-            fgScenery.forEach(s => { s.x -= scrollSpeed * 1.5; if(s.x < -60) s.x = canvas.width + Math.random() * 50; });
+            fgScenery.forEach(s => { s.x -= scrollSpeed; if(s.x < -60) s.x = canvas.width + Math.random() * 50; });
         } else {
             if (mob.x > (hero.x + hero.w + 30)) { 
                 mob.x -= (4 + scrollSpeed); 
                 mob.isStopped = false; 
                 groundScroll = (groundScroll + scrollSpeed) % canvas.width; 
                 bgScenery.forEach(s => { s.x -= scrollSpeed * 0.6; if(s.x < -50) s.x = canvas.width + Math.random() * 50; });
-                fgScenery.forEach(s => { s.x -= scrollSpeed * 1.5; if(s.x < -60) s.x = canvas.width + Math.random() * 50; });
+                fgScenery.forEach(s => { s.x -= scrollSpeed; if(s.x < -60) s.x = canvas.width + Math.random() * 50; });
             } else {
                 mob.isStopped = true; 
                 if (logicClock % p.idleAttackSpeed === 0) {
