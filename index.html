@@ -377,6 +377,7 @@ window.onload = function() {
                         if (offlineSeconds > 28800) offlineSeconds = 28800; // 8 hour cap
                         
                         let p = resolvePlayerStats();
+                        // Enforce 1 kill per minute locally for offline calculation
                         let timePerKill = 60; 
                         let simulatedKills = Math.floor(offlineSeconds / timePerKill);
                         
@@ -415,16 +416,20 @@ window.onload = function() {
         }
     };
 
-    for(let i=0; i<10; i++) {
+    // Scenery Initialization
+    for(let i=0; i<12; i++) {
         bgScenery.push({ x: Math.random() * canvas.width, y: 180, type: Math.random() > 0.5 ? 'tree' : 'bush', size: Math.random() * 0.5 + 0.5 });
     }
-    for(let i=0; i<15; i++) {
+    
+    let flowerColors = ["#f1c40f", "#e74c3c", "#9b59b6", "#3498db", "#ffffff", "#ff7979"];
+    for(let i=0; i<25; i++) {
         let fgType = Math.random();
         fgScenery.push({ 
             x: Math.random() * canvas.width, 
             y: 190 + Math.random() * 60, 
-            type: fgType > 0.8 ? 'bush' : (fgType > 0.4 ? 'flower' : 'grass'),
-            size: Math.random() * 0.8 + 0.6
+            type: fgType > 0.8 ? 'bush' : (fgType > 0.5 ? 'flower' : 'grass'),
+            size: Math.random() * 0.7 + 0.5,
+            color: flowerColors[Math.floor(Math.random() * flowerColors.length)]
         });
     }
 
@@ -1502,23 +1507,33 @@ window.onload = function() {
 
         ctx.fillStyle = "#3e2723"; ctx.fillRect(0, 180, canvas.width, 70);
         
+        ctx.fillStyle = "#4e342e";
+        for(let i=0; i<canvas.width+80; i+=80) { 
+            let gx = i - (groundScroll % 80);
+            ctx.fillRect(gx, 200, 25, 4);
+            ctx.fillRect(gx + 35, 215, 15, 3); 
+            ctx.fillRect(gx + 10, 235, 20, 5); 
+            ctx.fillRect(gx + 60, 225, 8, 3);
+        }
+
         ctx.fillStyle = "#2ecc71"; ctx.fillRect(0, 180, canvas.width, 8);
         ctx.fillStyle = "#27ae60"; ctx.fillRect(0, 188, canvas.width, 6);
         
-        ctx.fillStyle = "#4e342e";
-        for(let i=0; i<canvas.width+80; i+=80) { 
-            ctx.fillRect(i - (groundScroll % 80), 205, 20, 3);
-            ctx.fillRect(i + 40 - (groundScroll % 80), 225, 12, 3); 
-            ctx.fillRect(i + 15 - (groundScroll % 80), 240, 25, 4); 
-        }
-        
         bgScenery.forEach(s => {
             if (s.type === 'tree') {
-                ctx.fillStyle = "#5c4033"; ctx.fillRect(s.x - 4, s.y - 40 * s.size, 8, 40 * s.size);
-                ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.arc(s.x, s.y - 40 * s.size, 20 * s.size, 0, Math.PI*2); ctx.fill();
+                let tx = s.x, ty = s.y - 40 * s.size, ts = s.size;
+                ctx.fillStyle = "#5c4033"; ctx.fillRect(tx - 6*ts, ty, 12*ts, 40 * ts);
+                ctx.fillStyle = "#3e2723"; ctx.fillRect(tx + 2*ts, ty, 4*ts, 40 * ts); 
+                
+                ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(tx, ty - 10*ts, 22 * ts, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.arc(tx - 8*ts, ty - 5*ts, 18 * ts, 0, Math.PI*2); ctx.fill(); 
+                ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(tx + 8*ts, ty - 5*ts, 18 * ts, 0, Math.PI*2); ctx.fill(); 
+                ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(tx, ty - 15*ts, 15 * ts, 0, Math.PI*2); ctx.fill(); 
             } else {
-                ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(s.x, s.y - 8 * s.size, 12 * s.size, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(s.x + 10 * s.size, s.y - 6 * s.size, 10 * s.size, 0, Math.PI*2); ctx.fill();
+                let bx = s.x, by = s.y, bs = s.size;
+                ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(bx, by - 8 * bs, 14 * bs, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.arc(bx + 10 * bs, by - 6 * bs, 10 * bs, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(bx - 10 * bs, by - 6 * bs, 10 * bs, 0, Math.PI*2); ctx.fill();
             }
         });
 
@@ -1586,20 +1601,32 @@ window.onload = function() {
         }
 
         fgScenery.forEach(s => {
+            let sx = s.x, sy = s.y, ss = s.size;
             if (s.type === 'grass') {
                 ctx.fillStyle = "#2ecc71";
-                ctx.fillRect(s.x, s.y, 2*s.size, -12*s.size);
-                ctx.fillRect(s.x+4*s.size, s.y+2*s.size, 2*s.size, -8*s.size);
-                ctx.fillRect(s.x-4*s.size, s.y-2*s.size, 2*s.size, -10*s.size);
+                ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx-5*ss, sy-10*ss, sx-8*ss, sy-15*ss); ctx.lineTo(sx-4*ss, sy); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(sx+2*ss, sy); ctx.quadraticCurveTo(sx+5*ss, sy-12*ss, sx+2*ss, sy-18*ss); ctx.lineTo(sx+6*ss, sy); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(sx+8*ss, sy); ctx.quadraticCurveTo(sx+12*ss, sy-8*ss, sx+15*ss, sy-12*ss); ctx.lineTo(sx+10*ss, sy); ctx.fill();
             } else if (s.type === 'flower') {
-                ctx.fillStyle = "#27ae60"; ctx.fillRect(s.x, s.y, 2*s.size, -14*s.size);
-                ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(s.x+1*s.size, s.y-14*s.size, 4*s.size, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(s.x+1*s.size, s.y-14*s.size, 1.5*s.size, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#27ae60"; 
+                ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx+3*ss, sy-10*ss, sx+1*ss, sy-18*ss); ctx.lineWidth=2; ctx.stroke();
+                ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.ellipse(sx+4*ss, sy-8*ss, 4*ss, 2*ss, Math.PI/4, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(sx-2*ss, sy-12*ss, 4*ss, 2*ss, -Math.PI/4, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = s.color;
+                let px = sx+1*ss, py = sy-18*ss;
+                for(let p=0; p<5; p++) {
+                    ctx.beginPath(); ctx.arc(px + Math.cos(p*Math.PI*2/5)*4*ss, py + Math.sin(p*Math.PI*2/5)*4*ss, 3*ss, 0, Math.PI*2); ctx.fill();
+                }
+                ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(px, py, 2.5*ss, 0, Math.PI*2); ctx.fill();
             } else if (s.type === 'bush') {
-                ctx.fillStyle = "#1e8449";
-                ctx.beginPath(); ctx.arc(s.x, s.y, 12*s.size, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(s.x+10*s.size, s.y-4*s.size, 10*s.size, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(s.x-10*s.size, s.y-2*s.size, 9*s.size, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#145a32"; ctx.beginPath(); ctx.arc(sx, sy, 14*ss, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#1e8449"; 
+                ctx.beginPath(); ctx.arc(sx-8*ss, sy-4*ss, 10*ss, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(sx+10*ss, sy-2*ss, 11*ss, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(sx+2*ss, sy-8*ss, 12*ss, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#27ae60"; 
+                ctx.beginPath(); ctx.arc(sx-4*ss, sy-10*ss, 6*ss, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(sx+6*ss, sy-8*ss, 5*ss, 0, Math.PI*2); ctx.fill();
             }
         });
 
