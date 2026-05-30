@@ -117,6 +117,9 @@
         .live-drop-cols { display: flex; justify-content: space-between; margin-bottom: 10px; }
         .stat-hover { cursor: help; border-bottom: 1px dotted #888; pointer-events: auto; }
 
+        @keyframes toastFadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes toastFadeOut { from { opacity: 1; } to { opacity: 0; } }
+
         /* --- MOBILE RESPONSIVENESS --- */
         @media (max-width: 600px) {
             .grid-layout { grid-template-columns: 1fr; }
@@ -135,6 +138,9 @@
 <body>
 
     <div id="game-container">
+        <!-- DOM Toast Container -->
+        <div id="toast-container" style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 8000; gap: 5px; width: 90%;"></div>
+
         <div id="game-tooltip" class="tooltip-base"></div>
         <div id="etc-tooltip" class="tooltip-base"></div>
         <div id="log-item-tooltip" class="tooltip-base"></div>
@@ -249,7 +255,20 @@
             <div id="tab-forge" class="tab-content">
                 <div class="forge-grid">
                     <div class="forge-panel" id="forge-details">
-                        <div style='color:#666;text-align:center;padding-top:80px;'>Select an item from your sack to temper.</div>
+                        <!-- Default Forge View -->
+                        <div style='color:#aaa; text-align:center; padding-top:10px;'>
+                            <div style='color:#e67e22; font-weight:bold; font-size:14px; margin-bottom:10px;'>🔨 Tempering Guide</div>
+                            <div style='font-size:11px; line-height:1.8; background:#1a1a1a; padding:10px; border-radius:4px; border:1px solid #333; text-align:left; display:inline-block;'>
+                                <span style='color:#3498db; font-weight:bold;'>1★ Rare Gear</span> ➔ Requires Rare Scrap<br>
+                                <span style='color:#9b59b6; font-weight:bold;'>2★ Magic Gear</span> ➔ Requires Magic Scrap<br>
+                                <span style='color:#e67e22; font-weight:bold;'>3★ Epic Gear</span> ➔ Requires Epic Scrap<br>
+                                <span style='color:#f1c40f; font-weight:bold;'>4★ Legendary Gear</span> ➔ Requires Legendary Scrap<br>
+                                <span style='color:#e74c3c; font-weight:bold;'>5★ Mythic Gear</span> ➔ Requires Mythic Scrap<br>
+                                <hr style='border:none; border-top:1px dashed #444; margin:8px 0;'>
+                                <span style='color:#1abc9c; font-weight:bold;'>⭐ Unique Artifacts cannot be tempered.</span><br><br>
+                                <i style='color:#7f8c8d;'>Select an unequipped item from your sack to view its specific Gold and Scrap cost.</i>
+                            </div>
+                        </div>
                     </div>
                     <div class="bag-container" id="forge-list"></div>
                 </div>
@@ -325,7 +344,6 @@ window.onload = function() {
     let mob = null;
     let effects = [];
     let particles = []; 
-    let activeToasts = [];
     let scenery = [];
     
     let groundScroll = 0;
@@ -370,9 +388,9 @@ window.onload = function() {
                 if (parsed.lastSaveTime) {
                     let now = Date.now();
                     let offlineMs = now - parsed.lastSaveTime;
-                    if (offlineMs > 60000) { // Off for more than 1 minute
+                    if (offlineMs > 60000) { 
                         let offlineSeconds = Math.floor(offlineMs / 1000);
-                        if (offlineSeconds > 7200) offlineSeconds = 7200; // 2 hour cap
+                        if (offlineSeconds > 7200) offlineSeconds = 7200; 
                         
                         let p = resolvePlayerStats();
                         let effMultiplier = 1 + (p.critChance * (p.critDamage - 1));
@@ -399,7 +417,7 @@ window.onload = function() {
                             let scraps = 0;
                             for(let i=0; i<dropsEarned; i++) {
                                 if (inventory.EQUIP.length < 20) {
-                                    rollEquipmentDrop(false, true); // true flag for silent/offline roll
+                                    rollEquipmentDrop(false, true); 
                                     actualItems++;
                                 } else {
                                     scraps++;
@@ -497,23 +515,41 @@ window.onload = function() {
         box.innerHTML = logsHistory.join("<br><br>");
     }
 
-    function pushToast(name, stars, color, isEtc = false, quantity = 1) {
-        let label = isEtc ? `📦 +${quantity} Loot` : (stars === "UNIQUE" ? "⭐ UNIQUE DETECTED!" : `⚔️ ITEM FOUND (${stars}★)`);
-        let baseOffset = 30;
-        let activeCounts = activeToasts.length;
-        let yStart = baseOffset + (activeCounts * 32);
+    // --- DOM Toast System ---
+    function pushToast(name, stars, color, isEtc = false, quantity = 1, customText = null) {
+        let container = document.getElementById('toast-container');
+        let toast = document.createElement('div');
         
-        activeToasts.push({ 
-            name: name, stars: stars, color: color, label: label, 
-            yOffset: yStart, targetY: yStart, alpha: 1, life: 150 
-        });
+        toast.style.background = "rgba(11, 15, 18, 0.95)";
+        toast.style.border = `2px solid ${color}`;
+        toast.style.color = "#fff";
+        toast.style.padding = "8px 16px";
+        toast.style.borderRadius = "6px";
+        toast.style.fontSize = "11px";
+        toast.style.fontWeight = "bold";
+        toast.style.textAlign = "center";
+        toast.style.boxShadow = "0 4px 15px rgba(0,0,0,0.6)";
+        toast.style.animation = "toastFadeIn 0.3s ease-out";
+        toast.style.maxWidth = "100%";
+        toast.style.pointerEvents = "none";
+        
+        if (customText) {
+            toast.innerHTML = customText;
+        } else {
+            let label = isEtc ? `📦 +${quantity} Loot` : (stars === "UNIQUE" ? "⭐ UNIQUE DETECTED!" : `⚔️ ITEM FOUND (${stars}★)`);
+            toast.innerHTML = `${label} : <span style="color:${color}">${name}</span>`;
+        }
+
+        container.prepend(toast); 
+        
+        setTimeout(() => {
+            toast.style.animation = "toastFadeOut 0.5s ease-in forwards";
+            setTimeout(() => toast.remove(), 450);
+        }, 2800);
     }
     
     function pushHeaderToast(text, color) {
-        activeToasts.push({ 
-            name: "", stars: null, color: color, label: text, 
-            yOffset: 30 + (activeToasts.length * 32), alpha: 1, life: 100, isHeader: true 
-        });
+        pushToast("", null, color, false, 0, text);
     }
 
     function processEnemySpawn() {
@@ -618,7 +654,18 @@ window.onload = function() {
             }
         }
         
+        // Salvage Particles
+        for(let i=0; i<30; i++) {
+            particles.push({
+                x: canvas.width / 2, y: canvas.height / 2,
+                vx: (Math.random() - 0.5) * 12, vy: (Math.random() - 0.5) * 12,
+                radius: Math.random() * 3 + 1.5, color: Math.random() > 0.5 ? "#bdc3c7" : "#e74c3c", alpha: 1, life: 35
+            });
+        }
+        
         pushLog(`<span style='color:#e74c3c;'>[SALVAGE]</span> Dismantled ${item.name} yielding: ${scrapsGained.join(", ")}`);
+        pushHeaderToast(`♻️ Salvaged: ${scrapsGained.join(", ")}`, "#e74c3c");
+        
         if (forgeSelectedItem && forgeSelectedItem.id === id) { forgeSelectedItem = null; renderForgeTab(); }
         updateUI();
         renderInventory();
@@ -751,7 +798,7 @@ window.onload = function() {
     function rollEquipmentDrop(isBossKill, silent = false) {
         if (inventory.EQUIP.length >= 20) {
             if(!silent) {
-                pushToast("Bag Full! Scrap gained.", null, "#e74c3c", true, 1);
+                pushHeaderToast("Bag Full! Scrap gained.", "#e74c3c");
                 addEtcDrop(isBossKill ? "Ancient Core" : "Iron Scrap", 1);
             }
             return;
@@ -1026,20 +1073,39 @@ window.onload = function() {
 
     function renderForgeTab() {
         let listEl = document.getElementById('forge-list'); let detailEl = document.getElementById('forge-details');
+        
         if (inventory.EQUIP.length === 0) {
             listEl.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No unequipped gear to temper.</div>";
-            detailEl.innerHTML = "<div style='color:#666;text-align:center;padding-top:80px;'>Select an item from your sack to temper.</div>"; return;
+        } else {
+            listEl.innerHTML = inventory.EQUIP.map(item => {
+                if (item.type === "artifact") return "";
+                let nameColor = getTierColor(item.statsRolled); let temperTag = item.temperLevel > 0 ? ` [+${item.temperLevel}]` : "";
+                let bgStyle = forgeSelectedItem && forgeSelectedItem.id === item.id ? "background:#2c3e50; border-left:3px solid #3498db;" : "";
+                return `<div class="bag-item" style="cursor:pointer; ${bgStyle}" onclick="selectForgeItem(${item.id})">
+                    <div><strong style="color:${nameColor};">${item.name}${temperTag}</strong><br><span style="font-size:10px;color:#aaa;">${item.type.toUpperCase()} | ${item.statsRolled}★</span></div>
+                </div>`;
+            }).join("");
         }
-        listEl.innerHTML = inventory.EQUIP.map(item => {
-            if (item.type === "artifact") return "";
-            let nameColor = getTierColor(item.statsRolled); let temperTag = item.temperLevel > 0 ? ` [+${item.temperLevel}]` : "";
-            let bgStyle = forgeSelectedItem && forgeSelectedItem.id === item.id ? "background:#2c3e50; border-left:3px solid #3498db;" : "";
-            return `<div class="bag-item" style="cursor:pointer; ${bgStyle}" onclick="selectForgeItem(${item.id})">
-                <div><strong style="color:${nameColor};">${item.name}${temperTag}</strong><br><span style="font-size:10px;color:#aaa;">${item.type.toUpperCase()} | ${item.statsRolled}★</span></div>
-            </div>`;
-        }).join("");
 
-        if (!forgeSelectedItem) { detailEl.innerHTML = "<div style='color:#666;text-align:center;padding-top:80px;'>Select an item from your sack to temper.</div>"; return; }
+        if (!forgeSelectedItem) { 
+            detailEl.innerHTML = `
+                <div style='color:#aaa; text-align:center; padding-top:10px;'>
+                    <div style='color:#e67e22; font-weight:bold; font-size:14px; margin-bottom:10px;'>🔨 Tempering Guide</div>
+                    <div style='font-size:11px; line-height:1.8; background:#1a1a1a; padding:10px; border-radius:4px; border:1px solid #333; text-align:left; display:inline-block;'>
+                        <span style='color:#3498db; font-weight:bold;'>1★ Rare Gear</span> ➔ Requires Rare Scrap<br>
+                        <span style='color:#9b59b6; font-weight:bold;'>2★ Magic Gear</span> ➔ Requires Magic Scrap<br>
+                        <span style='color:#e67e22; font-weight:bold;'>3★ Epic Gear</span> ➔ Requires Epic Scrap<br>
+                        <span style='color:#f1c40f; font-weight:bold;'>4★ Legendary Gear</span> ➔ Requires Legendary Scrap<br>
+                        <span style='color:#e74c3c; font-weight:bold;'>5★ Mythic Gear</span> ➔ Requires Mythic Scrap<br>
+                        <hr style='border:none; border-top:1px dashed #444; margin:8px 0;'>
+                        <span style='color:#1abc9c; font-weight:bold;'>⭐ Unique Artifacts cannot be tempered.</span><br><br>
+                        <i style='color:#7f8c8d;'>Select an unequipped item from your sack to view its specific Gold and Scrap cost.</i>
+                    </div>
+                </div>
+            `;
+            return; 
+        }
+
         let item = forgeSelectedItem; let maxT = getMaxTemper(item.statsRolled); let titleColor = getTierColor(item.statsRolled);
         let temperTag = item.temperLevel > 0 ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>` : "";
         let html = `<div style="font-weight:bold; font-size:13px; color:${titleColor}; border-bottom:1px solid #333; padding-bottom:4px; margin-bottom:10px;">${item.name}${temperTag}</div>`;
@@ -1123,7 +1189,7 @@ window.onload = function() {
         overlay.style.display = "flex";
         setTimeout(() => { 
             overlay.style.display = "none"; 
-            reviveTimer = 90; // Trigger revive God Ray animation
+            reviveTimer = 90;
             isGamePaused = false;
             window.saveGame();
         }, 1500);
@@ -1279,19 +1345,6 @@ window.onload = function() {
         if (mob && mob.flashTimer > 0) mob.flashTimer--; if (playerStats.frenzyTimer > 0) playerStats.frenzyTimer--;
         
         logicClock++;
-        
-        for (let i = activeToasts.length - 1; i >= 0; i--) {
-            let t = activeToasts[i];
-            t.life--;
-            if (t.yOffset > t.targetY) t.yOffset -= 1.5;
-            else if (t.yOffset < t.targetY) t.yOffset += 1.5;
-            
-            if (t.life < 30) t.alpha -= 0.034;
-            if (t.life <= 0) {
-                activeToasts.splice(i, 1);
-                activeToasts.forEach((remT, idx) => { remT.targetY = 30 + (idx * 32); });
-            }
-        }
 
         if (!mob) { 
             processEnemySpawn(); 
@@ -1379,21 +1432,25 @@ window.onload = function() {
             ctx.strokeStyle = "#111"; ctx.lineWidth = 1; ctx.strokeRect(barX, mob.y - 12, barW, 6);
         }
 
-        // Draw God Rays Revive Animation
         if (reviveTimer > 0) {
             ctx.save();
             ctx.globalAlpha = reviveTimer / 90;
-            ctx.fillStyle = "rgba(241, 196, 15, 0.4)";
+            
+            let grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            grad.addColorStop(0, "rgba(255, 255, 200, 0.8)");
+            grad.addColorStop(1, "rgba(255, 255, 200, 0)");
+            
+            ctx.fillStyle = grad;
             ctx.beginPath();
-            ctx.moveTo(hero.x + 12, hero.y + 20);
-            ctx.lineTo(hero.x - 80, -50);
-            ctx.lineTo(hero.x + 100, -50);
+            ctx.moveTo(hero.x + 12, -10); // Point top center
+            ctx.lineTo(hero.x - 60, canvas.height); // Wide bottom left
+            ctx.lineTo(hero.x + 80, canvas.height); // Wide bottom right
             ctx.fill();
             
             for(let i=0; i<8; i++) {
                 ctx.fillStyle = "#fff";
                 ctx.beginPath();
-                ctx.arc(hero.x - 30 + Math.random()*80, hero.y - Math.random()*(90-reviveTimer)*3, Math.random()*2+1, 0, Math.PI*2);
+                ctx.arc(hero.x - 40 + Math.random()*100, canvas.height - Math.random()*(90-reviveTimer)*4, Math.random()*2+1, 0, Math.PI*2);
                 ctx.fill();
             }
             ctx.restore();
@@ -1402,18 +1459,6 @@ window.onload = function() {
 
         particles.forEach(pt => { ctx.fillStyle = pt.color; ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2); ctx.fill(); });
         effects.forEach(eff => { ctx.fillStyle = eff.color; ctx.font = "bold 12px sans-serif"; ctx.fillText(eff.text, eff.x, eff.y); });
-
-        // Draw active toasts stacked (dynamically sized for mobile)
-        activeToasts.forEach(toast => {
-            ctx.save(); ctx.globalAlpha = Math.max(0, toast.alpha);
-            ctx.fillStyle = "rgba(11, 15, 18, 0.9)"; ctx.strokeStyle = toast.color; ctx.lineWidth = 2;
-            let boxWidth = Math.min(340, canvas.width - 20); let boxHeight = 28; let boxX = (canvas.width / 2) - (boxWidth / 2); let boxY = toast.yOffset;
-            ctx.fillRect(boxX, boxY, boxWidth, boxHeight); ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
-            ctx.fillStyle = "#ffffff"; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center";
-            let fullText = toast.isHeader ? toast.label : `${toast.label} : ${toast.name}`;
-            ctx.fillText(fullText, canvas.width / 2, boxY + 17, boxWidth - 10);
-            ctx.restore();
-        });
     }
 
     function engineCycle() { 
