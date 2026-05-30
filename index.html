@@ -302,6 +302,9 @@ window.onload = function() {
         renderInventory();
     };
 
+    function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+    function randFloat(min, max) { return Math.random() * (max - min) + min; }
+
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
@@ -374,7 +377,6 @@ window.onload = function() {
                         if (offlineSeconds > 28800) offlineSeconds = 28800; // 8 hour cap
                         
                         let p = resolvePlayerStats();
-                        // Enforce 1 kill per minute locally for offline calculation
                         let timePerKill = 60; 
                         let simulatedKills = Math.floor(offlineSeconds / timePerKill);
                         
@@ -767,29 +769,33 @@ window.onload = function() {
             item.dropRate = chosenArt.dropRate; item.quality = chosenArt.quality; item.goldMulti = chosenArt.goldMulti; item.statsRolled = "UNIQUE";
             if(!silent) pushLog(`<strong style='color:#1abc9c;'>⭐ UNIQUE ARTIFACT DROPPED!</strong> Extracted: <span style='color:#1abc9c;'>${item.name}</span>!`, item.id);
         } else {
-            if (chosenType === "overall") { item.baseMaxHp = Math.ceil(40 * stageScale); }
+            // VARIANCED BASE STATS
+            if (chosenType === "overall") { item.baseMaxHp = randInt(30, 50) * stageScale; }
             else if (chosenType === "chest" || chosenType === "leggings" || chosenType === "helmet") { 
-                if (Math.random() > 0.5) item.baseMaxHp = Math.ceil(15 * stageScale); 
-                else item.baseDef = Math.ceil(2 * stageScale); 
+                if (Math.random() > 0.5) item.baseMaxHp = randInt(10, 20) * stageScale; 
+                else item.baseDef = randInt(1, 3) * stageScale; 
             }
-            else if (chosenType === "weapon" || chosenType === "subweapon") { item.baseAtk = Math.ceil(3 * stageScale); }
-            else if (chosenType === "boots") { item.baseMoveSpeed = Math.ceil(2 * stageScale); }
+            else if (chosenType === "weapon" || chosenType === "subweapon") { item.baseAtk = randInt(2, 4) * stageScale; }
+            else if (chosenType === "boots") { item.baseMoveSpeed = randInt(1, 3) * stageScale; }
 
             let pool = ["critChance", "critDamage", "block", "parry", "atk", "maxHp", "def", "moveSpeed", "activeSpd", "idleSpd"];
             pool.sort(() => Math.random() - 0.5);
 
+            let rarityMult = 1 + (statLinesCount * 0.15);
+
+            // VARIANCED BONUS STATS WITH RARITY MULTIPLIER
             for (let i = 0; i < statLinesCount; i++) {
                 let selectedStat = pool[i % pool.length];
-                if (selectedStat === "atk") item.bonusAtk += Math.ceil(1 * stageScale); 
-                if (selectedStat === "maxHp") item.bonusMaxHp += Math.ceil(5 * stageScale); 
-                if (selectedStat === "def") item.bonusDef += Math.ceil(1 * stageScale);
-                if (selectedStat === "moveSpeed") item.bonusMoveSpeed += Math.ceil(1 * stageScale);
-                if (selectedStat === "critChance") item.bonusCritChance += parseFloat((0.02 * stageScale).toFixed(2)); 
-                if (selectedStat === "critDamage") item.bonusCritDamage += parseFloat((0.05 * stageScale).toFixed(2));
-                if (selectedStat === "block") item.bonusBlock += parseFloat((0.01 * stageScale).toFixed(2)); 
-                if (selectedStat === "parry") item.bonusParry += parseFloat((0.01 * stageScale).toFixed(2));
-                if (selectedStat === "activeSpd") item.bonusActiveSpeed -= 1; 
-                if (selectedStat === "idleSpd") item.bonusIdleSpeed -= 3;
+                if (selectedStat === "atk") item.bonusAtk += Math.ceil(randInt(1, 2) * stageScale * rarityMult); 
+                if (selectedStat === "maxHp") item.bonusMaxHp += Math.ceil(randInt(3, 8) * stageScale * rarityMult); 
+                if (selectedStat === "def") item.bonusDef += Math.ceil(randInt(1, 2) * stageScale * rarityMult);
+                if (selectedStat === "moveSpeed") item.bonusMoveSpeed += Math.ceil(randInt(1, 2) * stageScale * rarityMult);
+                if (selectedStat === "critChance") item.bonusCritChance += parseFloat((randFloat(0.01, 0.025) * stageScale * rarityMult).toFixed(2)); 
+                if (selectedStat === "critDamage") item.bonusCritDamage += parseFloat((randFloat(0.03, 0.06) * stageScale * rarityMult).toFixed(2));
+                if (selectedStat === "block") item.bonusBlock += parseFloat((randFloat(0.005, 0.015) * stageScale * rarityMult).toFixed(2)); 
+                if (selectedStat === "parry") item.bonusParry += parseFloat((randFloat(0.005, 0.015) * stageScale * rarityMult).toFixed(2));
+                if (selectedStat === "activeSpd") item.bonusActiveSpeed -= randInt(1, 2); 
+                if (selectedStat === "idleSpd") item.bonusIdleSpeed -= randInt(2, 4); 
             }
 
             item.atk = item.baseAtk + item.bonusAtk; item.maxHp = item.baseMaxHp + item.bonusMaxHp; 
