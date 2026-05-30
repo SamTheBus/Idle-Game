@@ -97,7 +97,7 @@
         .btn-pulse { animation: pulseBtn 1.5s infinite; border: 1px solid #e74c3c; }
         
         .market-card { background: #151515; border: 1px solid #444; padding: 12px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;}
-        .shop-row { display: flex; justify-content: space-between; align-items: center; background: #111; padding: 8px; border: 1px solid #333; margin-bottom: 4px; border-radius: 4px; text-align: left; position: relative; }
+        .shop-row { display: flex; justify-content: space-between; align-items: center; background: #111; padding: 8px; border: 1px solid #333; margin-bottom: 4px; border-radius: 4px; text-align: left; position: relative; cursor: help;}
         .shop-row.iotd { border-color: #f1c40f; background: rgba(241, 196, 15, 0.05); }
 
         .tooltip-base {
@@ -156,7 +156,7 @@
             .live-drop-cols { flex-direction: column; }
             .live-drop-cols > div { width: 100%; margin-bottom: 10px; }
             #control-bar { flex-direction: column; gap: 8px; padding: 15px; }
-            #toast-container { position: fixed; top: 15px; }
+            #toast-container { position: fixed; top: 15px; left: 50%; transform: translateX(-50%); }
         }
     </style>
 </head>
@@ -215,8 +215,7 @@
         <div id="fairy-modal">
             <div style="background:#151515; border:2px solid #ffb6c1; padding:20px; border-radius:8px; text-align:center; max-width:80%;">
                 <h2 style="color:#ffb6c1; margin-top:0;">🧚 Fairy Treasure!</h2>
-                <p style="font-size:14px; color:#ccc; margin-bottom:15px;">The fairy dropped a mysterious chest for you!</p>
-                <div id="fairy-reward-content" style="background:#111; border:1px dashed #ffb6c1; padding:15px; margin-bottom:15px; border-radius:4px;"></div>
+                <div id="fairy-reward-content" style="background:#111; border:1px dashed #ffb6c1; padding:15px; margin-bottom:15px; border-radius:4px; line-height: 1.5;"></div>
                 <button class="btn-action" style="padding:10px 20px; font-size:14px;" onclick="closeFairyModal()">Claim & Resume</button>
             </div>
         </div>
@@ -323,7 +322,7 @@
             <div id="tab-forge" class="tab-content" onscroll="hideTooltip()" ontouchmove="hideTooltip()">
                 <div style="display:flex; gap:10px; margin-bottom:10px;">
                     <button id="btn-mode-temper" class="btn-toggle active" style="flex:1; background:#2980b9;" onclick="setForgeMode('temper')">Mode: TEMPER</button>
-                    <button id="btn-mode-tier" class="btn-toggle" style="flex:1; background:#8e44ad;" onclick="setForgeMode('tier')">Mode: TIER UP</button>
+                    <button id="btn-mode-tier" class="btn-toggle" style="flex:1; background:transparent;" onclick="setForgeMode('tier')">Mode: TIER UP</button>
                 </div>
                 <div class="forge-grid">
                     <div class="forge-panel" id="forge-details"></div>
@@ -387,7 +386,7 @@ window.onload = function() {
     };
 
     const ARTIFACT_POOL = [
-        { name: "Berserker Stone", trait: "frenzy", desc: "Grants Frenzy Mode for 10s every 10 kills", breakdown: "<strong>Frenzy Buff Breakdown:</strong><br>• Attack Speed: Max Haste (4-frame cap)<br>• Crit Chance: <span style='color:#e67e22;'>100% Guaranteed</span><br>• Crit Damage: <span style='color:#f1c40f;'>+50% Extra Multiplier</span>", dropRate: 0, quality: 0, goldMulti: 0 },
+        { name: "Berserker Stone", trait: "frenzy", desc: "Grants Frenzy Mode for 10s every 10 kills", breakdown: "<strong>Frenzy Buff Breakdown:</strong><br>• Active Atk Spd: Max Haste (4-frame cap)<br>• Crit Chance: <span style='color:#e67e22;'>100% Guaranteed</span><br>• Crit Multi: <span style='color:#f1c40f;'>+50% Extra Multiplier</span>", dropRate: 0, quality: 0, goldMulti: 0 },
         { name: "Blood-Soaked Chalice", trait: "vampirism", desc: "Heals 10% of damage dealt on every hit", breakdown: "<strong>Vampirism Breakdown:</strong><br>• Life Steal: <span style='color:#e74c3c;'>10% of total slash damage</span> directly heals your HP pool.", dropRate: 0, quality: 0, goldMulti: 0 },
         { name: "Philosopher's Anchor", trait: "gold_hoard", desc: "Permanent x1.50 Gold Multiplier bonus", breakdown: "<strong>Hoard Breakdown:</strong><br>• Multiplies all direct gold drops from mobs and bosses by flat <span style='color:#f1c40f;'>+50%</span>.", dropRate: 0, quality: 0, goldMulti: 0.50 },
         { name: "Gilded Scarab", trait: "magic_find", desc: "+50% Drop Rate and +30% Drop Quality", breakdown: "<strong>Scarab Hunting Breakdown:</strong><br>• Drop Rate: <span style='color:#2ecc71;'>+50% Item Frequency</span><br>• Drop Quality: <span style='color:#9b59b6;'>+30% Higher Stat Line Probability</span>", dropRate: 0.50, quality: 0.30, goldMulti: 0 },
@@ -473,14 +472,14 @@ window.onload = function() {
 
     window.saveGame = function() {
         let saveData = { playerStats, equippedSlots, inventory, idCounter, logsHistory, frozenItemDb, lastSaveTime: Date.now() };
-        localStorage.setItem('postknight_save_v9', JSON.stringify(saveData));
+        localStorage.setItem('postknight_save_v10', JSON.stringify(saveData));
     };
 
     setInterval(() => { window.saveGame(); }, 60000);
     window.addEventListener('beforeunload', window.saveGame);
 
     window.loadGame = function() {
-        let data = localStorage.getItem('postknight_save_v9');
+        let data = localStorage.getItem('postknight_save_v10');
         if (data) {
             try {
                 let parsed = JSON.parse(data);
@@ -586,6 +585,7 @@ window.onload = function() {
             let chosenArt = ARTIFACT_POOL[Math.floor(Math.random() * ARTIFACT_POOL.length)];
             item.name = `⭐ UNIQUE ${chosenArt.name}`; item.trait = chosenArt.trait; item.desc = chosenArt.desc; item.breakdown = chosenArt.breakdown;
             item.dropRate = chosenArt.dropRate; item.quality = chosenArt.quality; item.goldMulti = chosenArt.goldMulti;
+            item.statsRolled = "UNIQUE";
             statLinesCount = 3; 
         } else {
             if (chosenType === "overall") { item.baseMaxHp = randInt(30, 50) * stageScale; }
@@ -812,7 +812,9 @@ window.onload = function() {
 
         let stageScale = Math.floor((playerStats.stage - 1) / 10) + 1; 
         let newItem = createItemObject(chosenType, statLinesCount, stageScale, 0);
+        
         inventory.EQUIP.push(newItem);
+        pushLog(`<strong style='color:#ffb6c1;'>[FAIRY]</strong> Dropped: <span style='color:${getTierColor(newItem.statsRolled)};'>${newItem.name}</span>`, newItem.id);
 
         let color = getTierColor(newItem.statsRolled);
         document.getElementById('fairy-reward-content').innerHTML = `<strong style="color:${color}; font-size:16px;">${newItem.name}</strong><br><span style="font-size:12px; color:#aaa;">${newItem.statsRolled}★ ${getTierName(newItem.statsRolled)}</span>`;
@@ -821,6 +823,67 @@ window.onload = function() {
 
     window.closeFairyModal = function() {
         document.getElementById('fairy-modal').style.display = "none"; isGamePaused = false; updateUI(); renderInventory(); renderForgeTab();
+    }
+
+    function generateEquipment(chosenType, statLinesCount, stageScale, sourceName, silent = false, minStars = 0) {
+        let item = createItemObject(chosenType, statLinesCount, stageScale, minStars);
+        
+        if (!silent) {
+            if (item.type === "artifact") {
+                pushLog(`<strong style='color:#1abc9c;'>⭐ UNIQUE ARTIFACT DROPPED!</strong> Extracted: <span style='color:#1abc9c;'>${item.name}</span>!`, item.id);
+            } else if (sourceName === "Gacha") { 
+                pushLog(`<strong style='color:#f1c40f;'>[GACHA]</strong> Dispensed: <span style='color:${getTierColor(item.statsRolled)};'>${item.name}</span>`, item.id); 
+            } else { 
+                pushLog(`<strong style='color:#ff9f43;'>BOSS KILLED!</strong> Found: <span style='color:${getTierColor(item.statsRolled)};'>${item.name}</span>`, item.id); 
+            }
+        }
+
+        if(!silent) pushToast(item.name, item.statsRolled, getTierColor(item.statsRolled));
+        inventory.EQUIP.push(item);
+        if(!silent) { renderInventory(); renderForgeTab(); updateUI(); }
+    }
+
+    function rollEquipmentDrop(isBossKill, silent = false, minStars = 0) {
+        let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+        if (inventory.EQUIP.length >= maxBag) {
+            if(!silent) { pushHeaderToast(`Bag Full! Scrap gained.`, "#e74c3c"); addEtcDrop(isBossKill ? "Ancient Core" : "Iron Scrap", 1); }
+            return;
+        }
+
+        let p = resolvePlayerStats();
+        let artifactChance = playerStats.isUberBoss ? 0.30 : 0.05;
+        let allowArtifact = isBossKill && (Math.random() < artifactChance); 
+        
+        let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+        let chosenType = allowArtifact ? "artifact" : types[Math.floor(Math.random() * types.length)];
+
+        let statLinesCount = 0; let luckMultiplier = p.qly; let roll = Math.random() * 100;
+        
+        if (minStars === 1) {
+            if (roll < (0.5 * luckMultiplier)) statLinesCount = 5; else if (roll < (5.0 * luckMultiplier)) statLinesCount = 4;
+            else if (roll < (25.0 * luckMultiplier)) statLinesCount = 3; else if (roll < (60.0 * luckMultiplier)) statLinesCount = 2; else statLinesCount = 1; 
+        } else {
+            if (roll < (0.02 * luckMultiplier)) statLinesCount = 5; else if (roll < (0.18 * luckMultiplier)) statLinesCount = 4;
+            else if (roll < (0.80 * luckMultiplier)) statLinesCount = 3; else if (roll < (4.00 * luckMultiplier)) statLinesCount = 2; 
+            else if (roll < (15.00 * luckMultiplier)) statLinesCount = 1; else statLinesCount = 0;
+        }
+
+        let stageScale = Math.floor((playerStats.stage - 1) / 10) + 1; 
+        generateEquipment(chosenType, statLinesCount, stageScale, isBossKill ? "Boss" : "Route", silent, minStars);
+    }
+
+    function rollGachaDrop() {
+        let p = resolvePlayerStats();
+        let allowArtifact = (Math.random() < 0.01); 
+        let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+        let chosenType = allowArtifact ? "artifact" : types[Math.floor(Math.random() * types.length)];
+        let statLinesCount = 1; let luckMultiplier = p.qly; let roll = Math.random() * 100;
+        
+        if (roll < (0.5 * luckMultiplier)) statLinesCount = 5; else if (roll < (2.0 * luckMultiplier)) statLinesCount = 4;
+        else if (roll < (10.0 * luckMultiplier)) statLinesCount = 3; else if (roll < (30.0 * luckMultiplier)) statLinesCount = 2; else statLinesCount = 1; 
+
+        let stageScale = Math.floor((playerStats.stage - 1) / 10) + 1;
+        generateEquipment(chosenType, statLinesCount, stageScale, "Gacha");
     }
 
     function checkArtifactTrait(traitName) {
@@ -1202,6 +1265,8 @@ window.onload = function() {
         window.hideTooltip(); let index = inventory.EQUIP.findIndex(i => i.id === id); if (index === -1) return;
         let item = inventory.EQUIP[index];
         
+        let oldMaxHp = resolvePlayerStats().maxHp;
+        
         if (item.type === "overall") {
             if (equippedSlots.chest) { inventory.EQUIP.push(equippedSlots.chest); equippedSlots.chest = null; }
             if (equippedSlots.leggings) { inventory.EQUIP.push(equippedSlots.leggings); equippedSlots.leggings = null; }
@@ -1221,7 +1286,7 @@ window.onload = function() {
         inventory.EQUIP.splice(index, 1); 
         
         let newMaxHp = resolvePlayerStats().maxHp;
-        playerStats.currentHp = Math.min(playerStats.currentHp, newMaxHp);
+        playerStats.currentHp = Math.max(1, Math.min(newMaxHp, Math.floor((playerStats.currentHp / oldMaxHp) * newMaxHp)));
         
         updateUI(); renderInventory(); renderForgeTab(); window.saveGame();
     };
@@ -1231,10 +1296,11 @@ window.onload = function() {
         if (inventory.EQUIP.length >= maxBag) { pushHeaderToast(`Inventory Full!`, "#e74c3c"); return; }
         window.hideTooltip(); let item = equippedSlots[slotKey]; if (!item) return;
         
+        let oldMaxHp = resolvePlayerStats().maxHp;
         equippedSlots[slotKey] = null; inventory.EQUIP.push(item); 
         
         let newMaxHp = resolvePlayerStats().maxHp;
-        playerStats.currentHp = Math.min(playerStats.currentHp, newMaxHp);
+        playerStats.currentHp = Math.max(1, Math.min(newMaxHp, Math.floor((playerStats.currentHp / oldMaxHp) * newMaxHp)));
         
         updateUI(); renderInventory(); renderForgeTab(); window.saveGame();
     };
