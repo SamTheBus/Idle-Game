@@ -328,7 +328,8 @@ window.onload = function() {
     let mob = null;
     let effects = [];
     let particles = []; 
-    let scenery = [];
+    let bgScenery = [];
+    let fgScenery = [];
     
     let groundScroll = 0;
     let logicClock = 0;
@@ -370,16 +371,11 @@ window.onload = function() {
                     let offlineMs = now - parsed.lastSaveTime;
                     if (offlineMs > 60000) { 
                         let offlineSeconds = Math.floor(offlineMs / 1000);
-                        if (offlineSeconds > 7200) offlineSeconds = 7200; 
+                        if (offlineSeconds > 28800) offlineSeconds = 28800; // 8 hour cap
                         
                         let p = resolvePlayerStats();
-                        let effMultiplier = 1 + (p.critChance * (p.critDamage - 1));
-                        let idps = (p.atk * effMultiplier) * (60 / p.idleAttackSpeed);
-                        
-                        let stageScale = 1 + (playerStats.stage * 0.15);
-                        let mobHp = Math.floor(16 * stageScale);
-                        
-                        let timePerKill = Math.max(1, mobHp / idps);
+                        // Enforce 1 kill per minute locally for offline calculation
+                        let timePerKill = 60; 
                         let simulatedKills = Math.floor(offlineSeconds / timePerKill);
                         
                         if (simulatedKills > 0) {
@@ -408,7 +404,7 @@ window.onload = function() {
                             if (scraps > 0) addEtcDrop("Iron Scrap", scraps);
                             
                             pushLog(`<span style='color:#3498db; font-weight:bold;'>[OFFLINE GAINS] Gone for ${Math.floor(offlineSeconds/60)} mins. Simulated Kills: ${simulatedKills}. Gold: +${goldEarned}. Items: +${actualItems}. Scraps (Equip Bag Full): +${scraps}.</span>`);
-                            alert(`Offline Progress (Capped at 2 hrs)\n\nTime Offline: ${Math.floor(offlineSeconds/60)} mins\nKills Simulated: ${simulatedKills}\nGold Earned: ${goldEarned}\nItems Found: ${actualItems}\nScraps Gained (Equip Bag Full): ${scraps}`);
+                            alert(`Offline Progress (Capped at 8 hrs)\n\nTime Offline: ${Math.floor(offlineSeconds/60)} mins\nKills Simulated: ${simulatedKills}\nGold Earned: ${goldEarned}\nItems Found: ${actualItems}\nScraps Gained (Equip Bag Full): ${scraps}`);
                         }
                     }
                 }
@@ -417,8 +413,9 @@ window.onload = function() {
         }
     };
 
-    for(let i=0; i<8; i++) {
-        scenery.push({ x: Math.random() * canvas.width, y: 150 - (Math.random() * 20), type: Math.random() > 0.5 ? 'tree' : 'bush', size: Math.random() * 0.5 + 0.5 });
+    for(let i=0; i<10; i++) {
+        bgScenery.push({ x: Math.random() * canvas.width, y: 180, type: Math.random() > 0.5 ? 'tree' : 'bush', size: Math.random() * 0.5 + 0.5 });
+        fgScenery.push({ x: Math.random() * canvas.width, y: 220 + Math.random() * 25, type: Math.random() > 0.7 ? 'flower' : 'grass' });
     }
 
     window.toggleAuto = function() {
@@ -548,7 +545,7 @@ window.onload = function() {
         if (playerStats.isBossMode) {
             let label = playerStats.isUberBoss ? "ENRAGED RIFT GUARDIAN" : "STAGE BOSS";
             let baseBossHp = 55 * scale * (playerStats.isUberBoss ? 1.5 : 1);
-            mob = { x: 750, y: 130, w: 35, h: 60, type: "boss", hp: Math.floor(baseBossHp), maxHp: Math.floor(baseBossHp), damage: Math.floor((4 + (5 * scale)) * 5.5), flashTimer: 0, isStopped: false };
+            mob = { x: 750, y: 100, w: 40, h: 80, type: "boss", hp: Math.floor(baseBossHp), maxHp: Math.floor(baseBossHp), damage: Math.floor((4 + (5 * scale)) * 5.5), flashTimer: 0, isStopped: false };
             pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[${label}]</span> blocked your transit route!`);
         } else {
             let isBandit = Math.random() > 0.6;
@@ -560,7 +557,7 @@ window.onload = function() {
         let colors = []; let count = 15;
         if (type === "slime") colors = ["#2ecc71", "#145a32", "#1e8449"];
         else if (type === "bandit") colors = ["#c0392b", "#922b21", "#e67e22", "#d35400"];
-        else if (type === "boss") { colors = playerStats.isUberBoss ? ["#9b59b6", "#1abc9c", "#e74c3c", "#f1c40f"] : ["#5c4033", "#27ae60", "#8e44ad", "#c0392b"]; count = 35; }
+        else if (type === "boss") { colors = playerStats.isUberBoss ? ["#9b59b6", "#1abc9c", "#e74c3c", "#f1c40f"] : ["#8B4513", "#228B22", "#e74c3c", "#5c4033"]; count = 35; }
         colors.push("#f1c40f", "#f39c12");
         for (let i = 0; i < count; i++) {
             particles.push({ x: x + (Math.random() * 15), y: y + (Math.random() * 20), vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.7) * 7, radius: Math.random() * 3 + 1.5, color: colors[Math.floor(Math.random() * colors.length)], alpha: 1, life: Math.random() * 25 + 15 });
@@ -1435,13 +1432,15 @@ window.onload = function() {
         if (!mob) { 
             processEnemySpawn(); 
             groundScroll = (groundScroll + scrollSpeed) % canvas.width; 
-            scenery.forEach(s => { s.x -= scrollSpeed * 0.8; if(s.x < -50) s.x = canvas.width + Math.random() * 50; });
+            bgScenery.forEach(s => { s.x -= scrollSpeed * 0.6; if(s.x < -50) s.x = canvas.width + Math.random() * 50; });
+            fgScenery.forEach(s => { s.x -= scrollSpeed * 1.2; if(s.x < -20) s.x = canvas.width + Math.random() * 50; });
         } else {
             if (mob.x > (hero.x + hero.w + 30)) { 
                 mob.x -= (4 + scrollSpeed); 
                 mob.isStopped = false; 
                 groundScroll = (groundScroll + scrollSpeed) % canvas.width; 
-                scenery.forEach(s => { s.x -= scrollSpeed * 0.8; if(s.x < -50) s.x = canvas.width + Math.random() * 50; });
+                bgScenery.forEach(s => { s.x -= scrollSpeed * 0.6; if(s.x < -50) s.x = canvas.width + Math.random() * 50; });
+                fgScenery.forEach(s => { s.x -= scrollSpeed * 1.2; if(s.x < -20) s.x = canvas.width + Math.random() * 50; });
             } else {
                 mob.isStopped = true; 
                 if (logicClock % p.idleAttackSpeed === 0) {
@@ -1477,22 +1476,34 @@ window.onload = function() {
 
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = playerStats.isBossMode ? "#3a123a" : "#1e272c"; ctx.fillRect(0, 0, canvas.width, 180);
         
-        scenery.forEach(s => {
+        let skyGrad = ctx.createLinearGradient(0, 0, 0, 180);
+        skyGrad.addColorStop(0, playerStats.isBossMode ? "#1a0b1c" : "#2b5876");
+        skyGrad.addColorStop(1, playerStats.isBossMode ? "#000000" : "#4e4376");
+        ctx.fillStyle = skyGrad; 
+        ctx.fillRect(0, 0, canvas.width, 180);
+
+        ctx.fillStyle = playerStats.isBossMode ? "#1a0b1c" : "#212f3d";
+        ctx.beginPath(); ctx.moveTo(0, 180); ctx.lineTo(150, 80); ctx.lineTo(300, 180); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(200, 180); ctx.lineTo(400, 50); ctx.lineTo(600, 180); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(500, 180); ctx.lineTo(650, 90); ctx.lineTo(800, 180); ctx.fill();
+
+        ctx.fillStyle = "#34495e"; ctx.fillRect(0, 180, canvas.width, 70);
+        ctx.fillStyle = "#27ae60"; ctx.fillRect(0, 180, canvas.width, 10);
+        
+        ctx.fillStyle = "#2c3e50";
+        for(let i=0; i<canvas.width+40; i+=40) { ctx.fillRect(i - (groundScroll % 40), 190, 4, 60); }
+        
+        bgScenery.forEach(s => {
             if (s.type === 'tree') {
-                ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.arc(s.x, s.y - 15, 20 * s.size, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = "#5c4033"; ctx.fillRect(s.x - 4, s.y, 8, 30);
+                ctx.fillStyle = "#5c4033"; ctx.fillRect(s.x - 4, s.y - 40 * s.size, 8, 40 * s.size);
+                ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.arc(s.x, s.y - 40 * s.size, 20 * s.size, 0, Math.PI*2); ctx.fill();
             } else {
-                ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(s.x, s.y + 10, 12 * s.size, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(s.x + 10, s.y + 12, 10 * s.size, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(s.x, s.y - 8 * s.size, 12 * s.size, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(s.x + 10 * s.size, s.y - 6 * s.size, 10 * s.size, 0, Math.PI*2); ctx.fill();
             }
         });
 
-        ctx.fillStyle = "#34495e"; ctx.fillRect(0, 180, canvas.width, 70);
-        ctx.fillStyle = "#2c3e50";
-        for(let i=0; i<canvas.width+40; i+=40) { ctx.fillRect(i - (groundScroll % 40), 180, 4, 70); }
-        
         let hx = hero.x; let hy = hero.y;
         ctx.fillStyle = playerStats.frenzyTimer > 0 ? "#e67e22" : "#3498db";
         ctx.fillRect(hx + 5, hy, 15, 15);
@@ -1519,11 +1530,25 @@ window.onload = function() {
                 ctx.fillStyle = "rgba(255,255,255,0.4)";
                 ctx.beginPath(); ctx.arc(sx + sw*0.7, sy - mob.h*0.6, 2, 0, Math.PI*2); ctx.fill();
             } else if (mob.type === "boss") {
-                ctx.fillRect(mob.x + 10, mob.y + 20, mob.w - 20, mob.h - 20);
-                ctx.fillStyle = mob.flashTimer > 0 ? "#fff" : "#27ae60";
-                ctx.beginPath(); ctx.arc(mob.x + mob.w/2, mob.y + 15, 25, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = "#e74c3c";
-                ctx.fillRect(mob.x + 12, mob.y + 10, 4, 4); ctx.fillRect(mob.x + 20, mob.y + 10, 4, 4);
+                ctx.fillStyle = "#8B4513";
+                ctx.fillRect(mob.x, mob.y, mob.w, mob.h);
+                
+                ctx.beginPath(); ctx.moveTo(mob.x, mob.y+mob.h); ctx.lineTo(mob.x-10, mob.y+mob.h+5); ctx.lineTo(mob.x, mob.y+mob.h-5); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(mob.x+mob.w, mob.y+mob.h); ctx.lineTo(mob.x+mob.w+10, mob.y+mob.h+5); ctx.lineTo(mob.x+mob.w, mob.y+mob.h-5); ctx.fill();
+                
+                ctx.fillStyle = mob.flashTimer > 0 ? "#fff" : "#228B22"; 
+                ctx.beginPath(); ctx.arc(mob.x + mob.w/2, mob.y, 35, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(mob.x - 5, mob.y + 15, 25, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(mob.x + mob.w + 5, mob.y + 15, 25, 0, Math.PI*2); ctx.fill();
+
+                if (mob.flashTimer === 0) {
+                    ctx.fillStyle = "#000";
+                    ctx.beginPath(); ctx.ellipse(mob.x + 12, mob.y + 25, 3, 6, 0, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.ellipse(mob.x + mob.w - 12, mob.y + 25, 3, 6, 0, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.ellipse(mob.x + mob.w/2, mob.y + 45, 6, 8, 0, 0, Math.PI*2); ctx.fill();
+                }
+                
+                ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(mob.x + mob.w/2 - 15, mob.y - 10, 5, 0, Math.PI*2); ctx.fill();
             } else {
                 ctx.fillRect(mob.x, mob.y, 20, 20);
                 ctx.fillRect(mob.x + 2, mob.y + 20, 16, 25);
@@ -1537,6 +1562,17 @@ window.onload = function() {
             ctx.fillStyle = "#f1c40f"; ctx.fillRect(barX, mob.y - 12, Math.max(0, (mob.hp / mob.maxHp) * barW), 6);
             ctx.strokeStyle = "#111"; ctx.lineWidth = 1; ctx.strokeRect(barX, mob.y - 12, barW, 6);
         }
+
+        fgScenery.forEach(s => {
+            if (s.type === 'grass') {
+                ctx.fillStyle = "#2ecc71";
+                ctx.fillRect(s.x, s.y, 2, -10);
+                ctx.fillRect(s.x+4, s.y+2, 2, -8);
+            } else if (s.type === 'flower') {
+                ctx.fillStyle = "#27ae60"; ctx.fillRect(s.x, s.y, 2, -10);
+                ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(s.x+1, s.y-10, 3, 0, Math.PI*2); ctx.fill();
+            }
+        });
 
         if (reviveTimer > 0) {
             ctx.save();
