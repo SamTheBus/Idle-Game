@@ -415,7 +415,15 @@ window.onload = function() {
 
     for(let i=0; i<10; i++) {
         bgScenery.push({ x: Math.random() * canvas.width, y: 180, type: Math.random() > 0.5 ? 'tree' : 'bush', size: Math.random() * 0.5 + 0.5 });
-        fgScenery.push({ x: Math.random() * canvas.width, y: 220 + Math.random() * 25, type: Math.random() > 0.7 ? 'flower' : 'grass' });
+    }
+    for(let i=0; i<15; i++) {
+        let fgType = Math.random();
+        fgScenery.push({ 
+            x: Math.random() * canvas.width, 
+            y: 190 + Math.random() * 60, 
+            type: fgType > 0.8 ? 'bush' : (fgType > 0.4 ? 'flower' : 'grass'),
+            size: Math.random() * 0.8 + 0.6
+        });
     }
 
     window.toggleAuto = function() {
@@ -1433,14 +1441,14 @@ window.onload = function() {
             processEnemySpawn(); 
             groundScroll = (groundScroll + scrollSpeed) % canvas.width; 
             bgScenery.forEach(s => { s.x -= scrollSpeed * 0.6; if(s.x < -50) s.x = canvas.width + Math.random() * 50; });
-            fgScenery.forEach(s => { s.x -= scrollSpeed * 1.2; if(s.x < -20) s.x = canvas.width + Math.random() * 50; });
+            fgScenery.forEach(s => { s.x -= scrollSpeed * 1.5; if(s.x < -60) s.x = canvas.width + Math.random() * 50; });
         } else {
             if (mob.x > (hero.x + hero.w + 30)) { 
                 mob.x -= (4 + scrollSpeed); 
                 mob.isStopped = false; 
                 groundScroll = (groundScroll + scrollSpeed) % canvas.width; 
                 bgScenery.forEach(s => { s.x -= scrollSpeed * 0.6; if(s.x < -50) s.x = canvas.width + Math.random() * 50; });
-                fgScenery.forEach(s => { s.x -= scrollSpeed * 1.2; if(s.x < -20) s.x = canvas.width + Math.random() * 50; });
+                fgScenery.forEach(s => { s.x -= scrollSpeed * 1.5; if(s.x < -60) s.x = canvas.width + Math.random() * 50; });
             } else {
                 mob.isStopped = true; 
                 if (logicClock % p.idleAttackSpeed === 0) {
@@ -1488,11 +1496,17 @@ window.onload = function() {
         ctx.beginPath(); ctx.moveTo(200, 180); ctx.lineTo(400, 50); ctx.lineTo(600, 180); ctx.fill();
         ctx.beginPath(); ctx.moveTo(500, 180); ctx.lineTo(650, 90); ctx.lineTo(800, 180); ctx.fill();
 
-        ctx.fillStyle = "#34495e"; ctx.fillRect(0, 180, canvas.width, 70);
-        ctx.fillStyle = "#27ae60"; ctx.fillRect(0, 180, canvas.width, 10);
+        ctx.fillStyle = "#3e2723"; ctx.fillRect(0, 180, canvas.width, 70);
         
-        ctx.fillStyle = "#2c3e50";
-        for(let i=0; i<canvas.width+40; i+=40) { ctx.fillRect(i - (groundScroll % 40), 190, 4, 60); }
+        ctx.fillStyle = "#2ecc71"; ctx.fillRect(0, 180, canvas.width, 8);
+        ctx.fillStyle = "#27ae60"; ctx.fillRect(0, 188, canvas.width, 6);
+        
+        ctx.fillStyle = "#4e342e";
+        for(let i=0; i<canvas.width+80; i+=80) { 
+            ctx.fillRect(i - (groundScroll % 80), 205, 20, 3);
+            ctx.fillRect(i + 40 - (groundScroll % 80), 225, 12, 3); 
+            ctx.fillRect(i + 15 - (groundScroll % 80), 240, 25, 4); 
+        }
         
         bgScenery.forEach(s => {
             if (s.type === 'tree') {
@@ -1548,7 +1562,11 @@ window.onload = function() {
                     ctx.beginPath(); ctx.ellipse(mob.x + mob.w/2, mob.y + 45, 6, 8, 0, 0, Math.PI*2); ctx.fill();
                 }
                 
-                ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(mob.x + mob.w/2 - 15, mob.y - 10, 5, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(mob.x + mob.w/2 - 12, mob.y + 8, 6, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#5c4033"; ctx.fillRect(mob.x + mob.w/2 - 13, mob.y + 1, 2, 4);
+                
+                ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(mob.x + mob.w/2 + 15, mob.y - 2, 5, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#5c4033"; ctx.fillRect(mob.x + mob.w/2 + 14, mob.y - 7, 2, 4);
             } else {
                 ctx.fillRect(mob.x, mob.y, 20, 20);
                 ctx.fillRect(mob.x + 2, mob.y + 20, 16, 25);
@@ -1566,11 +1584,18 @@ window.onload = function() {
         fgScenery.forEach(s => {
             if (s.type === 'grass') {
                 ctx.fillStyle = "#2ecc71";
-                ctx.fillRect(s.x, s.y, 2, -10);
-                ctx.fillRect(s.x+4, s.y+2, 2, -8);
+                ctx.fillRect(s.x, s.y, 2*s.size, -12*s.size);
+                ctx.fillRect(s.x+4*s.size, s.y+2*s.size, 2*s.size, -8*s.size);
+                ctx.fillRect(s.x-4*s.size, s.y-2*s.size, 2*s.size, -10*s.size);
             } else if (s.type === 'flower') {
-                ctx.fillStyle = "#27ae60"; ctx.fillRect(s.x, s.y, 2, -10);
-                ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(s.x+1, s.y-10, 3, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#27ae60"; ctx.fillRect(s.x, s.y, 2*s.size, -14*s.size);
+                ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(s.x+1*s.size, s.y-14*s.size, 4*s.size, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(s.x+1*s.size, s.y-14*s.size, 1.5*s.size, 0, Math.PI*2); ctx.fill();
+            } else if (s.type === 'bush') {
+                ctx.fillStyle = "#1e8449";
+                ctx.beginPath(); ctx.arc(s.x, s.y, 12*s.size, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(s.x+10*s.size, s.y-4*s.size, 10*s.size, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(s.x-10*s.size, s.y-2*s.size, 9*s.size, 0, Math.PI*2); ctx.fill();
             }
         });
 
