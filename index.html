@@ -474,14 +474,14 @@ window.onload = function() {
 
     window.saveGame = function() {
         let saveData = { playerStats, equippedSlots, inventory, idCounter, logsHistory, frozenItemDb, lastSaveTime: Date.now() };
-        localStorage.setItem('postknight_save_v11', JSON.stringify(saveData));
+        localStorage.setItem('postknight_save_v12', JSON.stringify(saveData));
     };
 
     setInterval(() => { window.saveGame(); }, 60000);
     window.addEventListener('beforeunload', window.saveGame);
 
     window.loadGame = function() {
-        let data = localStorage.getItem('postknight_save_v11');
+        let data = localStorage.getItem('postknight_save_v12') || localStorage.getItem('postknight_save_v11');
         if (data) {
             try {
                 let parsed = JSON.parse(data);
@@ -493,7 +493,10 @@ window.onload = function() {
                 frozenItemDb = parsed.frozenItemDb || frozenItemDb;
                 
                 if (!playerStats.targetsRequired || playerStats.targetsRequired === 7) playerStats.targetsRequired = 5;
-                if (!playerStats.shopItems) playerStats.shopItems = [];
+                if (!playerStats.shopItems || (playerStats.shopItems.length > 0 && playerStats.shopItems[0].atk === undefined)) { 
+                    playerStats.shopItems = []; 
+                    playerStats.shopRefreshTime = 0; 
+                }
                 
                 let box = document.getElementById('log-box');
                 box.innerHTML = logsHistory.join("<br><br>");
@@ -698,7 +701,7 @@ window.onload = function() {
             return `<div class="bag-item" style="cursor:help; border-left: 3px solid #1abc9c;" onclick="showDummyArtifact(event, '${art.trait}')">
                     <div><strong style="color:#1abc9c;">⭐ UNIQUE ${art.name}</strong><br><span style="font-size:10px;color:#d2b4de;">Trait: ${art.desc}</span></div>
                 </div>`;
-            }).join("");
+        }).join("");
     };
 
     window.showDummyArtifact = function(e, traitId) {
@@ -761,8 +764,6 @@ window.onload = function() {
             const rect = canvas.getBoundingClientRect();
             const clickX = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
             const clickY = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
-            
-            // WIDENED FAIRY HITBOX TRACKING FROM 8PX TO 35PX FOR MOBILE ACCESSIBILITY FIX
             const dist = Math.hypot(clickX - fairy.x, clickY - fairy.y);
             if (dist < 35) { triggerFairyLoot(); return; }
         }
@@ -782,7 +783,6 @@ window.onload = function() {
         let stageScale = Math.floor((playerStats.stage - 1) / 10) + 1;
 
         if (Math.random() < 0.40) {
-            // SCALING FAIRY GOLD HARVEST VALUATION BALANCING
             let goldYield = Math.floor(100 * stageScale * p.gold * randInt(10, 15));
             playerStats.coins += goldYield;
             document.getElementById('fairy-reward-content').innerHTML = `<strong style="color:#f1c40f; font-size:18px;">🌟 Golden Bounty!</strong><br><span style="font-size:13px; color:#fff;">+${goldYield} Gold pieces gathered!</span>`;
@@ -877,27 +877,219 @@ window.onload = function() {
         generateEquipment(chosenType, statLinesCount, stageScale, "Gacha");
     }
 
-    function makeSlotHtml(slotKey, label) {
-        let item = equippedSlots[slotKey]; let el = document.getElementById('slot-' + slotKey);
-        if ((slotKey === 'chest' || slotKey === 'leggings') && equippedSlots.overall) { el.className = "slots-card locked"; el.innerHTML = `⚙️ LOCKED BY OVERALL`; el.style.borderColor = ""; return; }
-        if (slotKey === 'overall' && (equippedSlots.chest || equippedSlots.leggings)) { el.className = "slots-card locked"; el.innerHTML = `⚙️ LOCKED BY PIECE GEAR`; el.style.borderColor = ""; return; }
-        
-        if (!item) { el.className = "slots-card"; el.innerHTML = `<i>[Empty ${label}]</i>`; el.style.borderColor = ""; } 
-        else {
-            let isArt = slotKey.startsWith("art"); el.className = isArt ? "slots-card artifact-slot equipped" : "slots-card equipped";
-            el.style.borderColor = getTierColor(item.statsRolled);
-            let tierLabel = item.statsRolled === "UNIQUE" ? "UNIQUE" : `${item.statsRolled}★ ${getTierName(item.statsRolled)}`;
-            let temperTag = item.temperLevel > 0 ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>` : "";
+    function generateItemCardHtml(item, compareEq = null, isCurrentlyEquipped = false) {
+        if (!item) return ""; let html = "";
+        let badge = isCurrentlyEquipped ? `<div style="background:#c0392b; color:white; text-align:center; font-weight:bold; padding:3px; margin-bottom:8px; border-radius:3px; font-size:10px; letter-spacing: 1px;">CURRENTLY EQUIPPED</div>` : ``;
+        html += badge;
 
-            if (isArt) el.innerHTML = `<strong style="font-size:10px; color:#1abc9c;">${item.name}</strong><br><span style="font-size:8px;color:#aaa;line-height:1;">${item.desc}</span><button class="btn-action un" style="margin-top:2px;padding:1px 3px;" onclick="unequipItem('${slotKey}')">Remove</button>`;
-            else {
-                let s = []; if (item.atk > 0) s.push(`⚔️${item.atk}`); if (item.maxHp > 0) s.push(`❤️${item.maxHp}`); if (item.def > 0) s.push(`🛡️${item.def}`);
-                el.innerHTML = `<strong style="font-size:10px;">${item.name}${temperTag}</strong><div style="font-size:8px; color:${getTierColor(item.statsRolled)}; font-weight:bold; margin:2px 0;">${tierLabel}</div><span style="font-size:9px;color:#bbb;">${s.join(" ")}</span><button class="btn-action un" style="margin-top:2px;padding:1px 3px;" onclick="unequipItem('${slotKey}')">Remove</button>`;
-            }
+        let tierColor = getTierColor(item.statsRolled); let titleColor = item.type === "artifact" ? "#1abc9c" : tierColor;
+        let tierName = getTierName(item.statsRolled); let tierDisplay = item.statsRolled === "UNIQUE" ? "UNIQUE" : `${item.statsRolled}★ ${tierName}`;
+        let subtitle = item.type === "artifact" ? "Unique Boss Trophy Slot" : `${item.type.toUpperCase()} | <span style="color:${tierColor}; font-weight:bold;">${tierDisplay}</span>`;
+        let temperTag = item.temperLevel > 0 ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>` : "";
+
+        html += `<div class="tt-title" style="color:${titleColor}; white-space:normal;">${item.name}${temperTag}</div>`;
+        html += `<div class="tt-subtitle">${subtitle}</div>`;
+
+        if (item.id === "dummy") {
+            html += `<div class="tt-stat-line" style="color:#d2b4de; margin-bottom: 6px; white-space:normal;">• Effect: ${item.desc}</div>`;
+            html += `<div class="tt-trait">${item.breakdown}</div>`;
+            html += `<div style="font-weight:bold; color:#bdc3c7; margin-top:8px; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Bonus Parameters:</div>`;
+            html += `<div class="tt-stat-line" style="color:#aaa; font-style:italic;">* Rolls 3 random stat modifiers upon drop.</div>`;
+        } else if (item.type === "artifact") {
+            html += `<div class="tt-stat-line" style="color:#d2b4de; margin-bottom: 6px; white-space:normal;">• Effect: ${item.desc}</div>`;
+            html += `<div class="tt-trait">${item.breakdown}</div>`;
+            html += `<div style="font-weight:bold; color:#aaa; margin-top:8px; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Bonus Parameters:</div>`;
+        } else {
+            html += `<div style="font-weight:bold; color:#aaa; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Current Parameters:</div>`;
         }
+
+        if (item.id !== "dummy") {
+            if (item.atk > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• ⚔️ Attack: ${item.atk}</div>`;
+            if (item.maxHp > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• ❤️ Max HP: ${item.maxHp}</div>`;
+            if (item.def > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 🛡️ Defense: ${item.def}</div>`;
+            if (item.moveSpeed > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 👟 Move Speed: ${item.moveSpeed}</div>`;
+            
+            if (item.critChance > 0) html += `<div class="tt-stat-line" style="color:#e67e22;">• ✨ Crit Chance: +${Math.floor(item.critChance*100)}%</div>`;
+            if (item.critDamage > 0) html += `<div class="tt-stat-line" style="color:#f1c40f;">• 💥 Crit Multi: +${Math.floor(item.critDamage*100)}%</div>`;
+            if (item.block > 0) html += `<div class="tt-stat-line" style="color:#3498db;">• 🛡️ Block Rate: +${Math.floor(item.block*100)}%</div>`;
+            if (item.parry > 0) html += `<div class="tt-stat-line" style="color:#e74c3c;">• ⚡ Parry Rate: +${Math.floor(item.parry*100)}%</div>`;
+            if (item.activeAttackSpeed < 0) html += `<div class="tt-stat-line" style="color:#2ecc71;">• ⚡ Active Atk Spd: ${item.activeAttackSpeed}f</div>`;
+            if (item.idleAttackSpeed < 0) html += `<div class="tt-stat-line" style="color:#1abc9c;">• ⏱️ Idle Atk Spd: ${item.idleAttackSpeed}f</div>`;
+            
+            if (item.statsRolled === 0 && item.temperLevel === 0 && item.type !== "artifact") { html += `<div class="tt-stat-line" style="color:#7f8c8d; font-style:italic; margin-top:4px;">No bonus modifiers applied.</div>`; }
+        }
+
+        if (compareEq && !isCurrentlyEquipped) {
+            html += `<div style="font-weight:bold; color:#3498db; margin-top:8px; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Net Change vs. Equipped:</div>`;
+            let statsList = [
+                {key: "atk", icon: "⚔️", label: "Attack"}, {key: "maxHp", icon: "❤️", label: "Max HP"},
+                {key: "def", icon: "🛡️", label: "Defense"}, {key: "moveSpeed", icon: "👟", label: "Move Speed"},
+                {key: "critChance", isPct: true, icon: "✨", label: "Crit Chance"}, {key: "critDamage", isPct: true, icon: "💥", label: "Crit Multi"}, 
+                {key: "block", isPct: true, icon: "🛡️", label: "Block Rate"}, {key: "parry", isPct: true, icon: "⚡", label: "Parry Rate"},
+                {key: "activeAttackSpeed", icon: "⚡", label: "Active Atk Spd", inverseGood: true}, {key: "idleAttackSpeed", icon: "⏱️", label: "Idle Atk Spd", inverseGood: true}
+            ];
+            let hasDiffs = false;
+            statsList.forEach(s => {
+                let val = item[s.key] || 0; let eqVal = compareEq[s.key] || 0; let diff = val - eqVal;
+                if (Math.abs(diff) > 0.001) {
+                    hasDiffs = true; 
+                    let isPositive = s.inverseGood ? diff < 0 : diff > 0;
+                    let color = isPositive ? "#2ecc71" : "#e74c3c"; let sign = diff > 0 ? "+" : "";
+                    let diffStr = s.isPct ? sign + Math.round(diff*100) + "%" : sign + Math.round(diff);
+                    html += `<div class="tt-stat-line" style="color:${color}; font-weight:bold; white-space:nowrap;">• ${s.icon} Total ${s.label}: ${diffStr}</div>`;
+                }
+            });
+            if (!hasDiffs) html += `<div class="tt-stat-line" style="color:#7f8c8d; font-style:italic;">No net difference.</div>`;
+        }
+        return html;
     }
 
-    function setForgeMode(mode) {
+    function buildGeneralTooltipHtml(item, isBagItem = false) {
+        let eq = isBagItem ? getEquippedItemForComparison(item.type) : null; let html = "";
+        if (eq && eq.id !== item.id) {
+            html += `<div style="padding: 10px; width: 250px; box-sizing: border-box; border-right: 1px solid #333;">${generateItemCardHtml(eq, null, true)}</div>`;
+            html += `<div style="padding: 10px; width: 250px; box-sizing: border-box;">${generateItemCardHtml(item, eq, false)}</div>`;
+        } else {
+            html += `<div style="padding: 10px; width: 250px; box-sizing: border-box;">${generateItemCardHtml(item, null, item.isEquippedSlot != null)}</div>`;
+        }
+        return `<div class="tooltip-flex-container">${html}</div>`;
+    }
+
+    function getEquippedItemForComparison(type) {
+        if (type === "overall") return equippedSlots.overall || equippedSlots.chest || equippedSlots.leggings;
+        if (type === "chest" || type === "leggings") return equippedSlots[type] || equippedSlots.overall;
+        return equippedSlots[type]; 
+    }
+
+    window.showInventoryTooltip = function(e, itemId) {
+        e.stopPropagation(); let item = inventory.EQUIP.find(i => i.id === itemId); if (!item) return;
+        let tt = document.getElementById('game-tooltip'); tt.innerHTML = buildGeneralTooltipHtml(item, true); 
+        tt.style.borderColor = getTierColor(item.statsRolled); tt.style.display = "block"; window.positionTooltip(e, tt);
+    };
+
+    window.showForgeTooltip = function(e, itemId) {
+        e.stopPropagation(); let item = inventory.EQUIP.find(i => i.id === itemId); 
+        if (!item) { for (let k in equippedSlots) { if(equippedSlots[k] && equippedSlots[k].id === itemId) { item = equippedSlots[k]; item.isEquippedSlot = k; break;} } }
+        if (!item) return;
+        let tt = document.getElementById('game-tooltip'); tt.innerHTML = buildGeneralTooltipHtml(item, false); 
+        tt.style.borderColor = getTierColor(item.statsRolled); tt.style.display = "block"; window.positionTooltip(e, tt);
+    };
+
+    window.showSlotTooltip = function(e, slotKey) {
+        e.stopPropagation(); let item = equippedSlots[slotKey]; if (!item) return;
+        let tt = document.getElementById('game-tooltip'); tt.innerHTML = buildGeneralTooltipHtml(item, false); 
+        tt.style.borderColor = getTierColor(item.statsRolled); tt.style.display = "block"; window.positionTooltip(e, tt);
+    };
+
+    window.showLogTooltip = function(e, itemId) {
+        e.stopPropagation(); let item = frozenItemDb[itemId]; if (!item) return;
+        let tt = document.getElementById('log-item-tooltip'); 
+        tt.innerHTML = `<div class="tooltip-flex-container"><div style="padding: 10px; width: 250px; box-sizing: border-box;">${generateItemCardHtml(item, null, false)}</div></div>`;
+        tt.style.borderColor = getTierColor(item.statsRolled); tt.style.display = "block"; window.positionTooltip(e, tt);
+    }
+    
+    window.showStatHoverTooltip = function(e, statType) {
+        e.stopPropagation(); let tt = document.getElementById('stat-tooltip'); let html = ""; let p = resolvePlayerStats();
+        
+        if (statType === 'ias') {
+            html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#3498db;">⏱️ Idle Attack Speed</div><div style="color:#aaa; font-size:11px;">The number of engine frames between your automatic attacks. (60 frames = 1 second).<br><br><b>Lower is faster!</b><br>Currently hitting automatically every ${(p.idleAttackSpeed/60).toFixed(2)} seconds.</div></div>`;
+            tt.style.borderColor = "#3498db";
+        } else if (statType === 'aas') {
+            html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#e74c3c;">⚡ Active Attack Speed</div><div style="color:#aaa; font-size:11px;">The cooldown limit in frames between your manual clicks or spacebar taps.<br><br><b>Lower is faster!</b><br>Currently capped at ${(60/p.activeAttackSpeed).toFixed(1)} attacks per second.</div></div>`;
+            tt.style.borderColor = "#e74c3c";
+        } else if (statType === 'drp') {
+            let eff = state.efficiency;
+            html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#2ecc71;">🍀 Drop Rate Modifier</div><div style="color:#aaa; font-size:11px;">Current Multiplier: x${(p.drop * eff).toFixed(2)} ${eff > 1.0 ? "(Manual Play Bonus Active)" : ""}<br><br><b>Exact Chances:</b><br>• Mob Drop: ${(4.5 * p.drop * eff).toFixed(2)}%<br>• Boss Drop: ${(25.0 * p.drop * eff).toFixed(2)}%<br>• Dungeon Mob: ${(10.0 * p.drop * eff).toFixed(2)}%</div></div>`;
+            tt.style.borderColor = "#2ecc71";
+        } else if (statType === 'qly') {
+            html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#9b59b6;">💎 Drop Quality Modifier</div><div style="color:#aaa; font-size:11px;">Current Multiplier: x${p.qly.toFixed(2)}<br><br>Increases the probability that an item drop will roll with more bonus modifier lines (higher star rating).</div></div>`;
+            tt.style.borderColor = "#9b59b6";
+        }
+        
+        tt.innerHTML = html; tt.style.display = "block"; window.positionTooltip(e, tt);
+    };
+
+    window.showEtcTooltip = function(e, keyName) {
+        e.stopPropagation(); let tt = document.getElementById('etc-tooltip'); let desc = etcDex[keyName] || "Unknown material.";
+        tt.innerHTML = `<div style="padding: 10px; width: 200px; box-sizing: border-box;"><div class="tt-title" style="color:#bdc3c7;">📦 ${keyName}</div><div style="color:#aaa; font-size:11px;">${desc}</div></div>`;
+        tt.style.borderColor = "#bdc3c7"; tt.style.display = "block"; window.positionTooltip(e, tt);
+    };
+
+    window.showGachaTooltip = function(e) {
+        e.stopPropagation(); let p = resolvePlayerStats(); let qly = p.qly;
+        let mythic = (0.5 * qly); let leg = (2.0 * qly) - mythic; let epic = (10.0 * qly) - (2.0 * qly); let magic = (30.0 * qly) - (10.0 * qly); let rare = 100 - (30.0 * qly);
+
+        let tt = document.getElementById('game-tooltip');
+        tt.innerHTML = `<div style="padding: 10px; width: 250px; box-sizing: border-box;"><div class="tt-title" style="color:#f1c40f;">🎰 Vending Machine Rates</div><div class="tt-subtitle">Gacha Rarity Distribution</div><div class="tt-stat-line" style="color:#3498db;">• 1★ Rare: ${Math.max(0, rare).toFixed(2)}%</div><div class="tt-stat-line" style="color:#9b59b6;">• 2★ Magic: ${Math.max(0, magic).toFixed(2)}%</div><div class="tt-stat-line" style="color:#e67e22;">• 3★ Epic: ${Math.max(0, epic).toFixed(2)}%</div><div class="tt-stat-line" style="color:#f1c40f;">• 4★ Legendary: ${Math.max(0, leg).toFixed(2)}%</div><div class="tt-stat-line" style="color:#e74c3c;">• 5★ Mythic: ${Math.max(0, mythic).toFixed(2)}%</div><div class="tt-stat-line" style="color:#1abc9c; margin-top:4px;">• Bonus: 1% flat chance for Unique Artifact!</div><div class="tt-subtitle" style="margin-top:6px; border-top:1px solid #333; padding-top:4px;">Guaranteed 1★ to 5★ gear. Influenced by Drop Quality.</div></div>`;
+        tt.style.borderColor = "#f1c40f"; tt.style.display = "block"; window.positionTooltip(e, tt);
+    };
+
+    window.positionTooltip = function(e, tt) {
+        let container = document.getElementById('game-container').getBoundingClientRect();
+        let clientX = e.clientX || (e.touches && e.touches[0].clientX); let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        let x = clientX - container.left + 15; let y = clientY - container.top + 15;
+        if (x + tt.offsetWidth > container.width) x = (clientX - container.left) - tt.offsetWidth - 15;
+        if (y + tt.offsetHeight > container.height) y = (clientY - container.top) - tt.offsetHeight - 15;
+        if (x < 5) x = 5; if (y < 5) y = 5;
+        tt.style.left = x + "px"; tt.style.top = y + "px";
+    };
+
+    window.hideTooltip = function() { 
+        document.getElementById('game-tooltip').style.display = "none"; document.getElementById('etc-tooltip').style.display = "none"; 
+        document.getElementById('log-item-tooltip').style.display = "none"; document.getElementById('stat-tooltip').style.display = "none";
+    };
+
+    window.equipItem = function(id) {
+        window.hideTooltip(); let index = inventory.EQUIP.findIndex(i => i.id === id); if (index === -1) return;
+        let item = inventory.EQUIP[index];
+        
+        let oldMaxHp = resolvePlayerStats().maxHp;
+        
+        if (item.type === "overall") {
+            if (equippedSlots.chest) { inventory.EQUIP.push(equippedSlots.chest); equippedSlots.chest = null; }
+            if (equippedSlots.leggings) { inventory.EQUIP.push(equippedSlots.leggings); equippedSlots.leggings = null; }
+            if (equippedSlots.overall) { inventory.EQUIP.push(equippedSlots.overall); }
+            equippedSlots.overall = item;
+        } else if (item.type === "chest" || item.type === "leggings") {
+            if (equippedSlots.overall) { inventory.EQUIP.push(equippedSlots.overall); equippedSlots.overall = null; }
+            if (equippedSlots[item.type]) { inventory.EQUIP.push(equippedSlots[item.type]); }
+            equippedSlots[item.type] = item;
+        } else if (item.type === "artifact") {
+            if (!equippedSlots.art1) equippedSlots.art1 = item; else if (!equippedSlots.art2) equippedSlots.art2 = item;
+            else { if (equippedSlots.art3) inventory.EQUIP.push(equippedSlots.art3); equippedSlots.art3 = item; }
+        } else {
+            if (equippedSlots[item.type]) inventory.EQUIP.push(equippedSlots[item.type]);
+            equippedSlots[item.type] = item;
+        }
+        inventory.EQUIP.splice(index, 1); 
+        
+        let newMaxHp = resolvePlayerStats().maxHp;
+        playerStats.currentHp = Math.max(1, Math.min(newMaxHp, Math.floor((playerStats.currentHp / oldMaxHp) * newMaxHp)));
+        
+        updateUI(); renderInventory(); renderForgeTab(); window.saveGame();
+    };
+
+    window.unequipItem = function(slotKey) {
+        let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+        if (inventory.EQUIP.length >= maxBag) { pushHeaderToast(`Inventory Full!`, "#e74c3c"); return; }
+        window.hideTooltip(); let item = equippedSlots[slotKey]; if (!item) return;
+        
+        let oldMaxHp = resolvePlayerStats().maxHp;
+        equippedSlots[slotKey] = null; inventory.EQUIP.push(item); 
+        
+        let newMaxHp = resolvePlayerStats().maxHp;
+        playerStats.currentHp = Math.max(1, Math.min(newMaxHp, Math.floor((playerStats.currentHp / oldMaxHp) * newMaxHp)));
+        
+        updateUI(); renderInventory(); renderForgeTab(); window.saveGame();
+    };
+
+    window.selectForgeItem = function(id) { 
+        let item = inventory.EQUIP.find(i => i.id === id);
+        if (!item) { for (let k in equippedSlots) { if (equippedSlots[k] && equippedSlots[k].id === id) { item = equippedSlots[k]; break; } } }
+        forgeSelectedItem = item; renderForgeTab(); 
+    };
+
+    window.setForgeMode = function(mode) {
         forgeMode = mode;
         document.getElementById('btn-mode-temper').className = mode === 'temper' ? "btn-toggle active" : "btn-toggle";
         document.getElementById('btn-mode-tier').className = mode === 'tier' ? "btn-toggle active" : "btn-toggle";
@@ -907,8 +1099,7 @@ window.onload = function() {
         document.getElementById('btn-mode-tier').style.background = mode === 'tier' ? "#8e44ad" : "transparent";
         document.getElementById('btn-mode-star').style.background = mode === 'star' ? "#e67e22" : "transparent";
         renderForgeTab();
-    }
-    window.setForgeMode = setForgeMode;
+    };
 
     window.promoteStarItem = function() {
         if (!forgeSelectedItem || forgeSelectedItem.type === "artifact") return;
@@ -925,7 +1116,6 @@ window.onload = function() {
         inventory.ETC["Celestial Stardust"] -= stardustReq;
         if (inventory.ETC["Celestial Stardust"] === 0) delete inventory.ETC["Celestial Stardust"];
 
-        // Roll 1 new affix parameter onto the pool
         forgeSelectedItem.statsRolled++;
         
         let pool = ["critChance", "critDamage", "block", "parry", "atk", "maxHp", "def", "moveSpeed", "activeSpd", "idleSpd"];
@@ -951,34 +1141,112 @@ window.onload = function() {
         pushHeaderToast(`✨ Star Promotion Success!`, "#e67e22");
         spawnTemperParticles(true);
 
-        // Sync HP safely
         let newMaxHp = resolvePlayerStats().maxHp;
         playerStats.currentHp = Math.min(playerStats.currentHp, newMaxHp);
 
         updateUI(); renderInventory(); renderForgeTab(); window.saveGame();
     };
 
+    window.temperItem = function() {
+        if (!forgeSelectedItem) return;
+        let isArt = forgeSelectedItem.type === "artifact";
+        let baseLevelFactor = Math.max(1, forgeSelectedItem.stageLevel);
+        
+        if (forgeMode === 'temper') {
+            let maxT = getMaxTemper(forgeSelectedItem.statsRolled); if (forgeSelectedItem.temperLevel >= maxT) return;
+            let costGold = getTemperGoldCost(forgeSelectedItem) * baseLevelFactor; 
+            let scrapReqAmount = (isArt ? 1 : 1 + Math.floor(forgeSelectedItem.temperLevel / 3)) * baseLevelFactor;
+            let scrapReq = getRequiredScrapForTemper(forgeSelectedItem.temperLevel + 1, isArt);
+            
+            if (playerStats.coins < costGold) { pushLog(`<span style='color:#e74c3c;'>Not enough Gold to temper!</span>`); return; }
+            if (!inventory.ETC[scrapReq] || inventory.ETC[scrapReq] < scrapReqAmount) { pushLog(`<span style='color:#e74c3c;'>Not enough ${scrapReq} to temper!</span>`); return; }
+
+            let failChance = forgeSelectedItem.temperLevel * 5; 
+            let isSuccess = Math.random() >= (failChance / 100);
+
+            playerStats.coins -= costGold; inventory.ETC[scrapReq] -= scrapReqAmount;
+            if (inventory.ETC[scrapReq] === 0) delete inventory.ETC[scrapReq];
+
+            if (isSuccess) {
+                if (forgeSelectedItem.baseAtk > 0 || forgeSelectedItem.type === "weapon" || isArt) forgeSelectedItem.atk += (isArt ? 5 : 2);
+                if (forgeSelectedItem.baseMaxHp > 0 || isArt) forgeSelectedItem.maxHp += (isArt ? 25 : 10);
+                if (forgeSelectedItem.baseDef > 0 || isArt) forgeSelectedItem.def += (isArt ? 2 : 1);
+                if (forgeSelectedItem.baseMoveSpeed > 0) forgeSelectedItem.moveSpeed += 1;
+                
+                forgeSelectedItem.temperLevel++;
+                pushLog(`<span style='color:#e67e22;'>[FORGE]</span> Successfully tempered ${forgeSelectedItem.name} to [+${forgeSelectedItem.temperLevel}]!`);
+                pushHeaderToast(`🔨 Success! [+${forgeSelectedItem.temperLevel}]`, "#2ecc71");
+                spawnTemperParticles(true);
+            } else {
+                pushLog(`<span style='color:#e74c3c;'>[FORGE]</span> Temper failed on ${forgeSelectedItem.name}! Materials lost.`);
+                pushHeaderToast(`💥 Temper Failed!`, "#e74c3c");
+                spawnTemperParticles(false);
+            }
+        } else {
+            if (isArt) return; 
+            let currentTier = forgeSelectedItem.stageLevel;
+            let costGold = currentTier * 500 * baseLevelFactor;
+            let scrapReq = getTierUpScrapName(forgeSelectedItem.statsRolled);
+            let scrapReqAmount = currentTier * 2 * baseLevelFactor;
+            
+            if (playerStats.coins < costGold) { pushLog(`<span style='color:#e74c3c;'>Not enough Gold to Tier Up!</span>`); return; }
+            if (!inventory.ETC[scrapReq] || inventory.ETC[scrapReq] < scrapReqAmount) { pushLog(`<span style='color:#e74c3c;'>Not enough ${scrapReq} to Tier Up!</span>`); return; }
+            
+            playerStats.coins -= costGold; inventory.ETC[scrapReq] -= scrapReqAmount;
+            if (inventory.ETC[scrapReq] === 0) delete inventory.ETC[scrapReq];
+            
+            forgeSelectedItem.stageLevel++;
+            
+            if (forgeSelectedItem.baseAtk > 0) forgeSelectedItem.atk += 2;
+            if (forgeSelectedItem.baseMaxHp > 0) forgeSelectedItem.maxHp += 10;
+            if (forgeSelectedItem.baseDef > 0) forgeSelectedItem.def += 1;
+            if (forgeSelectedItem.baseMoveSpeed > 0) forgeSelectedItem.moveSpeed += 1;
+            
+            let prefix = getTierName(forgeSelectedItem.statsRolled);
+            forgeSelectedItem.name = `${prefix} ${forgeSelectedItem.type.toUpperCase()} (+${forgeSelectedItem.stageLevel})`;
+            
+            pushLog(`<span style='color:#9b59b6;'>[FORGE]</span> Successfully Tiered Up to ${forgeSelectedItem.name}!`);
+            pushHeaderToast(`✨ Tier Up Success!`, "#9b59b6");
+            spawnTemperParticles(true);
+        }
+
+        updateUI(); renderInventory(); renderForgeTab(); window.saveGame();
+    };
+
     function renderForgeTab() {
         let listEl = document.getElementById('forge-list'); let detailEl = document.getElementById('forge-details');
+        
         let allValidItems = [...inventory.EQUIP];
-        for(let key in equippedSlots) { if(equippedSlots[key]) { allValidItems.push({...equippedSlots[key], isEquippedSlot: key}); } }
+        for(let key in equippedSlots) {
+            if(equippedSlots[key]) {
+                let eqClone = {...equippedSlots[key], isEquippedSlot: key};
+                allValidItems.push(eqClone);
+            }
+        }
         
         if (allValidItems.length === 0) { listEl.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No gear.</div>"; } 
         else {
             listEl.innerHTML = allValidItems.map(item => {
                 let isArt = item.type === "artifact";
                 if ((forgeMode === 'tier' || forgeMode === 'star') && isArt) return ""; 
+                
                 let nameColor = getTierColor(item.statsRolled); let temperTag = item.temperLevel > 0 ? ` [+${item.temperLevel}]` : "";
                 let bgStyle = forgeSelectedItem && forgeSelectedItem.id === item.id ? "background:#2c3e50; border-left:3px solid #3498db;" : "";
                 let eqBadge = item.isEquippedSlot ? `<span style="background:#c0392b; color:white; padding:1px 3px; border-radius:2px; font-size:8px;">[EQUIPPED]</span> ` : "";
+                let rarityLabel = isArt ? "UNIQUE" : `${item.statsRolled}★`;
                 return `<div class="bag-item" style="cursor:pointer; ${bgStyle}" onclick="selectForgeItem(${item.id})" onmousemove="showForgeTooltip(event, ${item.id})" onmouseleave="hideTooltip()" ontouchstart="showForgeTooltip(event, ${item.id})">
-                    <div>${eqBadge}<strong style="color:${nameColor};">${item.name}${temperTag}</strong><br><span style="font-size:10px;color:#aaa;">${item.type.toUpperCase()} | ${item.statsRolled === "UNIQUE" ? "UNIQUE" : item.statsRolled + "★"}</span></div>
+                    <div>${eqBadge}<strong style="color:${nameColor};">${item.name}${temperTag}</strong><br><span style="font-size:10px;color:#aaa;">${item.type.toUpperCase()} | ${rarityLabel}</span></div>
                 </div>`;
             }).join("");
         }
 
         if (!forgeSelectedItem || ((forgeMode === 'tier' || forgeMode === 'star') && forgeSelectedItem.type === "artifact")) { 
-            detailEl.innerHTML = `<div style='color:#aaa; text-align:center; padding-top:10px;'><div style='color:#e67e22; font-weight:bold; font-size:14px; margin-bottom:10px;'>🔨 Forge Matrix</div><div style='font-size:11px; line-height:1.8; background:#1a1a1a; padding:10px; border-radius:4px; border:1px solid #333; text-align:left;'>Select gear from list.<br>• <b>TEMPER:</b> Scraps scale with Level. Buffs stats.<br>• <b>TIER UP:</b> Materials scale with Level. Increases Base Level Bracket.<br>• <b>STAR UP:</b> Uses Stardust to roll a brand-new bonus modifier affix.</div></div>`;
+            detailEl.innerHTML = `<div style='color:#aaa; text-align:center; padding-top:10px;'>
+                <div style='color:#e67e22; font-weight:bold; font-size:14px; margin-bottom:10px;'>🔨 Forge Matrix</div>
+                <div style='font-size:11px; line-height:1.8; background:#1a1a1a; padding:10px; border-radius:4px; border:1px solid #333; text-align:left; display:inline-block;'>
+                    Select gear from list.<br>• <b>TEMPER:</b> Scraps scale with Level. Buffs stats.<br>• <b>TIER UP:</b> Materials scale with Level. Increases Base Level Bracket.<br>• <b>STAR UP:</b> Uses Stardust to roll a brand-new bonus modifier affix.
+                </div>
+            </div>`;
             return; 
         }
 
@@ -992,7 +1260,6 @@ window.onload = function() {
             let maxT = getMaxTemper(item.statsRolled);
             if (item.temperLevel >= maxT) { html += `<div style="color:#e74c3c; font-weight:bold; text-align:center; padding: 20px 0;">MAXIMUM TEMPER LIMIT REACHED</div>`; } 
             else {
-                // LEVEL BASE COST SCALING FOR TEMPER ANVIL
                 let costGold = getTemperGoldCost(item) * baseLevelFactor; 
                 let scrapReqAmount = (isArt ? 1 : 1 + Math.floor(item.temperLevel / 3)) * baseLevelFactor;
                 let scrapReq = getRequiredScrapForTemper(item.temperLevel + 1, isArt); let playerScrap = inventory.ETC[scrapReq] || 0;
@@ -1002,11 +1269,10 @@ window.onload = function() {
                 html += `<div style="font-size:11px; margin-bottom:15px; color:#aaa;">Temper Progress: <span style="color:#fff;">${item.temperLevel} / ${maxT}</span></div>`;
                 html += `<div style="font-size:11px; color:${goldColor}; margin-bottom:3px;">• ${costGold} Gold</div>`;
                 html += `<div style="font-size:11px; color:${scrapColor}; margin-bottom:10px;">• ${scrapReqAmount}x ${scrapReq} (You have: ${playerScrap})</div>`;
-                html += `<div style="font-size:11px; color:#e74c3c; font-weight:bold; margin-bottom:15px;">⚠️ ${failChance}% Chance to Fail</div>`;
+                html += `<div style="font-size:11px; color:#e74c3c; font-weight:bold; margin-bottom:15px;">⚠️ ${failChance}% Chance to Fail (Eats materials)</div>`;
                 html += `<button class="btn-action forge" style="${(playerStats.coins >= costGold) && (playerScrap >= scrapReqAmount) ? '' : 'opacity:0.5; cursor:not-allowed;'}" onclick="temperItem()">Strike Anvil</button>`;
             }
         } else if (forgeMode === 'tier') {
-            // LEVEL BASE COST SCALING FOR TIER PROGRESSION
             let currentTier = item.stageLevel;
             let costGold = currentTier * 500 * baseLevelFactor;
             let scrapReq = getTierUpScrapName(item.statsRolled);
@@ -1053,7 +1319,6 @@ window.onload = function() {
         effects.push({ x: mob.x + 35, y: mob.y + 25, text: "+" + coinYield + "g", color: "#f1c40f", life: 25 });
         
         if (playerStats.isDungeonMode) {
-            // STARDUST ACTIVITIES LOOT POOL ARRAYS
             if (mob.type === "dungeon_miniboss" && Math.random() < 0.10) { addEtcDrop("Celestial Stardust", 1); pushToast("Celestial Stardust", null, "#ffb6c1", true, 1); }
             if (mob.type === "dungeon_boss") { addEtcDrop("Celestial Stardust", randInt(1, 2)); }
 
@@ -1289,8 +1554,8 @@ window.onload = function() {
 
         let p = resolvePlayerStats(); let scrollSpeed = p.moveSpeed * 0.3;
 
-        if (hero.attackTimer > 0) h
-[The prompt has a definitive answer, is a self-contained task, or dictates strict rules. Generating response exactly based on Master Rule Step 4 Integration Protocol, closing conversation directly with no options or follow-up question.]ero.attackTimer--; hero.slashFrame = (hero.attackTimer > 0 && hero.attackTimer < (p.activeAttackSpeed/2));
+        if (hero.attackTimer > 0) hero.attackTimer--; 
+        hero.slashFrame = (hero.attackTimer > 0 && hero.attackTimer < (p.activeAttackSpeed/2));
         if (mob && mob.flashTimer > 0) mob.flashTimer--; 
         if (playerStats.frenzyTimer > 0) playerStats.frenzyTimer--;
         if (playerStats.adrenalineTimer > 0) playerStats.adrenalineTimer--;
@@ -1489,8 +1754,7 @@ window.onload = function() {
                 } else {
                     if (t===0) {
                         ctx.fillStyle = "#8B4513"; ctx.fillRect(mob.x, mob.y, mob.w, mob.h);
-                        ctx.beginPath(); ctx.moveTo(mob.x, mob.y+mob.h); ctx.lineTo(mob.x-10, mob.y+mob.h+5); ctx.lineTo(mob.x, mob.y+mob.h-5); ctx.fill();
-                        ctx.beginPath(); ctx.moveTo(mob.x+mob.w, mob.y+mob.h); ctx.lineTo(mob.x+mob.w+10, mob.y+mob.h+5); ctx.lineTo(mob.x+mob.w, mob.y+mob.h-5); ctx.fill();
+                        ctx.beginPath(); ctx.moveTo(mob.x, mob.y+mob.h); ctx.lineTo(mob.x-10, mob.y+mob.h+5); ctx.lineTo(mob.x, mob.y+mob.h-5); ctx.fill(); ctx.beginPath(); ctx.moveTo(mob.x+mob.w, mob.y+mob.h); ctx.lineTo(mob.x+mob.w+10, mob.y+mob.h+5); ctx.lineTo(mob.x+mob.w, mob.y+mob.h-5); ctx.fill();
                         ctx.fillStyle = mob.flashTimer > 0 ? "#fff" : "#228B22"; ctx.beginPath(); ctx.arc(mob.x + mob.w/2, mob.y, 35, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(mob.x - 5, mob.y + 15, 25, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(mob.x + mob.w + 5, mob.y + 15, 25, 0, Math.PI*2); ctx.fill();
                         if (mob.flashTimer === 0) { ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(mob.x + 12, mob.y + 25, 3, 6, 0, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.ellipse(mob.x + mob.w - 12, mob.y + 25, 3, 6, 0, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.ellipse(mob.x + mob.w/2, mob.y + 45, 6, 8, 0, 0, Math.PI*2); ctx.fill(); }
                         ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(mob.x + mob.w/2 - 12, mob.y + 8, 6, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = "#5c4033"; ctx.fillRect(mob.x + mob.w/2 - 13, mob.y + 1, 2, 4);
@@ -1574,6 +1838,20 @@ window.onload = function() {
                     ctx.fillStyle = cBush3; ctx.beginPath(); ctx.arc(sx-4*ss, sy-10*ss, 6*ss, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(sx+6*ss, sy-8*ss, 5*ss, 0, Math.PI*2); ctx.fill();
                 }
             });
+        }
+
+        if (reviveTimer > 0) {
+            ctx.save();
+            ctx.globalAlpha = reviveTimer / 90;
+            let grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            grad.addColorStop(0, "rgba(255, 255, 200, 0.8)"); grad.addColorStop(1, "rgba(255, 255, 200, 0)");
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.moveTo(hero.x + 12, -10); ctx.lineTo(hero.x - 60, canvas.height); ctx.lineTo(hero.x + 80, canvas.height); ctx.fill();
+            for(let i=0; i<8; i++) {
+                ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(hero.x - 40 + Math.random()*100, canvas.height - Math.random()*(90-reviveTimer)*4, Math.random()*2+1, 0, Math.PI*2); ctx.fill();
+            }
+            ctx.restore();
+            reviveTimer--;
         }
 
         particles.forEach(pt => { ctx.fillStyle = pt.color; ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2); ctx.fill(); });
