@@ -228,7 +228,7 @@
         <div class="stats-hud">
             <div>Stage: <span id="hud-stage" style="color:#3498db;">1-1</span></div>
             <div>Prog: <span id="hud-progress" style="color:#f1c40f;">0/5</span></div>
-            <div>Buff: <span id="hud-buff" style="color:#aaa;">None</span></div>
+            <div>Buff: <span id="hud-buff" style="color:#aaa; cursor:help;" onmousemove="showBuffTooltip(event)" ontouchstart="showBuffTooltip(event)" onmouseleave="hideTooltip()">None</span></div>
             <div>Bag: <span id="hud-bag" style="color:#2ecc71;">0/20</span></div>
             <div>HP: <span id="hud-hp" style="color:#e74c3c;">100/100</span></div>
             <div>💰: <span id="hud-coins" style="color:#f1c40f;">0</span></div>
@@ -323,6 +323,7 @@
                 <div style="display:flex; gap:10px; margin-bottom:10px;">
                     <button id="btn-mode-temper" class="btn-toggle active" style="flex:1; background:#2980b9;" onclick="setForgeMode('temper')">Mode: TEMPER</button>
                     <button id="btn-mode-tier" class="btn-toggle" style="flex:1; background:transparent;" onclick="setForgeMode('tier')">Mode: TIER UP</button>
+                    <button id="btn-mode-awaken" class="btn-toggle" style="flex:1; background:transparent;" onclick="setForgeMode('awaken')">Mode: AWAKEN</button>
                 </div>
                 <div class="forge-grid">
                     <div class="forge-panel" id="forge-details"></div>
@@ -373,6 +374,7 @@
 window.onload = function() {
 
     const etcDex = {
+        "Eridium Shard": "A glowing, alien fragment used in the Forge to awaken an item's Star Rarity.",
         "Gacha Key": "Guaranteed drop from Rift Guardians. Used at the Vending Machine for a gear roll.",
         "Ancient Core": "Rare drop from Stage Bosses. Sacrifice 5 at the Ancient Altar to summon a Rift Guardian.",
         "Overlord's Sigil": "Guaranteed drop from the Equipment Dungeon Overlord. Used to temper Unique Artifacts.",
@@ -769,8 +771,10 @@ window.onload = function() {
         e.preventDefault(); 
         if (fairy.active) {
             const rect = canvas.getBoundingClientRect();
-            const clickX = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
-            const clickY = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const clickX = ((e.clientX || (e.touches && e.touches[0].clientX)) - rect.left) * scaleX;
+            const clickY = ((e.clientY || (e.touches && e.touches[0].clientY)) - rect.top) * scaleY;
             const dist = Math.hypot(clickX - fairy.x, clickY - fairy.y);
             if (dist < 30) { triggerFairyLoot(); return; }
         }
@@ -790,7 +794,7 @@ window.onload = function() {
         let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
 
         if (Math.random() < 0.40) {
-            let goldYield = Math.floor(1500 * (Math.floor((playerStats.stage - 1) / 10) + 1) * p.gold);
+            let goldYield = Math.floor((100 + (playerStats.stage * 35)) * p.gold);
             playerStats.coins += goldYield;
             document.getElementById('fairy-reward-content').innerHTML = `<strong style="color:#f1c40f; font-size:18px;">🌟 Golden Bounty!</strong><br><span style="font-size:13px; color:#fff;">+${goldYield} Gold pieces gathered!</span>`;
             document.getElementById('fairy-modal').style.display = "flex";
@@ -1042,7 +1046,8 @@ window.onload = function() {
     }
 
     function getTemperGoldCost(item) {
-        let baseCost = item.type === "artifact" ? 1000 : 100; return Math.floor(baseCost * Math.pow(1.5, item.temperLevel) * (item.statsRolled === "UNIQUE" ? 1 : (item.statsRolled + 1)));
+        let baseCost = item.type === "artifact" ? 1000 : 100;
+        return Math.floor(baseCost * Math.pow(1.5, item.temperLevel) * (item.statsRolled === "UNIQUE" ? 1 : (item.statsRolled + 1)) * (1 + (item.stageLevel * 0.15)));
     }
     
     function getTierUpScrapName(stars) {
@@ -1245,6 +1250,23 @@ window.onload = function() {
         tt.innerHTML = `<div style="padding: 10px; width: 250px; box-sizing: border-box;"><div class="tt-title" style="color:#f1c40f;">🎰 Vending Machine Rates</div><div class="tt-subtitle">Gacha Rarity Distribution</div><div class="tt-stat-line" style="color:#3498db;">• 1★ Rare: ${Math.max(0, rare).toFixed(2)}%</div><div class="tt-stat-line" style="color:#9b59b6;">• 2★ Magic: ${Math.max(0, magic).toFixed(2)}%</div><div class="tt-stat-line" style="color:#e67e22;">• 3★ Epic: ${Math.max(0, epic).toFixed(2)}%</div><div class="tt-stat-line" style="color:#f1c40f;">• 4★ Legendary: ${Math.max(0, leg).toFixed(2)}%</div><div class="tt-stat-line" style="color:#e74c3c;">• 5★ Mythic: ${Math.max(0, mythic).toFixed(2)}%</div><div class="tt-stat-line" style="color:#1abc9c; margin-top:4px;">• Bonus: 1% flat chance for Unique Artifact!</div><div class="tt-subtitle" style="margin-top:6px; border-top:1px solid #333; padding-top:4px;">Guaranteed 1★ to 5★ gear. Influenced by Drop Quality.</div></div>`;
         tt.style.borderColor = "#f1c40f"; tt.style.display = "block"; window.positionTooltip(e, tt);
     };
+    
+    window.showBuffTooltip = function(e) {
+        e.stopPropagation(); let tt = document.getElementById('stat-tooltip'); let html = "";
+        let buffs = [];
+        if (playerStats.frenzyTimer > 0) buffs.push("<div style='color:#e67e22; margin-bottom:5px;'><b>🔥 FRENZY:</b> +50% Crit Multi, 100% Crit Chance, Max Attack Speed.</div>");
+        if (playerStats.adrenalineTimer > 0) buffs.push("<div style='color:#f1c40f; margin-bottom:5px;'><b>⚡ ADRENALINE:</b> x2 Damage Output.</div>");
+        if (checkArtifactTrait("second_wind") && !playerStats.usedSecondWind) buffs.push("<div style='color:#e74c3c; margin-bottom:5px;'><b>🛡️ ANKH:</b> Will revive with 50% HP upon taking lethal damage.</div>");
+
+        if (buffs.length === 0) {
+            html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div style="color:#aaa; font-size:11px;">No active buffs. Equip artifacts or defeat enemies to gain temporal powers!</div></div>`;
+            tt.style.borderColor = "#aaa";
+        } else {
+            html = `<div style="padding: 10px; width: 250px; box-sizing: border-box;"><div class="tt-title" style="color:#e67e22;">Active Buffs</div><div style="font-size:11px;">${buffs.join("")}</div></div>`;
+            tt.style.borderColor = "#e67e22";
+        }
+        tt.innerHTML = html; tt.style.display = "block"; window.positionTooltip(e, tt);
+    };
 
     window.positionTooltip = function(e, tt) {
         let container = document.getElementById('game-container').getBoundingClientRect();
@@ -1315,8 +1337,10 @@ window.onload = function() {
         forgeMode = mode;
         document.getElementById('btn-mode-temper').className = mode === 'temper' ? "btn-toggle active" : "btn-toggle";
         document.getElementById('btn-mode-tier').className = mode === 'tier' ? "btn-toggle active" : "btn-toggle";
-        document.getElementById('btn-mode-tier').style.background = mode === 'tier' ? "#8e44ad" : "transparent";
+        document.getElementById('btn-mode-awaken').className = mode === 'awaken' ? "btn-toggle active" : "btn-toggle";
         document.getElementById('btn-mode-temper').style.background = mode === 'temper' ? "#2980b9" : "transparent";
+        document.getElementById('btn-mode-tier').style.background = mode === 'tier' ? "#8e44ad" : "transparent";
+        document.getElementById('btn-mode-awaken').style.background = mode === 'awaken' ? "#e67e22" : "transparent";
         renderForgeTab();
     };
 
@@ -1354,7 +1378,7 @@ window.onload = function() {
                 pushHeaderToast(`💥 Temper Failed!`, "#e74c3c");
                 spawnTemperParticles(false);
             }
-        } else {
+        } else if (forgeMode === 'tier') {
             if (isArt) return; 
             let currentTier = forgeSelectedItem.stageLevel;
             let costGold = currentTier * 500;
@@ -1380,6 +1404,26 @@ window.onload = function() {
             pushLog(`<span style='color:#9b59b6;'>[FORGE]</span> Successfully Tiered Up to ${forgeSelectedItem.name}!`);
             pushHeaderToast(`✨ Tier Up Success!`, "#9b59b6");
             spawnTemperParticles(true);
+        } else if (forgeMode === 'awaken') {
+            if (isArt || forgeSelectedItem.statsRolled >= 5) return;
+            let currentStars = forgeSelectedItem.statsRolled;
+            let costGold = (currentStars + 1) * 2500;
+            let scrapReqAmount = currentStars + 1;
+            
+            if (playerStats.coins < costGold) { pushLog(`<span style='color:#e74c3c;'>Not enough Gold to Awaken!</span>`); return; }
+            if (!inventory.ETC["Eridium Shard"] || inventory.ETC["Eridium Shard"] < scrapReqAmount) { pushLog(`<span style='color:#e74c3c;'>Not enough Eridium Shards to Awaken!</span>`); return; }
+            
+            playerStats.coins -= costGold; 
+            inventory.ETC["Eridium Shard"] -= scrapReqAmount;
+            if (inventory.ETC["Eridium Shard"] === 0) delete inventory.ETC["Eridium Shard"];
+            
+            forgeSelectedItem.statsRolled++;
+            let prefix = getTierName(forgeSelectedItem.statsRolled);
+            forgeSelectedItem.name = `${prefix} ${forgeSelectedItem.type.toUpperCase()} (+${forgeSelectedItem.stageLevel})`;
+            
+            pushLog(`<span style='color:#e67e22;'>[FORGE]</span> Awakened gear rarity to ${forgeSelectedItem.statsRolled}★!`);
+            pushHeaderToast(`🌟 Awaken Success!`, "#e67e22");
+            spawnTemperParticles(true);
         }
 
         updateUI(); renderInventory(); renderForgeTab(); window.saveGame();
@@ -1400,7 +1444,7 @@ window.onload = function() {
         else {
             listEl.innerHTML = allValidItems.map(item => {
                 let isArt = item.type === "artifact";
-                if (forgeMode === 'tier' && isArt) return ""; 
+                if ((forgeMode === 'tier' || forgeMode === 'awaken') && isArt) return ""; 
                 
                 let nameColor = getTierColor(item.statsRolled); let temperTag = item.temperLevel > 0 ? ` [+${item.temperLevel}]` : "";
                 let bgStyle = forgeSelectedItem && forgeSelectedItem.id === item.id ? "background:#2c3e50; border-left:3px solid #3498db;" : "";
@@ -1412,11 +1456,11 @@ window.onload = function() {
             }).join("");
         }
 
-        if (!forgeSelectedItem || (forgeMode === 'tier' && forgeSelectedItem.type === "artifact")) { 
+        if (!forgeSelectedItem || ((forgeMode === 'tier' || forgeMode === 'awaken') && forgeSelectedItem.type === "artifact")) { 
             detailEl.innerHTML = `<div style='color:#aaa; text-align:center; padding-top:10px;'>
                 <div style='color:#e67e22; font-weight:bold; font-size:14px; margin-bottom:10px;'>🔨 Forge Guide</div>
                 <div style='font-size:11px; line-height:1.8; background:#1a1a1a; padding:10px; border-radius:4px; border:1px solid #333; text-align:left; display:inline-block;'>
-                    Select an item from the list. <br><br><b>TEMPER:</b> Uses level-appropriate scraps to boost stats. Has a chance to fail as it goes higher.<br><br><b>TIER UP:</b> Uses scaling Gold and Scraps based on the item's Star Rarity to guarantee a Base Level (+1) increase. Cannot fail.
+                    Select an item from the list. <br><br><b>TEMPER:</b> Uses level-appropriate scraps to boost stats. Has a chance to fail.<br><br><b>TIER UP:</b> Uses scaling Gold and Scraps to guarantee a Base Level (+1) increase.<br><br><b>AWAKEN:</b> Increases an item's Star Rarity using Eridium Shards, unlocking higher base potential.
                 </div>
             </div>`;
             return; 
@@ -1441,7 +1485,7 @@ window.onload = function() {
                 html += `<div style="font-size:11px; color:#e74c3c; font-weight:bold; margin-bottom:15px;">⚠️ ${failChance}% Chance to Fail (Eats materials)</div>`;
                 html += `<button class="btn-action forge" style="${(playerStats.coins >= costGold) && (playerScrap >= scrapReqAmount) ? '' : 'opacity:0.5; cursor:not-allowed;'}" onclick="temperItem()">Strike Anvil</button>`;
             }
-        } else {
+        } else if (forgeMode === 'tier') {
             let currentTier = item.stageLevel;
             let costGold = currentTier * 500;
             let scrapReq = getTierUpScrapName(item.statsRolled);
@@ -1455,6 +1499,24 @@ window.onload = function() {
             html += `<div style="font-size:11px; color:${scrapColor}; margin-bottom:10px;">• ${scrapReqAmount}x ${scrapReq} (You have: ${playerScrap})</div>`;
             html += `<div style="font-size:11px; color:#2ecc71; font-weight:bold; margin-bottom:15px;">✨ 100% Success Rate</div>`;
             html += `<button class="btn-action forge" style="background:#8e44ad; ${(playerStats.coins >= costGold) && (playerScrap >= scrapReqAmount) ? '' : 'opacity:0.5; cursor:not-allowed;'}" onclick="temperItem()">Tier Up Gear</button>`;
+        } else if (forgeMode === 'awaken') {
+            if (item.statsRolled >= 5) { 
+                html += `<div style="color:#e74c3c; font-weight:bold; text-align:center; padding: 20px 0;">MAXIMUM RARITY REACHED</div>`; 
+            } else {
+                let currentStars = item.statsRolled;
+                let costGold = (currentStars + 1) * 2500;
+                let scrapReqAmount = currentStars + 1;
+                let playerScrap = inventory.ETC["Eridium Shard"] || 0;
+                
+                let goldColor = playerStats.coins >= costGold ? "#f1c40f" : "#e74c3c"; 
+                let scrapColor = playerScrap >= scrapReqAmount ? "#8e44ad" : "#e74c3c";
+                
+                html += `<div style="font-size:11px; margin-bottom:15px; color:#aaa;">Current Rarity: <span style="color:#fff;">${currentStars}★</span> ➔ <span style="color:#f1c40f;">${currentStars+1}★</span></div>`;
+                html += `<div style="font-size:11px; color:${goldColor}; margin-bottom:3px;">• ${costGold} Gold</div>`;
+                html += `<div style="font-size:11px; color:${scrapColor}; margin-bottom:10px;">• ${scrapReqAmount}x Eridium Shard (You have: ${playerScrap})</div>`;
+                html += `<div style="font-size:11px; color:#2ecc71; font-weight:bold; margin-bottom:15px;">✨ 100% Success Rate</div>`;
+                html += `<button class="btn-action forge" style="background:#e67e22; ${(playerStats.coins >= costGold) && (playerScrap >= scrapReqAmount) ? '' : 'opacity:0.5; cursor:not-allowed;'}" onclick="temperItem()">Awaken Potential</button>`;
+            }
         }
         detailEl.innerHTML = html;
     }
@@ -1488,6 +1550,7 @@ window.onload = function() {
                 if (mob.type === "dungeon_boss") {
                     if (Math.random() < 0.8) { addEtcDrop("Ancient Core", randInt(1, 3)); pushToast("Ancient Core", null, "#9b59b6", true, 1); }
                     if (Math.random() < 0.5) { addEtcDrop("Gacha Key", 1); pushToast("Gacha Key", null, "#f1c40f", true, 1); }
+                    if (Math.random() < 0.25) { addEtcDrop("Eridium Shard", 1); pushToast("Eridium Shard", null, "#8e44ad", true, 1); }
                     addEtcDrop("Legendary Scrap", randInt(1, 3));
                 } else {
                     let r = Math.random();
@@ -1503,8 +1566,9 @@ window.onload = function() {
         
         if (playerStats.isUberBoss) {
             addEtcDrop("Gacha Key", 1); pushToast("Gacha Key", null, "#f1c40f", true, 1);
-        } else if (mob.type === "boss" && Math.random() < 0.05) { 
-            addEtcDrop("Ancient Core", 1); pushToast("Ancient Core", null, "#9b59b6", true, 1);
+        } else if (mob.type === "boss") { 
+            if (Math.random() < 0.05) { addEtcDrop("Ancient Core", 1); pushToast("Ancient Core", null, "#9b59b6", true, 1); }
+            if (Math.random() < 0.10) { addEtcDrop("Eridium Shard", 1); pushToast("Eridium Shard", null, "#8e44ad", true, 1); }
         } else if (!isBoss && !playerStats.isDungeonMode) { 
             if (Math.random() < 0.15) {
                 let etcItemName = Math.random() > 0.5 ? "Iron Scrap" : "Sticky Gel";
