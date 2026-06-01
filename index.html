@@ -853,10 +853,25 @@ window.onload = function() {
         updateUI(); window.saveGame();
     };
 
-    for(let i=0; i<12; i++) { bgScenery.push({ x: Math.random() * canvas.width, y: 180, type: Math.random() > 0.5 ? 'tree' : 'bush', size: Math.random() * 0.5 + 0.5 }); }
+    for(let i=0; i<12; i++) { 
+        bgScenery.push({ 
+            x: Math.random() * canvas.width, 
+            y: 180, 
+            type: Math.random() > 0.5 ? 'tree' : 'bush', 
+            size: Math.random() * 0.5 + 0.5,
+            seed: Math.random()
+        }); 
+    }
     for(let i=0; i<25; i++) {
         let fgType = Math.random();
-        fgScenery.push({ x: Math.random() * canvas.width, y: 190 + Math.random() * 60, type: fgType > 0.8 ? 'bush' : (fgType > 0.5 ? 'flower' : 'grass'), size: Math.random() * 0.7 + 0.5, color: flowerColors[Math.floor(Math.random() * flowerColors.length)] });
+        fgScenery.push({ 
+            x: Math.random() * canvas.width, 
+            y: 190 + Math.random() * 60, 
+            type: fgType > 0.8 ? 'bush' : (fgType > 0.5 ? 'flower' : 'grass'), 
+            size: Math.random() * 0.7 + 0.5, 
+            color: flowerColors[Math.floor(Math.random() * flowerColors.length)],
+            seed: Math.random()
+        });
     }
 
     /* ==========================================================================
@@ -2645,96 +2660,298 @@ window.onload = function() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         let tier = getStageTier();
 
+        // 1. SKY & BACKGROUND FILL
         if (playerStats.isDungeonMode) {
             let caveGrad = ctx.createLinearGradient(0, 0, 0, 180);
-            if (playerStats.currentDungeon === 'gold') { caveGrad.addColorStop(0, "#1a1100"); caveGrad.addColorStop(1, "#332200"); } 
-            else if (playerStats.currentDungeon === 'mat') { caveGrad.addColorStop(0, "#0a1a11"); caveGrad.addColorStop(1, "#113322"); } 
-            else { caveGrad.addColorStop(0, "#0b0c10"); caveGrad.addColorStop(1, "#1c2833"); }
-            
+            if (playerStats.currentDungeon === 'gold') { caveGrad.addColorStop(0, "#0f0800"); caveGrad.addColorStop(1, "#1d1205"); } 
+            else if (playerStats.currentDungeon === 'mat') { caveGrad.addColorStop(0, "#040d08"); caveGrad.addColorStop(1, "#0d2115"); } 
+            else { caveGrad.addColorStop(0, "#06070a"); caveGrad.addColorStop(1, "#12181f"); }
             ctx.fillStyle = caveGrad; ctx.fillRect(0, 0, canvas.width, 180);
-            ctx.fillStyle = playerStats.currentDungeon === 'gold' ? "#261a00" : (playerStats.currentDungeon === 'mat' ? "#0f2619" : "#17202a");
-            ctx.beginPath(); ctx.moveTo(0, 180); ctx.lineTo(150, 40); ctx.lineTo(300, 180); ctx.fill();
-            ctx.beginPath(); ctx.moveTo(200, 180); ctx.lineTo(400, 20); ctx.lineTo(600, 180); ctx.fill();
-            ctx.beginPath(); ctx.moveTo(500, 180); ctx.lineTo(650, 60); ctx.lineTo(800, 180); ctx.fill();
 
-            ctx.fillStyle = playerStats.currentDungeon === 'gold' ? "#4d3300" : (playerStats.currentDungeon === 'mat' ? "#1e4d30" : "#2c3e50"); ctx.fillRect(0, 180, canvas.width, 70);
-            ctx.fillStyle = playerStats.currentDungeon === 'gold' ? "#664400" : (playerStats.currentDungeon === 'mat' ? "#27633e" : "#34495e"); ctx.fillRect(0, 180, canvas.width, 8);
-            ctx.fillStyle = playerStats.currentDungeon === 'gold' ? "#332200" : (playerStats.currentDungeon === 'mat' ? "#13331f" : "#1c2833");
-            for(let i=0; i<canvas.width+80; i+=80) { 
-                let gx = i - (groundScroll % 80); ctx.fillRect(gx, 200, 20, 5); ctx.fillRect(gx + 30, 220, 15, 4); ctx.fillRect(gx + 10, 240, 25, 3); 
+            // Cavern backwall structure lines
+            ctx.fillStyle = playerStats.currentDungeon === 'gold' ? "#140a00" : (playerStats.currentDungeon === 'mat' ? "#050f0a" : "#0d1117");
+            ctx.beginPath(); ctx.moveTo(0, 180); ctx.quadraticCurveTo(180, 20, 380, 180); ctx.quadraticCurveTo(580, 10, 800, 180); ctx.fill();
+            
+            // Dungeon structures
+            if (playerStats.currentDungeon === 'gold') {
+                ctx.strokeStyle = "#1b1108"; ctx.lineWidth = 6;
+                for (let i = 100; i < canvas.width; i += 220) {
+                    ctx.beginPath(); ctx.moveTo(i - 40, 180); ctx.lineTo(i - 40, 60); ctx.lineTo(i + 40, 60); ctx.lineTo(i + 40, 180); ctx.stroke();
+                }
+            } else if (playerStats.currentDungeon === 'equip') {
+                ctx.strokeStyle = "#1b2126"; ctx.lineWidth = 2;
+                for (let i = 180; i < canvas.width; i += 250) {
+                    ctx.beginPath(); ctx.moveTo(i, 0); ctx.bezierCurveTo(i - 10, 50, i + 15, 100, i, 140); ctx.stroke();
+                    ctx.fillStyle = "#13181c"; ctx.fillRect(i - 6, 140, 12, 8);
+                }
             }
-            bgScenery.forEach(s => {
-                ctx.fillStyle = playerStats.currentDungeon === 'gold' ? "#261a00" : (playerStats.currentDungeon === 'mat' ? "#0f2619" : "#17202a");
-                ctx.beginPath(); ctx.moveTo(s.x - 15*s.size, 180); ctx.lineTo(s.x, 180 - 60*s.size); ctx.lineTo(s.x + 15*s.size, 180); ctx.fill();
-            });
         } else {
             let skyGrad = ctx.createLinearGradient(0, 0, 0, 180);
-            if (playerStats.isBossMode) { skyGrad.addColorStop(0, "#1a0b1c"); skyGrad.addColorStop(1, "#000000"); } 
+            if (playerStats.isBossMode) { skyGrad.addColorStop(0, "#140618"); skyGrad.addColorStop(1, "#030005"); } 
             else {
-                if (tier===0) { skyGrad.addColorStop(0, "#2b5876"); skyGrad.addColorStop(1, "#4e4376"); }
-                else if (tier===1) { skyGrad.addColorStop(0, "#2c3e50"); skyGrad.addColorStop(1, "#17202a"); }
-                else if (tier===2) { skyGrad.addColorStop(0, "#641e16"); skyGrad.addColorStop(1, "#1b0000"); }
-                else if (tier===3) { skyGrad.addColorStop(0, "#145a32"); skyGrad.addColorStop(1, "#0b2b18"); }
-                else if (tier===4) { skyGrad.addColorStop(0, "#154360"); skyGrad.addColorStop(1, "#081a25"); }
+                if (tier===0) { skyGrad.addColorStop(0, "#2c3e50"); skyGrad.addColorStop(1, "#3498db"); }
+                else if (tier===1) { skyGrad.addColorStop(0, "#2c3e50"); skyGrad.addColorStop(1, "#1a252f"); }
+                else if (tier===2) { skyGrad.addColorStop(0, "#5a0e0e"); skyGrad.addColorStop(1, "#0e0202"); }
+                else if (tier===3) { skyGrad.addColorStop(0, "#082113"); skyGrad.addColorStop(1, "#193623"); }
+                else { skyGrad.addColorStop(0, "#070313"); skyGrad.addColorStop(1, "#020005"); }
             }
             ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, canvas.width, 180);
 
-            ctx.fillStyle = playerStats.isBossMode ? "#1a0b1c" : (tier===1 ? "#1c2833" : (tier===2 ? "#4a2311" : (tier===3 ? "#0e331c" : (tier===4 ? "#17202a" : "#212f3d"))));
-            ctx.beginPath(); ctx.moveTo(0, 180); ctx.lineTo(150, 80); ctx.lineTo(300, 180); ctx.fill(); ctx.beginPath(); ctx.moveTo(200, 180); ctx.lineTo(400, 50); ctx.lineTo(600, 180); ctx.fill(); ctx.beginPath(); ctx.moveTo(500, 180); ctx.lineTo(650, 90); ctx.lineTo(800, 180); ctx.fill();
+            // Outdoor Parallax Layers & Skylines
+            if (tier === 0) {
+                ctx.fillStyle = "rgba(255,255,255,0.06)";
+                let cloudScroll1 = (Date.now() / 250) % (canvas.width + 100) - 50;
+                let cloudScroll2 = (Date.now() / 400 + 300) % (canvas.width + 100) - 50;
+                ctx.beginPath(); ctx.arc(cloudScroll1, 35, 20, 0, Math.PI*2); ctx.arc(cloudScroll1 + 25, 30, 25, 0, Math.PI*2); ctx.arc(cloudScroll1 - 25, 38, 15, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(cloudScroll2, 60, 15, 0, Math.PI*2); ctx.arc(cloudScroll2 + 18, 55, 20, 0, Math.PI*2); ctx.fill();
 
-            ctx.fillStyle = (tier===1 ? "#34495e" : (tier===2 ? "#7b241c" : (tier===3 ? "#196f3d" : (tier===4 ? "#2e4053" : "#3e2723")))); ctx.fillRect(0, 180, canvas.width, 70);
-            ctx.fillStyle = (tier===1 ? "#2c3e50" : (tier===2 ? "#4a2311" : (tier===3 ? "#114f2b" : (tier===4 ? "#1c2833" : "#4e342e"))));
-            for(let i=0; i<canvas.width+80; i+=80) { 
-                let gx = i - (groundScroll % 80); ctx.fillRect(gx, 200, 25, 4); ctx.fillRect(gx + 35, 215, 15, 3); ctx.fillRect(gx + 10, 235, 20, 5); ctx.fillRect(gx + 60, 225, 8, 3);
+                ctx.fillStyle = "#1e3d29"; ctx.beginPath(); ctx.moveTo(0, 180); ctx.quadraticCurveTo(100, 110, 220, 180); ctx.quadraticCurveTo(350, 95, 480, 180); ctx.quadraticCurveTo(620, 115, 800, 180); ctx.fill();
+                ctx.fillStyle = "#154f2c"; ctx.beginPath(); ctx.moveTo(0, 180); ctx.quadraticCurveTo(150, 130, 320, 180); ctx.quadraticCurveTo(500, 120, 680, 180); ctx.quadraticCurveTo(740, 150, 800, 180); ctx.fill();
+            } else if (tier === 1) {
+                ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+                for(let i = 0; i < 20; i++) { ctx.fillRect((i * 37) % canvas.width, (i * 13) % 90, 1, 1); }
+                ctx.fillStyle = "#1c2833"; ctx.beginPath(); ctx.moveTo(0, 180); ctx.lineTo(100, 80); ctx.lineTo(180, 130); ctx.lineTo(310, 60); ctx.lineTo(450, 150); ctx.lineTo(580, 75); ctx.lineTo(700, 140); ctx.lineTo(800, 180); ctx.fill();
+                ctx.fillStyle = "#ecf0f1"; ctx.beginPath(); ctx.moveTo(100, 80); ctx.lineTo(85, 95); ctx.lineTo(115, 95); ctx.moveTo(310, 60); ctx.lineTo(290, 85); ctx.lineTo(330, 85); ctx.moveTo(580, 75); ctx.lineTo(565, 90); ctx.lineTo(595, 90); ctx.fill();
+                ctx.fillStyle = "#2c3e50"; ctx.beginPath(); ctx.moveTo(0, 180); ctx.lineTo(150, 110); ctx.lineTo(280, 180); ctx.lineTo(440, 100); ctx.lineTo(600, 180); ctx.lineTo(700, 120); ctx.lineTo(800, 180); ctx.fill();
+            } else if (tier === 2) {
+                ctx.fillStyle = "rgba(230, 126, 34, 0.08)"; ctx.fillRect(0, 0, canvas.width, 180);
+                for (let i = 0; i < 8; i++) {
+                    ctx.fillStyle = "#e67e22"; ctx.fillRect((Date.now() / 15 + i * 90) % (canvas.width + 20) - 10, 160 - ((Date.now() / 8 + i * 43) % 150), 2, 2);
+                }
+                ctx.fillStyle = "#200401"; ctx.beginPath(); ctx.moveTo(0, 180); ctx.lineTo(80, 90); ctx.lineTo(120, 115); ctx.lineTo(250, 40); ctx.lineTo(320, 125); ctx.lineTo(500, 50); ctx.lineTo(620, 140); ctx.lineTo(720, 80); ctx.lineTo(800, 180); ctx.fill();
+                ctx.strokeStyle = "#e74c3c"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(250, 40); ctx.lineTo(250, 60); ctx.moveTo(500, 50); ctx.lineTo(500, 75); ctx.stroke();
+                ctx.fillStyle = "#110200"; ctx.beginPath(); ctx.moveTo(0, 180); ctx.lineTo(150, 120); ctx.lineTo(300, 180); ctx.lineTo(480, 110); ctx.lineTo(650, 180); ctx.fill();
+            } else if (tier === 3) {
+                let mistGrad = ctx.createLinearGradient(0, 120, 0, 180); mistGrad.addColorStop(0, "rgba(39, 174, 96, 0)"); mistGrad.addColorStop(1, "rgba(39, 174, 96, 0.12)");
+                ctx.fillStyle = mistGrad; ctx.fillRect(0, 120, canvas.width, 60);
+                ctx.fillStyle = "#0c1f13"; ctx.beginPath(); ctx.moveTo(0, 180); ctx.quadraticCurveTo(80, 130, 160, 150); ctx.quadraticCurveTo(240, 125, 340, 160); ctx.quadraticCurveTo(460, 110, 580, 155); ctx.quadraticCurveTo(680, 140, 800, 180); ctx.fill();
+                ctx.fillStyle = "#07140c"; ctx.beginPath(); ctx.ellipse(50, 120, 80, 50, 0, 0, Math.PI*2); ctx.ellipse(750, 110, 90, 60, 0, 0, Math.PI*2); ctx.fill();
+            } else {
+                let nebula = ctx.createRadialGradient(canvas.width/2, 50, 5, canvas.width/2, 50, 120); nebula.addColorStop(0, "rgba(155, 89, 182, 0.3)"); nebula.addColorStop(1, "rgba(155, 89, 182, 0)");
+                ctx.fillStyle = nebula; ctx.beginPath(); ctx.arc(canvas.width/2, 50, 120, 0, Math.PI*2); ctx.fill();
+                let starPulse = Math.sin(Date.now() / 300) * 0.4 + 0.6; ctx.fillStyle = `rgba(255, 255, 255, ${0.4 * starPulse})`;
+                for (let i = 0; i < 30; i++) { ctx.fillRect((i * 59 + 23) % canvas.width, (i * 29 + 11) % 140, 1.5, 1.5); }
+                ctx.fillStyle = "#100221"; let hover = Math.sin(Date.now() / 400) * 4;
+                ctx.beginPath(); ctx.moveTo(120, 140 + hover); ctx.lineTo(140, 50 + hover); ctx.lineTo(160, 140 + hover); ctx.lineTo(140, 165 + hover); ctx.closePath(); ctx.fill();
+                ctx.fillStyle = "#0b0116"; ctx.beginPath(); ctx.moveTo(520, 150 - hover); ctx.lineTo(535, 75 - hover); ctx.lineTo(550, 150 - hover); ctx.closePath(); ctx.fill();
+                ctx.fillStyle = "#130426"; ctx.beginPath(); ctx.ellipse(320, 120 + hover * 1.5, 45, 12, Math.PI/12, 0, Math.PI*2); ctx.ellipse(650, 90 - hover * 1.2, 35, 10, -Math.PI/8, 0, Math.PI*2); ctx.fill();
             }
+        }
 
-            ctx.fillStyle = (tier===1 ? "#7f8c8d" : (tier===2 ? "#922b21" : (tier===3 ? "#229954" : (tier===4 ? "#5d6d7e" : "#2ecc71")))); ctx.fillRect(0, 180, canvas.width, 8);
-            ctx.fillStyle = (tier===1 ? "#95a5a6" : (tier===2 ? "#a93226" : (tier===3 ? "#1e8449" : (tier===4 ? "#85929e" : "#27ae60")))); ctx.fillRect(0, 188, canvas.width, 6);
-            
-            bgScenery.forEach(s => {
-                if (s.type === 'tree') {
-                    let tx = s.x, ty = s.y - 40 * s.size, ts = s.size;
-                    if (tier===0) { 
-                        ctx.fillStyle = "#5c4033"; ctx.fillRect(tx - 6*ts, ty, 12*ts, 40 * ts); ctx.fillStyle = "#3e2723"; ctx.fillRect(tx + 2*ts, ty, 4*ts, 40 * ts); 
-                        ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(tx, ty - 10*ts, 22 * ts, 0, Math.PI*2); ctx.fill();
-                        ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.arc(tx - 8*ts, ty - 5*ts, 18 * ts, 0, Math.PI*2); ctx.fill(); 
-                        ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(tx + 8*ts, ty - 5*ts, 18 * ts, 0, Math.PI*2); ctx.fill(); 
-                        ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(tx, ty - 15*ts, 15 * ts, 0, Math.PI*2); ctx.fill(); 
-                    } else if (tier===1) { 
-                        ctx.fillStyle = "#5d6d7e"; ctx.beginPath(); ctx.moveTo(tx - 15*ts, 180); ctx.lineTo(tx, ty + 10*ts); ctx.lineTo(tx + 15*ts, 180); ctx.fill(); 
-                        ctx.fillStyle = "#7f8c8d"; ctx.beginPath(); ctx.moveTo(tx - 5*ts, 180); ctx.lineTo(tx + 8*ts, ty + 18*ts); ctx.lineTo(tx + 20*ts, 180); ctx.fill(); 
-                    } else if (tier===2) { 
-                        ctx.fillStyle = "#111"; ctx.beginPath(); ctx.moveTo(tx - 10*ts, 180); ctx.lineTo(tx - 4*ts, ty - 10*ts); ctx.lineTo(tx + 10*ts, 180); ctx.fill(); 
-                        ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.moveTo(tx - 2*ts, 180); ctx.lineTo(tx + 6*ts, ty + 5*ts); ctx.lineTo(tx + 12*ts, 180); ctx.fill();
-                    } else if (tier===3) { 
-                        ctx.fillStyle = "#7f8c8d"; ctx.beginPath(); ctx.roundRect(tx - 12*ts, ty + 20*ts, 24*ts, 30*ts, [8*ts, 8*ts, 0, 0]); ctx.fill();
-                        ctx.fillStyle = "#5d6d7e"; ctx.fillRect(tx - 8*ts, ty + 28*ts, 16*ts, 2*ts); ctx.fillRect(tx - 6*ts, ty + 34*ts, 12*ts, 2*ts);
-                    } else if (tier===4) { 
-                        ctx.fillStyle = "#8e44ad"; let hover = Math.sin(Date.now() / 200 + tx) * 5;
-                        ctx.beginPath(); ctx.moveTo(tx, ty + hover - 10*ts); ctx.lineTo(tx + 10*ts, ty + hover + 10*ts); ctx.lineTo(tx, ty + hover + 30*ts); ctx.lineTo(tx - 10*ts, ty + hover + 10*ts); ctx.fill();
-                        ctx.fillStyle = "#9b59b6"; ctx.beginPath(); ctx.moveTo(tx, ty + hover - 10*ts); ctx.lineTo(tx + 4*ts, ty + hover + 10*ts); ctx.lineTo(tx, ty + hover + 30*ts); ctx.fill();
+        // 2. BACKGROUND SCENERY & VEGETATION
+        bgScenery.forEach(s => {
+            s.seed = s.seed || Math.random();
+            let ts = s.size;
+
+            if (playerStats.isDungeonMode) {
+                let isCeiling = s.seed < 0.45; 
+                if (isCeiling) {
+                    // Ceiling stalactites
+                    let h = 35 + s.seed * 50 * ts;
+                    let w = 12 + s.seed * 22 * ts;
+                    let color = playerStats.currentDungeon === 'gold' ? "#332211" : (playerStats.currentDungeon === 'mat' ? "#1b2d1f" : "#20262e");
+                    ctx.fillStyle = color;
+                    ctx.beginPath(); ctx.moveTo(s.x - w/2, 0); ctx.lineTo(s.x, h); ctx.lineTo(s.x + w/2, 0); ctx.closePath(); ctx.fill();
+                    
+                    ctx.strokeStyle = "rgba(255,255,255,0.06)"; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.moveTo(s.x, h); ctx.lineTo(s.x - w/4, 0); ctx.stroke();
+
+                    if (playerStats.currentDungeon === 'gold' && s.seed < 0.15) {
+                        ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(s.x + 2, h - 12, 2.5, 0, Math.PI*2); ctx.fill();
+                    }
+                    if (playerStats.currentDungeon === 'mat' && s.seed < 0.2) {
+                        let drip = (Date.now() / 20 + s.x) % 65;
+                        ctx.fillStyle = "#2ecc71";
+                        if (drip > h) { ctx.beginPath(); ctx.arc(s.x, drip, 2, 0, Math.PI*2); ctx.fill(); } 
+                        else { ctx.beginPath(); ctx.arc(s.x, h, 2 * (drip/h), 0, Math.PI*2); ctx.fill(); }
                     }
                 } else {
-                    let bx = s.x, by = s.y, bs = s.size;
+                    // Ground stalagmites
+                    let h = 22 + s.seed * 45 * ts;
+                    let w = 10 + s.seed * 18 * ts;
+                    let color = playerStats.currentDungeon === 'gold' ? "#261a0c" : (playerStats.currentDungeon === 'mat' ? "#121f16" : "#191e24");
+                    ctx.fillStyle = color;
+                    ctx.beginPath(); ctx.moveTo(s.x - w/2, 180); ctx.lineTo(s.x, 180 - h); ctx.lineTo(s.x + w/2, 180); ctx.closePath(); ctx.fill();
+                    
+                    ctx.strokeStyle = "rgba(255,255,255,0.04)"; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.moveTo(s.x, 180 - h); ctx.lineTo(s.x + w/4, 180); ctx.stroke();
+                }
+            } else {
+                if (s.type === 'tree') {
+                    let tx = s.x, ty = s.y - 40 * ts;
+                    if (tier===0) { 
+                        ctx.fillStyle = "#5c4033"; ctx.fillRect(tx - 6*ts, ty, 12*ts, 40 * ts); ctx.fillStyle = "#3e2723"; ctx.fillRect(tx + 2*ts, ty, 4*ts, 40 * ts); 
+                        ctx.fillStyle = "#165e34"; ctx.beginPath(); ctx.arc(tx, ty - 12*ts, 24 * ts, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(tx - 10*ts, ty - 5*ts, 18 * ts, 0, Math.PI*2); ctx.arc(tx + 10*ts, ty - 5*ts, 18 * ts, 0, Math.PI*2); ctx.fill(); 
+                        ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(tx, ty - 18*ts, 15 * ts, 0, Math.PI*2); ctx.fill(); 
+                    } else if (tier===1) { 
+                        ctx.fillStyle = "#34495e"; ctx.beginPath(); ctx.moveTo(tx - 15*ts, 180); ctx.lineTo(tx, ty - 10*ts); ctx.lineTo(tx + 15*ts, 180); ctx.fill(); 
+                        ctx.fillStyle = "#7f8c8d"; ctx.beginPath(); ctx.moveTo(tx - 5*ts, 180); ctx.lineTo(tx + 5*ts, ty + 10*ts); ctx.lineTo(tx + 15*ts, 180); ctx.fill(); 
+                    } else if (tier===2) { 
+                        ctx.fillStyle = "#110502"; ctx.beginPath(); ctx.moveTo(tx - 12*ts, 180); ctx.lineTo(tx, ty - 15*ts); ctx.lineTo(tx + 12*ts, 180); ctx.fill(); 
+                        ctx.fillStyle = "#e67e22"; ctx.beginPath(); ctx.arc(tx, ty - 15*ts, 4*ts, 0, Math.PI*2); ctx.fill();
+                    } else if (tier===3) { 
+                        ctx.fillStyle = "#5c503b"; ctx.fillRect(tx - 4*ts, ty, 8*ts, 40 * ts);
+                        ctx.fillStyle = "#144222"; ctx.beginPath(); ctx.ellipse(tx, ty, 20*ts, 15*ts, 0, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = "#1b5e30"; ctx.beginPath(); ctx.ellipse(tx - 6*ts, ty + 5*ts, 15*ts, 10*ts, 0, 0, Math.PI*2); ctx.fill();
+                    } else if (tier===4) { 
+                        ctx.fillStyle = "#4a154b"; let hover = Math.sin(Date.now() / 200 + tx) * 4;
+                        ctx.beginPath(); ctx.moveTo(tx, ty + hover - 12*ts); ctx.lineTo(tx + 12*ts, ty + hover + 8*ts); ctx.lineTo(tx, ty + hover + 28*ts); ctx.lineTo(tx - 12*ts, ty + hover + 8*ts); ctx.fill();
+                        ctx.fillStyle = "#8e44ad"; ctx.beginPath(); ctx.moveTo(tx, ty + hover - 12*ts); ctx.lineTo(tx + 5*ts, ty + hover + 8*ts); ctx.lineTo(tx, ty + hover + 28*ts); ctx.fill();
+                    }
+                } else {
+                    let bx = s.x, by = s.y, bs = ts;
                     if (tier === 0) {
-                        ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(bx, by - 8 * bs, 14 * bs, 0, Math.PI*2); ctx.fill();
-                        ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.arc(bx + 10 * bs, by - 6 * bs, 10 * bs, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(bx - 10 * bs, by - 6 * bs, 10 * bs, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = "#113f21"; ctx.beginPath(); ctx.arc(bx, by, 16 * bs, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(bx + 8 * bs, by, 12 * bs, 0, Math.PI*2); ctx.arc(bx - 8 * bs, by, 12 * bs, 0, Math.PI*2); ctx.fill();
                     } else if (tier === 1) { 
-                        ctx.fillStyle = "#7f8c8d"; ctx.beginPath(); ctx.roundRect(bx - 15*bs, by - 12*bs, 30*bs, 12*bs, 4*bs); ctx.fill();
-                        ctx.fillStyle = "#95a5a6"; ctx.beginPath(); ctx.roundRect(bx - 8*bs, by - 18*bs, 16*bs, 8*bs, 3*bs); ctx.fill();
+                        ctx.fillStyle = "#5d6d7e"; ctx.beginPath(); ctx.roundRect(bx - 16*bs, by - 12*bs, 32*bs, 12*bs, [4*bs, 4*bs, 0, 0]); ctx.fill();
                     } else if (tier === 2) { 
-                        ctx.fillStyle = "#3e3a39"; ctx.beginPath(); ctx.ellipse(bx, by, 25*bs, 12*bs, 0, 0, Math.PI*2); ctx.fill();
-                        ctx.fillStyle = "#2b2a29"; ctx.beginPath(); ctx.ellipse(bx - 5*bs, by - 2*bs, 16*bs, 8*bs, 0, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = "#2c1e1c"; ctx.beginPath(); ctx.ellipse(bx, by, 22*bs, 10*bs, 0, 0, Math.PI*2); ctx.fill();
                     } else if (tier === 3) { 
-                        ctx.fillStyle = "#145a32"; ctx.beginPath(); ctx.ellipse(bx, by, 30*bs, 8*bs, 0, 0, Math.PI*2); ctx.fill();
-                        ctx.fillStyle = "#196f3d"; ctx.beginPath(); ctx.ellipse(bx, by - 1*bs, 20*bs, 5*bs, 0, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = "#0a2614"; ctx.beginPath(); ctx.ellipse(bx, by, 26*bs, 7*bs, 0, 0, Math.PI*2); ctx.fill();
                     } else if (tier === 4) { 
-                        ctx.fillStyle = "rgba(142, 68, 173, 0.3)"; ctx.beginPath(); ctx.arc(bx, by - 10*bs, 25*bs, 0, Math.PI*2); ctx.fill();
-                        ctx.fillStyle = "rgba(52, 152, 219, 0.2)"; ctx.beginPath(); ctx.arc(bx + 12*bs, by - 8*bs, 18*bs, 0, Math.PI*2); ctx.beginPath(); ctx.arc(bx - 12*bs, by - 8*bs, 18*bs, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = "rgba(142, 68, 173, 0.25)"; ctx.beginPath(); ctx.arc(bx, by, 22*bs, 0, Math.PI*2); ctx.fill();
                     }
                 }
-            });
+            }
+        });
+
+        // 3. GROUND FLOOR RENDERING WITH DETAILED TEXTURES
+        ctx.save();
+        if (playerStats.isDungeonMode) {
+            if (playerStats.currentDungeon === 'gold') {
+                let groundGrad = ctx.createLinearGradient(0, 180, 0, 250);
+                groundGrad.addColorStop(0, "#2c1c0a"); groundGrad.addColorStop(1, "#120a03");
+                ctx.fillStyle = groundGrad; ctx.fillRect(0, 180, canvas.width, 70);
+                
+                ctx.strokeStyle = "rgba(241, 196, 15, 0.35)"; ctx.lineWidth = 2;
+                for (let i = -100; i < canvas.width + 100; i += 120) {
+                    let gx = i - (groundScroll % 120);
+                    ctx.beginPath(); ctx.moveTo(gx, 200); ctx.quadraticCurveTo(gx + 20, 210, gx + 40, 205); ctx.quadraticCurveTo(gx + 60, 195, gx + 80, 215); ctx.stroke();
+                }
+
+                ctx.fillStyle = "#3e2723"; ctx.strokeStyle = "#5d6d7e"; ctx.lineWidth = 2;
+                for (let i = -60; i < canvas.width + 60; i += 40) {
+                    ctx.fillRect(i - (groundScroll % 40), 215, 8, 20);
+                }
+                ctx.beginPath(); ctx.moveTo(0, 218); ctx.lineTo(canvas.width, 218); ctx.moveTo(0, 232); ctx.lineTo(canvas.width, 232); ctx.stroke();
+            } else if (playerStats.currentDungeon === 'mat') {
+                let groundGrad = ctx.createLinearGradient(0, 180, 0, 250);
+                groundGrad.addColorStop(0, "#19221c"); groundGrad.addColorStop(1, "#0a0e0b");
+                ctx.fillStyle = groundGrad; ctx.fillRect(0, 180, canvas.width, 70);
+                
+                ctx.strokeStyle = "#0f1511"; ctx.lineWidth = 1.5;
+                for (let i = -120; i < canvas.width + 120; i += 100) {
+                    let gx = i - (groundScroll % 100);
+                    ctx.beginPath(); ctx.moveTo(gx, 180); ctx.lineTo(gx - 30, 250); ctx.stroke();
+                    ctx.fillStyle = "#1e2821"; ctx.beginPath(); ctx.arc(gx + 5, 195, 2, 0, Math.PI*2); ctx.arc(gx - 15, 230, 2, 0, Math.PI*2); ctx.fill();
+                }
+
+                ctx.fillStyle = "rgba(46, 204, 113, 0.3)"; ctx.strokeStyle = "#2ecc71"; ctx.lineWidth = 1;
+                for (let i = -150; i < canvas.width + 150; i += 180) {
+                    let gx = i - (groundScroll % 180);
+                    ctx.beginPath(); ctx.ellipse(gx + 40, 212, 35, 12, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                    let bubbleOffset = (Date.now() / 15 + gx) % 24;
+                    if (bubbleOffset < 12) {
+                        ctx.fillStyle = "rgba(46, 204, 113, 0.55)"; ctx.beginPath(); ctx.arc(gx + 30 + bubbleOffset, 212 - bubbleOffset/4, 2 + bubbleOffset/6, 0, Math.PI*2); ctx.fill();
+                    }
+                }
+            } else {
+                let groundGrad = ctx.createLinearGradient(0, 180, 0, 250);
+                groundGrad.addColorStop(0, "#1c2229"); groundGrad.addColorStop(1, "#0c0f13");
+                ctx.fillStyle = groundGrad; ctx.fillRect(0, 180, canvas.width, 70);
+                
+                ctx.strokeStyle = "#10141a"; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(0, 180); ctx.lineTo(canvas.width, 180); ctx.moveTo(0, 202); ctx.lineTo(canvas.width, 202); ctx.moveTo(0, 226); ctx.lineTo(canvas.width, 226); ctx.stroke();
+                for (let i = -100; i < canvas.width + 100; i += 80) {
+                    let gx = i - (groundScroll % 80);
+                    ctx.beginPath(); ctx.moveTo(gx, 180); ctx.lineTo(gx, 202); ctx.moveTo(gx + 40, 202); ctx.lineTo(gx + 40, 226); ctx.moveTo(gx + 10, 226); ctx.lineTo(gx + 10, 250); ctx.stroke();
+                }
+            }
+        } else {
+            if (tier === 0) {
+                let groundGrad = ctx.createLinearGradient(0, 180, 0, 250);
+                groundGrad.addColorStop(0, "#194d22"); groundGrad.addColorStop(0.15, "#223d1c"); groundGrad.addColorStop(1, "#0c1a0c");
+                ctx.fillStyle = groundGrad; ctx.fillRect(0, 180, canvas.width, 70);
+                
+                ctx.fillStyle = "#27ae60";
+                for (let i = -20; i < canvas.width + 20; i += 12) {
+                    let gx = i - (groundScroll % 12);
+                    let h = 4 + Math.sin(i) * 3;
+                    ctx.beginPath(); ctx.moveTo(gx, 180); ctx.lineTo(gx + 4, 180 - h); ctx.lineTo(gx + 8, 180); ctx.fill();
+                }
+            } else if (tier === 1) {
+                let groundGrad = ctx.createLinearGradient(0, 180, 0, 250);
+                groundGrad.addColorStop(0, "#2c3e50"); groundGrad.addColorStop(1, "#111a24");
+                ctx.fillStyle = groundGrad; ctx.fillRect(0, 180, canvas.width, 70);
+
+                ctx.strokeStyle = "rgba(52, 152, 219, 0.4)"; ctx.shadowColor = "#3498db"; ctx.lineWidth = 1.5;
+                for (let i = -160; i < canvas.width + 160; i += 160) {
+                    ctx.save(); let gx = i - (groundScroll % 160);
+                    ctx.shadowBlur = Math.sin(Date.now() / 180 + i) * 5 + 5;
+                    ctx.beginPath(); ctx.moveTo(gx, 188); ctx.lineTo(gx + 30, 205); ctx.lineTo(gx + 10, 235); ctx.lineTo(gx + 80, 245); ctx.stroke();
+                    ctx.restore();
+                }
+                
+                ctx.strokeStyle = "#1a252f"; ctx.lineWidth = 1.5;
+                for (let i = -100; i < canvas.width + 100; i += 100) {
+                    let gx = i - (groundScroll % 100);
+                    ctx.beginPath(); ctx.moveTo(gx, 180); ctx.quadraticCurveTo(gx + 50, 210, gx + 100, 180); ctx.moveTo(gx + 20, 210); ctx.lineTo(gx - 30, 250); ctx.stroke();
+                }
+            } else if (tier === 2) {
+                let groundGrad = ctx.createLinearGradient(0, 180, 0, 250);
+                groundGrad.addColorStop(0, "#1a0805"); groundGrad.addColorStop(1, "#080201");
+                ctx.fillStyle = groundGrad; ctx.fillRect(0, 180, canvas.width, 70);
+
+                let pulse = Math.sin(Date.now() / 150) * 0.15 + 0.85;
+                for (let i = -140; i < canvas.width + 140; i += 140) {
+                    let gx = i - (groundScroll % 140);
+                    ctx.strokeStyle = `rgba(230, 126, 34, ${0.8 * pulse})`; ctx.lineWidth = 4;
+                    ctx.beginPath(); ctx.moveTo(gx, 180); ctx.quadraticCurveTo(gx + 35, 205, gx + 20, 225); ctx.quadraticCurveTo(gx + 5, 245, gx + 70, 250); ctx.stroke();
+                    
+                    ctx.strokeStyle = `rgba(241, 196, 15, ${0.9 * pulse})`; ctx.lineWidth = 1.5;
+                    ctx.beginPath(); ctx.moveTo(gx, 180); ctx.quadraticCurveTo(gx + 35, 205, gx + 20, 225); ctx.quadraticCurveTo(gx + 5, 245, gx + 70, 250); ctx.stroke();
+                }
+            } else if (tier === 3) {
+                let groundGrad = ctx.createLinearGradient(0, 180, 0, 250);
+                groundGrad.addColorStop(0, "#0e1a12"); groundGrad.addColorStop(1, "#050a07");
+                ctx.fillStyle = groundGrad; ctx.fillRect(0, 180, canvas.width, 70);
+
+                ctx.strokeStyle = "#142c1d"; ctx.lineWidth = 3;
+                for (let i = -120; i < canvas.width + 120; i += 90) {
+                    let gx = i - (groundScroll % 90);
+                    ctx.beginPath(); ctx.moveTo(gx, 195); ctx.quadraticCurveTo(gx + 40, 210, gx + 80, 198); ctx.stroke();
+                }
+
+                for (let i = -200; i < canvas.width + 200; i += 220) {
+                    let gx = i - (groundScroll % 220); let pop = (Date.now() / 25 + i) % 70;
+                    if (pop < 35) {
+                        ctx.fillStyle = "#193f26"; ctx.strokeStyle = "#27ae60"; ctx.lineWidth = 1;
+                        ctx.beginPath(); ctx.arc(gx + 60, 220, pop/8, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                    } else if (pop < 42) {
+                        ctx.strokeStyle = "rgba(46, 204, 113, " + (1 - (pop-35)/7) + ")"; ctx.lineWidth = 1.5;
+                        ctx.beginPath(); ctx.ellipse(gx + 60, 220, (pop-35)*3, (pop-35)*1.2, 0, 0, Math.PI*2); ctx.stroke();
+                    }
+                }
+            } else {
+                let groundGrad = ctx.createLinearGradient(0, 180, 0, 250);
+                groundGrad.addColorStop(0, "#0a0114"); groundGrad.addColorStop(1, "#030005");
+                ctx.fillStyle = groundGrad; ctx.fillRect(0, 180, canvas.width, 70);
+
+                ctx.strokeStyle = "rgba(155, 89, 182, 0.35)"; ctx.lineWidth = 1;
+                for (let h = 180; h <= 250; h += 14) {
+                    ctx.beginPath(); ctx.moveTo(0, h); ctx.lineTo(canvas.width, h); ctx.stroke();
+                }
+                for (let i = -200; i < canvas.width + 200; i += 60) {
+                    let gx = i - (groundScroll % 60);
+                    ctx.beginPath(); ctx.moveTo(gx, 180); ctx.lineTo(gx * 1.5 - (canvas.width * 0.25), 250); ctx.stroke();
+                }
+            }
         }
+        ctx.restore();
+
+        beams.forEach(bm => {
 
         beams.forEach(bm => {
             ctx.save();
