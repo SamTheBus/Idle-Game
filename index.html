@@ -2791,7 +2791,7 @@ window.onload = function() {
         ctx.restore();
 
         /* ==========================================================================
-           14. STYLIZED MONSTERS DRAW ROUTINE (Bats, Segmented Crawlers & Armored Bosses)
+           14. STYLIZED MONSTERS DRAW ROUTINE (Regular Mobs, Bats, Crawlers & Bosses)
            ========================================================================== */
         if (mob) {
             let t = mob.visualTier;
@@ -2803,7 +2803,72 @@ window.onload = function() {
                 ctx.fillStyle = (mob.type === "boss" || mob.type === "dungeon_boss" || mob.type === "dungeon_miniboss") ? "#34495e" : "#555";
             }
 
-            if (mob.type === "bat") {
+            if (mob.type === "mob") {
+                // Procedural Standard Route Enemy drawing based on Stage Tier (0-4)
+                if (mob.flashTimer > 0) {
+                    ctx.fillStyle = "#ffffff";
+                } else {
+                    if (t === 0) ctx.fillStyle = mob.isRare ? "#f1c40f" : "#2ecc71"; // Forest Slime
+                    else if (t === 1) ctx.fillStyle = mob.isRare ? "#bdc3c7" : "#7f8c8d"; // Stone Golem
+                    else if (t === 2) ctx.fillStyle = mob.isRare ? "#e67e22" : "#c0392b"; // Flame Imp
+                    else if (t === 3) ctx.fillStyle = mob.isRare ? "#1abc9c" : "#27ae60"; // Toxic Spore
+                    else ctx.fillStyle = mob.isRare ? "#9b59b6" : "#34495e"; // Void Shard
+                }
+
+                if (t === 0) {
+                    // Forest Slime: animated squish
+                    let squish = Math.sin(Date.now() / 100) * 3;
+                    ctx.beginPath();
+                    ctx.ellipse(mob.x + mob.w / 2, mob.y + mob.h - 10 + squish / 2, mob.w / 2 + squish, mob.h / 2 - squish, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    if (mob.flashTimer === 0) {
+                        ctx.fillStyle = "#111";
+                        ctx.beginPath(); ctx.arc(mob.x + mob.w / 2 - 4, mob.y + mob.h / 2, 2, 0, Math.PI * 2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(mob.x + mob.w / 2 + 4, mob.y + mob.h / 2, 2, 0, Math.PI * 2); ctx.fill();
+                    }
+                } else if (t === 1) {
+                    // Blocky Stone Golem with cracks
+                    ctx.beginPath();
+                    ctx.roundRect(mob.x, mob.y, mob.w, mob.h, [4]);
+                    ctx.fill();
+                    ctx.strokeStyle = "#333";
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(mob.x + 3, mob.y + 5); ctx.lineTo(mob.x + 12, mob.y + 15);
+                    ctx.moveTo(mob.x + mob.w - 5, mob.y + 12); ctx.lineTo(mob.x + mob.w - 15, mob.y + 20);
+                    ctx.stroke();
+                } else if (t === 2) {
+                    // Flame Sprite
+                    let flicker = Math.sin(Date.now() / 50) * 4;
+                    ctx.beginPath();
+                    ctx.moveTo(mob.x + mob.w / 2, mob.y - flicker);
+                    ctx.quadraticCurveTo(mob.x + mob.w + flicker, mob.y + mob.h / 2, mob.x + mob.w - 5, mob.y + mob.h);
+                    ctx.lineTo(mob.x + 5, mob.y + mob.h);
+                    ctx.quadraticCurveTo(mob.x - flicker, mob.y + mob.h / 2, mob.x + mob.w / 2, mob.y - flicker);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (t === 3) {
+                    // Toxic Spore mushroom
+                    ctx.beginPath();
+                    ctx.arc(mob.x + mob.w / 2, mob.y + 10, mob.w / 2, Math.PI, 0);
+                    ctx.fill();
+                    ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#f5f5dc";
+                    ctx.fillRect(mob.x + mob.w / 2 - 4, mob.y + 10, 8, mob.h - 10);
+                } else {
+                    // Levitating Void Shard
+                    let hover = Math.sin(Date.now() / 150) * 4;
+                    ctx.beginPath();
+                    ctx.ellipse(mob.x + mob.w / 2, mob.y + mob.h / 2 + hover, mob.w / 2, mob.h / 3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    if (mob.flashTimer === 0) {
+                        ctx.fillStyle = "#ff007f";
+                        ctx.beginPath();
+                        ctx.arc(mob.x + mob.w / 2, mob.y + mob.h / 2 + hover, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            } 
+            else if (mob.type === "bat") {
                 // Procedural Bat: Flapping wings, pointed wingtips, glowing eyes
                 let wingSpan = Math.sin(Date.now() / 80) * 14;
                 ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#4a154b";
