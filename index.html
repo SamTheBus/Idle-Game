@@ -32,9 +32,9 @@
         #menu-panel { padding: 12px; background: #222; position: relative; border-radius: 0 0 8px 8px; }
         
         .stats-hud {
-            display: flex; justify-content: space-between; padding: 8px;
-            background: #0f0f0f; border-radius: 4px; margin-bottom: 10px;
-            font-weight: bold; font-size: 12px; flex-wrap: wrap; gap: 5px;
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            padding: 8px; background: #0f0f0f; border-radius: 4px; margin-bottom: 10px;
+            font-weight: bold; font-size: 12px; gap: 5px; text-align: center; align-items: center;
         }
         
         .tabs { display: flex; gap: 2px; margin-bottom: 12px; flex-wrap: wrap; }
@@ -51,7 +51,7 @@
         }
         .tab-content.active { display: block; }
         
-        .grid-layout { display: grid; grid-template-columns: 240px 1fr; gap: 12px; }
+        .grid-layout { display: grid; grid-template-columns: 260px 1fr; gap: 12px; }
         .forge-grid { display: grid; grid-template-columns: 240px 1fr; gap: 12px; }
         .market-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .paper-doll { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
@@ -79,6 +79,8 @@
         }
         .btn-action.un { background: #e74c3c; }
         .btn-action.forge { background: #e67e22; margin-top: 5px; width: 100%; padding: 6px; font-size: 12px; }
+        .btn-action.sp { background: #3498db; margin-left: 5px; border-radius: 50%; width: 20px; height: 20px; padding: 0; line-height: 20px; text-align: center; }
+        
         .btn-toggle {
             background: #2980b9; color: white; border: 2px solid transparent; padding: 6px 10px;
             border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px;
@@ -131,13 +133,16 @@
         }
         
         .live-drop-cols { display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .stat-hover { cursor: help; border-bottom: 1px dotted #888; pointer-events: auto; }
+        .stat-hover { cursor: help; border-bottom: 1px dotted #888; pointer-events: auto; display:flex; justify-content:space-between; align-items:center; }
 
         #altar-modal {
             display:none; position:fixed; top:10%; left:50%; transform:translateX(-50%); 
             width:90%; max-width:500px; background:#111; border:2px solid #9b59b6; border-radius:8px; 
             z-index:11000; padding:15px; box-shadow:0 0 30px rgba(0,0,0,0.9); max-height:80vh; overflow-y:auto; overscroll-behavior: contain;
         }
+        
+        .xp-bar-container { background: #333; width: 100%; height: 10px; border-radius: 5px; margin-top: 5px; overflow: hidden; position: relative;}
+        .xp-bar-fill { background: #9b59b6; height: 100%; width: 0%; transition: width 0.3s; }
 
         /* MOBILE SCALING */
         @media (max-width: 600px) {
@@ -150,7 +155,7 @@
             .paper-doll { grid-template-columns: 1fr; }
             .tooltip-flex-container { flex-direction: column; }
             .tooltip-flex-container > div { width: 100% !important; border-right: none !important; border-bottom: 1px solid #333; }
-            .stats-hud { font-size: 13px; padding: 12px; }
+            .stats-hud { font-size: 11px; padding: 10px; }
             .btn-action, .btn-toggle { padding: 8px 12px; font-size: 12px; }
             .tab-btn { padding: 12px 4px; font-size: 12px; }
             .live-drop-cols { flex-direction: column; }
@@ -226,9 +231,9 @@
         </div>
 
         <div class="stats-hud">
-            <div>Stage: <span id="hud-stage" style="color:#3498db;">1-1</span></div>
-            <div>Prog: <span id="hud-progress" style="color:#f1c40f;">0/5</span></div>
-            <div>Buff: <span id="hud-buff" style="color:#aaa; cursor:help;" onmousemove="showBuffTooltip(event)" ontouchstart="showBuffTooltip(event)" onmouseleave="hideTooltip()">None</span></div>
+            <div>Stage <span id="hud-stage" style="color:#3498db;">1</span></div>
+            <div><span id="hud-progress" style="color:#f1c40f;">0/5</span></div>
+            <div style="cursor:help;" onmouseenter="showBuffTooltip(event)" ontouchstart="showBuffTooltip(event)" onmouseleave="hideTooltip()">Buff: <span id="hud-buff" style="color:#aaa;">None</span></div>
             <div>Bag: <span id="hud-bag" style="color:#2ecc71;">0/20</span></div>
             <div>HP: <span id="hud-hp" style="color:#e74c3c;">100/100</span></div>
             <div>💰: <span id="hud-coins" style="color:#f1c40f;">0</span></div>
@@ -250,16 +255,16 @@
                 <div style="display:flex; flex-direction:column; align-items:center;">
                     <button id="btn-rechallenge" class="btn-pulse" style="color:white; width:100%; max-width:300px; padding:10px; margin-bottom:12px; border-radius:4px; font-weight:bold; cursor:pointer; display:none;" onclick="rechallengeBoss()">⚔️ RECHALLENGE STAGE</button>
                     <div class="paper-doll">
-                        <div id="slot-weapon" class="slots-card" onmousemove="showSlotTooltip(event, 'weapon')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'weapon')"><i>[Empty Weapon]</i></div>
-                        <div id="slot-subweapon" class="slots-card" onmousemove="showSlotTooltip(event, 'subweapon')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'subweapon')"><i>[Empty Sub-weapon]</i></div>
-                        <div id="slot-helmet" class="slots-card" onmousemove="showSlotTooltip(event, 'helmet')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'helmet')"><i>[Empty Helmet]</i></div>
-                        <div id="slot-chest" class="slots-card" onmousemove="showSlotTooltip(event, 'chest')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'chest')"><i>[Empty Chest Armor]</i></div>
-                        <div id="slot-leggings" class="slots-card" onmousemove="showSlotTooltip(event, 'leggings')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'leggings')"><i>[Empty Leggings]</i></div>
-                        <div id="slot-overall" class="slots-card" onmousemove="showSlotTooltip(event, 'overall')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'overall')"><i>[Empty Overall Suit]</i></div>
-                        <div id="slot-boots" class="slots-card" onmousemove="showSlotTooltip(event, 'boots')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'boots')"><i>[Empty Boots]</i></div>
-                        <div id="slot-art1" class="slots-card artifact-slot" onmousemove="showSlotTooltip(event, 'art1')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'art1')"><i>[Artifact Slot 1]</i></div>
-                        <div id="slot-art2" class="slots-card artifact-slot" onmousemove="showSlotTooltip(event, 'art2')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'art2')"><i>[Artifact Slot 2]</i></div>
-                        <div id="slot-art3" class="slots-card artifact-slot" onmousemove="showSlotTooltip(event, 'art3')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'art3')"><i>[Artifact Slot 3]</i></div>
+                        <div id="slot-weapon" class="slots-card" onmouseenter="showSlotTooltip(event, 'weapon')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'weapon')"><i>[Empty Weapon]</i></div>
+                        <div id="slot-subweapon" class="slots-card" onmouseenter="showSlotTooltip(event, 'subweapon')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'subweapon')"><i>[Empty Sub-weapon]</i></div>
+                        <div id="slot-helmet" class="slots-card" onmouseenter="showSlotTooltip(event, 'helmet')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'helmet')"><i>[Empty Helmet]</i></div>
+                        <div id="slot-chest" class="slots-card" onmouseenter="showSlotTooltip(event, 'chest')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'chest')"><i>[Empty Chest Armor]</i></div>
+                        <div id="slot-leggings" class="slots-card" onmouseenter="showSlotTooltip(event, 'leggings')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'leggings')"><i>[Empty Leggings]</i></div>
+                        <div id="slot-overall" class="slots-card" onmouseenter="showSlotTooltip(event, 'overall')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'overall')"><i>[Empty Overall Suit]</i></div>
+                        <div id="slot-boots" class="slots-card" onmouseenter="showSlotTooltip(event, 'boots')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'boots')"><i>[Empty Boots]</i></div>
+                        <div id="slot-art1" class="slots-card artifact-slot" onmouseenter="showSlotTooltip(event, 'art1')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'art1')"><i>[Artifact Slot 1]</i></div>
+                        <div id="slot-art2" class="slots-card artifact-slot" onmouseenter="showSlotTooltip(event, 'art2')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'art2')"><i>[Artifact Slot 2]</i></div>
+                        <div id="slot-art3" class="slots-card artifact-slot" onmouseenter="showSlotTooltip(event, 'art3')" onmouseleave="hideTooltip()" ontouchstart="showSlotTooltip(event, 'art3')"><i>[Artifact Slot 3]</i></div>
                     </div>
                 </div>
             </div>
@@ -274,45 +279,105 @@
             </div>
 
             <div id="tab-stats" class="tab-content" onscroll="hideTooltip()" ontouchmove="hideTooltip()">
+                
+                <div style="background: #151515; padding: 12px; border: 1px solid #9b59b6; border-radius: 4px; margin-bottom: 12px; font-size:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+                        <h3 style="margin:0; color:#9b59b6; font-size:14px;">Character Level: <span id="char-level" style="color:#fff;">1</span></h3>
+                        <span style="color:#f1c40f; font-weight:bold;">SP Available: <span id="char-sp">0</span></span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#aaa; margin-bottom:2px;">
+                        <span>XP: <span id="char-xp-text">0 / 100</span></span>
+                    </div>
+                    <div class="xp-bar-container"><div id="char-xp-fill" class="xp-bar-fill"></div></div>
+                </div>
+
                 <div class="grid-layout">
                     <div style="font-size: 11px; background: #111; padding: 8px; border-radius: 4px; line-height: 1.5;">
                         <h4 style="margin: 0 0 5px 0; color:#e67e22; font-size:12px;">Attributes Matrix</h4>
-                        <div>⚔️ Attack: <span id="stat-atk" style="font-weight:bold;">10</span></div>
-                        <div>❤️ Max HP: <span id="stat-mhp" style="font-weight:bold;">100</span></div>
-                        <div>🛡️ Defense: <span id="stat-def" style="font-weight:bold;">0</span></div>
-                        <div>👟 Move Speed: <span id="stat-mov" style="font-weight:bold;">10</span></div>
+                        
+                        <div class="stat-hover" onmouseenter="showStatBreakdown(event, 'atk')" ontouchstart="showStatBreakdown(event, 'atk')" onmouseleave="hideTooltip()">
+                            <span>⚔️ Attack: <span id="stat-atk" style="font-weight:bold; color:#fff;">10</span></span>
+                            <button class="btn-action sp" onclick="spendSP('spAtk')">+</button>
+                        </div>
+                        <div class="stat-hover" onmouseenter="showStatBreakdown(event, 'maxHp')" ontouchstart="showStatBreakdown(event, 'maxHp')" onmouseleave="hideTooltip()">
+                            <span>❤️ Max HP: <span id="stat-mhp" style="font-weight:bold; color:#fff;">100</span></span>
+                            <button class="btn-action sp" onclick="spendSP('spHp')">+</button>
+                        </div>
+                        <div class="stat-hover" onmouseenter="showStatBreakdown(event, 'def')" ontouchstart="showStatBreakdown(event, 'def')" onmouseleave="hideTooltip()">
+                            <span>🛡️ Defense: <span id="stat-def" style="font-weight:bold; color:#fff;">0</span></span>
+                            <button class="btn-action sp" onclick="spendSP('spDef')">+</button>
+                        </div>
+                        <div class="stat-hover" onmouseenter="showStatBreakdown(event, 'moveSpeed')" ontouchstart="showStatBreakdown(event, 'moveSpeed')" onmouseleave="hideTooltip()">
+                            <span>👟 Move Speed: <span id="stat-mov" style="font-weight:bold; color:#fff;">10</span></span>
+                            <button class="btn-action sp" onclick="spendSP('spSpd')">+</button>
+                        </div>
                         <div style="margin: 4px 0; border-bottom: 1px dashed #333;"></div>
-                        <div>⏱️ Idle Atk Spd: <span id="stat-ias" class="stat-hover" style="font-weight:bold; color: #3498db;" onmousemove="showStatHoverTooltip(event, 'ias')" ontouchstart="showStatHoverTooltip(event, 'ias')" onmouseleave="hideTooltip()">60f</span></div>
-                        <div>⚡ Active Atk Spd: <span id="stat-aas" class="stat-hover" style="font-weight:bold; color: #e74c3c;" onmousemove="showStatHoverTooltip(event, 'aas')" ontouchstart="showStatHoverTooltip(event, 'aas')" onmouseleave="hideTooltip()">15f</span></div>
-                        <div>🔄 Idle DPS: <span id="stat-idps" style="font-weight:bold; color: #9b59b6;">0.0</span></div>
+                        
+                        <div class="stat-hover" style="color: #3498db;" onmouseenter="showStatHoverTooltip(event, 'ias')" ontouchstart="showStatHoverTooltip(event, 'ias')" onmouseleave="hideTooltip()">
+                            <span>⏱️ Idle Atk Spd: <span id="stat-ias" style="font-weight:bold; color: #fff;">60f</span></span>
+                        </div>
+                        <div class="stat-hover" style="color: #e74c3c;" onmouseenter="showStatHoverTooltip(event, 'aas')" ontouchstart="showStatHoverTooltip(event, 'aas')" onmouseleave="hideTooltip()">
+                            <span>⚡ Active Atk Spd: <span id="stat-aas" style="font-weight:bold; color: #fff;">15f</span></span>
+                        </div>
+                        <div class="stat-hover" style="color: #9b59b6;" onmouseenter="showStatHoverTooltip(event, 'idps')" ontouchstart="showStatHoverTooltip(event, 'idps')" onmouseleave="hideTooltip()">
+                            <span>🔄 Idle DPS: <span id="stat-idps" style="font-weight:bold; color: #fff;">0.0</span></span>
+                        </div>
                         <div style="margin: 4px 0; border-bottom: 1px dashed #333;"></div>
-                        <div>✨ Crit Chance: <span id="stat-crt" style="font-weight:bold; color: #e67e22;">5%</span></div>
-                        <div>💥 Crit Multi: <span id="stat-crd" style="font-weight:bold; color: #f1c40f;">150%</span></div>
-                        <div>🛡️ Block Rate: <span id="stat-blk" style="font-weight:bold; color: #3498db;">0%</span></div>
-                        <div>⚡ Parry Rate: <span id="stat-pry" style="font-weight:bold; color: #e74c3c;">0%</span></div>
+                        
+                        <div class="stat-hover" onmouseenter="showStatBreakdown(event, 'critChance', true)" ontouchstart="showStatBreakdown(event, 'critChance', true)" onmouseleave="hideTooltip()">
+                            <span style="color:#e67e22;">✨ Crit Chance: <span id="stat-crt" style="font-weight:bold; color:#fff;">5%</span></span>
+                            <button class="btn-action sp" id="btn-sp-crit" onclick="spendSP('spCrit')">+</button>
+                        </div>
+                        <div class="stat-hover" onmouseenter="showStatBreakdown(event, 'critDamage', true)" ontouchstart="showStatBreakdown(event, 'critDamage', true)" onmouseleave="hideTooltip()">
+                            <span style="color:#f1c40f;">💥 Crit Multi: <span id="stat-crd" style="font-weight:bold; color:#fff;">150%</span></span>
+                            <button class="btn-action sp" onclick="spendSP('spCritDmg')">+</button>
+                        </div>
+                        <div class="stat-hover" onmouseenter="showStatBreakdown(event, 'block', true)" ontouchstart="showStatBreakdown(event, 'block', true)" onmouseleave="hideTooltip()">
+                            <span style="color:#3498db;">🛡️ Block Rate: <span id="stat-blk" style="font-weight:bold; color:#fff;">0%</span></span>
+                            <button class="btn-action sp" id="btn-sp-blk" onclick="spendSP('spBlock')">+</button>
+                        </div>
+                        <div class="stat-hover" onmouseenter="showStatBreakdown(event, 'parry', true)" ontouchstart="showStatBreakdown(event, 'parry', true)" onmouseleave="hideTooltip()">
+                            <span style="color:#e74c3c;">⚡ Parry Rate: <span id="stat-pry" style="font-weight:bold; color:#fff;">0%</span></span>
+                            <button class="btn-action sp" id="btn-sp-pry" onclick="spendSP('spParry')">+</button>
+                        </div>
                         <div style="margin: 4px 0; border-bottom: 1px dashed #333;"></div>
-                        <div>🍀 Drop Rate: <span id="stat-drp" class="stat-hover" style="font-weight:bold; color: #2ecc71;" onmousemove="showStatHoverTooltip(event, 'drp')" ontouchstart="showStatHoverTooltip(event, 'drp')" onmouseleave="hideTooltip()">+0%</span></div>
-                        <div>💎 Drop Quality: <span id="stat-qly" class="stat-hover" style="font-weight:bold; color: #9b59b6;" onmousemove="showStatHoverTooltip(event, 'qly')" ontouchstart="showStatHoverTooltip(event, 'qly')" onmouseleave="hideTooltip()">+0%</span></div>
-                        <div>🟡 Gold Multi: <span id="stat-gld" style="font-weight:bold; color: #f1c40f;">x1.0</span></div>
+
+                        <div class="stat-hover" onmouseenter="showStatBreakdown(event, 'rareSpawn', true)" ontouchstart="showStatBreakdown(event, 'rareSpawn', true)" onmouseleave="hideTooltip()">
+                            <span style="color:#ffb6c1;">✨ Rare Spawn Rate: <span id="stat-rar" style="font-weight:bold; color:#fff;">1%</span></span>
+                        </div>
+                        <div class="stat-hover" style="color: #2ecc71;" onmouseenter="showStatHoverTooltip(event, 'drp')" ontouchstart="showStatHoverTooltip(event, 'drp')" onmouseleave="hideTooltip()">
+                            <span>🍀 Drop Rate Mod: <span id="stat-drp" style="font-weight:bold; color:#fff;">+0%</span></span>
+                        </div>
+                        <div class="stat-hover" style="color: #9b59b6;" onmouseenter="showStatHoverTooltip(event, 'qly')" ontouchstart="showStatHoverTooltip(event, 'qly')" onmouseleave="hideTooltip()">
+                            <span>💎 Drop Quality Mod: <span id="stat-qly" style="font-weight:bold; color:#fff;">+0%</span></span>
+                        </div>
+                        <div class="stat-hover" onmouseenter="showStatBreakdown(event, 'gold', true)" ontouchstart="showStatBreakdown(event, 'gold', true)" onmouseleave="hideTooltip()">
+                            <span style="color:#f1c40f;">🟡 Gold Multiplier: <span id="stat-gld" style="font-weight:bold; color:#fff;">x1.0</span></span>
+                        </div>
                     </div>
+                    
                     <div style="font-size: 11px; background: #151515; padding: 12px; border: 1px solid #444; border-radius: 4px; box-sizing: border-box;">
                         <h3 style="margin-top:0; color:#3498db; font-size:14px; border-bottom:1px solid #333; padding-bottom:4px;">Live Drop Analytics</h3>
                         <div class="live-drop-cols">
                             <div style="width:48%;">
                                 <div style="color:#2ecc71; font-weight:bold; margin-bottom:4px;">Entity Drop Chances</div>
                                 <div>Standard Mob: <span id="live-rate-mob" style="color:#fff;">4.5%</span></div>
+                                <div>Rare Mob: <span id="live-rate-rare" style="color:#fff;">15.0%</span></div>
                                 <div>Stage Boss: <span id="live-rate-boss" style="color:#fff;">25.0%</span></div>
                                 <div>Dung. Miniboss: <span id="live-rate-dmini" style="color:#fff;">30.0%</span></div>
-                                <div style="margin-top:6px; color:#1abc9c; font-weight:bold;">Special Item Multipliers</div>
-                                <div>Ancient Core Rate: <span id="live-rate-acore" style="color:#fff;">5.0%</span></div>
-                                <div>Dungeon Key Mod: <span style="color:#fff;">1.0%</span></div>
+                                <div style="margin-top:6px; color:#1abc9c; font-weight:bold;">Special Multipliers</div>
+                                <div>Ancient Core: <span id="live-rate-acore" style="color:#fff;">40.0%</span></div>
+                                <div>Eridium Shard: <span id="live-rate-eshard" style="color:#fff;">10.0%</span></div>
                             </div>
                             <div style="width:48%;">
-                                <div style="color:#3498db; font-weight:bold; margin-bottom:4px;">Market & World Events</div>
-                                <div style="color:#f1c40f;">• Gold Shop Refreshes: 4hrs</div>
-                                <div style="color:#f1c40f;">• IOTD Min Rarity: 1★+</div>
-                                <div style="color:#ffb6c1; margin-top:4px;">• Fairy Encounter: ~5 Minutes</div>
-                                <div style="color:#ffb6c1;">• Fairy Drops: Normal / Gold Bundle</div>
+                                <div style="color:#f1c40f; font-weight:bold; margin-bottom:4px;">Star Rarity Chances</div>
+                                <div>1★ Rare: <span id="star-rate-1" style="color:#fff;">0%</span></div>
+                                <div>2★ Magic: <span id="star-rate-2" style="color:#fff;">0%</span></div>
+                                <div>3★ Epic: <span id="star-rate-3" style="color:#fff;">0%</span></div>
+                                <div>4★ Legendary: <span id="star-rate-4" style="color:#fff;">0%</span></div>
+                                <div>5★ Mythic: <span id="star-rate-5" style="color:#fff;">0%</span></div>
+                                <div style="margin-top:6px; color:#ffb6c1; font-weight:bold;">Events</div>
+                                <div>Fairy Encounter: ~5 Min</div>
                             </div>
                         </div>
                     </div>
@@ -322,8 +387,8 @@
             <div id="tab-forge" class="tab-content" onscroll="hideTooltip()" ontouchmove="hideTooltip()">
                 <div style="display:flex; gap:10px; margin-bottom:10px;">
                     <button id="btn-mode-temper" class="btn-toggle active" style="flex:1; background:#2980b9;" onclick="setForgeMode('temper')">Mode: TEMPER</button>
+                    <button id="btn-mode-lvl" class="btn-toggle" style="flex:1; background:transparent;" onclick="setForgeMode('lvl')">Mode: UPGRADE LVL</button>
                     <button id="btn-mode-tier" class="btn-toggle" style="flex:1; background:transparent;" onclick="setForgeMode('tier')">Mode: TIER UP</button>
-                    <button id="btn-mode-awaken" class="btn-toggle" style="flex:1; background:transparent;" onclick="setForgeMode('awaken')">Mode: AWAKEN</button>
                 </div>
                 <div class="forge-grid">
                     <div class="forge-panel" id="forge-details"></div>
@@ -333,7 +398,7 @@
 
             <div id="tab-market" class="tab-content" onscroll="hideTooltip()" ontouchmove="hideTooltip()">
                 <div class="market-grid">
-                    <div class="market-card" style="border-color: #f1c40f;" onmousemove="showGachaTooltip(event)" onmouseleave="hideTooltip()" ontouchstart="showGachaTooltip(event)">
+                    <div class="market-card" style="border-color: #f1c40f;" onmouseenter="showGachaTooltip(event)" onmouseleave="hideTooltip()" ontouchstart="showGachaTooltip(event)">
                         <div>
                             <h3 style="margin-top:0; color:#f1c40f; font-size:14px;">🎰 VENDING MACHINE</h3>
                             <p style="font-size:11px; color:#aaa; min-height:36px;">Roll a guaranteed random 1-5★ piece of standard gear.</p>
@@ -374,17 +439,17 @@
 window.onload = function() {
 
     const etcDex = {
-        "Eridium Shard": "A glowing, alien fragment used in the Forge to awaken an item's Star Rarity.",
+        "Eridium Shard": "A glowing, alien fragment used in the Forge to Tier Up an item's Star Rarity.",
         "Gacha Key": "Guaranteed drop from Rift Guardians. Used at the Vending Machine for a gear roll.",
         "Ancient Core": "Rare drop from Stage Bosses. Sacrifice 5 at the Ancient Altar to summon a Rift Guardian.",
         "Overlord's Sigil": "Guaranteed drop from the Equipment Dungeon Overlord. Used to temper Unique Artifacts.",
-        "Mythic Scrap": "Used to temper or tier-up items. Salvaged from Mythic gear.",
+        "Mythic Scrap": "Used to temper or upgrade levels. Salvaged from Mythic gear.",
         "Legendary Scrap": "Used for high-level tempering. Salvaged from Legendary gear.",
-        "Epic Scrap": "Used to temper or tier-up items. Salvaged from Epic gear.",
-        "Magic Scrap": "Used to temper or tier-up items. Salvaged from Magic gear.",
-        "Rare Scrap": "Used to temper or tier-up items. Salvaged from Rare gear.",
-        "Iron Scrap": "Common material. Drops occasionally from standard enemies.",
-        "Sticky Gel": "Minor craft material. Drops from slimes."
+        "Epic Scrap": "Used to temper or upgrade levels. Salvaged from Epic gear.",
+        "Magic Scrap": "Used to temper or upgrade levels. Salvaged from Magic gear.",
+        "Rare Scrap": "Used to temper or upgrade levels. Salvaged from Rare gear.",
+        "Luminous Soul": "A brilliant soul dropped exclusively by Rare enemies.",
+        "Monster Soul": "Standard essence from common foes. Drops from common enemies."
     };
 
     const ARTIFACT_POOL = [
@@ -418,10 +483,15 @@ window.onload = function() {
     const ctx = canvas.getContext('2d');
 
     let playerStats = {
+        level: 1, xp: 0, xpReq: 100, sp: 0,
+        spAllocations: { spHp: 0, spAtk: 0, spDef: 0, spCrit: 0, spCritDmg: 0, spBlock: 0, spParry: 0, spSpd: 0 },
+        
         baseAtk: 10, baseMaxHp: 100, baseDef: 0, baseMoveSpeed: 10,
         baseIdleSpeed: 60, baseActiveSpeed: 15,
         baseDrop: 1.0, baseQuality: 1.0, baseGold: 1.0,
         baseCritChance: 0.05, baseCritDamage: 1.50, baseBlock: 0.0, baseParry: 0.0,
+        baseRareSpawn: 0.01,
+        
         currentHp: 100, coins: 0, stage: 1, killCount: 0, totalLifetimeKills: 0, targetsRequired: 5,
         isBossMode: false, isFarmingLoop: false, isUberBoss: false, frenzyTimer: 0, adrenalineTimer: 0, usedSecondWind: false,
         isDungeonMode: false, currentDungeon: null, dungeonWave: 1, 
@@ -468,20 +538,28 @@ window.onload = function() {
         if (!inventory.ETC["Gacha Key"]) { inventory.ETC["Gacha Key"] = 0; }
         inventory.ETC["Gacha Key"] += amount;
         updateUI(); renderInventory(); window.saveGame();
-        console.log(`[CHEAT ENABLED] Granted ${amount} Dungeon Keys and Gacha Keys!`);
         pushHeaderToast(`🛑 DEV CHEAT: +${amount} Keys!`, "#e74c3c");
+    };
+    
+    window.giveSP = function(amount = 10) {
+        playerStats.sp += amount; updateUI(); window.saveGame(); pushHeaderToast(`🛑 DEV CHEAT: +${amount} SP!`, "#e74c3c");
     };
 
     window.saveGame = function() {
         let saveData = { playerStats, equippedSlots, inventory, idCounter, logsHistory, frozenItemDb, lastSaveTime: Date.now() };
-        localStorage.setItem('postknight_save_v10', JSON.stringify(saveData));
+        localStorage.setItem('idle_game_v11', JSON.stringify(saveData));
     };
 
     setInterval(() => { window.saveGame(); }, 60000);
     window.addEventListener('beforeunload', window.saveGame);
 
     window.loadGame = function() {
-        let data = localStorage.getItem('postknight_save_v10');
+        let data = localStorage.getItem('idle_game_v11');
+        if (!data) {
+            data = localStorage.getItem('postknight_save_v10'); // Migration hook
+            if (data) console.log("Migrating save v10 -> v11");
+        }
+        
         if (data) {
             try {
                 let parsed = JSON.parse(data);
@@ -492,11 +570,19 @@ window.onload = function() {
                 logsHistory = parsed.logsHistory || logsHistory;
                 frozenItemDb = parsed.frozenItemDb || frozenItemDb;
                 
+                // Init new fields if missing
+                if (!playerStats.level) { playerStats.level = 1; playerStats.xp = 0; playerStats.xpReq = 100; playerStats.sp = 0; playerStats.spAllocations = { spHp: 0, spAtk: 0, spDef: 0, spCrit: 0, spCritDmg: 0, spBlock: 0, spParry: 0, spSpd: 0 }; }
+                if (!playerStats.baseRareSpawn) playerStats.baseRareSpawn = 0.01;
+                
                 if (!playerStats.targetsRequired || playerStats.targetsRequired === 7) playerStats.targetsRequired = 5;
                 if (!playerStats.shopItems || (playerStats.shopItems.length > 0 && playerStats.shopItems[0].atk === undefined)) { 
                     playerStats.shopItems = []; 
                     playerStats.shopRefreshTime = 0; 
                 }
+                
+                // Clean up old deprecated materials from inventory during load
+                if (inventory.ETC["Iron Scrap"]) { addEtcDrop("Monster Soul", inventory.ETC["Iron Scrap"]); delete inventory.ETC["Iron Scrap"]; }
+                if (inventory.ETC["Sticky Gel"]) { addEtcDrop("Monster Soul", inventory.ETC["Sticky Gel"]); delete inventory.ETC["Sticky Gel"]; }
                 
                 let box = document.getElementById('log-box');
                 box.innerHTML = logsHistory.join("<br><br>");
@@ -531,13 +617,21 @@ window.onload = function() {
                             let baseCoin = Math.floor(1 + (playerStats.stage * 0.5));
                             let goldEarned = Math.floor(simulatedKills * baseCoin * p.gold);
                             
-                            let dropsEarned = 0; let gachaKeyDrop = 0;
+                            let dropsEarned = 0; let gachaKeyDrop = 0; let totalXpEarned = 0;
+                            let rareCount = 0;
                             for(let i=0; i<simulatedKills; i++) {
-                                if (Math.random() < (0.045 * p.drop * state.efficiency)) dropsEarned++;
+                                let isRare = Math.random() < p.rareSpawn;
+                                if (isRare) rareCount++;
+                                let xpYield = isRare ? (playerStats.stage * 30) : (playerStats.stage * 10);
+                                totalXpEarned += xpYield;
+                                
+                                let dropR = isRare ? 0.15 : 0.045;
+                                if (Math.random() < (dropR * p.drop * state.efficiency)) dropsEarned++;
                                 if (Math.random() < 0.005) gachaKeyDrop++; 
                             }
                             
                             playerStats.coins += goldEarned;
+                            gainXp(totalXpEarned, true);
                             if (gachaKeyDrop > 0) addEtcDrop("Gacha Key", gachaKeyDrop);
                             
                             let actualItems = 0; let scraps = 0;
@@ -547,11 +641,10 @@ window.onload = function() {
                                 if (inventory.EQUIP.length < maxBag) { rollEquipmentDrop(false, true); actualItems++; } 
                                 else { scraps++; }
                             }
-                            if (scraps > 0) addEtcDrop("Iron Scrap", scraps);
+                            if (scraps > 0) addEtcDrop("Monster Soul", scraps);
                             
                             setTimeout(() => {
-                                pushLog(`<span style='color:#3498db; font-weight:bold;'>[OFFLINE GAINS] Gone for ${Math.floor(offlineSeconds/60)} mins. Kills: ${simulatedKills}. Gold: +${goldEarned}. Items: +${actualItems}. Scraps: +${scraps}. Gacha Keys: +${gachaKeyDrop}</span>`);
-                                alert(`Offline Progress\n\nTime Offline: ${Math.floor(offlineSeconds/60)} mins\nKills Simulated: ${simulatedKills}\nGold Earned: ${goldEarned}\nItems Found: ${actualItems}\nGacha Keys Found: ${gachaKeyDrop}`);
+                                pushLog(`<span style='color:#3498db; font-weight:bold;'>[OFFLINE GAINS] Gone for ${Math.floor(offlineSeconds/60)} mins. Kills: ${simulatedKills}. XP: +${totalXpEarned}. Gold: +${goldEarned}. Items: +${actualItems}. Souls: +${scraps}. Gacha Keys: +${gachaKeyDrop}</span>`);
                             }, 500);
                         }
                     }
@@ -560,6 +653,41 @@ window.onload = function() {
             } catch(e) { console.error("Save load failed", e); }
         }
         refreshMarketShopIfNeeded();
+    };
+    
+    window.gainXp = function(amount, silent = false) {
+        playerStats.xp += amount;
+        let leveledUp = false;
+        while (playerStats.xp >= playerStats.xpReq) {
+            playerStats.xp -= playerStats.xpReq;
+            playerStats.level++;
+            playerStats.sp++;
+            playerStats.xpReq = Math.floor(playerStats.xpReq * 1.2);
+            leveledUp = true;
+        }
+        if (leveledUp && !silent) {
+            pushLog(`<span style='color:#f1c40f; font-weight:bold;'>⭐ LEVEL UP! You are now Level ${playerStats.level}! +1 SP</span>`);
+            pushHeaderToast(`⭐ LEVEL UP! Level ${playerStats.level}`, "#f1c40f");
+            let p = resolvePlayerStats();
+            playerStats.currentHp = p.maxHp; 
+        }
+    };
+    
+    window.spendSP = function(statKey) {
+        if (playerStats.sp <= 0) return;
+        
+        if (statKey === 'spCrit' || statKey === 'spBlock' || statKey === 'spParry') {
+            if (playerStats.spAllocations[statKey] >= 40) {
+                pushHeaderToast("Attribute Maxed (20%)!", "#e74c3c"); return;
+            }
+        }
+        
+        playerStats.sp--;
+        playerStats.spAllocations[statKey]++;
+        
+        let p = resolvePlayerStats();
+        playerStats.currentHp = Math.min(playerStats.currentHp + (statKey === 'spHp' ? 10 : 0), p.maxHp);
+        updateUI(); window.saveGame();
     };
 
     for(let i=0; i<12; i++) { bgScenery.push({ x: Math.random() * canvas.width, y: 180, type: Math.random() > 0.5 ? 'tree' : 'bush', size: Math.random() * 0.5 + 0.5 }); }
@@ -598,7 +726,7 @@ window.onload = function() {
             else if (chosenType === "boots") { item.baseMoveSpeed = randInt(1, 3) * stageScale; }
             
             let prefix = getTierName(item.statsRolled);
-            item.name = `${prefix} ${chosenType.toUpperCase()} (+${stageScale})`;
+            item.name = `${prefix} ${chosenType.toUpperCase()} (Lv. ${stageScale})`;
         }
 
         let pool = ["critChance", "critDamage", "block", "parry", "atk", "maxHp", "def", "moveSpeed", "activeSpd", "idleSpd"];
@@ -668,10 +796,10 @@ window.onload = function() {
         let listEl = document.getElementById('gold-shop-list');
         listEl.innerHTML = playerStats.shopItems.map((shopItem, index) => {
             let nameColor = getTierColor(shopItem.statsRolled); let tierName = getTierName(shopItem.statsRolled);
-            let name = `${tierName} ${shopItem.type.toUpperCase()} (+${shopItem.stageLevel})`;
+            let name = `${tierName} ${shopItem.type.toUpperCase()} (Lv. ${shopItem.stageLevel})`;
             let costColor = playerStats.coins >= shopItem.cost ? "#f1c40f" : "#e74c3c";
             
-            return `<div class="shop-row ${shopItem.isIOTD ? 'iotd' : ''}" onmousemove="showMarketTooltip(event, ${index})" onmouseleave="hideTooltip()" ontouchstart="showMarketTooltip(event, ${index})">
+            return `<div class="shop-row ${shopItem.isIOTD ? 'iotd' : ''}" onmouseenter="showMarketTooltip(event, ${index})" onmouseleave="hideTooltip()" ontouchstart="showMarketTooltip(event, ${index})">
                     <div>${shopItem.isIOTD ? '<span style="background:#f1c40f; color:#000; font-size:9px; font-weight:bold; padding:1px 3px; border-radius:2px;">ITEM OF THE DAY</span><br>' : ''}<strong style="color:${nameColor}; font-size:12px;">${name}</strong><br><span style="font-size:10px; color:#aaa;">${shopItem.statsRolled}★ Quality</span></div>
                     <div style="text-align:right; position:relative; z-index:10;"><div style="color:${costColor}; font-weight:bold; font-size:11px; margin-bottom:4px;">${shopItem.cost} Gold</div><button class="btn-action" style="${shopItem.purchased || playerStats.coins < shopItem.cost ? 'opacity:0.5; cursor:not-allowed; background:#444;' : 'background:#f1c40f; color:#000;'}" onclick="buyShopItem(${index})">${shopItem.purchased ? 'SOLD' : 'BUY'}</button></div>
                 </div>`;
@@ -707,7 +835,7 @@ window.onload = function() {
     window.buildAltarModal = function() {
         let listEl = document.getElementById('altar-list');
         listEl.innerHTML = ARTIFACT_POOL.map(art => {
-            return `<div class="bag-item" style="cursor:help; border-left: 3px solid #1abc9c;" onclick="showDummyArtifact(event, '${art.trait}')">
+            return `<div class="bag-item" style="cursor:help; border-left: 3px solid #1abc9c;" onmouseenter="showDummyArtifact(event, '${art.trait}')" ontouchstart="showDummyArtifact(event, '${art.trait}')" onmouseleave="hideTooltip()">
                     <div><strong style="color:#1abc9c;">⭐ UNIQUE ${art.name}</strong><br><span style="font-size:10px;color:#d2b4de;">Trait: ${art.desc}</span></div>
                 </div>`;
         }).join("");
@@ -782,7 +910,7 @@ window.onload = function() {
     });
 
     document.addEventListener('pointerdown', (e) => {
-        if (!e.target.closest('#game-tooltip') && !e.target.closest('.bag-item') && !e.target.closest('.slots-card') && !e.target.closest('.stat-hover') && !e.target.closest('.shop-row')) {
+        if (!e.target.closest('#game-tooltip') && !e.target.closest('.bag-item') && !e.target.closest('.slots-card') && !e.target.closest('.stat-hover') && !e.target.closest('.shop-row') && !e.target.closest('#hud-buff')) {
             window.hideTooltip();
         }
     });
@@ -801,7 +929,7 @@ window.onload = function() {
             return;
         }
 
-        if (inventory.EQUIP.length >= maxBag) { pushHeaderToast(`Inventory Full! Scrap gained.`, "#e74c3c"); addEtcDrop("Iron Scrap", 5); isGamePaused = false; return; }
+        if (inventory.EQUIP.length >= maxBag) { pushHeaderToast(`Inventory Full! Soul gained.`, "#e74c3c"); addEtcDrop("Monster Soul", 5); isGamePaused = false; return; }
 
         let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
         let chosenType = types[Math.floor(Math.random() * types.length)];
@@ -837,6 +965,8 @@ window.onload = function() {
                 pushLog(`<strong style='color:#1abc9c;'>⭐ UNIQUE ARTIFACT DROPPED!</strong> Extracted: <span style='color:#1abc9c;'>${item.name}</span>!`, item.id);
             } else if (sourceName === "Gacha") { 
                 pushLog(`<strong style='color:#f1c40f;'>[GACHA]</strong> Dispensed: <span style='color:${getTierColor(item.statsRolled)};'>${item.name}</span>`, item.id); 
+            } else if (sourceName === "Rare") {
+                pushLog(`<strong style='color:#ffb6c1;'>RARE ENEMY KILLED!</strong> Found: <span style='color:${getTierColor(item.statsRolled)};'>${item.name}</span>`, item.id); 
             } else { 
                 pushLog(`<strong style='color:#ff9f43;'>BOSS KILLED!</strong> Found: <span style='color:${getTierColor(item.statsRolled)};'>${item.name}</span>`, item.id); 
             }
@@ -847,10 +977,10 @@ window.onload = function() {
         if(!silent) { renderInventory(); renderForgeTab(); updateUI(); }
     }
 
-    function rollEquipmentDrop(isBossKill, silent = false, minStars = 0) {
+    function rollEquipmentDrop(isBossKill, silent = false, minStars = 0, isRareMob = false) {
         let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
         if (inventory.EQUIP.length >= maxBag) {
-            if(!silent) { pushHeaderToast(`Bag Full! Scrap gained.`, "#e74c3c"); addEtcDrop(isBossKill ? "Ancient Core" : "Iron Scrap", 1); }
+            if(!silent) { pushHeaderToast(`Bag Full! Soul gained.`, "#e74c3c"); addEtcDrop(isBossKill ? "Ancient Core" : (isRareMob ? "Luminous Soul" : "Monster Soul"), 1); }
             return;
         }
 
@@ -873,7 +1003,8 @@ window.onload = function() {
         }
 
         let stageScale = Math.floor((playerStats.stage - 1) / 10) + 1; 
-        generateEquipment(chosenType, statLinesCount, stageScale, isBossKill ? "Boss" : "Route", silent, minStars);
+        let sourceName = isBossKill ? "Boss" : (isRareMob ? "Rare" : "Route");
+        generateEquipment(chosenType, statLinesCount, stageScale, sourceName, silent, minStars);
     }
 
     function rollGachaDrop() {
@@ -900,8 +1031,18 @@ window.onload = function() {
             idleAttackSpeed: playerStats.baseIdleSpeed, activeAttackSpeed: playerStats.baseActiveSpeed,
             drop: playerStats.baseDrop, qly: playerStats.baseQuality, gold: playerStats.baseGold,
             critChance: playerStats.baseCritChance, critDamage: playerStats.baseCritDamage,
-            block: playerStats.baseBlock, parry: playerStats.baseParry
+            block: playerStats.baseBlock, parry: playerStats.baseParry, rareSpawn: playerStats.baseRareSpawn
         };
+        
+        let alloc = playerStats.spAllocations;
+        p.maxHp += (alloc.spHp * 10);
+        p.atk += (alloc.spAtk * 2);
+        p.def += (alloc.spDef * 1);
+        p.critChance += (alloc.spCrit * 0.005);
+        p.critDamage += (alloc.spCritDmg * 0.02);
+        p.block += (alloc.spBlock * 0.005);
+        p.parry += (alloc.spParry * 0.005);
+        p.moveSpeed += (alloc.spSpd * 1);
         
         for (let key in equippedSlots) {
             let item = equippedSlots[key];
@@ -936,8 +1077,13 @@ window.onload = function() {
 
             if (isArt) el.innerHTML = `<strong style="font-size:10px; color:#1abc9c;">${item.name}</strong><br><span style="font-size:8px;color:#aaa;line-height:1;">${item.desc}</span><button class="btn-action un" style="margin-top:2px;padding:1px 3px;" onclick="unequipItem('${slotKey}')">Remove</button>`;
             else {
-                let s = []; if (item.atk > 0) s.push(`⚔️${item.atk}`); if (item.maxHp > 0) s.push(`❤️${item.maxHp}`); if (item.def > 0) s.push(`🛡️${item.def}`);
-                el.innerHTML = `<strong style="font-size:10px;">${item.name}${temperTag}</strong><div style="font-size:8px; color:${getTierColor(item.statsRolled)}; font-weight:bold; margin:2px 0;">${tierLabel}</div><span style="font-size:9px;color:#bbb;">${s.join(" ")}</span><button class="btn-action un" style="margin-top:2px;padding:1px 3px;" onclick="unequipItem('${slotKey}')">Remove</button>`;
+                let s = []; 
+                if (item.atk > 0) s.push(`⚔️${item.atk}`); if (item.maxHp > 0) s.push(`❤️${item.maxHp}`); if (item.def > 0) s.push(`🛡️${item.def}`);
+                if (item.moveSpeed > 0) s.push(`👟${item.moveSpeed}`); if (item.critChance > 0) s.push(`✨${Math.floor(item.critChance*100)}%`);
+                if (item.critDamage > 0) s.push(`💥${Math.floor(item.critDamage*100)}%`); if (item.block > 0) s.push(`🛡️${Math.floor(item.block*100)}%`);
+                if (item.parry > 0) s.push(`⚡${Math.floor(item.parry*100)}%`);
+                
+                el.innerHTML = `<strong style="font-size:10px;">${item.name}${temperTag}</strong><div style="font-size:8px; color:${getTierColor(item.statsRolled)}; font-weight:bold; margin:2px 0;">${tierLabel}</div><div style="font-size:9px;color:#bbb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${s.join(" ")}">${s.join(" ")}</div><button class="btn-action un" style="margin-top:2px;padding:1px 3px;" onclick="unequipItem('${slotKey}')">Remove</button>`;
             }
         }
     }
@@ -948,7 +1094,7 @@ window.onload = function() {
             if (!item) { for (let k in equippedSlots) { if (equippedSlots[k] && equippedSlots[k].id === itemId) item = equippedSlots[k]; } }
             if (item) {
                 frozenItemDb[itemId] = JSON.parse(JSON.stringify(item));
-                text = text.replace(item.name, `<span class="log-item-link" onclick="showLogTooltip(event, ${itemId})">${item.name}</span>`);
+                text = text.replace(item.name, `<span class="log-item-link" onmouseenter="showLogTooltip(event, ${itemId})" onmouseleave="hideTooltip()">${item.name}</span>`);
             }
         }
         logsHistory.unshift(text); if (logsHistory.length > 50) logsHistory.pop();
@@ -971,31 +1117,36 @@ window.onload = function() {
     function pushHeaderToast(text, color) { pushToast("", null, color, false, 0, text); }
 
     function processEnemySpawn() {
-        let scale = 1 + (playerStats.stage * 0.15);
+        let scale = Math.pow(1.15, playerStats.stage);
         if (playerStats.isDungeonMode) {
             let hpScale = playerStats.currentDungeon === 'gold' ? 1.5 : 1; 
             
             if (playerStats.killCount >= playerStats.targetsRequired) {
                 if (playerStats.dungeonWave < 5) {
                     let hp = 30 * scale * hpScale;
-                    mob = { x: 750, y: 120, w: 30, h: 50, type: "dungeon_miniboss", hp: Math.floor(hp), maxHp: Math.floor(hp), damage: Math.floor((1 + (2 * scale)) * 4.5), flashTimer: 0, isStopped: false };
+                    mob = { x: 750, y: 120, w: 30, h: 50, type: "dungeon_miniboss", isRare: false, hp: Math.floor(hp), maxHp: Math.floor(hp), damage: Math.floor((1 + (2 * scale)) * 4.5), flashTimer: 0, isStopped: false };
                 } else {
                     let hp = 60 * scale * hpScale;
-                    mob = { x: 750, y: 90, w: 50, h: 90, type: "dungeon_boss", hp: Math.floor(hp), maxHp: Math.floor(hp), damage: Math.floor((2 + (3 * scale)) * 5.0), flashTimer: 0, isStopped: false };
+                    mob = { x: 750, y: 90, w: 50, h: 90, type: "dungeon_boss", isRare: false, hp: Math.floor(hp), maxHp: Math.floor(hp), damage: Math.floor((2 + (3 * scale)) * 5.0), flashTimer: 0, isStopped: false };
                 }
             } else {
                 let isBat = Math.random() > 0.5;
-                mob = { x: 750, y: isBat ? 100 : 160, w: 25, h: 25, type: isBat ? "bat" : "crawler", hp: Math.floor(14 * scale * hpScale), maxHp: Math.floor(14 * scale * hpScale), damage: Math.floor((1 + (1 * scale)) * 4.0), flashTimer: 0, isStopped: false };
+                mob = { x: 750, y: isBat ? 100 : 160, w: 25, h: 25, type: isBat ? "bat" : "crawler", isRare: false, hp: Math.floor(14 * scale * hpScale), maxHp: Math.floor(14 * scale * hpScale), damage: Math.floor((1 + (1 * scale)) * 4.0), flashTimer: 0, isStopped: false };
             }
         } else {
             let tier = getStageTier();
+            let p = resolvePlayerStats();
+            
             if (playerStats.isBossMode) {
                 let baseBossHp = 45 * scale * (playerStats.isUberBoss ? 1.5 : 1);
-                mob = { x: 750, y: 100, w: 40, h: 80, type: "boss", visualTier: tier, hp: Math.floor(baseBossHp), maxHp: Math.floor(baseBossHp), damage: Math.floor((2 + (3 * scale)) * 5.0), flashTimer: 0, isStopped: false };
+                mob = { x: 750, y: 100, w: 40, h: 80, type: "boss", isRare: false, visualTier: tier, hp: Math.floor(baseBossHp), maxHp: Math.floor(baseBossHp), damage: Math.floor((2 + (3 * scale)) * 5.0), flashTimer: 0, isStopped: false };
                 let label = playerStats.isUberBoss ? "ENRAGED RIFT GUARDIAN" : "STAGE BOSS"; pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[${label}]</span> blocked your transit route!`);
             } else {
                 let isMelee = Math.random() > 0.5;
-                mob = { x: 750, y: isMelee ? 145 : 160, w: isMelee ? 25 : 30, h: isMelee ? 40 : 25, type: "mob", isMelee: isMelee, visualTier: tier, hp: Math.floor(12 * scale), maxHp: Math.floor(12 * scale), damage: Math.floor((1 + (1 * scale)) * 4.5), flashTimer: 0, isStopped: false };
+                let isRare = Math.random() < p.rareSpawn;
+                let hpMult = isRare ? 2.5 : 1; let dmgMult = isRare ? 1.5 : 1;
+                mob = { x: 750, y: isMelee ? 145 : 160, w: isMelee ? 25 : 30, h: isMelee ? 40 : 25, type: "mob", isRare: isRare, isMelee: isMelee, visualTier: tier, hp: Math.floor(12 * scale * hpMult), maxHp: Math.floor(12 * scale * hpMult), damage: Math.floor((1 + (1 * scale)) * 4.5 * dmgMult), flashTimer: 0, isStopped: false };
+                if (isRare) pushLog(`<span style='color:#ffb6c1; font-weight:bold;'>✨ A glowing Rare enemy appears!</span>`);
             }
         }
     }
@@ -1012,6 +1163,8 @@ window.onload = function() {
         else if (type === "dungeon_miniboss" || type === "dungeon_boss") { colors = ["#9b59b6", "#1abc9c", "#e74c3c", "#f1c40f"]; count = 35; }
         
         colors.push("#f1c40f", "#f39c12");
+        if (mob && mob.isRare) { colors.push("#ffb6c1", "#ffffff"); count = 30; }
+        
         for (let i = 0; i < count; i++) { particles.push({ x: x + (Math.random() * 15), y: y + (Math.random() * 20), vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.7) * 7, radius: Math.random() * 3 + 1.5, color: colors[Math.floor(Math.random() * colors.length)], alpha: 1, life: Math.random() * 25 + 15 }); }
     }
 
@@ -1032,7 +1185,7 @@ window.onload = function() {
 
     function getScrapYieldName(stars) {
         if (stars === "UNIQUE") return "Ancient Core"; if (stars === 5) return "Mythic Scrap"; if (stars === 4) return "Legendary Scrap";
-        if (stars === 3) return "Epic Scrap"; if (stars === 2) return "Magic Scrap"; if (stars === 1) return "Rare Scrap"; return "Iron Scrap";
+        if (stars === 3) return "Epic Scrap"; if (stars === 2) return "Magic Scrap"; if (stars === 1) return "Rare Scrap"; return "Monster Soul";
     }
 
     function getMaxTemper(stars) {
@@ -1041,7 +1194,7 @@ window.onload = function() {
     }
 
     function getRequiredScrapForTemper(targetLevel, isArtifact) {
-        if (isArtifact) return "Overlord's Sigil"; if (targetLevel <= 3) return "Iron Scrap"; if (targetLevel <= 5) return "Rare Scrap";
+        if (isArtifact) return "Overlord's Sigil"; if (targetLevel <= 3) return "Monster Soul"; if (targetLevel <= 5) return "Rare Scrap";
         if (targetLevel <= 7) return "Magic Scrap"; if (targetLevel <= 9) return "Epic Scrap"; if (targetLevel <= 12) return "Legendary Scrap"; return "Mythic Scrap";
     }
 
@@ -1052,7 +1205,7 @@ window.onload = function() {
     
     function getTierUpScrapName(stars) {
         if (stars === 5) return "Mythic Scrap"; if (stars === 4) return "Legendary Scrap"; if (stars === 3) return "Epic Scrap";
-        if (stars === 2) return "Magic Scrap"; if (stars === 1) return "Rare Scrap"; return "Iron Scrap";
+        if (stars === 2) return "Magic Scrap"; if (stars === 1) return "Rare Scrap"; return "Monster Soul";
     }
 
     window.salvageItem = function(id) {
@@ -1215,6 +1368,58 @@ window.onload = function() {
         tt.style.borderColor = getTierColor(item.statsRolled); tt.style.display = "block"; window.positionTooltip(e, tt);
     }
     
+    window.showStatBreakdown = function(e, statKey, isPct = false) {
+        e.stopPropagation(); let tt = document.getElementById('stat-tooltip');
+        let alloc = playerStats.spAllocations;
+        
+        let map = {
+            'atk': { title: "⚔️ Total Attack", base: playerStats.baseAtk, lvl: alloc.spAtk * 2, color: "#fff" },
+            'maxHp': { title: "❤️ Max Health", base: playerStats.baseMaxHp, lvl: alloc.spHp * 10, color: "#fff" },
+            'def': { title: "🛡️ Total Defense", base: playerStats.baseDef, lvl: alloc.spDef * 1, color: "#fff" },
+            'moveSpeed': { title: "👟 Move Speed", base: playerStats.baseMoveSpeed, lvl: alloc.spSpd * 1, color: "#fff" },
+            'critChance': { title: "✨ Crit Chance", base: playerStats.baseCritChance, lvl: alloc.spCrit * 0.005, color: "#e67e22" },
+            'critDamage': { title: "💥 Crit Multiplier", base: playerStats.baseCritDamage, lvl: alloc.spCritDmg * 0.02, color: "#f1c40f" },
+            'block': { title: "🛡️ Block Rate", base: playerStats.baseBlock, lvl: alloc.spBlock * 0.005, color: "#3498db" },
+            'parry': { title: "⚡ Parry Rate", base: playerStats.baseParry, lvl: alloc.spParry * 0.005, color: "#e74c3c" },
+            'rareSpawn': { title: "✨ Rare Enemy Spawn", base: playerStats.baseRareSpawn, lvl: 0, color: "#ffb6c1" },
+            'gold': { title: "🟡 Gold Multiplier", base: playerStats.baseGold, lvl: 0, color: "#f1c40f" }
+        };
+        
+        let data = map[statKey];
+        let gearTotal = 0; let artTotal = 0;
+        
+        for (let key in equippedSlots) {
+            let item = equippedSlots[key];
+            if (item && item[statKey] !== undefined) {
+                if (item.type === "artifact") artTotal += item[statKey];
+                else gearTotal += item[statKey];
+            }
+        }
+        
+        if (statKey === 'moveSpeed' && checkArtifactTrait("move_speed")) artTotal += 10;
+        if (statKey === 'def' && checkArtifactTrait("defense")) artTotal += 15;
+        if (statKey === 'gold' && checkArtifactTrait("gold_hoard")) artTotal += 0.50;
+        
+        let formatVal = (v) => isPct ? `+${Math.floor(v*100)}%` : `+${v}`;
+        if (statKey === 'gold') formatVal = (v) => `+${v.toFixed(2)}`;
+
+        let html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;">
+            <div class="tt-title" style="color:${data.color};">${data.title} Breakdown</div>
+            <div class="tt-stat-line" style="color:#aaa;">• Base Entity: ${formatVal(data.base).replace('+','')}</div>`;
+            
+        if (data.lvl > 0) html += `<div class="tt-stat-line" style="color:#3498db;">• Level Stats (SP): ${formatVal(data.lvl)}</div>`;
+        if (gearTotal > 0) html += `<div class="tt-stat-line" style="color:#2ecc71;">• Equipment: ${formatVal(gearTotal)}</div>`;
+        if (artTotal > 0) html += `<div class="tt-stat-line" style="color:#9b59b6;">• Artifacts: ${formatVal(artTotal)}</div>`;
+        
+        if (statKey === 'critChance' || statKey === 'critDamage') {
+            if (playerStats.frenzyTimer > 0) html += `<div class="tt-stat-line" style="color:#e67e22; font-weight:bold; margin-top:5px;">• FRENZY BUFF ACTIVE!</div>`;
+        }
+        
+        html += `</div>`;
+        tt.style.borderColor = data.color;
+        tt.innerHTML = html; tt.style.display = "block"; window.positionTooltip(e, tt);
+    };
+
     window.showStatHoverTooltip = function(e, statType) {
         e.stopPropagation(); let tt = document.getElementById('stat-tooltip'); let html = ""; let p = resolvePlayerStats();
         
@@ -1226,10 +1431,13 @@ window.onload = function() {
             tt.style.borderColor = "#e74c3c";
         } else if (statType === 'drp') {
             let eff = state.efficiency;
-            html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#2ecc71;">🍀 Drop Rate Modifier</div><div style="color:#aaa; font-size:11px;">Current Multiplier: x${(p.drop * eff).toFixed(2)} ${eff > 1.0 ? "(Manual Play Bonus Active)" : ""}<br><br><b>Exact Chances:</b><br>• Mob Drop: ${(4.5 * p.drop * eff).toFixed(2)}%<br>• Boss Drop: ${(25.0 * p.drop * eff).toFixed(2)}%<br>• Dungeon Mob: ${(10.0 * p.drop * eff).toFixed(2)}%</div></div>`;
+            html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#2ecc71;">🍀 Drop Rate Modifier</div><div style="color:#aaa; font-size:11px;">Current Multiplier: x${(p.drop * eff).toFixed(2)} ${eff > 1.0 ? "(Manual Play Bonus Active)" : ""}<br><br><b>Exact Chances:</b><br>• Standard Mob Drop: ${(4.5 * p.drop * eff).toFixed(2)}%<br>• Rare Mob Drop: ${(15.0 * p.drop * eff).toFixed(2)}%<br>• Boss Drop: ${(25.0 * p.drop * eff).toFixed(2)}%<br>• Dungeon Mob: ${(10.0 * p.drop * eff).toFixed(2)}%</div></div>`;
             tt.style.borderColor = "#2ecc71";
         } else if (statType === 'qly') {
             html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#9b59b6;">💎 Drop Quality Modifier</div><div style="color:#aaa; font-size:11px;">Current Multiplier: x${p.qly.toFixed(2)}<br><br>Increases the probability that an item drop will roll with more bonus modifier lines (higher star rating).</div></div>`;
+            tt.style.borderColor = "#9b59b6";
+        } else if (statType === 'idps') {
+            html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#9b59b6;">🔄 Idle DPS</div><div style="color:#aaa; font-size:11px;">Your calculated Damage Per Second when the game is attacking automatically or when offline.<br><br>Factors in your Attack, Crit Chance, Crit Multiplier, and Idle Atk Spd. Does not account for manual clicking or active buffs like Adrenaline.</div></div>`;
             tt.style.borderColor = "#9b59b6";
         }
         
@@ -1336,11 +1544,11 @@ window.onload = function() {
     window.setForgeMode = function(mode) {
         forgeMode = mode;
         document.getElementById('btn-mode-temper').className = mode === 'temper' ? "btn-toggle active" : "btn-toggle";
+        document.getElementById('btn-mode-lvl').className = mode === 'lvl' ? "btn-toggle active" : "btn-toggle";
         document.getElementById('btn-mode-tier').className = mode === 'tier' ? "btn-toggle active" : "btn-toggle";
-        document.getElementById('btn-mode-awaken').className = mode === 'awaken' ? "btn-toggle active" : "btn-toggle";
         document.getElementById('btn-mode-temper').style.background = mode === 'temper' ? "#2980b9" : "transparent";
-        document.getElementById('btn-mode-tier').style.background = mode === 'tier' ? "#8e44ad" : "transparent";
-        document.getElementById('btn-mode-awaken').style.background = mode === 'awaken' ? "#e67e22" : "transparent";
+        document.getElementById('btn-mode-lvl').style.background = mode === 'lvl' ? "#8e44ad" : "transparent";
+        document.getElementById('btn-mode-tier').style.background = mode === 'tier' ? "#e67e22" : "transparent";
         renderForgeTab();
     };
 
@@ -1378,15 +1586,15 @@ window.onload = function() {
                 pushHeaderToast(`💥 Temper Failed!`, "#e74c3c");
                 spawnTemperParticles(false);
             }
-        } else if (forgeMode === 'tier') {
+        } else if (forgeMode === 'lvl') {
             if (isArt) return; 
             let currentTier = forgeSelectedItem.stageLevel;
             let costGold = currentTier * 500;
             let scrapReq = getTierUpScrapName(forgeSelectedItem.statsRolled);
             let scrapReqAmount = currentTier * 2;
             
-            if (playerStats.coins < costGold) { pushLog(`<span style='color:#e74c3c;'>Not enough Gold to Tier Up!</span>`); return; }
-            if (!inventory.ETC[scrapReq] || inventory.ETC[scrapReq] < scrapReqAmount) { pushLog(`<span style='color:#e74c3c;'>Not enough ${scrapReq} to Tier Up!</span>`); return; }
+            if (playerStats.coins < costGold) { pushLog(`<span style='color:#e74c3c;'>Not enough Gold to Upgrade Level!</span>`); return; }
+            if (!inventory.ETC[scrapReq] || inventory.ETC[scrapReq] < scrapReqAmount) { pushLog(`<span style='color:#e74c3c;'>Not enough ${scrapReq} to Upgrade!</span>`); return; }
             
             playerStats.coins -= costGold; inventory.ETC[scrapReq] -= scrapReqAmount;
             if (inventory.ETC[scrapReq] === 0) delete inventory.ETC[scrapReq];
@@ -1399,19 +1607,19 @@ window.onload = function() {
             if (forgeSelectedItem.baseMoveSpeed > 0) forgeSelectedItem.moveSpeed += 1;
             
             let prefix = getTierName(forgeSelectedItem.statsRolled);
-            forgeSelectedItem.name = `${prefix} ${forgeSelectedItem.type.toUpperCase()} (+${forgeSelectedItem.stageLevel})`;
+            forgeSelectedItem.name = `${prefix} ${forgeSelectedItem.type.toUpperCase()} (Lv. ${forgeSelectedItem.stageLevel})`;
             
-            pushLog(`<span style='color:#9b59b6;'>[FORGE]</span> Successfully Tiered Up to ${forgeSelectedItem.name}!`);
-            pushHeaderToast(`✨ Tier Up Success!`, "#9b59b6");
+            pushLog(`<span style='color:#9b59b6;'>[FORGE]</span> Successfully Upgraded Level to ${forgeSelectedItem.name}!`);
+            pushHeaderToast(`✨ Upgrade Success!`, "#9b59b6");
             spawnTemperParticles(true);
-        } else if (forgeMode === 'awaken') {
+        } else if (forgeMode === 'tier') {
             if (isArt || forgeSelectedItem.statsRolled >= 5) return;
             let currentStars = forgeSelectedItem.statsRolled;
             let costGold = (currentStars + 1) * 2500;
             let scrapReqAmount = currentStars + 1;
             
-            if (playerStats.coins < costGold) { pushLog(`<span style='color:#e74c3c;'>Not enough Gold to Awaken!</span>`); return; }
-            if (!inventory.ETC["Eridium Shard"] || inventory.ETC["Eridium Shard"] < scrapReqAmount) { pushLog(`<span style='color:#e74c3c;'>Not enough Eridium Shards to Awaken!</span>`); return; }
+            if (playerStats.coins < costGold) { pushLog(`<span style='color:#e74c3c;'>Not enough Gold to Tier Up!</span>`); return; }
+            if (!inventory.ETC["Eridium Shard"] || inventory.ETC["Eridium Shard"] < scrapReqAmount) { pushLog(`<span style='color:#e74c3c;'>Not enough Eridium Shards to Tier Up!</span>`); return; }
             
             playerStats.coins -= costGold; 
             inventory.ETC["Eridium Shard"] -= scrapReqAmount;
@@ -1419,10 +1627,10 @@ window.onload = function() {
             
             forgeSelectedItem.statsRolled++;
             let prefix = getTierName(forgeSelectedItem.statsRolled);
-            forgeSelectedItem.name = `${prefix} ${forgeSelectedItem.type.toUpperCase()} (+${forgeSelectedItem.stageLevel})`;
+            forgeSelectedItem.name = `${prefix} ${forgeSelectedItem.type.toUpperCase()} (Lv. ${forgeSelectedItem.stageLevel})`;
             
-            pushLog(`<span style='color:#e67e22;'>[FORGE]</span> Awakened gear rarity to ${forgeSelectedItem.statsRolled}★!`);
-            pushHeaderToast(`🌟 Awaken Success!`, "#e67e22");
+            pushLog(`<span style='color:#e67e22;'>[FORGE]</span> Tiered Up gear rarity to ${forgeSelectedItem.statsRolled}★!`);
+            pushHeaderToast(`🌟 Tier Up Success!`, "#e67e22");
             spawnTemperParticles(true);
         }
 
@@ -1444,23 +1652,23 @@ window.onload = function() {
         else {
             listEl.innerHTML = allValidItems.map(item => {
                 let isArt = item.type === "artifact";
-                if ((forgeMode === 'tier' || forgeMode === 'awaken') && isArt) return ""; 
+                if ((forgeMode === 'lvl' || forgeMode === 'tier') && isArt) return ""; 
                 
                 let nameColor = getTierColor(item.statsRolled); let temperTag = item.temperLevel > 0 ? ` [+${item.temperLevel}]` : "";
                 let bgStyle = forgeSelectedItem && forgeSelectedItem.id === item.id ? "background:#2c3e50; border-left:3px solid #3498db;" : "";
                 let eqBadge = item.isEquippedSlot ? `<span style="background:#c0392b; color:white; padding:1px 3px; border-radius:2px; font-size:8px;">[EQUIPPED]</span> ` : "";
                 let rarityLabel = isArt ? "UNIQUE" : `${item.statsRolled}★`;
-                return `<div class="bag-item" style="cursor:pointer; ${bgStyle}" onclick="selectForgeItem(${item.id})" onmousemove="showForgeTooltip(event, ${item.id})" onmouseleave="hideTooltip()" ontouchstart="showForgeTooltip(event, ${item.id})">
+                return `<div class="bag-item" style="cursor:pointer; ${bgStyle}" onclick="selectForgeItem(${item.id})" onmouseenter="showForgeTooltip(event, ${item.id})" onmouseleave="hideTooltip()" ontouchstart="showForgeTooltip(event, ${item.id})">
                     <div>${eqBadge}<strong style="color:${nameColor};">${item.name}${temperTag}</strong><br><span style="font-size:10px;color:#aaa;">${item.type.toUpperCase()} | ${rarityLabel}</span></div>
                 </div>`;
             }).join("");
         }
 
-        if (!forgeSelectedItem || ((forgeMode === 'tier' || forgeMode === 'awaken') && forgeSelectedItem.type === "artifact")) { 
+        if (!forgeSelectedItem || ((forgeMode === 'lvl' || forgeMode === 'tier') && forgeSelectedItem.type === "artifact")) { 
             detailEl.innerHTML = `<div style='color:#aaa; text-align:center; padding-top:10px;'>
                 <div style='color:#e67e22; font-weight:bold; font-size:14px; margin-bottom:10px;'>🔨 Forge Guide</div>
                 <div style='font-size:11px; line-height:1.8; background:#1a1a1a; padding:10px; border-radius:4px; border:1px solid #333; text-align:left; display:inline-block;'>
-                    Select an item from the list. <br><br><b>TEMPER:</b> Uses level-appropriate scraps to boost stats. Has a chance to fail.<br><br><b>TIER UP:</b> Uses scaling Gold and Scraps to guarantee a Base Level (+1) increase.<br><br><b>AWAKEN:</b> Increases an item's Star Rarity using Eridium Shards, unlocking higher base potential.
+                    Select an item from the list. <br><br><b>TEMPER:</b> Uses level-appropriate scraps to boost stats. Has a chance to fail.<br><br><b>UPGRADE LVL:</b> Uses scaling Gold and Scraps to guarantee a Base Level (+1) increase.<br><br><b>TIER UP:</b> Increases an item's Star Rarity using Eridium Shards, unlocking higher base potential.
                 </div>
             </div>`;
             return; 
@@ -1469,6 +1677,9 @@ window.onload = function() {
         let item = forgeSelectedItem; let isArt = item.type === "artifact"; let titleColor = getTierColor(item.statsRolled);
         let temperTag = item.temperLevel > 0 ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>` : "";
         let html = `<div style="font-weight:bold; font-size:13px; color:${titleColor}; border-bottom:1px solid #333; padding-bottom:4px; margin-bottom:10px;">${item.name}${temperTag}</div>`;
+        
+        let previewHtml = "";
+        let previewItem = JSON.parse(JSON.stringify(item));
         
         if (forgeMode === 'temper') {
             let maxT = getMaxTemper(item.statsRolled);
@@ -1479,13 +1690,19 @@ window.onload = function() {
                 let failChance = item.temperLevel * 5;
                 let goldColor = playerStats.coins >= costGold ? "#f1c40f" : "#e74c3c"; let scrapColor = playerScrap >= scrapReqAmount ? "#bdc3c7" : "#e74c3c";
                 
+                previewItem.temperLevel++;
+                if (previewItem.baseAtk > 0 || previewItem.type === "weapon" || isArt) previewItem.atk += (isArt ? 5 : 2);
+                if (previewItem.baseMaxHp > 0 || isArt) previewItem.maxHp += (isArt ? 25 : 10);
+                if (previewItem.baseDef > 0 || isArt) previewItem.def += (isArt ? 2 : 1);
+                if (previewItem.baseMoveSpeed > 0) previewItem.moveSpeed += 1;
+                
                 html += `<div style="font-size:11px; margin-bottom:15px; color:#aaa;">Temper Progress: <span style="color:#fff;">${item.temperLevel} / ${maxT}</span></div>`;
                 html += `<div style="font-size:11px; color:${goldColor}; margin-bottom:3px;">• ${costGold} Gold</div>`;
                 html += `<div style="font-size:11px; color:${scrapColor}; margin-bottom:10px;">• ${scrapReqAmount}x ${scrapReq} (You have: ${playerScrap})</div>`;
                 html += `<div style="font-size:11px; color:#e74c3c; font-weight:bold; margin-bottom:15px;">⚠️ ${failChance}% Chance to Fail (Eats materials)</div>`;
                 html += `<button class="btn-action forge" style="${(playerStats.coins >= costGold) && (playerScrap >= scrapReqAmount) ? '' : 'opacity:0.5; cursor:not-allowed;'}" onclick="temperItem()">Strike Anvil</button>`;
             }
-        } else if (forgeMode === 'tier') {
+        } else if (forgeMode === 'lvl') {
             let currentTier = item.stageLevel;
             let costGold = currentTier * 500;
             let scrapReq = getTierUpScrapName(item.statsRolled);
@@ -1494,12 +1711,18 @@ window.onload = function() {
             
             let goldColor = playerStats.coins >= costGold ? "#f1c40f" : "#e74c3c"; let scrapColor = playerScrap >= scrapReqAmount ? "#bdc3c7" : "#e74c3c";
             
-            html += `<div style="font-size:11px; margin-bottom:15px; color:#aaa;">Current Base Tier: <span style="color:#fff;">+${currentTier}</span> ➔ <span style="color:#9b59b6;">+${currentTier+1}</span></div>`;
+            previewItem.stageLevel++;
+            if (previewItem.baseAtk > 0) previewItem.atk += 2;
+            if (previewItem.baseMaxHp > 0) previewItem.maxHp += 10;
+            if (previewItem.baseDef > 0) previewItem.def += 1;
+            if (previewItem.baseMoveSpeed > 0) previewItem.moveSpeed += 1;
+            
+            html += `<div style="font-size:11px; margin-bottom:15px; color:#aaa;">Current Base Lvl: <span style="color:#fff;">Lv. ${currentTier}</span> ➔ <span style="color:#9b59b6;">Lv. ${currentTier+1}</span></div>`;
             html += `<div style="font-size:11px; color:${goldColor}; margin-bottom:3px;">• ${costGold} Gold</div>`;
             html += `<div style="font-size:11px; color:${scrapColor}; margin-bottom:10px;">• ${scrapReqAmount}x ${scrapReq} (You have: ${playerScrap})</div>`;
             html += `<div style="font-size:11px; color:#2ecc71; font-weight:bold; margin-bottom:15px;">✨ 100% Success Rate</div>`;
-            html += `<button class="btn-action forge" style="background:#8e44ad; ${(playerStats.coins >= costGold) && (playerScrap >= scrapReqAmount) ? '' : 'opacity:0.5; cursor:not-allowed;'}" onclick="temperItem()">Tier Up Gear</button>`;
-        } else if (forgeMode === 'awaken') {
+            html += `<button class="btn-action forge" style="background:#8e44ad; ${(playerStats.coins >= costGold) && (playerScrap >= scrapReqAmount) ? '' : 'opacity:0.5; cursor:not-allowed;'}" onclick="temperItem()">Upgrade Base Level</button>`;
+        } else if (forgeMode === 'tier') {
             if (item.statsRolled >= 5) { 
                 html += `<div style="color:#e74c3c; font-weight:bold; text-align:center; padding: 20px 0;">MAXIMUM RARITY REACHED</div>`; 
             } else {
@@ -1511,25 +1734,48 @@ window.onload = function() {
                 let goldColor = playerStats.coins >= costGold ? "#f1c40f" : "#e74c3c"; 
                 let scrapColor = playerScrap >= scrapReqAmount ? "#8e44ad" : "#e74c3c";
                 
+                previewItem.statsRolled++;
+                
                 html += `<div style="font-size:11px; margin-bottom:15px; color:#aaa;">Current Rarity: <span style="color:#fff;">${currentStars}★</span> ➔ <span style="color:#f1c40f;">${currentStars+1}★</span></div>`;
                 html += `<div style="font-size:11px; color:${goldColor}; margin-bottom:3px;">• ${costGold} Gold</div>`;
                 html += `<div style="font-size:11px; color:${scrapColor}; margin-bottom:10px;">• ${scrapReqAmount}x Eridium Shard (You have: ${playerScrap})</div>`;
                 html += `<div style="font-size:11px; color:#2ecc71; font-weight:bold; margin-bottom:15px;">✨ 100% Success Rate</div>`;
-                html += `<button class="btn-action forge" style="background:#e67e22; ${(playerStats.coins >= costGold) && (playerScrap >= scrapReqAmount) ? '' : 'opacity:0.5; cursor:not-allowed;'}" onclick="temperItem()">Awaken Potential</button>`;
+                html += `<button class="btn-action forge" style="background:#e67e22; ${(playerStats.coins >= costGold) && (playerScrap >= scrapReqAmount) ? '' : 'opacity:0.5; cursor:not-allowed;'}" onclick="temperItem()">Tier Up Potential</button>`;
             }
         }
-        detailEl.innerHTML = html;
+        
+        if (forgeMode === 'tier' && item.statsRolled < 5) {
+            previewHtml = `<div style="margin-top:15px; padding:10px; background:#111; border:1px dashed #f1c40f; border-radius:4px; font-size:11px; color:#ccc; text-align:center;">
+                * Star Tier UP preserves current modifiers but allows the item to be tempered further and changes Scrap Yield tier!
+            </div>`;
+        } else if ((forgeMode === 'temper' && item.temperLevel < getMaxTemper(item.statsRolled)) || forgeMode === 'lvl') {
+            previewHtml = `<div style="margin-top:15px; padding:10px; background:#111; border:1px solid #333; border-radius:4px;">
+                <div style="color:#3498db; font-weight:bold; font-size:12px; margin-bottom:8px; border-bottom:1px solid #222; padding-bottom:4px;">Preview Upgrade</div>
+                ${generateItemCardHtml(previewItem, item, false)}
+            </div>`;
+        }
+        
+        detailEl.innerHTML = html + previewHtml;
     }
 
     function handleMobDeath() {
         let p = resolvePlayerStats(); 
         let isBoss = (mob.type === "boss" || mob.type === "dungeon_miniboss" || mob.type === "dungeon_boss");
         
+        let xpYield = 0;
+        if (playerStats.isDungeonMode) {
+            xpYield = mob.type === "dungeon_boss" ? playerStats.stage * 150 : playerStats.stage * 30;
+        } else {
+            xpYield = isBoss ? playerStats.stage * 50 : (mob.isRare ? playerStats.stage * 30 : playerStats.stage * 10);
+        }
+        gainXp(xpYield);
+        
         let baseCoin = isBoss ? 10 * playerStats.stage : Math.floor(1 + (playerStats.stage * 0.5));
         
         if (playerStats.isDungeonMode && playerStats.currentDungeon === 'gold') {
             baseCoin *= 5; if (mob.type === "dungeon_boss") baseCoin *= 4; 
         }
+        if (mob.isRare) baseCoin *= 4;
         
         let coinYield = Math.ceil(baseCoin * p.gold);
         playerStats.coins += coinYield;
@@ -1539,12 +1785,12 @@ window.onload = function() {
         if (playerStats.isDungeonMode) {
             if (playerStats.currentDungeon === 'equip') {
                 if (mob.type === "dungeon_boss") {
-                    if (Math.random() < 0.75) rollEquipmentDrop(true, false, 1); else rollEquipmentDrop(true, false, 0);
+                    if (Math.random() < 0.75) rollEquipmentDrop(true, false, 1, false); else rollEquipmentDrop(true, false, 0, false);
                     addEtcDrop("Overlord's Sigil", 1); pushToast("Overlord's Sigil", null, "#1abc9c", true, 1);
                 } else if (mob.type === "dungeon_miniboss") {
-                    if (Math.random() < 0.30) rollEquipmentDrop(true, false, 0);
+                    if (Math.random() < 0.30) rollEquipmentDrop(true, false, 0, false);
                 } else {
-                    if (Math.random() < 0.10) rollEquipmentDrop(false, false, 0);
+                    if (Math.random() < 0.10) rollEquipmentDrop(false, false, 0, false);
                 }
             } else if (playerStats.currentDungeon === 'mat') {
                 if (mob.type === "dungeon_boss") {
@@ -1555,24 +1801,24 @@ window.onload = function() {
                 } else {
                     let r = Math.random();
                     if (r < 0.10) addEtcDrop("Epic Scrap", 1); else if (r < 0.30) addEtcDrop("Magic Scrap", 1);
-                    else if (r < 0.60) addEtcDrop("Rare Scrap", 1); else addEtcDrop("Iron Scrap", randInt(1, 3));
+                    else if (r < 0.60) addEtcDrop("Rare Scrap", 1); else addEtcDrop("Monster Soul", randInt(1, 3));
                     effects.push({ x: mob.x + 10, y: mob.y + 10, text: "📦 Mats", color: "#bdc3c7", life: 35 });
                 }
             } 
         } else {
-            let baseDropRate = isBoss ? 0.25 : 0.045; 
-            if (Math.random() < (baseDropRate * p.drop * state.efficiency)) { rollEquipmentDrop(isBoss); }
+            let baseDropRate = isBoss ? 0.25 : (mob.isRare ? 0.15 : 0.045); 
+            if (Math.random() < (baseDropRate * p.drop * state.efficiency)) { rollEquipmentDrop(isBoss, false, 0, mob.isRare); }
         }
         
         if (playerStats.isUberBoss) {
             addEtcDrop("Gacha Key", 1); pushToast("Gacha Key", null, "#f1c40f", true, 1);
         } else if (mob.type === "boss") { 
-            if (Math.random() < 0.05) { addEtcDrop("Ancient Core", 1); pushToast("Ancient Core", null, "#9b59b6", true, 1); }
+            if (Math.random() < 0.40) { addEtcDrop("Ancient Core", 1); pushToast("Ancient Core", null, "#9b59b6", true, 1); }
             if (Math.random() < 0.10) { addEtcDrop("Eridium Shard", 1); pushToast("Eridium Shard", null, "#8e44ad", true, 1); }
         } else if (!isBoss && !playerStats.isDungeonMode) { 
-            if (Math.random() < 0.15) {
-                let etcItemName = Math.random() > 0.5 ? "Iron Scrap" : "Sticky Gel";
-                addEtcDrop(etcItemName); effects.push({ x: mob.x + 10, y: mob.y + 10, text: "+1 " + etcItemName, color: "#bdc3c7", life: 35 });
+            if (Math.random() < (mob.isRare ? 0.50 : 0.15)) {
+                let etcItemName = mob.isRare ? "Luminous Soul" : "Monster Soul";
+                addEtcDrop(etcItemName); effects.push({ x: mob.x + 10, y: mob.y + 10, text: "+1 " + etcItemName, color: mob.isRare ? "#f1c40f" : "#bdc3c7", life: 35 });
             }
             
             let keyTypes = ['equip', 'gold', 'mat'];
@@ -1580,7 +1826,7 @@ window.onload = function() {
             let countField = randomKey + 'Keys';
             let timeField = 'next' + randomKey.charAt(0).toUpperCase() + randomKey.slice(1) + 'KeyTime';
             
-            if (Math.random() < 0.01 && playerStats[countField] < 3) {
+            if (Math.random() < (mob.isRare ? 0.05 : 0.01) && playerStats[countField] < 3) {
                 playerStats[countField]++;
                 if (playerStats[countField] < 3) playerStats[timeField] = Date.now() + 3600000;
                 pushToast("Dungeon Key", null, "#8e44ad", true, 1);
@@ -1667,12 +1913,26 @@ window.onload = function() {
 
     function updateUI() {
         let p = resolvePlayerStats(); 
+        
+        document.getElementById('char-level').innerText = playerStats.level;
+        document.getElementById('char-sp').innerText = playerStats.sp;
+        document.getElementById('char-xp-text').innerText = `${playerStats.xp} / ${playerStats.xpReq}`;
+        document.getElementById('char-xp-fill').style.width = `${Math.min(100, (playerStats.xp / playerStats.xpReq) * 100)}%`;
+        
+        let alloc = playerStats.spAllocations;
+        document.querySelectorAll('.btn-action.sp').forEach(btn => {
+            btn.style.display = playerStats.sp > 0 ? "inline-block" : "none";
+        });
+        let cBtn = document.getElementById('btn-sp-crit'); if (cBtn && alloc.spCrit >= 40) cBtn.style.display = "none";
+        let bBtn = document.getElementById('btn-sp-blk'); if (bBtn && alloc.spBlock >= 40) bBtn.style.display = "none";
+        let pBtn = document.getElementById('btn-sp-pry'); if (pBtn && alloc.spParry >= 40) pBtn.style.display = "none";
+
         let progressEl = document.getElementById('hud-progress');
         if (playerStats.isDungeonMode) {
             document.getElementById('hud-stage').innerText = `Dungeon`; document.getElementById('hud-stage').style.color = "#8e44ad";
             progressEl.innerText = `Wave ${playerStats.dungeonWave}/5 (${playerStats.killCount}/${playerStats.targetsRequired})`; progressEl.style.color = "#8e44ad";
         } else {
-            document.getElementById('hud-stage').innerText = `1-${playerStats.stage}`; document.getElementById('hud-stage').style.color = "#3498db";
+            document.getElementById('hud-stage').innerText = `${playerStats.stage}`; document.getElementById('hud-stage').style.color = "#3498db";
             if (playerStats.isBossMode) { progressEl.innerText = playerStats.isUberBoss ? "⚡ RIFT BOSS!" : "🎯 BOSS READY!"; progressEl.style.color = playerStats.isUberBoss ? "#9b59b6" : "#e74c3c"; } 
             else if (playerStats.isFarmingLoop) { progressEl.innerText = "💀 FARMING MODE"; progressEl.style.color = "#7f8c8d"; } 
             else { progressEl.innerText = `${playerStats.killCount} / ${playerStats.targetsRequired}`; progressEl.style.color = "#f1c40f"; }
@@ -1688,6 +1948,7 @@ window.onload = function() {
         document.getElementById('stat-crt').innerText = Math.floor(p.critChance * 100) + "%"; document.getElementById('stat-crd').innerText = Math.floor(p.critDamage * 100) + "%";
         document.getElementById('stat-blk').innerText = Math.floor(p.block * 100) + "%"; document.getElementById('stat-pry').innerText = Math.floor(p.parry * 100) + "%";
         document.getElementById('stat-ias').innerText = p.idleAttackSpeed + "f"; document.getElementById('stat-aas').innerText = p.activeAttackSpeed + "f";
+        document.getElementById('stat-rar').innerText = Math.floor(p.rareSpawn * 100) + "%";
         
         let effMultiplier = 1 + (p.critChance * (p.critDamage - 1)); let idps = (p.atk * effMultiplier) * (60 / p.idleAttackSpeed);
         document.getElementById('stat-idps').innerText = idps.toFixed(1);
@@ -1695,9 +1956,24 @@ window.onload = function() {
         document.getElementById('stat-gld').innerText = "x" + p.gold.toFixed(2); 
         
         let drp = p.drop * state.efficiency;
-        document.getElementById('live-rate-mob').innerText = (4.5 * drp).toFixed(2) + "%"; document.getElementById('live-rate-boss').innerText = (25.0 * drp).toFixed(2) + "%"; document.getElementById('live-rate-dmini').innerText = (30.0 * drp).toFixed(2) + "%";
-        document.getElementById('live-rate-acore').innerText = (5.0 * drp).toFixed(2) + "%";
+        document.getElementById('live-rate-mob').innerText = (4.5 * drp).toFixed(2) + "%"; 
+        document.getElementById('live-rate-rare').innerText = (15.0 * drp).toFixed(2) + "%"; 
+        document.getElementById('live-rate-boss').innerText = (25.0 * drp).toFixed(2) + "%"; 
+        document.getElementById('live-rate-dmini').innerText = (30.0 * drp).toFixed(2) + "%";
+        document.getElementById('live-rate-acore').innerText = (40.0 * drp).toFixed(2) + "%";
         document.getElementById('btn-rechallenge').style.display = playerStats.isFarmingLoop ? "block" : "none";
+        
+        let qly = p.qly;
+        let p5 = 0, p4 = 0, p3 = 0, p2 = 0, p1 = 0;
+        let rollVal = 100;
+        let getC = (target) => { let chance = target - (100 - rollVal); rollVal -= chance; return Math.max(0, chance); };
+        p5 = getC(0.02 * qly); p4 = getC(0.18 * qly); p3 = getC(0.80 * qly); p2 = getC(4.00 * qly); p1 = getC(15.00 * qly);
+        
+        document.getElementById('star-rate-5').innerText = p5.toFixed(2) + "%";
+        document.getElementById('star-rate-4').innerText = p4.toFixed(2) + "%";
+        document.getElementById('star-rate-3').innerText = p3.toFixed(2) + "%";
+        document.getElementById('star-rate-2').innerText = p2.toFixed(2) + "%";
+        document.getElementById('star-rate-1').innerText = p1.toFixed(2) + "%";
         
         makeSlotHtml('weapon', 'Weapon'); makeSlotHtml('subweapon', 'Sub-weapon'); makeSlotHtml('helmet', 'Helmet'); makeSlotHtml('chest', 'Chest Armor');
         makeSlotHtml('leggings', 'Leggings'); makeSlotHtml('overall', 'Overall Suit'); makeSlotHtml('boots', 'Boots'); makeSlotHtml('art1', 'Artifact 1'); makeSlotHtml('art2', 'Artifact 2'); makeSlotHtml('art3', 'Artifact 3');
@@ -1711,7 +1987,7 @@ window.onload = function() {
                 let nameColor = getTierColor(item.statsRolled); let tierStr = item.statsRolled === "UNIQUE" ? "UNIQUE" : `${item.statsRolled}★ ${getTierName(item.statsRolled)}`;
                 let temperTag = item.temperLevel > 0 ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>` : "";
                 let details = item.type === "artifact" ? `<span style="font-size:10px;color:#d2b4de;font-weight:bold;">Trait: ${item.desc}</span>` : `<span style="font-size:10px;color:#aaa;">Slot: ${item.type.toUpperCase()} | <span style="color:${nameColor};font-weight:bold;">${tierStr}</span></span>`;
-                return `<div class="bag-item" onmousemove="showInventoryTooltip(event, ${item.id})" ontouchstart="showInventoryTooltip(event, ${item.id})" onmouseleave="hideTooltip()">
+                return `<div class="bag-item" onmouseenter="showInventoryTooltip(event, ${item.id})" ontouchstart="showInventoryTooltip(event, ${item.id})" onmouseleave="hideTooltip()">
                     <div><strong style="color:${nameColor};">${item.name}${temperTag}</strong><br>${details}</div>
                     <div style="position:relative; z-index:10; white-space:nowrap;">
                         <button class="btn-action" onclick="equipItem(${item.id})">Equip</button>
@@ -1722,7 +1998,7 @@ window.onload = function() {
         }
         let etcBox = document.getElementById('bag-etc'); let etcKeys = Object.keys(inventory.ETC);
         if (etcKeys.length === 0) { etcBox.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No materials collected.</div>"; }
-        else { etcBox.innerHTML = etcKeys.map(key => `<div class="bag-item" style="cursor:help;" onmousemove="showEtcTooltip(event, '${key}')" ontouchstart="showEtcTooltip(event, '${key}')" onmouseleave="hideTooltip()"><span>📦 ${key}</span><strong>x${inventory.ETC[key]}</strong></div>`).join(""); }
+        else { etcBox.innerHTML = etcKeys.map(key => `<div class="bag-item" style="cursor:help;" onmouseenter="showEtcTooltip(event, '${key}')" ontouchstart="showEtcTooltip(event, '${key}')" onmouseleave="hideTooltip()"><span>📦 ${key}</span><strong>x${inventory.ETC[key]}</strong></div>`).join(""); }
     }
 
     window.switchSubTab = function(type) {
@@ -1787,6 +2063,10 @@ window.onload = function() {
             bgScenery.forEach(s => { s.x -= scrollSpeed * 0.6; if(s.x < -50) s.x = canvas.width + Math.random() * 50; });
             fgScenery.forEach(s => { s.x -= scrollSpeed; if(s.x < -60) s.x = canvas.width + Math.random() * 50; });
         } else {
+            if (mob.isRare && Math.random() < 0.1) {
+                particles.push({ x: mob.x + Math.random()*mob.w, y: mob.y + Math.random()*mob.h, vx: (Math.random()-0.5)*2, vy: -Math.random()*3, radius: Math.random()*2+1, color: "#f1c40f", alpha: 1, life: 20 });
+            }
+            
             if (mob.x > (hero.x + hero.w + 30)) { 
                 mob.x -= (4 + scrollSpeed); mob.isStopped = false; groundScroll = (groundScroll + scrollSpeed) % canvas.width; 
                 bgScenery.forEach(s => { s.x -= scrollSpeed * 0.6; if(s.x < -50) s.x = canvas.width + Math.random() * 50; });
@@ -1879,15 +2159,25 @@ window.onload = function() {
             bgScenery.forEach(s => {
                 if (s.type === 'tree') {
                     let tx = s.x, ty = s.y - 40 * s.size, ts = s.size;
-                    if (tier===1) { ctx.fillStyle = "#5d6d7e"; ctx.beginPath(); ctx.moveTo(tx - 10*ts, 180); ctx.lineTo(tx, ty); ctx.lineTo(tx + 10*ts, 180); ctx.fill(); } 
-                    else if (tier===2) { ctx.fillStyle = "#111"; ctx.fillRect(tx - 3*ts, ty, 6*ts, 40 * ts); ctx.fillStyle = "#a93226"; ctx.beginPath(); ctx.arc(tx, ty, 15 * ts, 0, Math.PI*2); ctx.fill(); } 
-                    else if (tier===4) { ctx.fillStyle = "#1c2833"; ctx.fillRect(tx - 2*ts, ty, 4*ts, 40 * ts); ctx.fillStyle = "#2c3e50"; ctx.beginPath(); ctx.arc(tx, ty - 10*ts, 12 * ts, 0, Math.PI*2); ctx.fill(); } 
-                    else {
-                        let isSwamp = tier===3; ctx.fillStyle = isSwamp ? "#114f2b" : "#5c4033"; ctx.fillRect(tx - 6*ts, ty, 12*ts, 40 * ts); ctx.fillStyle = isSwamp ? "#0b2b18" : "#3e2723"; ctx.fillRect(tx + 2*ts, ty, 4*ts, 40 * ts); 
-                        ctx.fillStyle = isSwamp ? "#145a32" : "#1e8449"; ctx.beginPath(); ctx.arc(tx, ty - 10*ts, 22 * ts, 0, Math.PI*2); ctx.fill();
-                        ctx.fillStyle = isSwamp ? "#1e8449" : "#27ae60"; ctx.beginPath(); ctx.arc(tx - 8*ts, ty - 5*ts, 18 * ts, 0, Math.PI*2); ctx.fill(); 
-                        ctx.fillStyle = isSwamp ? "#229954" : "#2ecc71"; ctx.beginPath(); ctx.arc(tx + 8*ts, ty - 5*ts, 18 * ts, 0, Math.PI*2); ctx.fill(); 
-                        ctx.fillStyle = isSwamp ? "#229954" : "#2ecc71"; ctx.beginPath(); ctx.arc(tx, ty - 15*ts, 15 * ts, 0, Math.PI*2); ctx.fill(); 
+                    if (tier===0) { 
+                        ctx.fillStyle = "#5c4033"; ctx.fillRect(tx - 6*ts, ty, 12*ts, 40 * ts); ctx.fillStyle = "#3e2723"; ctx.fillRect(tx + 2*ts, ty, 4*ts, 40 * ts); 
+                        ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(tx, ty - 10*ts, 22 * ts, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.arc(tx - 8*ts, ty - 5*ts, 18 * ts, 0, Math.PI*2); ctx.fill(); 
+                        ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(tx + 8*ts, ty - 5*ts, 18 * ts, 0, Math.PI*2); ctx.fill(); 
+                        ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(tx, ty - 15*ts, 15 * ts, 0, Math.PI*2); ctx.fill(); 
+                    } else if (tier===1) { 
+                        ctx.fillStyle = "#5d6d7e"; ctx.beginPath(); ctx.moveTo(tx - 15*ts, 180); ctx.lineTo(tx, ty + 10*ts); ctx.lineTo(tx + 15*ts, 180); ctx.fill(); 
+                        ctx.fillStyle = "#7f8c8d"; ctx.beginPath(); ctx.moveTo(tx - 5*ts, 180); ctx.lineTo(tx + 8*ts, ty + 18*ts); ctx.lineTo(tx + 20*ts, 180); ctx.fill(); 
+                    } else if (tier===2) { 
+                        ctx.fillStyle = "#111"; ctx.beginPath(); ctx.moveTo(tx - 10*ts, 180); ctx.lineTo(tx - 4*ts, ty - 10*ts); ctx.lineTo(tx + 10*ts, 180); ctx.fill(); 
+                        ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.moveTo(tx - 2*ts, 180); ctx.lineTo(tx + 6*ts, ty + 5*ts); ctx.lineTo(tx + 12*ts, 180); ctx.fill();
+                    } else if (tier===3) { 
+                        ctx.fillStyle = "#7f8c8d"; ctx.beginPath(); ctx.roundRect(tx - 12*ts, ty + 20*ts, 24*ts, 30*ts, [8*ts, 8*ts, 0, 0]); ctx.fill();
+                        ctx.fillStyle = "#5d6d7e"; ctx.fillRect(tx - 8*ts, ty + 28*ts, 16*ts, 2*ts); ctx.fillRect(tx - 6*ts, ty + 34*ts, 12*ts, 2*ts);
+                    } else if (tier===4) { 
+                        ctx.fillStyle = "#8e44ad"; let hover = Math.sin(Date.now() / 200 + tx) * 5;
+                        ctx.beginPath(); ctx.moveTo(tx, ty + hover - 10*ts); ctx.lineTo(tx + 10*ts, ty + hover + 10*ts); ctx.lineTo(tx, ty + hover + 30*ts); ctx.lineTo(tx - 10*ts, ty + hover + 10*ts); ctx.fill();
+                        ctx.fillStyle = "#9b59b6"; ctx.beginPath(); ctx.moveTo(tx, ty + hover - 10*ts); ctx.lineTo(tx + 4*ts, ty + hover + 10*ts); ctx.lineTo(tx, ty + hover + 30*ts); ctx.fill();
                     }
                 } else {
                     let bx = s.x, by = s.y, bs = s.size;
@@ -2072,15 +2362,6 @@ window.onload = function() {
 
         particles.forEach(pt => { ctx.fillStyle = pt.color; ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2); ctx.fill(); });
         effects.forEach(eff => { ctx.fillStyle = eff.color; ctx.font = "bold 18px sans-serif"; ctx.fillText(eff.text, eff.x, eff.y); });
-        
-        let buffEl = document.getElementById('hud-buff');
-        let buffs = [];
-        if (playerStats.frenzyTimer > 0) buffs.push(`🔥 FRENZY`);
-        if (playerStats.adrenalineTimer > 0) buffs.push(`⚡ ADRENALINE`);
-        if (checkArtifactTrait("second_wind") && !playerStats.usedSecondWind) buffs.push(`🛡️ ANKH`);
-        
-        if (buffs.length > 0) { buffEl.innerText = buffs.join(" | "); buffEl.style.color = "#e67e22"; } 
-        else { buffEl.innerText = "None"; buffEl.style.color = "#aaa"; }
     }
 
     function engineCycle() { 
