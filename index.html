@@ -183,7 +183,31 @@
             font-size: 11px; line-height: 1.4; z-index: 12000;
             box-shadow: 0 4px 15px rgba(0,0,0,0.7); pointer-events: none;
         }
-        .tooltip-flex-container { display: flex; }
+        .tooltip-flex-container { display: flex; flex-direction: row; }
+        .tooltip-card { padding: 10px; width: 250px; box-sizing: border-box; }
+        .tooltip-card.compare-border { border-right: 1px solid #333; }
+        
+        @media (max-width: 600px) {
+            .tooltip-base {
+                max-width: 90vw;
+                max-height: 75vh;
+                overflow-y: auto;
+                pointer-events: auto; /* allows mobile scrolling within comparison cards */
+            }
+            .tooltip-flex-container {
+                flex-direction: column;
+            }
+            .tooltip-card {
+                width: 100%;
+                max-width: 100%;
+            }
+            .tooltip-card.compare-border {
+                border-right: none;
+                border-bottom: 1px solid #333;
+                padding-bottom: 15px;
+                margin-bottom: 15px;
+            }
+        }
         
         .tt-title { font-weight: bold; font-size: 12px; margin-bottom: 4px; border-bottom: 1px solid #333; padding-bottom: 2px; }
         .tt-subtitle { color: var(--text-dark); font-style: italic; margin-bottom: 6px; font-size: 10px; }
@@ -597,6 +621,16 @@ window.onload = function() {
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
+
+    // Adjust canvas dimensions dynamically to scale up and focus combat action on mobile
+    const isMobile = window.innerWidth <= 600;
+    if (isMobile) {
+        canvas.width = 420;
+        canvas.height = 250;
+    } else {
+        canvas.width = 750;
+        canvas.height = 250;
+    }
 
     /* ==========================================================================
        5. ENGINE GLOBAL STATE
@@ -1215,8 +1249,8 @@ window.onload = function() {
             str: 0, dex: 0, int: 0
         };
         let tt = document.getElementById('game-tooltip'); 
-        tt.innerHTML = `<div class="tooltip-flex-container"><div style="padding: 10px; width: 250px; box-sizing: border-box;">${generateItemCardHtml(dummy, null, false)}</div></div>`; 
-        tt.style.borderColor = getTierColor("UNIQUE"); tt.style.display = "block"; window.positionTooltip(e, tt);
+            tt.innerHTML = `<div class="tooltip-flex-container"><div class="tooltip-card">${generateItemCardHtml(dummy, null, false)}</div></div>`; 
+            tt.style.borderColor = getTierColor("UNIQUE"); tt.style.display = "block"; window.positionTooltip(e, tt);
     };
 
     window.toggleDungeonMenu = function() {
@@ -1825,10 +1859,10 @@ window.onload = function() {
     function buildGeneralTooltipHtml(item, isBagItem = false) {
         let eq = isBagItem ? getEquippedItemForComparison(item.type) : null; let html = "";
         if (eq && eq.id !== item.id) {
-            html += `<div style="padding: 10px; width: 250px; box-sizing: border-box; border-right: 1px solid #333;">${generateItemCardHtml(eq, null, true)}</div>`;
-            html += `<div style="padding: 10px; width: 250px; box-sizing: border-box;">${generateItemCardHtml(item, eq, false)}</div>`;
+            html += `<div class="tooltip-card compare-border">${generateItemCardHtml(eq, null, true)}</div>`;
+            html += `<div class="tooltip-card">${generateItemCardHtml(item, eq, false)}</div>`;
         } else {
-            html += `<div style="padding: 10px; width: 250px; box-sizing: border-box;">${generateItemCardHtml(item, null, item.isEquippedSlot != null)}</div>`;
+            html += `<div class="tooltip-card">${generateItemCardHtml(item, null, item.isEquippedSlot != null)}</div>`;
         }
         return `<div class="tooltip-flex-container">${html}</div>`;
     }
@@ -1862,7 +1896,7 @@ window.onload = function() {
     window.showLogTooltip = function(e, itemId) {
         e.stopPropagation(); let item = frozenItemDb[itemId]; if (!item) return;
         let tt = document.getElementById('log-item-tooltip'); 
-        tt.innerHTML = `<div class="tooltip-flex-container"><div style="padding: 10px; width: 250px; box-sizing: border-box;">${generateItemCardHtml(item, null, false)}</div></div>`;
+        tt.innerHTML = `<div class="tooltip-flex-container"><div class="tooltip-card">${generateItemCardHtml(item, null, false)}</div></div>`;
         tt.style.borderColor = getTierColor(item.statsRolled); tt.style.display = "block"; window.positionTooltip(e, tt);
     }
     
