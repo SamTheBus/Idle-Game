@@ -3969,7 +3969,6 @@ ctx.fill();
                 ctx.moveTo(mob.x + mob.w/2 + 12, mob.y + 2); ctx.quadraticCurveTo(mob.x + mob.w/2 + 20, mob.y - 12, mob.x + mob.w/2 + 16, mob.y - 14); ctx.lineTo(mob.x + mob.w/2 + 8, mob.y + 6);
                 ctx.fill();
 
-                // Core reactor glow
                 if (mob.flashTimer === 0) {
                     let grad = ctx.createRadialGradient(mob.x + mob.w/2, mob.y + 40, 2, mob.x + mob.w/2, mob.y + 40, 12);
                     grad.addColorStop(0, "#e74c3c");
@@ -3977,9 +3976,10 @@ ctx.fill();
                     ctx.fillStyle = grad;
                     ctx.beginPath(); ctx.arc(mob.x + mob.w/2, mob.y + 40, 12, 0, Math.PI*2); ctx.fill();
                 }
-            }
-        } 
-        else if (mob.type === "dungeon_miniboss") {
+            } // Closes the nested stage-tier boss else block
+        } // Closes the standard boss fallback else block
+    } // Closes the else if (mob.type === "boss" || mob.type === "dungeon_boss") container
+    else if (mob.type === "dungeon_miniboss") {
             // Runic Monolith: Levitating elemental prism, circling runic bands
             let hoverY = Math.sin(Date.now() / 120) * 6;
             ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#2c3e50";
