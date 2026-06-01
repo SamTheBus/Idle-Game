@@ -3430,28 +3430,40 @@ beams.forEach(bm => {
 
                     if (mob.flashTimer === 0) {
                         ctx.fillStyle = "#e74c3c";
-                        let apples = [
-                            {x: cx - r * 0.4, y: cy - r * 0.2},
-                            {x: cx + r * 0.4, y: cy - r * 0.3},
-                            {x: cx, y: cy - r * 0.5},
-                            {x: cx - r * 0.1, y: cy + 10},
-                            {x: cx + r * 0.25, y: cy + r * 0.2}
-                        ];
-                        apples.forEach(ap => {
+                        // Instantiates persistent offsets on spawn to prevent frame-by-frame regeneration
+                        if (!mob.appleOffsets) {
+                            mob.appleOffsets = [];
+                            let count = randInt(4, 8); // Random quantity of apples
+                            for (let i = 0; i < count; i++) {
+                                let angle = randFloat(0, Math.PI * 2);
+                                let dist = randFloat(0, r * 0.85); // Safe boundary check within canopy radius
+                                mob.appleOffsets.push({
+                                    dx: Math.cos(angle) * dist,
+                                    dy: Math.sin(angle) * dist - (r * 0.1) // Slightly adjusts vertical bias upwards
+                                });
+                            }
+                        }
+                        // Draw persistent offsets relative to current canopy coordinates
+                        mob.appleOffsets.forEach(ap => {
+                            let appleX = cx + ap.dx;
+                            let appleY = cy + ap.dy;
+
                             ctx.beginPath();
-                            ctx.arc(ap.x, ap.y, mob.w * 0.12, 0, Math.PI * 2);
+                            ctx.arc(appleX, appleY, mob.w * 0.12, 0, Math.PI * 2);
                             ctx.fill();
                             
+                            // Stem
                             ctx.strokeStyle = "#4d2e1a";
                             ctx.lineWidth = 1.5;
                             ctx.beginPath();
-                            ctx.moveTo(ap.x, ap.y - mob.w * 0.1);
-                            ctx.lineTo(ap.x - 2, ap.y - mob.w * 0.18);
+                            ctx.moveTo(appleX, appleY - mob.w * 0.1);
+                            ctx.lineTo(appleX - 2, appleY - mob.w * 0.18);
                             ctx.stroke();
 
+                            // Highlight shine
                             ctx.fillStyle = "#ffffff";
                             ctx.beginPath();
-                            ctx.arc(ap.x - mob.w * 0.04, ap.y - mob.w * 0.04, mob.w * 0.03, 0, Math.PI * 2);
+                            ctx.arc(appleX - mob.w * 0.04, appleY - mob.w * 0.04, mob.w * 0.03, 0, Math.PI * 2);
                             ctx.fill();
                             ctx.fillStyle = "#e74c3c";
                         });
