@@ -2828,16 +2828,83 @@ window.onload = function() {
                         ctx.beginPath(); ctx.arc(mob.x + mob.w / 2 + 4, mob.y + mob.h / 2, 2, 0, Math.PI * 2); ctx.fill();
                     }
                 } else if (t === 1) {
-                    // Blocky Stone Golem with cracks
+                // ==========================================================================
+                // RUNIC STONE GOLEM (Stage Tier 1 - Peaks Stage Mobs)
+                // ==========================================================================
+                let hover = Math.sin(Date.now() / 120) * 2;
+                let blockColor = mob.flashTimer > 0 ? "#ffffff" : "#4e545c";
+                let shadowColor = mob.flashTimer > 0 ? "#ffffff" : "#2f353d";
+                let runeColor = mob.isRare ? "#ff007f" : "#ff3333";
+
+                // 1. Stone Torso
+                ctx.fillStyle = shadowColor;
+                ctx.beginPath();
+                ctx.roundRect(mob.x + 2, mob.y + 10 + hover, mob.w - 4, mob.h - 10, [6]);
+                ctx.fill();
+                ctx.fillStyle = blockColor;
+                ctx.beginPath();
+                ctx.roundRect(mob.x + 4, mob.y + 12 + hover, mob.w - 8, mob.h - 14, [4]);
+                ctx.fill();
+
+                // 2. Rugged Head Plate
+                ctx.fillStyle = shadowColor;
+                ctx.fillRect(mob.x + 6, mob.y + hover, mob.w - 12, 10);
+                ctx.fillStyle = blockColor;
+                ctx.fillRect(mob.x + 8, mob.y + 2 + hover, mob.w - 16, 8);
+
+                // 3. Glowing Evil Slit Eyes
+                if (mob.flashTimer === 0) {
+                    ctx.fillStyle = runeColor;
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = runeColor;
+                    
+                    // Left eye slit
                     ctx.beginPath();
-                    ctx.roundRect(mob.x, mob.y, mob.w, mob.h, [4]);
+                    ctx.moveTo(mob.x + 8, mob.y + 4 + hover);
+                    ctx.lineTo(mob.x + 13, mob.y + 7 + hover);
+                    ctx.lineTo(mob.x + 8, mob.y + 8 + hover);
+                    ctx.closePath();
                     ctx.fill();
-                    ctx.strokeStyle = "#333";
+
+                    // Right eye slit
+                    ctx.beginPath();
+                    ctx.moveTo(mob.x + mob.w - 8, mob.y + 4 + hover);
+                    ctx.lineTo(mob.x + mob.w - 13, mob.y + 7 + hover);
+                    ctx.lineTo(mob.x + mob.w - 8, mob.y + 8 + hover);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.shadowBlur = 0; // Reset canvas shadow
+                }
+
+                // 4. Floating Shoulder Blocks (Fists/Shoulders)
+                ctx.fillStyle = shadowColor;
+                ctx.fillRect(mob.x - 4, mob.y + 12 + hover, 5, 8);
+                ctx.fillRect(mob.x + mob.w - 1, mob.y + 12 + hover, 5, 8);
+                ctx.fillStyle = blockColor;
+                ctx.fillRect(mob.x - 3, mob.y + 13 + hover, 3, 6);
+                ctx.fillRect(mob.x + mob.w - 2, mob.y + 13 + hover, 3, 6);
+
+                // 5. Heavy cracks & ancient runic glowing chest core
+                if (mob.flashTimer === 0) {
+                    ctx.strokeStyle = "#1b1d22";
                     ctx.lineWidth = 1.5;
                     ctx.beginPath();
-                    ctx.moveTo(mob.x + 3, mob.y + 5); ctx.lineTo(mob.x + 12, mob.y + 15);
-                    ctx.moveTo(mob.x + mob.w - 5, mob.y + 12); ctx.lineTo(mob.x + mob.w - 15, mob.y + 20);
+                    // Left Chest Crack
+                    ctx.moveTo(mob.x + 8, mob.y + 18 + hover);
+                    ctx.lineTo(mob.x + 14, mob.y + 24 + hover);
+                    // Right Chest Crack
+                    ctx.moveTo(mob.x + mob.w - 8, mob.y + 16 + hover);
+                    ctx.lineTo(mob.x + mob.w - 12, mob.y + 22 + hover);
                     ctx.stroke();
+
+                    // Glowing chest rune core
+                    ctx.fillStyle = runeColor;
+                    ctx.beginPath();
+                    ctx.arc(mob.x + mob.w / 2, mob.y + mob.h / 2 + 4 + hover, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
                 } else if (t === 2) {
                     // Flame Sprite
                     let flicker = Math.sin(Date.now() / 50) * 4;
