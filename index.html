@@ -2264,6 +2264,8 @@ window.onload = function() {
        10. COMBAT RESOLUTION & WAVES AUDIT
        ========================================================================== */
     function handleMobDeath() {
+        // Instantly clear target cumulative damage numbers on death
+        effects = effects.filter(e => !e.isCumulative);
         let p = resolvePlayerStats(); 
         let isBoss = (mob.type === "boss" || mob.type === "dungeon_boss" || mob.type === "dungeon_miniboss");
         
@@ -2387,17 +2389,16 @@ window.onload = function() {
     }
 
    function handlePlayerDefeat() {
+        // Ensure cumulative damage values clear on player defeat
+        effects = effects.filter(e => !e.isCumulative);
         isGamePaused = true; playerStats.isBossMode = false; playerStats.isFarmingLoop = false; playerStats.isUberBoss = false; playerStats.isDungeonMode = false;
-        playerStats.killCount = 0; playerStats.targetsRequired = 5; playerStats.usedSecondWind = false;
-        playerStats.frenzyTimer = 0; playerStats.frenzyKillCount = 0; playerStats.adrenalineTimer = 0;
-        hero.attackTimer = 0; hero.slashFrame = false; mob = null;
         
-        // Rogue-lite restart stage (10% of maximum reached stage, floor minimum 1)
-        let restartStage = Math.max(1, Math.floor((playerStats.maxStage || 1) * 0.10));
+        // Rogue-lite restart stage (70% of maximum reached stage, floor minimum 1)
+        let restartStage = Math.max(1, Math.floor((playerStats.maxStage || 1) * 0.70));
         playerStats.stage = restartStage;
         
         updateUI();
-        pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[DEFEATED] Your hero fell in battle! Returned to Stage ${restartStage} (10% of Max Stage ${playerStats.maxStage || 1}). All attributes, stats, level, and items remain intact!</span>`);
+        pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[DEFEATED] Your hero fell in battle! Returned to Stage ${restartStage} (70% of Max Stage ${playerStats.maxStage || 1}). All attributes, stats, level, and items remain intact!</span>`);
         document.getElementById('death-overlay').style.display = "flex"; window.saveGame();
     }
 
@@ -2410,54 +2411,57 @@ window.onload = function() {
     window.rechallengeBoss = function() { playerStats.isBossMode = true; playerStats.isFarmingLoop = false; mob = null; updateUI(); };
 
     function spawnDamageEffect(amount, type, isCrit) {
-        let existing = effects.find(e => e.isDamage && e.life > 0);
-        let doubleLife = 65 * 2; // Twice as long as default (24 * 2 = 48) -> We set to 130 frames for spectacular high-retention tracking
+        if (!mob) return;
 
-        if (existing) {
-            if (!existing.damageBreakdown) {
-                existing.damageBreakdown = {};
-            }
-            existing.damageBreakdown[type] = (existing.damageBreakdown[type] || 0) + amount;
-            existing.amount += amount;
-            existing.life = doubleLife;
-            if (isCrit) existing.hasCrit = true;
-            
-            let totalStr = (existing.hasCrit ? "💥 " : "-") + existing.amount;
-            let detailParts = [];
-            const icons = { slash: "⚔️", dagger: "🗡️", lightning: "⚡", fire: "🔥", frost: "❄️", echo: "👻", counter: "🛡️" };
-            for (let key in existing.damageBreakdown) {
-                if (existing.damageBreakdown[key] > 0) {
-                    detailParts.push(`${icons[key]}${existing.damageBreakdown[key]}`);
-                }
-            }
-            existing.text = `${totalStr} (${detailParts.join(" ")})`;
-            existing.y = Math.max(mob.y - 45, existing.y - 1);
-            existing.x = mob.x + 15;
+        // 1. Spawns the immediate individual hit indicator
+        let hitColor = "#ecf0f1";
+        let hitText = "-" + amount;
+        const icons = { slash: "⚔️", dagger: "🗡️", lightning: "⚡", fire: "🔥", frost: "❄️", echo: "👻", counter: "🛡️" };
+        
+        if (isCrit) {
+            hitColor = "#e74c3c";
+            hitText = "💥 " + amount;
         } else {
-            let breakdown = {};
-            breakdown[type] = amount;
-            const icons = { slash: "⚔️", dagger: "🗡️", lightning: "⚡", fire: "🔥", frost: "❄️", echo: "👻", counter: "🛡️" };
-            let totalStr = (isCrit ? "💥 " : "-") + amount;
-            let text = `${totalStr} (${icons[type]}${amount})`;
-            
-            let mainColor = "#ecf0f1";
-            if (isCrit) mainColor = "#e74c3c";
-            else if (type === 'lightning') mainColor = "#f1c40f";
-            else if (type === 'fire') mainColor = "#e67e22";
-            else if (type === 'frost') mainColor = "#3498db";
-            else if (type === 'echo') mainColor = "#9b59b6";
-            else if (type === 'counter') mainColor = "#f1c40f";
-            
+            if (type === 'lightning') hitColor = "#f1c40f";
+            else if (type === 'fire') hitColor = "#e67e22";
+            else if (type === 'frost') hitColor = "#3498db";
+            else if (type === 'echo') hitColor = "#9b59b6";
+            else if (type === 'counter') hitColor = "#f1c40f";
+        }
+        
+        if (type !== 'slash') {
+            hitText = `${icons[type]} ${hitText}`;
+        }
+
+        // Slightly randomize offset coordinates so rapid simultaneous hits don't overlay
+        let offsetX = randFloat(-22, 22);
+        let offsetY = randFloat(-30, 5);
+
+        effects.push({
+            x: mob.x + mob.w / 2 + offsetX,
+            y: mob.y + offsetY,
+            text: hitText,
+            color: hitColor,
+            life: 40 // Fades out neatly (approx. 0.6 seconds)
+        });
+
+        // 2. Manage the cumulative target total damage indicator
+        let existingTotal = effects.find(e => e.isCumulative && e.life > 0);
+        if (existingTotal) {
+            existingTotal.amount += amount;
+            existingTotal.text = `⚡ TOTAL: ${existingTotal.amount}`;
+            existingTotal.life = 55; // Reset the decay timer
+            existingTotal.x = mob.x + mob.w / 2 - 25;
+            existingTotal.y = mob.y - 25;
+        } else {
             effects.push({
-                x: mob.x + 15,
-                y: mob.y - 15,
-                text: text,
-                color: mainColor,
-                life: doubleLife,
-                isDamage: true,
-                amount: amount,
-                hasCrit: isCrit,
-                damageBreakdown: breakdown
+                x: mob.x + mob.w / 2 - 25,
+                y: mob.y - 25,
+                text: `⚡ TOTAL: ${amount}`,
+                color: "#f1c40f", // Gold total indicator
+                life: 55,
+                isCumulative: true,
+                amount: amount
             });
         }
     }
