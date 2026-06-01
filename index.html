@@ -2951,9 +2951,7 @@ window.onload = function() {
         }
         ctx.restore();
 
-        beams.forEach(bm => {
-
-        beams.forEach(bm => {
+beams.forEach(bm => {
             ctx.save();
             ctx.globalAlpha = bm.life / bm.maxLife * 0.7;
             let beamGrad = ctx.createLinearGradient(bm.x - 20, 0, bm.x + 20, 0);
@@ -3478,107 +3476,134 @@ ctx.fill();
         ctx.restore();
     }
 
-    // Render foreground scenery objects only if not in dungeon mode
-    if (!playerStats.isDungeonMode) {
-        fgScenery.forEach(s => {
-            let sx = s.x, sy = s.y, ss = s.size;
-            if (tier === 0) { // Forest Stage
+    // Render foreground scenery objects (Always active, customized per environment)
+    fgScenery.forEach(s => {
+        let sx = s.x, sy = s.y, ss = s.size;
+        s.seed = s.seed || Math.random();
+
+        if (playerStats.isDungeonMode) {
+            if (playerStats.currentDungeon === 'gold') {
                 if (s.type === 'grass') {
-                    ctx.fillStyle = "#2ecc71";
-                    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx-5*ss, sy-10*ss, sx-8*ss, sy-15*ss); ctx.lineTo(sx-4*ss, sy); ctx.fill();
-                    ctx.beginPath(); ctx.moveTo(sx+2*ss, sy); ctx.quadraticCurveTo(sx+5*ss, sy-12*ss, sx+2*ss, sy-18*ss); ctx.lineTo(sx+6*ss, sy); ctx.fill();
+                    // Sparkling Gold nuggets
+                    ctx.fillStyle = "#f1c40f"; ctx.beginPath();
+                    ctx.moveTo(sx - 5*ss, sy); ctx.lineTo(sx - 2*ss, sy - 6*ss); ctx.lineTo(sx + 4*ss, sy - 7*ss); ctx.lineTo(sx + 7*ss, sy - 2*ss); ctx.lineTo(sx + 2*ss, sy); ctx.closePath(); ctx.fill();
+                    ctx.fillStyle = "#ffffff"; ctx.fillRect(sx, sy - 5*ss, 1.5, 1.5);
                 } else if (s.type === 'flower') {
-                    ctx.fillStyle = "#27ae60"; ctx.strokeStyle = "#27ae60";
-                    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx+3*ss, sy-10*ss, sx+1*ss, sy-18*ss); ctx.lineWidth=2; ctx.stroke();
-                    ctx.fillStyle = s.color; let px = sx+1*ss, py = sy-18*ss;
-                    for(let p=0; p<5; p++) { ctx.beginPath(); ctx.arc(px + Math.cos(p*Math.PI*2/5)*4*ss, py + Math.sin(p*Math.PI*2/5)*4*ss, 3*ss, 0, Math.PI*2); ctx.fill(); }
-                    ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(px, py, 2.5*ss, 0, Math.PI*2); ctx.fill();
-                } else if (s.type === 'bush') {
-                    ctx.fillStyle = "#145a32"; ctx.beginPath(); ctx.arc(sx, sy, 14*ss, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(sx-8*ss, sy-4*ss, 10*ss, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(sx+10*ss, sy-2*ss, 11*ss, 0, Math.PI*2); ctx.fill();
+                    // Miner's Post Lantern
+                    ctx.fillStyle = "#3e2723"; ctx.fillRect(sx - 2, sy - 30*ss, 4, 30*ss); ctx.fillRect(sx - 2, sy - 30*ss, 12*ss, 3*ss);
+                    let lx = sx + 8*ss, ly = sy - 27*ss;
+                    ctx.fillStyle = "#2c3e50"; ctx.fillRect(lx - 3, ly, 6, 8);
+                    let glow = ctx.createRadialGradient(lx, ly + 4, 1, lx, ly + 4, 16*ss);
+                    glow.addColorStop(0, "rgba(241, 196, 15, 0.8)"); glow.addColorStop(1, "rgba(241, 196, 15, 0)");
+                    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(lx, ly + 4, 16*ss, 0, Math.PI*2); ctx.fill();
+                } else {
+                    // Heavy Mining Wooden Supply Box
+                    ctx.fillStyle = "#5c4033"; ctx.fillRect(sx - 10*ss, sy - 20*ss, 20*ss, 20*ss);
+                    ctx.strokeStyle = "#3e2723"; ctx.lineWidth = 1.5; ctx.strokeRect(sx - 10*ss, sy - 20*ss, 20*ss, 20*ss);
+                    ctx.beginPath(); ctx.moveTo(sx - 10*ss, sy - 20*ss); ctx.lineTo(sx + 10*ss, sy); ctx.stroke();
                 }
-            } else if (tier === 1) { // Peaks / Ruins Stage
-                if (s.type === 'grass') { 
-                    ctx.fillStyle = "#7f8c8d";
-                    ctx.beginPath(); ctx.arc(sx, sy - 2*ss, 4*ss, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = "#95a5a6";
-                    ctx.beginPath(); ctx.arc(sx + 6*ss, sy - 1*ss, 2.5*ss, 0, Math.PI*2); ctx.fill();
-                } else if (s.type === 'flower') { 
-                    ctx.fillStyle = "#5d6d7e";
-                    ctx.fillRect(sx - 8*ss, sy - 6*ss, 16*ss, 6*ss);
-                    ctx.fillStyle = "#34495e";
-                    ctx.fillRect(sx - 4*ss, sy - 10*ss, 10*ss, 4*ss);
-                } else if (s.type === 'bush') { 
-                    ctx.strokeStyle = "#5c4033"; ctx.lineWidth = 1.5;
-                    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 10*ss, sy - 15*ss);
-                    ctx.moveTo(sx, sy); ctx.lineTo(sx + 10*ss, sy - 18*ss);
-                    ctx.moveTo(sx, sy); ctx.lineTo(sx, sy - 22*ss);
-                    ctx.moveTo(sx - 4*ss, sy - 8*ss); ctx.lineTo(sx - 12*ss, sy - 10*ss);
-                    ctx.stroke();
+            } else if (playerStats.currentDungeon === 'mat') {
+                if (s.type === 'grass') {
+                    // Corrosive gas pod venting steam
+                    ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.ellipse(sx, sy - 3*ss, 9*ss, 5*ss, 0, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(sx, sy - 5*ss, 2.5*ss, 0, Math.PI*2); ctx.fill();
+                } else if (s.type === 'flower') {
+                    // Glowing bio-luminescent mushrooms
+                    ctx.fillStyle = "#95a5a6"; ctx.fillRect(sx - 1.5*ss, sy - 12*ss, 3*ss, 12*ss);
+                    ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(sx, sy - 12*ss, 7*ss, Math.PI, 0); ctx.fill();
+                    ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(sx - 2*ss, sy - 15*ss, 1, 0, Math.PI*2); ctx.arc(sx + 2*ss, sy - 14*ss, 1, 0, Math.PI*2); ctx.fill();
+                } else {
+                    // Toxic Waste Drum leaking green ooze
+                    ctx.fillStyle = "#7f8c8d"; ctx.fillRect(sx - 8*ss, sy - 18*ss, 16*ss, 18*ss);
+                    ctx.fillStyle = "#34495e"; ctx.fillRect(sx - 8*ss, sy - 15*ss, 16*ss, 2*ss); ctx.fillRect(sx - 8*ss, sy - 6*ss, 16*ss, 2*ss);
+                    ctx.fillStyle = "#2ecc71"; ctx.fillRect(sx - 4*ss, sy - 18*ss, 3*ss, 8*ss); ctx.beginPath(); ctx.arc(sx - 2.5*ss, sy - 10*ss, 2, 0, Math.PI*2); ctx.fill();
                 }
-            } else if (tier === 2) { // Inferno Stage
-                if (s.type === 'grass') { 
-                    let hover = (Date.now() / 15 + sx) % 30;
-                    ctx.fillStyle = "rgba(231, 76, 60, " + (1 - hover/30) + ")";
-                    ctx.beginPath(); ctx.arc(sx, sy - hover, 3*ss, 0, Math.PI*2); ctx.fill();
-                } else if (s.type === 'flower') { 
-                    ctx.fillStyle = "#111111";
-                    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx - 3*ss, sy - 8*ss, sx - 6*ss, sy - 12*ss); ctx.lineTo(sx + 6*ss, sy); ctx.fill();
-                    ctx.fillStyle = "#2c3e50";
-                    ctx.beginPath(); ctx.moveTo(sx + 3*ss, sy); ctx.quadraticCurveTo(sx + 6*ss, sy - 5*ss, sx + 10*ss, sy - 8*ss); ctx.lineTo(sx + 12*ss, sy); ctx.fill();
-                } else if (s.type === 'bush') { 
-                    ctx.fillStyle = "#c0392b";
-                    ctx.beginPath(); ctx.moveTo(sx - 15*ss, sy); ctx.lineTo(sx, sy - 4*ss); ctx.lineTo(sx + 15*ss, sy); ctx.closePath(); ctx.fill();
-                    ctx.fillStyle = "#f1c40f";
-                    ctx.beginPath(); ctx.moveTo(sx - 10*ss, sy); ctx.lineTo(sx, sy - 2*ss); ctx.lineTo(sx + 10*ss, sy); ctx.closePath(); ctx.fill();
-                }
-            } else if (tier === 3) { // Swamp Stage
-                if (s.type === 'grass') { 
-                    ctx.fillStyle = "#2ecc71";
-                    ctx.beginPath(); ctx.ellipse(sx, sy - 2*ss, 12*ss, 4*ss, 0, 0, Math.PI*2); ctx.fill();
-                    let bub = Math.abs(Math.sin(Date.now() / 400 + sx)) * 4 * ss;
-                    ctx.fillStyle = "#27ae60";
-                    ctx.beginPath(); ctx.arc(sx - 3*ss, sy - 3*ss - bub/2, bub/2, 0, Math.PI*2); ctx.fill();
-                } else if (s.type === 'flower') { 
-                    ctx.fillStyle = "#ecf0f1";
-                    ctx.fillRect(sx - 2*ss, sy - 12*ss, 4*ss, 12*ss);
-                    ctx.fillStyle = "#9b59b6";
-                    ctx.beginPath(); ctx.arc(sx, sy - 12*ss, 8*ss, Math.PI, 0); ctx.fill();
-                    ctx.fillStyle = "#2ecc71";
-                    ctx.beginPath(); ctx.arc(sx - 3*ss, sy - 15*ss, 1.5*ss, 0, Math.PI*2); ctx.fill();
-                    ctx.beginPath(); ctx.arc(sx + 3*ss, sy - 14*ss, 1.5*ss, 0, Math.PI*2); ctx.fill();
-                } else if (s.type === 'bush') { 
-                    ctx.fillStyle = "#0e331c";
-                    ctx.beginPath(); ctx.ellipse(sx, sy, 16*ss, 8*ss, 0, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = "#2ecc71";
-                    ctx.beginPath(); ctx.ellipse(sx, sy - 2*ss, 12*ss, 6*ss, 0, 0, Math.PI*2); ctx.fill();
-                }
-            } else if (tier === 4) { // Void Stage
-                if (s.type === 'grass') { 
-                    let rot = Date.now() / 800 + sx;
-                    ctx.fillStyle = "rgba(52, 152, 219, 0.8)";
-                    ctx.save(); ctx.translate(sx, sy - 10); ctx.rotate(rot);
-                    ctx.fillRect(-2*ss, -2*ss, 4*ss, 4*ss);
-                    ctx.restore();
-                } else if (s.type === 'flower') { 
-                    let hover = Math.sin(Date.now() / 300 + sx) * 6;
-                    ctx.fillStyle = "#9b59b6";
-                    ctx.beginPath(); ctx.moveTo(sx, sy - 20 + hover); ctx.lineTo(sx + 5*ss, sy - 10 + hover); ctx.lineTo(sx, sy + hover); ctx.lineTo(sx - 5*ss, sy - 10 + hover); ctx.closePath(); ctx.fill();
-                    ctx.fillStyle = "#3498db";
-                    ctx.beginPath(); ctx.moveTo(sx, sy - 20 + hover); ctx.lineTo(sx + 2*ss, sy - 10 + hover); ctx.lineTo(sx, sy + hover); ctx.closePath(); ctx.fill();
-                } else if (s.type === 'bush') { 
-                    let angle = Date.now() / 200;
-                    ctx.save(); ctx.translate(sx, sy - 5);
-                    ctx.rotate(angle);
-                    let grad = ctx.createRadialGradient(0, 0, 1, 0, 0, 15*ss);
-                    grad.addColorStop(0, "#000"); grad.addColorStop(0.5, "#8e44ad"); grad.addColorStop(1, "rgba(26,188,156,0)");
-                    ctx.fillStyle = grad;
-                    ctx.beginPath(); ctx.ellipse(0, 0, 18*ss, 8*ss, 0, 0, Math.PI*2); ctx.fill();
-                    ctx.restore();
+            } else {
+                if (s.type === 'grass') {
+                    // Runic ground spikes
+                    ctx.fillStyle = "#34495e"; ctx.beginPath(); ctx.moveTo(sx - 4*ss, sy); ctx.lineTo(sx, sy - 14*ss); ctx.lineTo(sx + 4*ss, sy); ctx.closePath(); ctx.fill();
+                } else if (s.type === 'flower') {
+                    // Scattered skull/bone props
+                    ctx.fillStyle = "#ecf0f1"; ctx.beginPath(); ctx.arc(sx, sy - 4*ss, 4*ss, 0, Math.PI*2); ctx.fill();
+                    ctx.fillRect(sx - 2*ss, sy - 2*ss, 4*ss, 3*ss);
+                } else {
+                    // Iron shield stand decoration
+                    ctx.fillStyle = "#2c3e50"; ctx.fillRect(sx - 1.5, sy - 16*ss, 3, 16*ss);
+                    ctx.fillStyle = "#7f8c8d"; ctx.beginPath(); ctx.arc(sx, sy - 14*ss, 6*ss, 0, Math.PI*2); ctx.fill();
                 }
             }
-        });
-    }
+        } else {
+            // OUTDOOR ACTIVE ENVIRONMENTS
+            if (tier === 0) {
+                if (s.type === 'grass') {
+                    ctx.fillStyle = "#2ecc71";
+                    let sway = Math.sin(Date.now() / 250 + sx) * 4 * ss;
+                    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx - 3*ss + sway, sy - 15*ss, sx - 8*ss + sway, sy - 22*ss); ctx.quadraticCurveTo(sx - 2*ss + sway, sy - 10*ss, sx + 2*ss, sy);
+                    ctx.moveTo(sx + 3*ss, sy); ctx.quadraticCurveTo(sx + 5*ss + sway, sy - 18*ss, sx + 2*ss + sway, sy - 26*ss); ctx.quadraticCurveTo(sx + 7*ss + sway, sy - 12*ss, sx + 8*ss, sy); ctx.fill();
+                } else if (s.type === 'flower') {
+                    ctx.fillStyle = "#27ae60"; ctx.fillRect(sx - 1*ss, sy - 14*ss, 2*ss, 14*ss);
+                    ctx.beginPath(); ctx.ellipse(sx - 4*ss, sy - 6*ss, 4*ss, 2*ss, Math.PI/4, 0, Math.PI*2); ctx.ellipse(sx + 4*ss, sy - 10*ss, 4*ss, 2*ss, -Math.PI/4, 0, Math.PI*2); ctx.fill();
+                    let swayF = Math.sin(Date.now() / 200 + sx) * 3 * ss; let fx = sx + swayF, fy = sy - 14*ss;
+                    ctx.fillStyle = s.color;
+                    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 3) {
+                        ctx.beginPath(); ctx.arc(fx + Math.cos(angle)*5*ss, fy + Math.sin(angle)*5*ss, 4*ss, 0, Math.PI*2); ctx.fill();
+                    }
+                    ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(fx, fy, 3.5*ss, 0, Math.PI*2); ctx.fill();
+                } else {
+                    ctx.fillStyle = "#196f3d"; ctx.beginPath(); ctx.arc(sx, sy - 10*ss, 16*ss, 0, Math.PI*2); ctx.arc(sx - 12*ss, sy - 6*ss, 12*ss, 0, Math.PI*2); ctx.arc(sx + 12*ss, sy - 6*ss, 12*ss, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.arc(sx - 4*ss, sy - 12*ss, 12*ss, 0, Math.PI*2); ctx.arc(sx + 4*ss, sy - 12*ss, 12*ss, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(sx - 6*ss, sy - 8*ss, 2.5*ss, 0, Math.PI*2); ctx.arc(sx + 8*ss, sy - 14*ss, 2.5*ss, 0, Math.PI*2); ctx.arc(sx + 2*ss, sy - 6*ss, 2.5*ss, 0, Math.PI*2); ctx.fill();
+                }
+            } else if (tier === 1) {
+                if (s.type === 'grass') { 
+                    ctx.fillStyle = "#7f8c8d"; ctx.beginPath(); ctx.arc(sx, sy - 2*ss, 4*ss, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = "#95a5a6"; ctx.beginPath(); ctx.arc(sx + 6*ss, sy - 1*ss, 2.5*ss, 0, Math.PI*2); ctx.fill();
+                } else if (s.type === 'flower') { 
+                    ctx.fillStyle = "#7f8c8d"; ctx.strokeStyle = "#5d6d7e"; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 10*ss, sy - 12*ss); ctx.lineTo(sx + 10*ss, sy - 12*ss); ctx.closePath(); ctx.fill(); ctx.stroke();
+                } else { 
+                    ctx.strokeStyle = "#5d6d7e"; ctx.lineWidth = 1.5;
+                    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 8*ss, sy - 15*ss); ctx.moveTo(sx, sy); ctx.lineTo(sx + 8*ss, sy - 18*ss); ctx.stroke();
+                }
+            } else if (tier === 2) {
+                if (s.type === 'grass') { 
+                    let hover = (Date.now() / 15 + sx) % 30; ctx.fillStyle = "rgba(231, 76, 60, " + (1 - hover/30) + ")";
+                    ctx.beginPath(); ctx.arc(sx, sy - hover, 2.5*ss, 0, Math.PI*2); ctx.fill();
+                } else if (s.type === 'flower') { 
+                    ctx.fillStyle = "#110200"; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx - 3*ss, sy - 8*ss, sx - 6*ss, sy - 12*ss); ctx.lineTo(sx + 6*ss, sy); ctx.fill();
+                    ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(sx - 6*ss, sy - 12*ss, 2*ss, 0, Math.PI*2); ctx.fill();
+                } else { 
+                    ctx.fillStyle = "#2c0e08"; ctx.beginPath(); ctx.moveTo(sx - 14*ss, sy); ctx.lineTo(sx, sy - 6*ss); ctx.lineTo(sx + 14*ss, sy); ctx.closePath(); ctx.fill();
+                    ctx.fillStyle = "#d35400"; ctx.beginPath(); ctx.moveTo(sx - 8*ss, sy); ctx.lineTo(sx, sy - 3*ss); ctx.lineTo(sx + 8*ss, sy); ctx.closePath(); ctx.fill();
+                }
+            } else if (tier === 3) {
+                if (s.type === 'grass') { 
+                    ctx.fillStyle = "#144222"; ctx.beginPath(); ctx.ellipse(sx, sy - 2*ss, 12*ss, 4*ss, 0, 0, Math.PI*2); ctx.fill();
+                    let bub = Math.abs(Math.sin(Date.now() / 400 + sx)) * 4 * ss;
+                    ctx.fillStyle = "#1b5e30"; ctx.beginPath(); ctx.arc(sx - 3*ss, sy - 3*ss - bub/2, bub/2, 0, Math.PI*2); ctx.fill();
+                } else if (s.type === 'flower') { 
+                    ctx.fillStyle = "#5c503b"; ctx.fillRect(sx - 1.5*ss, sy - 14*ss, 3*ss, 14*ss);
+                    ctx.fillStyle = "#9b59b6"; ctx.beginPath(); ctx.arc(sx, sy - 14*ss, 7*ss, Math.PI, 0); ctx.fill();
+                } else { 
+                    ctx.fillStyle = "#0c1a0c"; ctx.beginPath(); ctx.ellipse(sx, sy, 15*ss, 7*ss, 0, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = "#1b5e30"; ctx.beginPath(); ctx.ellipse(sx, sy - 1.5*ss, 10*ss, 5*ss, 0, 0, Math.PI*2); ctx.fill();
+                }
+            } else {
+                if (s.type === 'grass') { 
+                    let rot = Date.now() / 800 + sx; ctx.fillStyle = "rgba(155, 89, 182, 0.7)";
+                    ctx.save(); ctx.translate(sx, sy - 8); ctx.rotate(rot); ctx.fillRect(-2*ss, -2*ss, 4*ss, 4*ss); ctx.restore();
+                } else if (s.type === 'flower') { 
+                    let hover = Math.sin(Date.now() / 300 + sx) * 6;
+                    ctx.fillStyle = "#9b59b6"; ctx.beginPath(); ctx.moveTo(sx, sy - 16 + hover); ctx.lineTo(sx + 4*ss, sy - 8 + hover); ctx.lineTo(sx, sy + hover); ctx.lineTo(sx - 4*ss, sy - 8 + hover); ctx.closePath(); ctx.fill();
+                    ctx.fillStyle = "#3498db"; ctx.beginPath(); ctx.moveTo(sx, sy - 16 + hover); ctx.lineTo(sx + 1.5*ss, sy - 8 + hover); ctx.lineTo(sx, sy + hover); ctx.closePath(); ctx.fill();
+                } else { 
+                    let angle = Date.now() / 200; ctx.save(); ctx.translate(sx, sy - 4); ctx.rotate(angle);
+                    let grad = ctx.createRadialGradient(0, 0, 1, 0, 0, 14*ss); grad.addColorStop(0, "#000"); grad.addColorStop(0.5, "#8e44ad"); grad.addColorStop(1, "rgba(26,188,156,0)");
+                    ctx.fillStyle = grad; ctx.beginPath(); ctx.ellipse(0, 0, 16*ss, 6*ss, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
+                }
+            }
+        }
+    });
 
     // Render Revive Light Beams 
     if (reviveTimer > 0) {
