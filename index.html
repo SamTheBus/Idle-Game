@@ -2942,42 +2942,165 @@ window.onload = function() {
                 }
             } 
             else if (mob.type === "boss" || mob.type === "dungeon_boss") {
-                // Overlord Knight: Heavy plate armor, glowing core, horned helmet, floating runic particles
-                ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#1a252f";
+                let currentTier = t !== undefined ? t : getStageTier();
                 
-                // Main Torso Armor plate
-                ctx.beginPath();
-                ctx.roundRect(mob.x, mob.y + 20, mob.w, mob.h - 20, [4, 4, 8, 8]);
-                ctx.fill();
-                
-                // Armored Shoulders/Spikes
-                ctx.fillStyle = "#34495e";
-                ctx.beginPath();
-                ctx.moveTo(mob.x - 6, mob.y + 20); ctx.lineTo(mob.x + 6, mob.y + 10); ctx.lineTo(mob.x + 12, mob.y + 20);
-                ctx.moveTo(mob.x + mob.w + 6, mob.y + 20); ctx.lineTo(mob.x + mob.w - 6, mob.y + 10); ctx.lineTo(mob.x + mob.w - 12, mob.y + 20);
-                ctx.fill();
+                if (currentTier === 0) {
+                    // ==========================================================================
+                    // WISPY WOODS BOSS RENDERING (Stage Tier 0 - Forest Stage)
+                    // ==========================================================================
+                    
+                    // 1. Root feet (Darker shading at base)
+                    ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#a97026";
+                    for (let i = 0; i < 4; i++) {
+                        let rx = mob.x + mob.w * (0.2 + i * 0.2);
+                        ctx.beginPath();
+                        ctx.arc(rx, mob.y + mob.h, mob.w * 0.15, Math.PI, 0);
+                        ctx.fill();
+                    }
 
-                // Horned Great-Helm
-                ctx.fillStyle = "#2c3e50";
-                ctx.beginPath();
-                ctx.arc(mob.x + mob.w/2, mob.y + 10, 16, Math.PI, 0);
-                ctx.fill();
-                ctx.beginPath(); // Horn Left
-                ctx.moveTo(mob.x + mob.w/2 - 12, mob.y + 2); ctx.quadraticCurveTo(mob.x + mob.w/2 - 20, mob.y - 12, mob.x + mob.w/2 - 16, mob.y - 14); ctx.lineTo(mob.x + mob.w/2 - 8, mob.y + 6);
-                ctx.fill();
-                ctx.beginPath(); // Horn Right
-                ctx.moveTo(mob.x + mob.w/2 + 12, mob.y + 2); ctx.quadraticCurveTo(mob.x + mob.w/2 + 20, mob.y - 12, mob.x + mob.w/2 + 16, mob.y - 14); ctx.lineTo(mob.x + mob.w/2 + 8, mob.y + 6);
-                ctx.fill();
+                    // 2. Main Tapered Trunk
+                    ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#dca04c";
+                    ctx.beginPath();
+                    ctx.moveTo(mob.x + mob.w * 0.3, mob.y + mob.h * 0.35); // top of trunk
+                    ctx.lineTo(mob.x + mob.w * 0.7, mob.y + mob.h * 0.35);
+                    ctx.quadraticCurveTo(mob.x + mob.w * 0.75, mob.y + mob.h * 0.7, mob.x + mob.w * 0.85, mob.y + mob.h); // right flare
+                    ctx.lineTo(mob.x + mob.w * 0.15, mob.y + mob.h);
+                    ctx.quadraticCurveTo(mob.x + mob.w * 0.25, mob.y + mob.h * 0.7, mob.x + mob.w * 0.3, mob.y + mob.h * 0.35); // left flare
+                    ctx.closePath();
+                    ctx.fill();
 
-                // Core reactor glow
-                if (mob.flashTimer === 0) {
-                    let grad = ctx.createRadialGradient(mob.x + mob.w/2, mob.y + 40, 2, mob.x + mob.w/2, mob.y + 40, 12);
-                    grad.addColorStop(0, "#e74c3c");
-                    grad.addColorStop(1, "rgba(231,76,60,0)");
-                    ctx.fillStyle = grad;
-                    ctx.beginPath(); ctx.arc(mob.x + mob.w/2, mob.y + 40, 12, 0, Math.PI*2); ctx.fill();
+                    // 3. Right Branch Arm stump with cut rings
+                    ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#a97026";
+                    ctx.beginPath();
+                    ctx.ellipse(mob.x + mob.w * 0.72, mob.y + mob.h * 0.65, mob.w * 0.15, mob.h * 0.08, -Math.PI / 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    if (mob.flashTimer === 0) {
+                        ctx.strokeStyle = "#825010";
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        ctx.ellipse(mob.x + mob.w * 0.72, mob.y + mob.h * 0.65, mob.w * 0.08, mob.h * 0.04, -Math.PI / 8, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+
+                    // 4. Branch Nose (pointing towards the player on the left)
+                    ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#dca04c";
+                    ctx.beginPath();
+                    ctx.roundRect(mob.x + mob.w * 0.05, mob.y + mob.h * 0.56, mob.w * 0.45, mob.h * 0.07, [4]);
+                    ctx.fill();
+                    ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#a97026"; // Nose shadow
+                    ctx.beginPath();
+                    ctx.roundRect(mob.x + mob.w * 0.05, mob.y + mob.h * 0.61, mob.w * 0.45, mob.h * 0.02, [2]);
+                    ctx.fill();
+
+                    // 5. Hollow Wood Surprised Face
+                    if (mob.flashTimer === 0) {
+                        ctx.fillStyle = "#301a0d"; // Deep hollow shadow
+                        
+                        // Tall hollow eyes
+                        ctx.beginPath();
+                        ctx.ellipse(mob.x + mob.w * 0.42, mob.y + mob.h * 0.5, mob.w * 0.06, mob.h * 0.08, 0, 0, Math.PI * 2);
+                        ctx.ellipse(mob.x + mob.w * 0.58, mob.y + mob.h * 0.5, mob.w * 0.06, mob.h * 0.08, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Circular surprised hollow mouth
+                        ctx.beginPath();
+                        ctx.arc(mob.x + mob.w * 0.5, mob.y + mob.h * 0.68, mob.w * 0.08, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+
+                    // 6. Layered Green Canopy (leaves)
+                    let cx = mob.x + mob.w / 2;
+                    let cy = mob.y + mob.h * 0.15;
+                    let r = mob.w * 0.8;
+                    
+                    ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#4ba337"; // Forest base green
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                    ctx.arc(cx - r * 0.5, cy - r * 0.1, r * 0.8, 0, Math.PI * 2);
+                    ctx.arc(cx + r * 0.5, cy - r * 0.1, r * 0.8, 0, Math.PI * 2);
+                    ctx.arc(cx, cy - r * 0.6, r * 0.9, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    if (mob.flashTimer === 0) {
+                        ctx.fillStyle = "#69c453"; // Light canopy highlight
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, r * 0.8, 0, Math.PI * 2);
+                        ctx.arc(cx - r * 0.4, cy - r * 0.1, r * 0.6, 0, Math.PI * 2);
+                        ctx.arc(cx + r * 0.4, cy - r * 0.1, r * 0.6, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+
+                    // 7. Red Wispy Apples
+                    if (mob.flashTimer === 0) {
+                        ctx.fillStyle = "#e74c3c";
+                        let apples = [
+                            {x: cx - r * 0.4, y: cy - r * 0.2},
+                            {x: cx + r * 0.4, y: cy - r * 0.3},
+                            {x: cx, y: cy - r * 0.5},
+                            {x: cx - r * 0.1, y: cy + 10},
+                            {x: cx + r * 0.25, y: cy + r * 0.2}
+                        ];
+                        apples.forEach(ap => {
+                            ctx.beginPath();
+                            ctx.arc(ap.x, ap.y, mob.w * 0.12, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // Small dark branch stems on the apples
+                            ctx.strokeStyle = "#4d2e1a";
+                            ctx.lineWidth = 1.5;
+                            ctx.beginPath();
+                            ctx.moveTo(ap.x, ap.y - mob.w * 0.1);
+                            ctx.lineTo(ap.x - 2, ap.y - mob.w * 0.18);
+                            ctx.stroke();
+
+                            // Specular lighting highlight spot
+                            ctx.fillStyle = "#ffffff";
+                            ctx.beginPath();
+                            ctx.arc(ap.x - mob.w * 0.04, ap.y - mob.w * 0.04, mob.w * 0.03, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.fillStyle = "#e74c3c";
+                        });
+                    }
+                } else {
+                    // ==========================================================================
+                    // CLASSIC OVERLORD KNIGHT RENDERING (Stage Tier 1+ / Dungeon Bosses)
+                    // ==========================================================================
+                    ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#1a252f";
+                    
+                    // Main Torso Armor plate
+                    ctx.beginPath();
+                    ctx.roundRect(mob.x, mob.y + 20, mob.w, mob.h - 20, [4, 4, 8, 8]);
+                    ctx.fill();
+                    
+                    // Armored Shoulders/Spikes
+                    ctx.fillStyle = "#34495e";
+                    ctx.beginPath();
+                    ctx.moveTo(mob.x - 6, mob.y + 20); ctx.lineTo(mob.x + 6, mob.y + 10); ctx.lineTo(mob.x + 12, mob.y + 20);
+                    ctx.moveTo(mob.x + mob.w + 6, mob.y + 20); ctx.lineTo(mob.x + mob.w - 6, mob.y + 10); ctx.lineTo(mob.x + mob.w - 12, mob.y + 20);
+                    ctx.fill();
+
+                    // Horned Great-Helm
+                    ctx.fillStyle = "#2c3e50";
+                    ctx.beginPath();
+                    ctx.arc(mob.x + mob.w/2, mob.y + 10, 16, Math.PI, 0);
+                    ctx.fill();
+                    ctx.beginPath(); // Horn Left
+                    ctx.moveTo(mob.x + mob.w/2 - 12, mob.y + 2); ctx.quadraticCurveTo(mob.x + mob.w/2 - 20, mob.y - 12, mob.x + mob.w/2 - 16, mob.y - 14); ctx.lineTo(mob.x + mob.w/2 - 8, mob.y + 6);
+                    ctx.fill();
+                    ctx.beginPath(); // Horn Right
+                    ctx.moveTo(mob.x + mob.w/2 + 12, mob.y + 2); ctx.quadraticCurveTo(mob.x + mob.w/2 + 20, mob.y - 12, mob.x + mob.w/2 + 16, mob.y - 14); ctx.lineTo(mob.x + mob.w/2 + 8, mob.y + 6);
+                    ctx.fill();
+
+                    // Core reactor glow
+                    if (mob.flashTimer === 0) {
+                        let grad = ctx.createRadialGradient(mob.x + mob.w/2, mob.y + 40, 2, mob.x + mob.w/2, mob.y + 40, 12);
+                        grad.addColorStop(0, "#e74c3c");
+                        grad.addColorStop(1, "rgba(231,76,60,0)");
+                        ctx.fillStyle = grad;
+                        ctx.beginPath(); ctx.arc(mob.x + mob.w/2, mob.y + 40, 12, 0, Math.PI*2); ctx.fill();
+                    }
                 }
-            } 
+            }
             else if (mob.type === "dungeon_miniboss") {
                 // Runic Monolith: Levitating elemental prism, circling runic bands
                 let hoverY = Math.sin(Date.now() / 120) * 6;
