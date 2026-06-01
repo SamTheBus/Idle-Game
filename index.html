@@ -2794,8 +2794,8 @@ window.onload = function() {
                         ctx.fillStyle = "#5c503b"; ctx.fillRect(tx - 4*ts, ty, 8*ts, 40 * ts);
                         ctx.fillStyle = "#144222"; ctx.beginPath(); ctx.ellipse(tx, ty, 20*ts, 15*ts, 0, 0, Math.PI*2); ctx.fill();
                         ctx.fillStyle = "#1b5e30"; ctx.beginPath(); ctx.ellipse(tx - 6*ts, ty + 5*ts, 15*ts, 10*ts, 0, 0, Math.PI*2); ctx.fill();
-                    } else if (tier===4) { 
-                        ctx.fillStyle = "#4a154b"; let hover = Math.sin(Date.now() / 200 + tx) * 4;
+                   } else if (tier===4) { 
+                        ctx.fillStyle = "#4a154b"; let hover = Math.sin(Date.now() / 200 + s.seed * 100) * 4;
                         ctx.beginPath(); ctx.moveTo(tx, ty + hover - 12*ts); ctx.lineTo(tx + 12*ts, ty + hover + 8*ts); ctx.lineTo(tx, ty + hover + 28*ts); ctx.lineTo(tx - 12*ts, ty + hover + 8*ts); ctx.fill();
                         ctx.fillStyle = "#8e44ad"; ctx.beginPath(); ctx.moveTo(tx, ty + hover - 12*ts); ctx.lineTo(tx + 5*ts, ty + hover + 8*ts); ctx.lineTo(tx, ty + hover + 28*ts); ctx.fill();
                     }
@@ -3537,13 +3537,13 @@ ctx.fill();
             if (tier === 0) {
                 if (s.type === 'grass') {
                     ctx.fillStyle = "#2ecc71";
-                    let sway = Math.sin(Date.now() / 250 + sx) * 4 * ss;
+                    let sway = Math.sin(Date.now() / 250 + s.seed * 100) * 4 * ss;
                     ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx - 3*ss + sway, sy - 15*ss, sx - 8*ss + sway, sy - 22*ss); ctx.quadraticCurveTo(sx - 2*ss + sway, sy - 10*ss, sx + 2*ss, sy);
                     ctx.moveTo(sx + 3*ss, sy); ctx.quadraticCurveTo(sx + 5*ss + sway, sy - 18*ss, sx + 2*ss + sway, sy - 26*ss); ctx.quadraticCurveTo(sx + 7*ss + sway, sy - 12*ss, sx + 8*ss, sy); ctx.fill();
                 } else if (s.type === 'flower') {
                     ctx.fillStyle = "#27ae60"; ctx.fillRect(sx - 1*ss, sy - 14*ss, 2*ss, 14*ss);
                     ctx.beginPath(); ctx.ellipse(sx - 4*ss, sy - 6*ss, 4*ss, 2*ss, Math.PI/4, 0, Math.PI*2); ctx.ellipse(sx + 4*ss, sy - 10*ss, 4*ss, 2*ss, -Math.PI/4, 0, Math.PI*2); ctx.fill();
-                    let swayF = Math.sin(Date.now() / 200 + sx) * 3 * ss; let fx = sx + swayF, fy = sy - 14*ss;
+                    let swayF = Math.sin(Date.now() / 200 + s.seed * 100) * 3 * ss; let fx = sx + swayF, fy = sy - 14*ss;
                     ctx.fillStyle = s.color;
                     for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 3) {
                         ctx.beginPath(); ctx.arc(fx + Math.cos(angle)*5*ss, fy + Math.sin(angle)*5*ss, 4*ss, 0, Math.PI*2); ctx.fill();
@@ -3567,7 +3567,7 @@ ctx.fill();
                 }
             } else if (tier === 2) {
                 if (s.type === 'grass') { 
-                    let hover = (Date.now() / 15 + sx) % 30; ctx.fillStyle = "rgba(231, 76, 60, " + (1 - hover/30) + ")";
+                    let hover = (Date.now() / 15 + s.seed * 300) % 30; ctx.fillStyle = "rgba(231, 76, 60, " + (1 - hover/30) + ")";
                     ctx.beginPath(); ctx.arc(sx, sy - hover, 2.5*ss, 0, Math.PI*2); ctx.fill();
                 } else if (s.type === 'flower') { 
                     ctx.fillStyle = "#110200"; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx - 3*ss, sy - 8*ss, sx - 6*ss, sy - 12*ss); ctx.lineTo(sx + 6*ss, sy); ctx.fill();
@@ -3579,7 +3579,7 @@ ctx.fill();
             } else if (tier === 3) {
                 if (s.type === 'grass') { 
                     ctx.fillStyle = "#144222"; ctx.beginPath(); ctx.ellipse(sx, sy - 2*ss, 12*ss, 4*ss, 0, 0, Math.PI*2); ctx.fill();
-                    let bub = Math.abs(Math.sin(Date.now() / 400 + sx)) * 4 * ss;
+                    let bub = Math.abs(Math.sin(Date.now() / 400 + s.seed * 100)) * 4 * ss;
                     ctx.fillStyle = "#1b5e30"; ctx.beginPath(); ctx.arc(sx - 3*ss, sy - 3*ss - bub/2, bub/2, 0, Math.PI*2); ctx.fill();
                 } else if (s.type === 'flower') { 
                     ctx.fillStyle = "#5c503b"; ctx.fillRect(sx - 1.5*ss, sy - 14*ss, 3*ss, 14*ss);
@@ -3590,10 +3590,10 @@ ctx.fill();
                 }
             } else {
                 if (s.type === 'grass') { 
-                    let rot = Date.now() / 800 + sx; ctx.fillStyle = "rgba(155, 89, 182, 0.7)";
+                    let rot = Date.now() / 800 + s.seed * 100; ctx.fillStyle = "rgba(155, 89, 182, 0.7)";
                     ctx.save(); ctx.translate(sx, sy - 8); ctx.rotate(rot); ctx.fillRect(-2*ss, -2*ss, 4*ss, 4*ss); ctx.restore();
                 } else if (s.type === 'flower') { 
-                    let hover = Math.sin(Date.now() / 300 + sx) * 6;
+                    let hover = Math.sin(Date.now() / 300 + s.seed * 100) * 6;
                     ctx.fillStyle = "#9b59b6"; ctx.beginPath(); ctx.moveTo(sx, sy - 16 + hover); ctx.lineTo(sx + 4*ss, sy - 8 + hover); ctx.lineTo(sx, sy + hover); ctx.lineTo(sx - 4*ss, sy - 8 + hover); ctx.closePath(); ctx.fill();
                     ctx.fillStyle = "#3498db"; ctx.beginPath(); ctx.moveTo(sx, sy - 16 + hover); ctx.lineTo(sx + 1.5*ss, sy - 8 + hover); ctx.lineTo(sx, sy + hover); ctx.closePath(); ctx.fill();
                 } else { 
