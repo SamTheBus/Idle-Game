@@ -551,9 +551,9 @@ window.onload = function() {
         { name: "Survivor's Adrenaline", trait: "dodge_buff", desc: "Blocking/Parrying grants +100% Dmg for 10s", breakdown: "<strong>Adrenaline Rush:</strong><br>• Successful defensive procs double your damage output temporarily.", dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
         { name: "Chrono Hourglass", trait: "extend_buffs", desc: "Extends all temporary buffs by 5 seconds", breakdown: "<strong>Chronology:</strong><br>• Applies to Frenzy and Adrenaline durations.", dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
         { name: "Dimensional Pouch", trait: "bag_space", desc: "Expands equipment sack capacity to 50", breakdown: "<strong>Bottomless Bag:</strong><br>• Carry more gear before having to salvage.", dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
-        { name: "Phoenix Ankh", trait: "second_wind", desc: "Ignore a fatal blow once per stage (50% Heal)", breakdown: "<strong>Second Wind:</strong><br>• When taking lethal damage, survive and instantly restore 50% HP. Resets every new stage or dungeon.", dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 }
+        { name: "Phoenix Ankh", trait: "second_wind", desc: "Ignore a fatal blow once per run (50% Heal)", breakdown: "<strong>Second Wind:</strong><br>• When taking lethal damage, survive and instantly restore 50% HP. Resets only upon defeat.", dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 }
     ];
-
+    
     window.addEtcDrop = function(itemName, amount = 1) {
         if (!inventory.ETC[itemName]) { inventory.ETC[itemName] = 0; }
         inventory.ETC[itemName] += amount;
@@ -1198,7 +1198,7 @@ window.onload = function() {
         if (playerStats[countField] === 2) playerStats[timeField] = Date.now() + 3600000;
         
         playerStats.isDungeonMode = true; playerStats.currentDungeon = type; playerStats.dungeonWave = 1;
-        playerStats.killCount = 0; playerStats.targetsRequired = 5; playerStats.isBossMode = false; playerStats.isUberBoss = false; playerStats.usedSecondWind = false; mob = null;
+        playerStats.killCount = 0; playerStats.targetsRequired = 5; playerStats.isBossMode = false; playerStats.isUberBoss = false; mob = null;
         
         let p = resolvePlayerStats(); playerStats.currentHp = p.maxHp;
         
@@ -1896,9 +1896,9 @@ window.onload = function() {
         if (playerStats.adrenalineTimer > 0) buffs.push(`<div style='color:#f1c40f; margin-bottom:5px;'><b>⚡ ADRENALINE:</b> x2 Damage output. (${Math.ceil(playerStats.adrenalineTimer/60)}s left)</div>`);
         if (playerStats.atkPotionTimer > 0) buffs.push(`<div style='color:#2ecc71; margin-bottom:5px;'><b>⚔️ ATTACK POTION:</b> +10% Attack. (${Math.ceil(playerStats.atkPotionTimer/60)}s left)</div>`);
         if (playerStats.hpPotionTimer > 0) buffs.push(`<div style='color:#e74c3c; margin-bottom:5px;'><b>❤️ VIT POTION:</b> +10% Max HP. (${Math.ceil(playerStats.hpPotionTimer/60)}s left)</div>`);
-        if (playerStats.defPotionTimer > 0) buffs.push(`<div style='color:#3498db; margin-bottom:5px;'><b>🛡️ ARMOR POTION:</b> +10% Defense. (${Math.ceil(playerStats.defPotionTimer/60)}s left)</div>`);
-        if (playerStats.hastePotionTimer > 0) buffs.push(`<div style='color:#f1c40f; margin-bottom:5px;'><b>👟 HASTE POTION:</b> Speed, -2 Cooldown. (${Math.ceil(playerStats.hastePotionTimer/60)}s left)</div>`);
-        if (checkArtifactTrait("second_wind") && !playerStats.usedSecondWind) buffs.push("<div style='color:#e74c3c; margin-bottom:5px;'><b>🛡️ ANKH:</b> Revive once per stage/dungeon with 50% HP.</div>");
+        if (playerStats.defPotionTimer > 0) buffs.push("<b>🛡️ ARMOR POTION:</b> +10% Defense. (" + Math.ceil(playerStats.defPotionTimer / 60) + "s left)");
+        if (playerStats.hastePotionTimer > 0) buffs.push("<b>👟 HASTE POTION:</b> Speed, -2 Cooldown. (" + Math.ceil(playerStats.hastePotionTimer / 60) + "s left)");
+        if (checkArtifactTrait("second_wind") && !playerStats.usedSecondWind) buffs.push("<div style='color:#e74c3c; margin-bottom:5px;'><b>🛡️ ANKH:</b> Revive once per run with 50% HP.</div>");
 
         if (buffs.length === 0) {
             html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div style="color:#aaa; font-size:11px;">No active buffs. Consumed elixirs or triggered relics will appear here!</div></div>`;
@@ -2305,7 +2305,7 @@ window.onload = function() {
                 playerStats.dungeonWave++; playerStats.killCount = 0;
                 pushLog(`<span style='color:#8e44ad; font-weight:bold;'>[DUNGEON] Wave ${playerStats.dungeonWave} begins!</span>`);
             } else if (mob.type === "dungeon_boss") {
-                playerStats.isDungeonMode = false; playerStats.killCount = 0; playerStats.targetsRequired = 5; playerStats.usedSecondWind = false;
+                playerStats.isDungeonMode = false; playerStats.killCount = 0; playerStats.targetsRequired = 5;
                 pushLog(`<span style='color:#8e44ad; font-weight:bold;'>[DUNGEON CLEARED] Returning to the surface.</span>`);
                 playerStats.currentHp = p.maxHp; window.saveGame();
             } else { playerStats.killCount++; }
@@ -2318,7 +2318,7 @@ window.onload = function() {
                 pushLog(`<span style='color:#9b59b6; font-weight:bold;'>[RIFT CLOSED] The Uber Boss was defeated! Returning to farming.</span>`);
             }
             playerStats.killCount = 0; playerStats.isBossMode = false; playerStats.isFarmingLoop = false; playerStats.isUberBoss = false; 
-            playerStats.usedSecondWind = false; playerStats.currentHp = p.maxHp; window.saveGame();
+            playerStats.currentHp = p.maxHp; window.saveGame();
         } else {
             if (!playerStats.isFarmingLoop) { 
                 playerStats.killCount++; 
