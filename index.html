@@ -503,7 +503,6 @@
             </div>
         </div>
     </div>
-
 <script>
 window.onload = function() {
 
@@ -613,17 +612,16 @@ window.onload = function() {
     let isGamePaused = false;
     let reviveTimer = 0;
 
-    let beams = []; // Beam visual array: { x, y, color, life, maxLife }
+    let beams = [];
 
     /* ==========================================================================
        6. PROCEDURAL NAME GENERATOR
        ========================================================================== */
     function buildProceduralName(item) {
         let stars = item.statsRolled;
-        if (stars === "UNIQUE") return item.name; // Keep unique artifact names
+        if (stars === "UNIQUE") return item.name;
         let prefix = getTierName(stars);
         
-        // Find highest modifier parameter on the item to determine its focus
         let highestKey = "maxHp";
         let maxVal = -9999;
         const checkKeys = ["bonusAtk", "bonusMaxHp", "bonusDef", "bonusMoveSpeed", "bonusCritChance", "bonusCritDamage", "bonusBlock", "bonusParry"];
@@ -634,7 +632,6 @@ window.onload = function() {
             }
         });
 
-        // Lexicons matching specific stat focuses
         const nomenclature = {
             bonusAtk: { name: "Vanguard", suffix: "of Shattering" },
             bonusMaxHp: { name: "Colossus", suffix: "of Vitality" },
@@ -843,7 +840,6 @@ window.onload = function() {
         updateUI(); window.saveGame();
     };
 
-    // Spawn and configure background and foreground assets procedurally
     for(let i=0; i<12; i++) { bgScenery.push({ x: Math.random() * canvas.width, y: 180, type: Math.random() > 0.5 ? 'tree' : 'bush', size: Math.random() * 0.5 + 0.5 }); }
     for(let i=0; i<25; i++) {
         let fgType = Math.random();
@@ -856,7 +852,6 @@ window.onload = function() {
     function addRandomStatLineToItem(item) {
         let pool = ["critChance", "critDamage", "block", "parry", "atk", "maxHp", "def", "moveSpeed", "activeSpd", "idleSpd", "str", "dex", "int"];
         
-        // Context-aware stat limits: block only rolls on shields, parry on daggers, etc.
         if (item.type === "subweapon") {
             if (item.subType === "shield") pool = ["block", "atk", "maxHp", "def", "str"];
             else if (item.subType === "dagger") pool = ["parry", "atk", "critChance", "dex"];
@@ -937,7 +932,6 @@ window.onload = function() {
             else if (chosenType === "boots") { item.baseMoveSpeed = randInt(1, 3) * stageScale; }
         }
 
-        // Set Pool Context
         let pool = ["critChance", "critDamage", "block", "parry", "atk", "maxHp", "def", "moveSpeed", "activeSpd", "idleSpd", "str", "dex", "int"];
         if (isArt) {
             pool = ["dropRate", "quality", "goldMulti", "rareSpawn", "fairySpawn", "str", "dex", "int"];
@@ -994,7 +988,7 @@ window.onload = function() {
 
     function refreshMarketShopIfNeeded() {
         if (Date.now() >= playerStats.shopRefreshTime || playerStats.shopItems.length === 0) {
-            playerStats.shopRefreshTime = Date.now() + (30 * 60 * 1000); // 30-minute shop timers
+            playerStats.shopRefreshTime = Date.now() + (30 * 60 * 1000); 
             playerStats.shopItems = [];
             
             let stageScale = Math.floor((playerStats.stage - 1) / 10) + 1;
@@ -1075,7 +1069,7 @@ window.onload = function() {
         if (!inventory.USE[itemName] || inventory.USE[itemName] <= 0) return;
         
         let pBefore = resolvePlayerStats();
-        let baseBonusDuration = 18000; // 5 mins in frames (60fps)
+        let baseBonusDuration = 18000; 
         let intBonusMultiplier = 1 + (pBefore.int * 0.01);
         let finalDuration = Math.floor(baseBonusDuration * intBonusMultiplier);
         
@@ -1247,7 +1241,6 @@ window.onload = function() {
         
         fairy.active = false; 
 
-        // 1. Cool physics gold-coin splash effect (15 particles)
         for (let i = 0; i < 15; i++) {
             particles.push({
                 x: spawnX,
@@ -1255,13 +1248,12 @@ window.onload = function() {
                 vx: randFloat(-4, 4),
                 vy: randFloat(-6, -1),
                 radius: randFloat(2, 4),
-                color: "#f1c40f", // Gold
+                color: "#f1c40f", 
                 alpha: 1,
                 life: randInt(25, 45)
             });
         }
 
-        // 20% Chance for direct gold bounty, 80% for equipment drops
         if (Math.random() < 0.20) {
             let goldYield = Math.floor((100 + (playerStats.stage * 35)) * p.gold);
             playerStats.coins += goldYield;
@@ -1294,7 +1286,6 @@ window.onload = function() {
 
         let color = getTierColor(newItem.statsRolled);
         
-        // Push a persistent glowing laser beam on the canvas at fairy drop location
         beams.push({
             x: spawnX,
             color: color,
@@ -1396,14 +1387,10 @@ window.onload = function() {
         
         let alloc = playerStats.spAllocations;
         
-        // STR SP Matrix
         p.str += (alloc.spStr || 0);
-        // DEX SP Matrix
         p.dex += (alloc.spDex || 0);
-        // INT SP Matrix
         p.int += (alloc.spInt || 0);
 
-        // Core Allocations
         p.maxHp += (alloc.spHp * 10);
         p.atk += (alloc.spAtk * 2);
         p.def += (alloc.spDef * 1);
@@ -1427,14 +1414,9 @@ window.onload = function() {
             }
         }
 
-        // Apply STR scaling: +1.5 Attack per STR
         p.atk += Math.floor(p.str * 1.5);
-        
-        // Apply DEX scaling: +0.1% Crit Chance and +0.5% Crit Damage per DEX
         p.critChance += (p.dex * 0.001);
         p.critDamage += (p.dex * 0.005);
-
-        // Apply INT scaling: +0.2% Block and Parry rates per INT
         p.block += (p.int * 0.002);
         p.parry += (p.int * 0.002);
         
@@ -1452,11 +1434,9 @@ window.onload = function() {
         if (p.idleAttackSpeed < 10) p.idleAttackSpeed = 10; if (p.activeAttackSpeed < 4) p.activeAttackSpeed = 4;
         if (playerStats.frenzyTimer > 0) { p.critChance = 1.00; p.critDamage += 0.50; p.activeAttackSpeed = 4; p.idleAttackSpeed = 20; }
         
-        // Defensive Stat Hard Caps (Diminishing cap scaling implementation)
         if (p.block > 0.75) p.block = 0.75;
-        if (p.parry > 0.35) p.parry = 0.35; // Lower hard cap on parry relative to block
+        if (p.parry > 0.35) p.parry = 0.35; 
 
-        // Rule Validation: Blocking is ONLY active if a subweapon of type "shield" is equipped
         const hasShield = equippedSlots.subweapon && equippedSlots.subweapon.subType === "shield";
         if (!hasShield) {
             p.block = 0.0;
@@ -1568,7 +1548,6 @@ window.onload = function() {
         colors.push("#f1c40f", "#f39c12");
         if (mob && mob.isRare) { colors.push("#ffb6c1", "#ffffff"); count = 30; }
         
-        // Emit custom death particles
         for (let i = 0; i < count; i++) { 
             particles.push({ 
                 x: x + (Math.random() * 15), 
@@ -1829,7 +1808,6 @@ window.onload = function() {
             }
         }
 
-        // Incorporate Elixir Boost parameters in calculations
         if (statKey === 'atk' && playerStats.atkPotionTimer > 0) gearTotal += Math.ceil((playerStats.baseAtk + alloc.spAtk * 2 + gearTotal + artTotal) * 0.10);
         if (statKey === 'maxHp' && playerStats.hpPotionTimer > 0) gearTotal += Math.ceil((playerStats.baseMaxHp + alloc.spHp * 10 + gearTotal + artTotal) * 0.10);
         if (statKey === 'def' && playerStats.defPotionTimer > 0) gearTotal += Math.ceil((playerStats.baseDef + alloc.spDef * 1 + gearTotal + artTotal) * 0.10);
@@ -2411,7 +2389,6 @@ window.onload = function() {
         document.getElementById('hud-bag').innerText = `${inventory.EQUIP.length}/${maxBag}`; document.getElementById('hud-bag').style.color = inventory.EQUIP.length >= maxBag ? "#e74c3c" : "#2ecc71";
         document.getElementById('btn-bag-count').innerText = inventory.EQUIP.length; document.getElementById('btn-bag-max').innerText = maxBag;
         
-        // Rendering STR, DEX, INT
         document.getElementById('stat-str').innerText = p.str;
         document.getElementById('stat-dex').innerText = p.dex;
         document.getElementById('stat-int').innerText = p.int;
@@ -2434,7 +2411,10 @@ window.onload = function() {
         document.getElementById('live-rate-rare').innerText = (15.0 * drp).toFixed(2) + "%"; 
         document.getElementById('live-rate-boss').innerText = (25.0 * drp).toFixed(2) + "%"; 
         document.getElementById('live-rate-dmini').innerText = (30.0 * drp).toFixed(2) + "%";
-        document.getElementById('live-rate-acore').innerText = (40.0 * drp).toFixed(2) + "%";
+        
+        let elRateAcore = document.getElementById('live-rate-acore');
+        if (elRateAcore) elRateAcore.innerText = (40.0 * drp).toFixed(2) + "%";
+        
         document.getElementById('btn-rechallenge').style.display = playerStats.isFarmingLoop ? "block" : "none";
         
         let qly = p.qly;
@@ -2449,7 +2429,6 @@ window.onload = function() {
         document.getElementById('star-rate-2').innerText = p2.toFixed(2) + "%";
         document.getElementById('star-rate-1').innerText = p1.toFixed(2) + "%";
 
-        // Realtime Drop Audit values updated
         document.getElementById('live-qty-acore').innerText = inventory.ETC["Ancient Core"] || 0;
         document.getElementById('live-qty-eshard').innerText = inventory.ETC["Eridium Shard"] || 0;
         document.getElementById('live-qty-keys').innerText = (inventory.ETC["Gacha Key"] || 0) + ` (E:${playerStats.equipKeys} G:${playerStats.goldKeys} M:${playerStats.matKeys})`;
@@ -2577,7 +2556,6 @@ window.onload = function() {
         
         logicClock++;
         
-        // Base spawn frequency modified dynamically by player's Fairy Spawn Rate attribute
         let adjustedFairyChance = 0.00005 * p.fairySpawn;
         if (!fairy.active && Math.random() < adjustedFairyChance) { fairy.active = true; fairy.x = -50; fairy.y = 30 + Math.random() * 60; }
         if (fairy.active) { fairy.x += 1.2; if (fairy.x > canvas.width + 50) fairy.active = false; }
@@ -2731,7 +2709,6 @@ window.onload = function() {
             });
         }
 
-        // Draw laser columns/beams of fairy drop rarity highlights on the canvas 
         beams.forEach(bm => {
             ctx.save();
             ctx.globalAlpha = bm.life / bm.maxLife * 0.7;
@@ -2752,7 +2729,6 @@ window.onload = function() {
         ctx.translate(hx + 12, hy + 15);
         let bounce = (!mob || !mob.isStopped) ? Math.abs(Math.sin(Date.now() / 150)) * 3 : 0;
         
-        // Render Shield behind body (z-index wise) and facing forward towards the enemy
         if (equippedSlots.subweapon && equippedSlots.subweapon.subType === "shield") {
             ctx.save();
             ctx.translate(8, 4 + bounce);
@@ -2761,14 +2737,12 @@ window.onload = function() {
             ctx.moveTo(-6, -8); ctx.lineTo(6, -8); ctx.lineTo(8, 0); ctx.lineTo(0, 10); ctx.lineTo(-8, 0);
             ctx.closePath();
             ctx.fill();
-            // Golden trim highlight
             ctx.strokeStyle = "#f1c40f";
             ctx.lineWidth = 1.5;
             ctx.stroke();
             ctx.restore();
         }
 
-        // Draw Player Body on top of the shield
         ctx.fillStyle = "#c0392b"; ctx.beginPath(); ctx.moveTo(-6, bounce); ctx.lineTo(-18, 15); ctx.lineTo(-2, 18); ctx.fill(); 
         ctx.fillStyle = "#95a5a6"; ctx.fillRect(-8, bounce, 14, 16); 
         ctx.fillStyle = "#bdc3c7"; ctx.fillRect(-10, -14 + bounce, 18, 16); 
@@ -2805,19 +2779,17 @@ window.onload = function() {
             }
 
             if (mob.type === "mob") {
-                // Procedural Standard Route Enemy drawing based on Stage Tier (0-4)
                 if (mob.flashTimer > 0) {
                     ctx.fillStyle = "#ffffff";
                 } else {
-                    if (t === 0) ctx.fillStyle = mob.isRare ? "#f1c40f" : "#2ecc71"; // Forest Slime
-                    else if (t === 1) ctx.fillStyle = mob.isRare ? "#bdc3c7" : "#7f8c8d"; // Stone Golem
-                    else if (t === 2) ctx.fillStyle = mob.isRare ? "#e67e22" : "#c0392b"; // Flame Imp
-                    else if (t === 3) ctx.fillStyle = mob.isRare ? "#1abc9c" : "#27ae60"; // Toxic Spore
-                    else ctx.fillStyle = mob.isRare ? "#9b59b6" : "#34495e"; // Void Shard
+                    if (t === 0) ctx.fillStyle = mob.isRare ? "#f1c40f" : "#2ecc71"; 
+                    else if (t === 1) ctx.fillStyle = mob.isRare ? "#bdc3c7" : "#7f8c8d"; 
+                    else if (t === 2) ctx.fillStyle = mob.isRare ? "#e67e22" : "#c0392b"; 
+                    else if (t === 3) ctx.fillStyle = mob.isRare ? "#1abc9c" : "#27ae60"; 
+                    else ctx.fillStyle = mob.isRare ? "#9b59b6" : "#34495e"; 
                 }
 
                 if (t === 0) {
-                    // Forest Slime: animated squish
                     let squish = Math.sin(Date.now() / 100) * 3;
                     ctx.beginPath();
                     ctx.ellipse(mob.x + mob.w / 2, mob.y + mob.h - 10 + squish / 2, mob.w / 2 + squish, mob.h / 2 - squish, 0, 0, Math.PI * 2);
@@ -2828,85 +2800,70 @@ window.onload = function() {
                         ctx.beginPath(); ctx.arc(mob.x + mob.w / 2 + 4, mob.y + mob.h / 2, 2, 0, Math.PI * 2); ctx.fill();
                     }
                 } else if (t === 1) {
-                // ==========================================================================
-                // RUNIC STONE GOLEM (Stage Tier 1 - Peaks Stage Mobs)
-                // ==========================================================================
-                let hover = Math.sin(Date.now() / 120) * 2;
-                let blockColor = mob.flashTimer > 0 ? "#ffffff" : "#4e545c";
-                let shadowColor = mob.flashTimer > 0 ? "#ffffff" : "#2f353d";
-                let runeColor = mob.isRare ? "#ff007f" : "#ff3333";
+                    let hover = Math.sin(Date.now() / 120) * 2;
+                    let blockColor = mob.flashTimer > 0 ? "#ffffff" : "#4e545c";
+                    let shadowColor = mob.flashTimer > 0 ? "#ffffff" : "#2f353d";
+                    let runeColor = mob.isRare ? "#ff007f" : "#ff3333";
 
-                // 1. Stone Torso
-                ctx.fillStyle = shadowColor;
-                ctx.beginPath();
-                ctx.roundRect(mob.x + 2, mob.y + 10 + hover, mob.w - 4, mob.h - 10, [6]);
-                ctx.fill();
-                ctx.fillStyle = blockColor;
-                ctx.beginPath();
-                ctx.roundRect(mob.x + 4, mob.y + 12 + hover, mob.w - 8, mob.h - 14, [4]);
-                ctx.fill();
-
-                // 2. Rugged Head Plate
-                ctx.fillStyle = shadowColor;
-                ctx.fillRect(mob.x + 6, mob.y + hover, mob.w - 12, 10);
-                ctx.fillStyle = blockColor;
-                ctx.fillRect(mob.x + 8, mob.y + 2 + hover, mob.w - 16, 8);
-
-                // 3. Glowing Evil Slit Eyes
-                if (mob.flashTimer === 0) {
-                    ctx.fillStyle = runeColor;
-                    ctx.shadowBlur = 8;
-                    ctx.shadowColor = runeColor;
-                    
-                    // Left eye slit
+                    ctx.fillStyle = shadowColor;
                     ctx.beginPath();
-                    ctx.moveTo(mob.x + 8, mob.y + 4 + hover);
-                    ctx.lineTo(mob.x + 13, mob.y + 7 + hover);
-                    ctx.lineTo(mob.x + 8, mob.y + 8 + hover);
-                    ctx.closePath();
+                    ctx.roundRect(mob.x + 2, mob.y + 10 + hover, mob.w - 4, mob.h - 10, [6]);
+                    ctx.fill();
+                    ctx.fillStyle = blockColor;
+                    ctx.beginPath();
+                    ctx.roundRect(mob.x + 4, mob.y + 12 + hover, mob.w - 8, mob.h - 14, [4]);
                     ctx.fill();
 
-                    // Right eye slit
-                    ctx.beginPath();
-                    ctx.moveTo(mob.x + mob.w - 8, mob.y + 4 + hover);
-                    ctx.lineTo(mob.x + mob.w - 13, mob.y + 7 + hover);
-                    ctx.lineTo(mob.x + mob.w - 8, mob.y + 8 + hover);
-                    ctx.closePath();
-                    ctx.fill();
-                    
-                    ctx.shadowBlur = 0; // Reset canvas shadow
-                }
+                    ctx.fillStyle = shadowColor;
+                    ctx.fillRect(mob.x + 6, mob.y + hover, mob.w - 12, 10);
+                    ctx.fillStyle = blockColor;
+                    ctx.fillRect(mob.x + 8, mob.y + 2 + hover, mob.w - 16, 8);
 
-                // 4. Floating Shoulder Blocks (Fists/Shoulders)
-                ctx.fillStyle = shadowColor;
-                ctx.fillRect(mob.x - 4, mob.y + 12 + hover, 5, 8);
-                ctx.fillRect(mob.x + mob.w - 1, mob.y + 12 + hover, 5, 8);
-                ctx.fillStyle = blockColor;
-                ctx.fillRect(mob.x - 3, mob.y + 13 + hover, 3, 6);
-                ctx.fillRect(mob.x + mob.w - 2, mob.y + 13 + hover, 3, 6);
+                    if (mob.flashTimer === 0) {
+                        ctx.fillStyle = runeColor;
+                        ctx.shadowBlur = 8;
+                        ctx.shadowColor = runeColor;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(mob.x + 8, mob.y + 4 + hover);
+                        ctx.lineTo(mob.x + 13, mob.y + 7 + hover);
+                        ctx.lineTo(mob.x + 8, mob.y + 8 + hover);
+                        ctx.closePath();
+                        ctx.fill();
 
-                // 5. Heavy cracks & ancient runic glowing chest core
-                if (mob.flashTimer === 0) {
-                    ctx.strokeStyle = "#1b1d22";
-                    ctx.lineWidth = 1.5;
-                    ctx.beginPath();
-                    // Left Chest Crack
-                    ctx.moveTo(mob.x + 8, mob.y + 18 + hover);
-                    ctx.lineTo(mob.x + 14, mob.y + 24 + hover);
-                    // Right Chest Crack
-                    ctx.moveTo(mob.x + mob.w - 8, mob.y + 16 + hover);
-                    ctx.lineTo(mob.x + mob.w - 12, mob.y + 22 + hover);
-                    ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(mob.x + mob.w - 8, mob.y + 4 + hover);
+                        ctx.lineTo(mob.x + mob.w - 13, mob.y + 7 + hover);
+                        ctx.lineTo(mob.x + mob.w - 8, mob.y + 8 + hover);
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                        ctx.shadowBlur = 0; 
+                    }
 
-                    // Glowing chest rune core
-                    ctx.fillStyle = runeColor;
-                    ctx.beginPath();
-                    ctx.arc(mob.x + mob.w / 2, mob.y + mob.h / 2 + 4 + hover, 3, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
+                    ctx.fillStyle = shadowColor;
+                    ctx.fillRect(mob.x - 4, mob.y + 12 + hover, 5, 8);
+                    ctx.fillRect(mob.x + mob.w - 1, mob.y + 12 + hover, 5, 8);
+                    ctx.fillStyle = blockColor;
+                    ctx.fillRect(mob.x - 3, mob.y + 13 + hover, 3, 6);
+                    ctx.fillRect(mob.x + mob.w - 2, mob.y + 13 + hover, 3, 6);
+
+                    if (mob.flashTimer === 0) {
+                        ctx.strokeStyle = "#1b1d22";
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        ctx.moveTo(mob.x + 8, mob.y + 18 + hover);
+                        ctx.lineTo(mob.x + 14, mob.y + 24 + hover);
+                        ctx.moveTo(mob.x + mob.w - 8, mob.y + 16 + hover);
+                        ctx.lineTo(mob.x + mob.w - 12, mob.y + 22 + hover);
+                        ctx.stroke();
+
+                        ctx.fillStyle = runeColor;
+                        ctx.beginPath();
+                        ctx.arc(mob.x + mob.w / 2, mob.y + mob.h / 2 + 4 + hover, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
                 } else if (t === 2) {
-                    // Flame Sprite
                     let flicker = Math.sin(Date.now() / 50) * 4;
                     ctx.beginPath();
                     ctx.moveTo(mob.x + mob.w / 2, mob.y - flicker);
@@ -2916,14 +2873,12 @@ window.onload = function() {
                     ctx.closePath();
                     ctx.fill();
                 } else if (t === 3) {
-                    // Toxic Spore mushroom
                     ctx.beginPath();
                     ctx.arc(mob.x + mob.w / 2, mob.y + 10, mob.w / 2, Math.PI, 0);
                     ctx.fill();
                     ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#f5f5dc";
                     ctx.fillRect(mob.x + mob.w / 2 - 4, mob.y + 10, 8, mob.h - 10);
                 } else {
-                    // Levitating Void Shard
                     let hover = Math.sin(Date.now() / 150) * 4;
                     ctx.beginPath();
                     ctx.ellipse(mob.x + mob.w / 2, mob.y + mob.h / 2 + hover, mob.w / 2, mob.h / 3, 0, 0, Math.PI * 2);
@@ -2937,36 +2892,30 @@ window.onload = function() {
                 }
             } 
             else if (mob.type === "bat") {
-                // Procedural Bat: Flapping wings, pointed wingtips, glowing eyes
                 let wingSpan = Math.sin(Date.now() / 80) * 14;
                 ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#4a154b";
                 
-                // Body
                 ctx.beginPath();
                 ctx.ellipse(mob.x + 12, mob.y + 12, 8, 12, 0, 0, Math.PI*2);
                 ctx.fill();
                 
-                // Ears
                 ctx.beginPath();
                 ctx.moveTo(mob.x + 6, mob.y); ctx.lineTo(mob.x + 9, mob.y + 6); ctx.lineTo(mob.x + 3, mob.y + 6);
                 ctx.moveTo(mob.x + 18, mob.y); ctx.lineTo(mob.x + 15, mob.y + 6); ctx.lineTo(mob.x + 21, mob.y + 6);
                 ctx.fill();
                 
-                // Left Wing
                 ctx.beginPath();
                 ctx.moveTo(mob.x + 6, mob.y + 12);
                 ctx.bezierCurveTo(mob.x - 10, mob.y + 12 - wingSpan, mob.x - 20, mob.y + 20, mob.x - 18, mob.y + 26);
                 ctx.bezierCurveTo(mob.x - 10, mob.y + 22, mob.x, mob.y + 16, mob.x + 6, mob.y + 12);
                 ctx.fill();
                 
-                // Right Wing
                 ctx.beginPath();
                 ctx.moveTo(mob.x + 18, mob.y + 12);
                 ctx.bezierCurveTo(mob.x + 34, mob.y + 12 - wingSpan, mob.x + 44, mob.y + 20, mob.x + 42, mob.y + 26);
                 ctx.bezierCurveTo(mob.x + 34, mob.y + 22, mob.x + 24, mob.y + 16, mob.x + 18, mob.y + 12);
                 ctx.fill();
 
-                // Crimson Glowing Eyes
                 if (mob.flashTimer === 0) {
                     ctx.fillStyle = "#e74c3c";
                     ctx.beginPath(); ctx.arc(mob.x + 9, mob.y + 10, 1.5, 0, Math.PI*2); ctx.fill();
@@ -2974,10 +2923,8 @@ window.onload = function() {
                 }
             } 
             else if (mob.type === "crawler") {
-                // Segmented Crawler: Chitinous plates, spikes, scuttling leg animation
                 ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#d35400";
                 
-                // Segmented plating
                 let segs = 4;
                 let spacing = mob.w / segs;
                 let legCycle = Math.sin(Date.now() / 50) * 4;
@@ -2988,7 +2935,6 @@ window.onload = function() {
                     ctx.ellipse(segX + spacing/2, mob.y + 12, spacing * 0.7, 10, 0, 0, Math.PI*2);
                     ctx.fill();
                     
-                    // Spikes on segments
                     ctx.fillStyle = "#2c3e50";
                     ctx.beginPath();
                     ctx.moveTo(segX + spacing/2 - 2, mob.y + 4);
@@ -2997,7 +2943,6 @@ window.onload = function() {
                     ctx.fill();
                     ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#d35400";
 
-                    // Legs scuttling
                     ctx.strokeStyle = "#a04000";
                     ctx.lineWidth = 2;
                     ctx.beginPath();
@@ -3012,11 +2957,6 @@ window.onload = function() {
                 let currentTier = t !== undefined ? t : getStageTier();
                 
                 if (currentTier === 0) {
-                    // ==========================================================================
-                    // WISPY WOODS BOSS RENDERING (Stage Tier 0 - Forest Stage)
-                    // ==========================================================================
-                    
-                    // 1. Root feet (Darker shading at base)
                     ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#a97026";
                     for (let i = 0; i < 4; i++) {
                         let rx = mob.x + mob.w * (0.2 + i * 0.2);
@@ -3025,18 +2965,16 @@ window.onload = function() {
                         ctx.fill();
                     }
 
-                    // 2. Main Tapered Trunk
                     ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#dca04c";
                     ctx.beginPath();
-                    ctx.moveTo(mob.x + mob.w * 0.3, mob.y + mob.h * 0.35); // top of trunk
+                    ctx.moveTo(mob.x + mob.w * 0.3, mob.y + mob.h * 0.35); 
                     ctx.lineTo(mob.x + mob.w * 0.7, mob.y + mob.h * 0.35);
-                    ctx.quadraticCurveTo(mob.x + mob.w * 0.75, mob.y + mob.h * 0.7, mob.x + mob.w * 0.85, mob.y + mob.h); // right flare
+                    ctx.quadraticCurveTo(mob.x + mob.w * 0.75, mob.y + mob.h * 0.7, mob.x + mob.w * 0.85, mob.y + mob.h); 
                     ctx.lineTo(mob.x + mob.w * 0.15, mob.y + mob.h);
-                    ctx.quadraticCurveTo(mob.x + mob.w * 0.25, mob.y + mob.h * 0.7, mob.x + mob.w * 0.3, mob.y + mob.h * 0.35); // left flare
+                    ctx.quadraticCurveTo(mob.x + mob.w * 0.25, mob.y + mob.h * 0.7, mob.x + mob.w * 0.3, mob.y + mob.h * 0.35); 
                     ctx.closePath();
                     ctx.fill();
 
-                    // 3. Right Branch Arm stump with cut rings
                     ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#a97026";
                     ctx.beginPath();
                     ctx.ellipse(mob.x + mob.w * 0.72, mob.y + mob.h * 0.65, mob.w * 0.15, mob.h * 0.08, -Math.PI / 8, 0, Math.PI * 2);
@@ -3049,38 +2987,33 @@ window.onload = function() {
                         ctx.stroke();
                     }
 
-                    // 4. Branch Nose (pointing towards the player on the left)
                     ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#dca04c";
                     ctx.beginPath();
                     ctx.roundRect(mob.x + mob.w * 0.05, mob.y + mob.h * 0.56, mob.w * 0.45, mob.h * 0.07, [4]);
                     ctx.fill();
-                    ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#a97026"; // Nose shadow
+                    ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#a97026"; 
                     ctx.beginPath();
                     ctx.roundRect(mob.x + mob.w * 0.05, mob.y + mob.h * 0.61, mob.w * 0.45, mob.h * 0.02, [2]);
                     ctx.fill();
 
-                    // 5. Hollow Wood Surprised Face
                     if (mob.flashTimer === 0) {
-                        ctx.fillStyle = "#301a0d"; // Deep hollow shadow
+                        ctx.fillStyle = "#301a0d"; 
                         
-                        // Tall hollow eyes
                         ctx.beginPath();
                         ctx.ellipse(mob.x + mob.w * 0.42, mob.y + mob.h * 0.5, mob.w * 0.06, mob.h * 0.08, 0, 0, Math.PI * 2);
                         ctx.ellipse(mob.x + mob.w * 0.58, mob.y + mob.h * 0.5, mob.w * 0.06, mob.h * 0.08, 0, 0, Math.PI * 2);
                         ctx.fill();
                         
-                        // Circular surprised hollow mouth
                         ctx.beginPath();
                         ctx.arc(mob.x + mob.w * 0.5, mob.y + mob.h * 0.68, mob.w * 0.08, 0, Math.PI * 2);
                         ctx.fill();
                     }
 
-                    // 6. Layered Green Canopy (leaves)
                     let cx = mob.x + mob.w / 2;
                     let cy = mob.y + mob.h * 0.15;
                     let r = mob.w * 0.8;
                     
-                    ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#4ba337"; // Forest base green
+                    ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#4ba337"; 
                     ctx.beginPath();
                     ctx.arc(cx, cy, r, 0, Math.PI * 2);
                     ctx.arc(cx - r * 0.5, cy - r * 0.1, r * 0.8, 0, Math.PI * 2);
@@ -3089,7 +3022,7 @@ window.onload = function() {
                     ctx.fill();
 
                     if (mob.flashTimer === 0) {
-                        ctx.fillStyle = "#69c453"; // Light canopy highlight
+                        ctx.fillStyle = "#69c453"; 
                         ctx.beginPath();
                         ctx.arc(cx, cy, r * 0.8, 0, Math.PI * 2);
                         ctx.arc(cx - r * 0.4, cy - r * 0.1, r * 0.6, 0, Math.PI * 2);
@@ -3097,7 +3030,6 @@ window.onload = function() {
                         ctx.fill();
                     }
 
-                    // 7. Red Wispy Apples
                     if (mob.flashTimer === 0) {
                         ctx.fillStyle = "#e74c3c";
                         let apples = [
@@ -3112,7 +3044,6 @@ window.onload = function() {
                             ctx.arc(ap.x, ap.y, mob.w * 0.12, 0, Math.PI * 2);
                             ctx.fill();
                             
-                            // Small dark branch stems on the apples
                             ctx.strokeStyle = "#4d2e1a";
                             ctx.lineWidth = 1.5;
                             ctx.beginPath();
@@ -3120,7 +3051,6 @@ window.onload = function() {
                             ctx.lineTo(ap.x - 2, ap.y - mob.w * 0.18);
                             ctx.stroke();
 
-                            // Specular lighting highlight spot
                             ctx.fillStyle = "#ffffff";
                             ctx.beginPath();
                             ctx.arc(ap.x - mob.w * 0.04, ap.y - mob.w * 0.04, mob.w * 0.03, 0, Math.PI * 2);
@@ -3129,22 +3059,17 @@ window.onload = function() {
                         });
                     }
                 } else if (currentTier === 1) {
-                    // ==========================================================================
-                    // GIANT RUINED STONE GOLEM BOSS (Stage Tier 1 - Peaks Stage Boss)
-                    // ==========================================================================
                     let bounceOffset = Math.sin(Date.now() / 200) * 3;
                     let blockColor = mob.flashTimer > 0 ? "#ffffff" : "#3b3f46";
                     let shadowColor = mob.flashTimer > 0 ? "#ffffff" : "#1f2126";
                     let lavaColor = "#ff2200";
 
-                    // 1. Massive Stone Legs / Base Support
                     ctx.fillStyle = shadowColor;
                     ctx.fillRect(mob.x + 4, mob.y + mob.h - 16, mob.w - 8, 16);
                     ctx.fillStyle = blockColor;
                     ctx.fillRect(mob.x + 8, mob.y + mob.h - 14, 12, 14);
                     ctx.fillRect(mob.x + mob.w - 20, mob.y + mob.h - 14, 12, 14);
 
-                    // 2. Colossal Cracked Torso Boulder
                     ctx.fillStyle = shadowColor;
                     ctx.beginPath();
                     ctx.roundRect(mob.x - 2, mob.y + 24 + bounceOffset, mob.w + 4, mob.h - 40, [10]);
@@ -3154,14 +3079,12 @@ window.onload = function() {
                     ctx.roundRect(mob.x, mob.y + 26 + bounceOffset, mob.w, mob.h - 44, [8]);
                     ctx.fill();
 
-                    // 3. Huge Segmented Armored Shoulders
                     ctx.fillStyle = "#121316";
                     ctx.beginPath();
                     ctx.roundRect(mob.x - 10, mob.y + 20 + bounceOffset, 14, 16, [4]);
                     ctx.roundRect(mob.x + mob.w - 4, mob.y + 20 + bounceOffset, 14, 16, [4]);
                     ctx.fill();
 
-                    // 4. Intimidating Stone Head Crown
                     ctx.fillStyle = shadowColor;
                     ctx.beginPath();
                     ctx.roundRect(mob.x + 8, mob.y + 4 + bounceOffset, mob.w - 16, 22, [6]);
@@ -3171,20 +3094,17 @@ window.onload = function() {
                     ctx.roundRect(mob.x + 10, mob.y + 6 + bounceOffset, mob.w - 20, 18, [4]);
                     ctx.fill();
 
-                    // 5. Menacing Angular Red Eyes
                     if (mob.flashTimer === 0) {
                         ctx.fillStyle = lavaColor;
                         ctx.shadowBlur = 15;
                         ctx.shadowColor = lavaColor;
 
                         ctx.beginPath();
-                        // Left eye slit
                         ctx.moveTo(mob.x + 14, mob.y + 11 + bounceOffset);
                         ctx.lineTo(mob.x + 22, mob.y + 16 + bounceOffset);
                         ctx.lineTo(mob.x + 14, mob.y + 18 + bounceOffset);
                         ctx.closePath();
                         
-                        // Right eye slit
                         ctx.moveTo(mob.x + mob.w - 14, mob.y + 11 + bounceOffset);
                         ctx.lineTo(mob.x + mob.w - 22, mob.y + 16 + bounceOffset);
                         ctx.lineTo(mob.x + mob.w - 14, mob.y + 18 + bounceOffset);
@@ -3194,14 +3114,12 @@ window.onload = function() {
                         ctx.shadowBlur = 0;
                     }
 
-                    // 6. Magma Cracks spreading from Runic Reactor Core
                     if (mob.flashTimer === 0) {
                         ctx.strokeStyle = lavaColor;
                         ctx.shadowBlur = 10;
                         ctx.shadowColor = lavaColor;
                         ctx.lineWidth = 2.5;
 
-                        // Engraved runic lines
                         ctx.beginPath();
                         ctx.moveTo(mob.x + mob.w/2, mob.y + mob.h/2 + 5 + bounceOffset);
                         ctx.lineTo(mob.x + 10, mob.y + 35 + bounceOffset);
@@ -3211,7 +3129,6 @@ window.onload = function() {
                         ctx.lineTo(mob.x + mob.w/2, mob.y + mob.h - 22 + bounceOffset);
                         ctx.stroke();
 
-                        // Glowing Core Reactor (Focal source of energy)
                         let coreGrad = ctx.createRadialGradient(
                             mob.x + mob.w/2, mob.y + mob.h/2 + 5 + bounceOffset, 1,
                             mob.x + mob.w/2, mob.y + mob.h/2 + 5 + bounceOffset, 8
@@ -3227,143 +3144,137 @@ window.onload = function() {
                         ctx.shadowBlur = 0;
                     }
                 } else {
-                    // ==========================================================================
-                    // CLASSIC OVERLORD KNIGHT RENDERING (Stage Tier 2+ / Dungeon Bosses)
-                    // ==========================================================================
                     ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#1a252f";
                     
-                    // Main Torso Armor plate
                     ctx.beginPath();
                     ctx.roundRect(mob.x, mob.y + 20, mob.w, mob.h - 20, [4, 4, 8, 8]);
                     ctx.fill();
                     
-                    // Armored Shoulders/Spikes
                     ctx.fillStyle = "#34495e";
                     ctx.beginPath();
                     ctx.moveTo(mob.x - 6, mob.y + 20); ctx.lineTo(mob.x + 6, mob.y + 10); ctx.lineTo(mob.x + 12, mob.y + 20);
                     ctx.moveTo(mob.x + mob.w + 6, mob.y + 20); ctx.lineTo(mob.x + mob.w - 6, mob.y + 10); ctx.lineTo(mob.x + mob.w - 12, mob.y + 20);
-                    ctx.fill();
-
-                    // Horned Great-Helm
-                    ctx.fillStyle = "#2c3e50";
-                    ctx.beginPath();
-                    ctx.arc(mob.x + mob.w/2, mob.y + 10, 16, Math.PI, 0);
-                    ctx.fill();
-                    ctx.beginPath(); // Horn Left
-                    ctx.moveTo(mob.x + mob.w/2 - 12, mob.y + 2); ctx.quadraticCurveTo(mob.x + mob.w/2 - 20, mob.y - 12, mob.x + mob.w/2 - 16, mob.y - 14); ctx.lineTo(mob.x + mob.w/2 - 8, mob.y + 6);
-                    ctx.fill();
-                    ctx.beginPath(); // Horn Right
-                    ctx.moveTo(mob.x + mob.w/2 + 12, mob.y + 2); ctx.quadraticCurveTo(mob.x + mob.w/2 + 20, mob.y - 12, mob.x + mob.w/2 + 16, mob.y - 14); ctx.lineTo(mob.x + mob.w/2 + 8, mob.y + 6);
-                    ctx.fill();
-
-                    // Core reactor glow
-                    if (mob.flashTimer === 0) {
-                        let grad = ctx.createRadialGradient(mob.x + mob.w/2, mob.y + 40, 2, mob.x + mob.w/2, mob.y + 40, 12);
-                        grad.addColorStop(0, "#e74c3c");
-                        grad.addColorStop(1, "rgba(231,76,60,0)");
-                        ctx.fillStyle = grad;
-                        ctx.beginPath(); ctx.arc(mob.x + mob.w/2, mob.y + 40, 12, 0, Math.PI*2); ctx.fill();
-                    }
-                }
-            }
-            else if (mob.type === "dungeon_miniboss") {
-                // Runic Monolith: Levitating elemental prism, circling runic bands
-                let hoverY = Math.sin(Date.now() / 120) * 6;
-                ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#2c3e50";
-                
+ctx.fill();
+// Horned Great-Helm
+                ctx.fillStyle = "#2c3e50";
                 ctx.beginPath();
-                ctx.moveTo(mob.x + mob.w/2, mob.y + hoverY);
-                ctx.lineTo(mob.x + mob.w, mob.y + mob.h / 2 + hoverY);
-                ctx.lineTo(mob.x + mob.w / 2, mob.y + mob.h + hoverY);
-                ctx.lineTo(mob.x, mob.y + mob.h / 2 + hoverY);
-                ctx.closePath();
+                ctx.arc(mob.x + mob.w/2, mob.y + 10, 16, Math.PI, 0);
                 ctx.fill();
-                
-                // Core Reactor Glow
+                ctx.beginPath(); // Horn Left
+                ctx.moveTo(mob.x + mob.w/2 - 12, mob.y + 2); ctx.quadraticCurveTo(mob.x + mob.w/2 - 20, mob.y - 12, mob.x + mob.w/2 - 16, mob.y - 14); ctx.lineTo(mob.x + mob.w/2 - 8, mob.y + 6);
+                ctx.fill();
+                ctx.beginPath(); // Horn Right
+                ctx.moveTo(mob.x + mob.w/2 + 12, mob.y + 2); ctx.quadraticCurveTo(mob.x + mob.w/2 + 20, mob.y - 12, mob.x + mob.w/2 + 16, mob.y - 14); ctx.lineTo(mob.x + mob.w/2 + 8, mob.y + 6);
+                ctx.fill();
+
+                // Core reactor glow
                 if (mob.flashTimer === 0) {
-                    ctx.fillStyle = "#1abc9c";
-                    ctx.beginPath();
-                    ctx.arc(mob.x + mob.w / 2, mob.y + mob.h / 2 + hoverY, 4, 0, Math.PI * 2);
-                    ctx.fill();
+                    let grad = ctx.createRadialGradient(mob.x + mob.w/2, mob.y + 40, 2, mob.x + mob.w/2, mob.y + 40, 12);
+                    grad.addColorStop(0, "#e74c3c");
+                    grad.addColorStop(1, "rgba(231,76,60,0)");
+                    ctx.fillStyle = grad;
+                    ctx.beginPath(); ctx.arc(mob.x + mob.w/2, mob.y + 40, 12, 0, Math.PI*2); ctx.fill();
                 }
             }
-
-            // Draw standard floating health bars
-            let barW = (mob.type === "boss" || mob.type === "dungeon_boss") ? 50 : mob.w;
-            let barX = (mob.type === "boss" || mob.type === "dungeon_boss") ? mob.x - 7 : mob.x;
-            ctx.fillStyle = "#e74c3c"; 
-            ctx.fillRect(barX, mob.y - 12, barW, 6);
-            ctx.fillStyle = "#f1c40f"; 
-            ctx.fillRect(barX, mob.y - 12, Math.max(0, (mob.hp / mob.maxHp) * barW), 6);
-            ctx.strokeStyle = "#111"; 
-            ctx.lineWidth = 1; 
-            ctx.strokeRect(barX, mob.y - 12, barW, 6);
+        } 
+        else if (mob.type === "dungeon_miniboss") {
+            // Runic Monolith: Levitating elemental prism, circling runic bands
+            let hoverY = Math.sin(Date.now() / 120) * 6;
+            ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#2c3e50";
             
-            ctx.restore();
+            ctx.beginPath();
+            ctx.moveTo(mob.x + mob.w/2, mob.y + hoverY);
+            ctx.lineTo(mob.x + mob.w, mob.y + mob.h / 2 + hoverY);
+            ctx.lineTo(mob.x + mob.w / 2, mob.y + mob.h + hoverY);
+            ctx.lineTo(mob.x, mob.y + mob.h / 2 + hoverY);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Core Reactor Glow
+            if (mob.flashTimer === 0) {
+                ctx.fillStyle = "#1abc9c";
+                ctx.beginPath();
+                ctx.arc(mob.x + mob.w / 2, mob.y + mob.h / 2 + hoverY, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
 
-        // Render active Fairy sprite on canvas
-        if (fairy.active) {
-            let flap = Math.abs(Math.sin(Date.now() / 100)) * 8 + 2; 
-            let hover = Math.sin(Date.now() / 200) * 10;
-            let fx = fairy.x; let fy = fairy.y + hover;
+        // Draw standard floating health bars
+        let barW = (mob.type === "boss" || mob.type === "dungeon_boss") ? 50 : mob.w;
+        let barX = (mob.type === "boss" || mob.type === "dungeon_boss") ? mob.x - 7 : mob.x;
+        ctx.fillStyle = "#e74c3c"; 
+        ctx.fillRect(barX, mob.y - 12, barW, 6);
+        ctx.fillStyle = "#f1c40f"; 
+        ctx.fillRect(barX, mob.y - 12, Math.max(0, (mob.hp / mob.maxHp) * barW), 6);
+        ctx.strokeStyle = "#111"; 
+        ctx.lineWidth = 1; 
+        ctx.strokeRect(barX, mob.y - 12, barW, 6);
+        
+        ctx.restore();
+    }
 
-            ctx.save(); 
-            ctx.shadowBlur = 15; 
-            ctx.shadowColor = "#ffb6c1";
-            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-            ctx.beginPath(); 
-            ctx.ellipse(fx - 4, fy - 4, 6, flap, Math.PI/6, 0, Math.PI*2); 
-            ctx.ellipse(fx + 4, fy - 4, 6, flap, -Math.PI/6, 0, Math.PI*2); 
-            ctx.fill();
-            ctx.fillStyle = "#ffb6c1"; 
-            ctx.beginPath(); 
-            ctx.arc(fx, fy, 6, 0, Math.PI*2); 
-            ctx.fill();
-            ctx.restore();
-        }
+    // Render active Fairy sprite on canvas
+    if (fairy.active) {
+        let flap = Math.abs(Math.sin(Date.now() / 100)) * 8 + 2; 
+        let hover = Math.sin(Date.now() / 200) * 10;
+        let fx = fairy.x; let fy = fairy.y + hover;
 
-        // Render foreground scenery objects only if not in dungeon mode
-        if (!playerStats.isDungeonMode) {
-            fgScenery.forEach(s => {
-                let sx = s.x, sy = s.y, ss = s.size;
-                if (tier === 0) { // Forest Stage
-                    if (s.type === 'grass') {
-                        ctx.fillStyle = "#2ecc71";
-                        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx-5*ss, sy-10*ss, sx-8*ss, sy-15*ss); ctx.lineTo(sx-4*ss, sy); ctx.fill();
-                        ctx.beginPath(); ctx.moveTo(sx+2*ss, sy); ctx.quadraticCurveTo(sx+5*ss, sy-12*ss, sx+2*ss, sy-18*ss); ctx.lineTo(sx+6*ss, sy); ctx.fill();
-                    } else if (s.type === 'flower') {
-                        ctx.fillStyle = "#27ae60"; ctx.strokeStyle = "#27ae60";
-                        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx+3*ss, sy-10*ss, sx+1*ss, sy-18*ss); ctx.lineWidth=2; ctx.stroke();
-                        ctx.fillStyle = s.color; let px = sx+1*ss, py = sy-18*ss;
-                        for(let p=0; p<5; p++) { ctx.beginPath(); ctx.arc(px + Math.cos(p*Math.PI*2/5)*4*ss, py + Math.sin(p*Math.PI*2/5)*4*ss, 3*ss, 0, Math.PI*2); ctx.fill(); }
-                        ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(px, py, 2.5*ss, 0, Math.PI*2); ctx.fill();
-                    } else if (s.type === 'bush') {
-                        ctx.fillStyle = "#145a32"; ctx.beginPath(); ctx.arc(sx, sy, 14*ss, 0, Math.PI*2); ctx.fill();
-                        ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(sx-8*ss, sy-4*ss, 10*ss, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(sx+10*ss, sy-2*ss, 11*ss, 0, Math.PI*2); ctx.fill();
-                    }
-                } else if (tier === 1) { // Peaks / Ruins Stage
-                    if (s.type === 'grass') { 
-                        ctx.fillStyle = "#7f8c8d";
-                        ctx.beginPath(); ctx.arc(sx, sy - 2*ss, 4*ss, 0, Math.PI*2); ctx.fill();
-                        ctx.fillStyle = "#95a5a6";
-                        ctx.beginPath(); ctx.arc(sx + 6*ss, sy - 1*ss, 2.5*ss, 0, Math.PI*2); ctx.fill();
-                    } else if (s.type === 'flower') { 
-                        ctx.fillStyle = "#5d6d7e";
-                        ctx.fillRect(sx - 8*ss, sy - 6*ss, 16*ss, 6*ss);
-                        ctx.fillStyle = "#34495e";
-                        ctx.fillRect(sx - 4*ss, sy - 10*ss, 10*ss, 4*ss);
-                    } else if (s.type === 'bush') { 
-                        ctx.strokeStyle = "#5c4033"; ctx.lineWidth = 1.5;
-                        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 10*ss, sy - 15*ss);
-                        ctx.moveTo(sx, sy); ctx.lineTo(sx + 10*ss, sy - 18*ss);
-                        ctx.moveTo(sx, sy); ctx.lineTo(sx, sy - 22*ss);
-                        ctx.moveTo(sx - 4*ss, sy - 8*ss); ctx.lineTo(sx - 12*ss, sy - 10*ss);
-                        ctx.stroke();
-                    }
-                } else if (tier === 2) { // Inferno Stage
-                    if (s.type === 'grass') { 
-                        let hover = (Date.now() / 15 + sx) % 30;
+        ctx.save(); 
+        ctx.shadowBlur = 15; 
+        ctx.shadowColor = "#ffb6c1";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+        ctx.beginPath(); 
+        ctx.ellipse(fx - 4, fy - 4, 6, flap, Math.PI/6, 0, Math.PI*2); 
+        ctx.ellipse(fx + 4, fy - 4, 6, flap, -Math.PI/6, 0, Math.PI*2); 
+        ctx.fill();
+        ctx.fillStyle = "#ffb6c1"; 
+        ctx.beginPath(); 
+        ctx.arc(fx, fy, 6, 0, Math.PI*2); 
+        ctx.fill();
+        ctx.restore();
+    }
+
+    // Render foreground scenery objects only if not in dungeon mode
+    if (!playerStats.isDungeonMode) {
+        fgScenery.forEach(s => {
+            let sx = s.x, sy = s.y, ss = s.size;
+            if (tier === 0) { // Forest Stage
+                if (s.type === 'grass') {
+                    ctx.fillStyle = "#2ecc71";
+                    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx-5*ss, sy-10*ss, sx-8*ss, sy-15*ss); ctx.lineTo(sx-4*ss, sy); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(sx+2*ss, sy); ctx.quadraticCurveTo(sx+5*ss, sy-12*ss, sx+2*ss, sy-18*ss); ctx.lineTo(sx+6*ss, sy); ctx.fill();
+                } else if (s.type === 'flower') {
+                    ctx.fillStyle = "#27ae60"; ctx.strokeStyle = "#27ae60";
+                    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx+3*ss, sy-10*ss, sx+1*ss, sy-18*ss); ctx.lineWidth=2; ctx.stroke();
+                    ctx.fillStyle = s.color; let px = sx+1*ss, py = sy-18*ss;
+                    for(let p=0; p<5; p++) { ctx.beginPath(); ctx.arc(px + Math.cos(p*Math.PI*2/5)*4*ss, py + Math.sin(p*Math.PI*2/5)*4*ss, 3*ss, 0, Math.PI*2); ctx.fill(); }
+                    ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(px, py, 2.5*ss, 0, Math.PI*2); ctx.fill();
+                } else if (s.type === 'bush') {
+                    ctx.fillStyle = "#145a32"; ctx.beginPath(); ctx.arc(sx, sy, 14*ss, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(sx-8*ss, sy-4*ss, 10*ss, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(sx+10*ss, sy-2*ss, 11*ss, 0, Math.PI*2); ctx.fill();
+                }
+            } else if (tier === 1) { // Peaks / Ruins Stage
+                if (s.type === 'grass') { 
+                    ctx.fillStyle = "#7f8c8d";
+                    ctx.beginPath(); ctx.arc(sx, sy - 2*ss, 4*ss, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = "#95a5a6";
+                    ctx.beginPath(); ctx.arc(sx + 6*ss, sy - 1*ss, 2.5*ss, 0, Math.PI*2); ctx.fill();
+                } else if (s.type === 'flower') { 
+                    ctx.fillStyle = "#5d6d7e";
+                    ctx.fillRect(sx - 8*ss, sy - 6*ss, 16*ss, 6*ss);
+                    ctx.fillStyle = "#34495e";
+                    ctx.fillRect(sx - 4*ss, sy - 10*ss, 10*ss, 4*ss);
+                } else if (s.type === 'bush') { 
+                    ctx.strokeStyle = "#5c4033"; ctx.lineWidth = 1.5;
+                    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 10*ss, sy - 15*ss);
+                    ctx.moveTo(sx, sy); ctx.lineTo(sx + 10*ss, sy - 18*ss);
+                    ctx.moveTo(sx, sy); ctx.lineTo(sx, sy - 22*ss);
+                    ctx.moveTo(sx - 4*ss, sy - 8*ss); ctx.lineTo(sx - 12*ss, sy - 10*ss);
+                    ctx.stroke();
+                }
+            } else if (tier === 2) { // Inferno Stage
+                if (s.type === 'grass') { 
+                    let hover = (Date.now() / 15 + sx) % 30;
                     ctx.fillStyle = "rgba(231, 76, 60, " + (1 - hover/30) + ")";
                     ctx.beginPath(); ctx.arc(sx, sy - hover, 3*ss, 0, Math.PI*2); ctx.fill();
                 } else if (s.type === 'flower') { 
@@ -3425,7 +3336,7 @@ window.onload = function() {
         });
     }
 
-    // Render Revive light beam overlays
+    // Render Revive Light Beams 
     if (reviveTimer > 0) {
         ctx.save();
         ctx.globalAlpha = reviveTimer / 90;
@@ -3448,7 +3359,7 @@ window.onload = function() {
         reviveTimer--;
     }
 
-    // Draw Active DPS HUD inside canvas
+    // Draw active DPS UI container over canvas
     let actDps = calculateActiveDps();
     ctx.fillStyle = "rgba(0,0,0,0.6)";
     ctx.fillRect(canvas.width - 150, 10, 140, 32);
@@ -3463,14 +3374,11 @@ window.onload = function() {
     ctx.font = "bold 13px sans-serif";
     ctx.fillText(actDps, canvas.width - 70, 25);
 
-    // Particle and effect rendering
+    // Draw dynamic active floaters and debris
     particles.forEach(pt => { ctx.fillStyle = pt.color; ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2); ctx.fill(); });
     effects.forEach(eff => { ctx.fillStyle = eff.color; ctx.font = "bold 18px sans-serif"; ctx.fillText(eff.text, eff.x, eff.y); });
 }
 
-/* ==========================================================================
-   15. ENGINE FRAME LOOPS & INITIALIZATION
-   ========================================================================== */
 function engineCycle() { 
     try {
         update(); 
@@ -3488,13 +3396,11 @@ function engineCycle() {
     }
 }
 
-// Load save data, update screens, and start the engine
 window.loadGame(); 
 updateUI(); 
 renderInventory(); 
 engineCycle();
-
-}; 
+};
 </script>
 </body>
 </html>
