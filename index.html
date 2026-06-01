@@ -273,9 +273,11 @@
                 <div class="sub-tabs">
                     <button id="sub-tab-eq" class="sub-tab-btn active" onclick="switchSubTab('EQUIP')">Equipment (<span id="btn-bag-count">0</span>/<span id="btn-bag-max">20</span>)</button>
                     <button id="sub-tab-etc" class="sub-tab-btn" onclick="switchSubTab('ETC')">ETC Items</button>
+                    <button id="sub-tab-use" class="sub-tab-btn" onclick="switchSubTab('USE')">Use Items</button>
                 </div>
                 <div id="bag-equip" class="bag-container" onscroll="hideTooltip()" ontouchmove="hideTooltip()"></div>
                 <div id="bag-etc" class="bag-container" style="display:none;" onscroll="hideTooltip()" ontouchmove="hideTooltip()"></div>
+                <div id="bag-use" class="bag-container" style="display:none;" onscroll="hideTooltip()" ontouchmove="hideTooltip()"></div>
             </div>
 
             <div id="tab-stats" class="tab-content" onscroll="hideTooltip()" ontouchmove="hideTooltip()">
@@ -420,6 +422,12 @@
                         </div>
                     </div>
                 </div>
+                
+                <div style="margin-top: 15px; border-top: 2px solid #333; padding-top: 10px;">
+                    <h3 style="margin:0 0 8px 0; color:#9b59b6; font-size:14px;">🔮 MYSTICAL ALCHEMY SHOP</h3>
+                    <div id="mystical-shop-list" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:8px;"></div>
+                </div>
+
                 <div style="margin-top: 15px; border-top: 2px solid #333; padding-top: 10px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                         <h3 style="margin:0; color:#f1c40f; font-size:14px;">🛒 GOLD SHOP</h3>
@@ -430,6 +438,7 @@
             </div>
 
             <div id="tab-feed" class="tab-content" onscroll="hideTooltip()" ontouchmove="hideTooltip()">
+                <button onclick="hardResetGame()" class="btn-action un" style="width:100%; padding:10px; font-weight:bold; margin-bottom:10px;">🚨 HARD RESET GAME (WIPE SAVE) 🚨</button>
                 <div id="log-box"></div>
             </div>
         </div>
@@ -469,6 +478,14 @@ window.onload = function() {
         { name: "Phoenix Ankh", trait: "second_wind", desc: "Ignore a fatal blow once per stage (50% Heal)", breakdown: "<strong>Second Wind:</strong><br>• When taking lethal damage, survive and instantly restore 50% HP. Resets every new stage or dungeon.", dropRate: 0, quality: 0, goldMulti: 0 }
     ];
 
+    const MYSTICAL_STOCK = [
+        { name: "SP Reset Scroll", desc: "Refunds all allocated SP from your Attribute Matrix.", cost: 5000, color: "#3498db" },
+        { name: "Attack Elixir", desc: "+10% Attack damage bonus for 5 minutes.", cost: 600, color: "#2ecc71" },
+        { name: "Vitality Elixir", desc: "+10% Max Health bonus for 5 minutes.", cost: 600, color: "#e74c3c" },
+        { name: "Armored Elixir", desc: "+10% Defense protection bonus for 5 minutes.", cost: 600, color: "#3498db" },
+        { name: "Haste Elixir", desc: "+3 Speed & -2 Active Attack cooldown for 5 mins.", cost: 800, color: "#f1c40f" }
+    ];
+
     window.addEtcDrop = function(itemName, amount = 1) {
         if (!inventory.ETC[itemName]) { inventory.ETC[itemName] = 0; }
         inventory.ETC[itemName] += amount;
@@ -493,14 +510,16 @@ window.onload = function() {
         baseRareSpawn: 0.01,
         
         currentHp: 100, coins: 0, stage: 1, killCount: 0, totalLifetimeKills: 0, targetsRequired: 5,
-        isBossMode: false, isFarmingLoop: false, isUberBoss: false, frenzyTimer: 0, adrenalineTimer: 0, usedSecondWind: false,
+        isBossMode: false, isFarmingLoop: false, isUberBoss: false, frenzyTimer: 0, frenzyKillCount: 0, adrenalineTimer: 0, usedSecondWind: false,
         isDungeonMode: false, currentDungeon: null, dungeonWave: 1, 
         equipKeys: 3, goldKeys: 3, matKeys: 3, nextEquipKeyTime: 0, nextGoldKeyTime: 0, nextMatKeyTime: 0,
-        shopRefreshTime: 0, shopItems: []
+        shopRefreshTime: 0, shopItems: [],
+        
+        atkPotionTimer: 0, hpPotionTimer: 0, defPotionTimer: 0, hastePotionTimer: 0
     };
 
     let equippedSlots = { weapon: null, subweapon: null, helmet: null, chest: null, leggings: null, overall: null, boots: null, art1: null, art2: null, art3: null };
-    let inventory = { EQUIP: [], ETC: {} };
+    let inventory = { EQUIP: [], ETC: {}, USE: {} };
     let logsHistory = [];
     let frozenItemDb = {}; 
     let idCounter = 0;
@@ -515,6 +534,7 @@ window.onload = function() {
     let bgScenery = [];
     let fgScenery = [];
     let fairy = { active: false, x: -50, y: 50 };
+    let damageHistory = [];
     
     let groundScroll = 0;
     let logicClock = 0;
@@ -530,7 +550,10 @@ window.onload = function() {
         event.target.classList.add('active'); 
         document.getElementById('tab-' + id).classList.add('active');
         if (id === 'forge') renderForgeTab();
-        if (id === 'market') refreshMarketShopIfNeeded();
+        if (id === 'market') {
+            refreshMarketShopIfNeeded();
+            renderMysticalShop();
+        }
     };
 
     window.giveKeys = function(amount = 10) {
@@ -545,6 +568,15 @@ window.onload = function() {
         playerStats.sp += amount; updateUI(); window.saveGame(); pushHeaderToast(`🛑 DEV CHEAT: +${amount} SP!`, "#e74c3c");
     };
 
+    window.hardResetGame = function() {
+        if (confirm("🚨 WARNING: This will permanently delete your entire save file and progress! Are you absolutely sure you want to start over?")) {
+            if (confirm("THIS CANNOT BE UNDONE! Confirm hard reset?")) {
+                localStorage.removeItem('idle_game_v11');
+                window.location.reload();
+            }
+        }
+    };
+
     window.saveGame = function() {
         let saveData = { playerStats, equippedSlots, inventory, idCounter, logsHistory, frozenItemDb, lastSaveTime: Date.now() };
         localStorage.setItem('idle_game_v11', JSON.stringify(saveData));
@@ -555,22 +587,16 @@ window.onload = function() {
 
     window.loadGame = function() {
         let data = localStorage.getItem('idle_game_v11');
-        if (!data) {
-            data = localStorage.getItem('postknight_save_v10'); // Migration hook
-            if (data) console.log("Migrating save v10 -> v11");
-        }
-        
         if (data) {
             try {
                 let parsed = JSON.parse(data);
                 playerStats = { ...playerStats, ...parsed.playerStats };
                 equippedSlots = parsed.equippedSlots || equippedSlots;
-                inventory = parsed.inventory || { EQUIP: [], ETC: {} };
+                inventory = parsed.inventory || { EQUIP: [], ETC: {}, USE: {} };
                 idCounter = parsed.idCounter || idCounter;
                 logsHistory = parsed.logsHistory || logsHistory;
                 frozenItemDb = parsed.frozenItemDb || frozenItemDb;
                 
-                // Init new fields if missing
                 if (!playerStats.level) { playerStats.level = 1; playerStats.xp = 0; playerStats.xpReq = 100; playerStats.sp = 0; playerStats.spAllocations = { spHp: 0, spAtk: 0, spDef: 0, spCrit: 0, spCritDmg: 0, spBlock: 0, spParry: 0, spSpd: 0 }; }
                 if (!playerStats.baseRareSpawn) playerStats.baseRareSpawn = 0.01;
                 
@@ -579,8 +605,14 @@ window.onload = function() {
                     playerStats.shopItems = []; 
                     playerStats.shopRefreshTime = 0; 
                 }
+
+                if (!inventory.USE) { inventory.USE = {}; }
+                if (playerStats.frenzyKillCount === undefined) playerStats.frenzyKillCount = 0;
+                if (playerStats.atkPotionTimer === undefined) playerStats.atkPotionTimer = 0;
+                if (playerStats.hpPotionTimer === undefined) playerStats.hpPotionTimer = 0;
+                if (playerStats.defPotionTimer === undefined) playerStats.defPotionTimer = 0;
+                if (playerStats.hastePotionTimer === undefined) playerStats.hastePotionTimer = 0;
                 
-                // Clean up old deprecated materials from inventory during load
                 if (inventory.ETC["Iron Scrap"]) { addEtcDrop("Monster Soul", inventory.ETC["Iron Scrap"]); delete inventory.ETC["Iron Scrap"]; }
                 if (inventory.ETC["Sticky Gel"]) { addEtcDrop("Monster Soul", inventory.ETC["Sticky Gel"]); delete inventory.ETC["Sticky Gel"]; }
                 
@@ -697,6 +729,35 @@ window.onload = function() {
         fgScenery.push({ x: Math.random() * canvas.width, y: 190 + Math.random() * 60, type: fgType > 0.8 ? 'bush' : (fgType > 0.5 ? 'flower' : 'grass'), size: Math.random() * 0.7 + 0.5, color: flowerColors[Math.floor(Math.random() * flowerColors.length)] });
     }
 
+    function addRandomStatLineToItem(item) {
+        let pool = ["critChance", "critDamage", "block", "parry", "atk", "maxHp", "def", "moveSpeed", "activeSpd", "idleSpd"];
+        let selectedStat = pool[Math.floor(Math.random() * pool.length)];
+        let stageScale = item.stageLevel || 1;
+        let rarityMult = 1 + (item.statsRolled * 0.15);
+
+        if (selectedStat === "atk") item.bonusAtk += Math.ceil(randInt(1, 2) * stageScale * rarityMult); 
+        else if (selectedStat === "maxHp") item.bonusMaxHp += Math.ceil(randInt(3, 8) * stageScale * rarityMult); 
+        else if (selectedStat === "def") item.bonusDef += Math.ceil(randInt(1, 2) * stageScale * rarityMult);
+        else if (selectedStat === "moveSpeed") item.bonusMoveSpeed += Math.ceil(randInt(1, 2) * stageScale * rarityMult);
+        else if (selectedStat === "critChance") item.bonusCritChance += parseFloat((randFloat(0.01, 0.025) * stageScale * rarityMult).toFixed(2)); 
+        else if (selectedStat === "critDamage") item.bonusCritDamage += parseFloat((randFloat(0.03, 0.06) * stageScale * rarityMult).toFixed(2));
+        else if (selectedStat === "block") item.bonusBlock += parseFloat((randFloat(0.005, 0.015) * stageScale * rarityMult).toFixed(2)); 
+        else if (selectedStat === "parry") item.bonusParry += parseFloat((randFloat(0.005, 0.015) * stageScale * rarityMult).toFixed(2));
+        else if (selectedStat === "activeSpd") item.bonusActiveSpeed -= randInt(1, 2); 
+        else if (selectedStat === "idleSpd") item.bonusIdleSpeed -= randInt(2, 4); 
+
+        item.atk = (item.baseAtk || 0) + item.bonusAtk; 
+        item.maxHp = (item.baseMaxHp || 0) + item.bonusMaxHp; 
+        item.def = (item.baseDef || 0) + item.bonusDef; 
+        item.moveSpeed = (item.baseMoveSpeed || 0) + item.bonusMoveSpeed;
+        item.critChance = item.bonusCritChance; 
+        item.critDamage = item.bonusCritDamage; 
+        item.block = item.bonusBlock; 
+        item.parry = item.bonusParry;
+        item.activeAttackSpeed = item.bonusActiveSpeed; 
+        item.idleAttackSpeed = item.bonusIdleSpeed;
+    }
+
     function createItemObject(chosenType, statLinesCount, stageScale, minStars = 0) {
         let isArt = (chosenType === "artifact");
         if (!isArt && statLinesCount < minStars) { statLinesCount = minStars; }
@@ -805,6 +866,87 @@ window.onload = function() {
                 </div>`;
         }).join("");
     }
+
+    function renderMysticalShop() {
+        let el = document.getElementById('mystical-shop-list');
+        if (!el) return;
+        el.innerHTML = MYSTICAL_STOCK.map((item, index) => {
+            let costColor = playerStats.coins >= item.cost ? "#f1c40f" : "#e74c3c";
+            return `<div class="shop-row" style="border-color: ${item.color}; background: rgba(155, 89, 182, 0.05); flex-direction: column; align-items: stretch; text-align: left; gap: 4px; padding: 8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong style="color:${item.color}; font-size:12px;">${item.name}</strong>
+                    <span style="color:${costColor}; font-weight:bold; font-size:11px;">${item.cost} Gold</span>
+                </div>
+                <div style="font-size:10px; color:#aaa; margin-bottom:6px;">${item.desc}</div>
+                <button class="btn-action" style="background:#9b59b6; color:#fff;" onclick="buyMysticalItem(${index})">Purchase</button>
+            </div>`;
+        }).join("");
+    }
+
+    window.buyMysticalItem = function(index) {
+        let item = MYSTICAL_STOCK[index];
+        if (playerStats.coins < item.cost) { pushHeaderToast("Not enough Gold!", "#e74c3c"); return; }
+        
+        playerStats.coins -= item.cost;
+        if (!inventory.USE[item.name]) inventory.USE[item.name] = 0;
+        inventory.USE[item.name]++;
+        
+        pushLog(`<strong style='color:#9b59b6;'>[ALCHEMY]</strong> Purchased: <span style='color:${item.color};'>${item.name}</span>`);
+        pushHeaderToast(`Purchased ${item.name}! Check Use Sack.`, "#9b59b6");
+        
+        updateUI(); renderInventory(); renderMysticalShop(); window.saveGame();
+    };
+
+    window.useItem = function(itemName) {
+        if (!inventory.USE[itemName] || inventory.USE[itemName] <= 0) return;
+        
+        let pBefore = resolvePlayerStats();
+        
+        if (itemName === "SP Reset Scroll") {
+            let totalRefund = 0;
+            for (let key in playerStats.spAllocations) {
+                totalRefund += playerStats.spAllocations[key];
+                playerStats.spAllocations[key] = 0;
+            }
+            if (totalRefund === 0) {
+                pushHeaderToast("No SP allocated to reset!", "#e74c3c");
+                return;
+            }
+            playerStats.sp += totalRefund;
+            inventory.USE[itemName]--;
+            if (inventory.USE[itemName] === 0) delete inventory.USE[itemName];
+            
+            pushLog("<span style='color:#3498db; font-weight:bold;'>[USE] Used SP Reset Scroll. All Attribute Matrix SP refunded!</span>");
+            pushHeaderToast("🔮 Attribute SP Reset Successfully!", "#3498db");
+        } else if (itemName === "Attack Elixir") {
+            playerStats.atkPotionTimer = 18000; 
+            consumeUseItem(itemName);
+            pushLog("<span style='color:#2ecc71; font-weight:bold;'>[USE] Consumed Attack Elixir! +10% Attack for 5 mins.</span>");
+        } else if (itemName === "Vitality Elixir") {
+            playerStats.hpPotionTimer = 18000; 
+            consumeUseItem(itemName);
+            pushLog("<span style='color:#e74c3c; font-weight:bold;'>[USE] Consumed Vitality Elixir! +10% Max HP for 5 mins.</span>");
+        } else if (itemName === "Armored Elixir") {
+            playerStats.defPotionTimer = 18000; 
+            consumeUseItem(itemName);
+            pushLog("<span style='color:#3498db; font-weight:bold;'>[USE] Consumed Armored Elixir! +10% Defense for 5 mins.</span>");
+        } else if (itemName === "Haste Elixir") {
+            playerStats.hastePotionTimer = 18000; 
+            consumeUseItem(itemName);
+            pushLog("<span style='color:#f1c40f; font-weight:bold;'>[USE] Consumed Haste Elixir! Speed increased for 5 mins.</span>");
+        }
+        
+        function consumeUseItem(name) {
+            inventory.USE[name]--;
+            if (inventory.USE[name] === 0) delete inventory.USE[name];
+            pushHeaderToast(`Consumed ${name}!`, "#2ecc71");
+        }
+        
+        let pAfter = resolvePlayerStats();
+        playerStats.currentHp = Math.max(1, Math.min(pAfter.maxHp, Math.floor((playerStats.currentHp / pBefore.maxHp) * pAfter.maxHp)));
+        
+        updateUI(); renderInventory(); window.saveGame();
+    };
 
     window.buyShopItem = function(index) {
         let shopItem = playerStats.shopItems[index];
@@ -1025,6 +1167,14 @@ window.onload = function() {
         return (equippedSlots.art1 && equippedSlots.art1.trait === traitName) || (equippedSlots.art2 && equippedSlots.art2.trait === traitName) || (equippedSlots.art3 && equippedSlots.art3.trait === traitName);
     }
 
+    function calculateActiveDps() {
+        let now = Date.now();
+        damageHistory = damageHistory.filter(d => now - d.time <= 3000); 
+        if (damageHistory.length === 0) return 0.0;
+        let totalDamage = damageHistory.reduce((sum, d) => sum + d.amount, 0);
+        return (totalDamage / 3).toFixed(1); 
+    }
+
     function resolvePlayerStats() {
         let p = { 
             atk: playerStats.baseAtk, maxHp: playerStats.baseMaxHp, def: playerStats.baseDef, moveSpeed: playerStats.baseMoveSpeed,
@@ -1055,10 +1205,19 @@ window.onload = function() {
             }
         }
         
+        if (playerStats.atkPotionTimer > 0) p.atk = Math.ceil(p.atk * 1.10);
+        if (playerStats.hpPotionTimer > 0) p.maxHp = Math.ceil(p.maxHp * 1.10);
+        if (playerStats.defPotionTimer > 0) p.def = Math.ceil(p.def * 1.10);
+        if (playerStats.hastePotionTimer > 0) {
+            p.moveSpeed += 3; 
+            p.activeAttackSpeed -= 2;
+            if (p.activeAttackSpeed < 4) p.activeAttackSpeed = 4;
+        }
+
         if (checkArtifactTrait("move_speed")) p.moveSpeed += 10; if (checkArtifactTrait("defense")) p.def += 15;
         if (checkArtifactTrait("idle_spd")) p.idleAttackSpeed -= 20; if (checkArtifactTrait("active_spd")) p.activeAttackSpeed -= 3;
         if (p.idleAttackSpeed < 10) p.idleAttackSpeed = 10; if (p.activeAttackSpeed < 4) p.activeAttackSpeed = 4;
-        if (playerStats.frenzyTimer > 0) { p.critChance = 1.00; p.critDamage += 0.50; p.activeAttackSpeed = 4; p.idleAttackSpeed = 10; }
+        if (playerStats.frenzyTimer > 0) { p.critChance = 1.00; p.critDamage += 0.50; p.activeAttackSpeed = 4; p.idleAttackSpeed = 20; }
         
         return p;
     }
@@ -1395,6 +1554,11 @@ window.onload = function() {
                 else gearTotal += item[statKey];
             }
         }
+
+        if (statKey === 'atk' && playerStats.atkPotionTimer > 0) gearTotal += Math.ceil((playerStats.baseAtk + alloc.spAtk * 2 + gearTotal + artTotal) * 0.10);
+        if (statKey === 'maxHp' && playerStats.hpPotionTimer > 0) gearTotal += Math.ceil((playerStats.baseMaxHp + alloc.spHp * 10 + gearTotal + artTotal) * 0.10);
+        if (statKey === 'def' && playerStats.defPotionTimer > 0) gearTotal += Math.ceil((playerStats.baseDef + alloc.spDef * 1 + gearTotal + artTotal) * 0.10);
+        if (statKey === 'moveSpeed' && playerStats.hastePotionTimer > 0) gearTotal += 3;
         
         if (statKey === 'moveSpeed' && checkArtifactTrait("move_speed")) artTotal += 10;
         if (statKey === 'def' && checkArtifactTrait("defense")) artTotal += 15;
@@ -1408,7 +1572,7 @@ window.onload = function() {
             <div class="tt-stat-line" style="color:#aaa;">• Base Entity: ${formatVal(data.base).replace('+','')}</div>`;
             
         if (data.lvl > 0) html += `<div class="tt-stat-line" style="color:#3498db;">• Level Stats (SP): ${formatVal(data.lvl)}</div>`;
-        if (gearTotal > 0) html += `<div class="tt-stat-line" style="color:#2ecc71;">• Equipment: ${formatVal(gearTotal)}</div>`;
+        if (gearTotal > 0) html += `<div class="tt-stat-line" style="color:#2ecc71;">• Equipment / Elixirs: ${formatVal(gearTotal)}</div>`;
         if (artTotal > 0) html += `<div class="tt-stat-line" style="color:#9b59b6;">• Artifacts: ${formatVal(artTotal)}</div>`;
         
         if (statKey === 'critChance' || statKey === 'critDamage') {
@@ -1462,12 +1626,16 @@ window.onload = function() {
     window.showBuffTooltip = function(e) {
         e.stopPropagation(); let tt = document.getElementById('stat-tooltip'); let html = "";
         let buffs = [];
-        if (playerStats.frenzyTimer > 0) buffs.push("<div style='color:#e67e22; margin-bottom:5px;'><b>🔥 FRENZY:</b> +50% Crit Multi, 100% Crit Chance, Max Attack Speed.</div>");
-        if (playerStats.adrenalineTimer > 0) buffs.push("<div style='color:#f1c40f; margin-bottom:5px;'><b>⚡ ADRENALINE:</b> x2 Damage Output.</div>");
-        if (checkArtifactTrait("second_wind") && !playerStats.usedSecondWind) buffs.push("<div style='color:#e74c3c; margin-bottom:5px;'><b>🛡️ ANKH:</b> Will revive with 50% HP upon taking lethal damage.</div>");
+        if (playerStats.frenzyTimer > 0) buffs.push(`<div style='color:#e67e22; margin-bottom:5px;'><b>🔥 FRENZY:</b> Max Atk Speed, 100% Crit. (${Math.ceil(playerStats.frenzyTimer/60)}s left)</div>`);
+        if (playerStats.adrenalineTimer > 0) buffs.push(`<div style='color:#f1c40f; margin-bottom:5px;'><b>⚡ ADRENALINE:</b> x2 Damage output. (${Math.ceil(playerStats.adrenalineTimer/60)}s left)</div>`);
+        if (playerStats.atkPotionTimer > 0) buffs.push(`<div style='color:#2ecc71; margin-bottom:5px;'><b>⚔️ ATTACK POTION:</b> +10% Attack. (${Math.ceil(playerStats.atkPotionTimer/60)}s left)</div>`);
+        if (playerStats.hpPotionTimer > 0) buffs.push(`<div style='color:#e74c3c; margin-bottom:5px;'><b>❤️ VIT POTION:</b> +10% Max HP. (${Math.ceil(playerStats.hpPotionTimer/60)}s left)</div>`);
+        if (playerStats.defPotionTimer > 0) buffs.push(`<div style='color:#3498db; margin-bottom:5px;'><b>🛡️ ARMOR POTION:</b> +10% Defense. (${Math.ceil(playerStats.defPotionTimer/60)}s left)</div>`);
+        if (playerStats.hastePotionTimer > 0) buffs.push(`<div style='color:#f1c40f; margin-bottom:5px;'><b>👟 HASTE POTION:</b> +3 Speed, -2 Cooldown. (${Math.ceil(playerStats.hastePotionTimer/60)}s left)</div>`);
+        if (checkArtifactTrait("second_wind") && !playerStats.usedSecondWind) buffs.push("<div style='color:#e74c3c; margin-bottom:5px;'><b>🛡️ ANKH:</b> Revive once per stage/dungeon with 50% HP.</div>");
 
         if (buffs.length === 0) {
-            html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div style="color:#aaa; font-size:11px;">No active buffs. Equip artifacts or defeat enemies to gain temporal powers!</div></div>`;
+            html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div style="color:#aaa; font-size:11px;">No active buffs. Consumed elixirs or triggered relics will appear here!</div></div>`;
             tt.style.borderColor = "#aaa";
         } else {
             html = `<div style="padding: 10px; width: 250px; box-sizing: border-box;"><div class="tt-title" style="color:#e67e22;">Active Buffs</div><div style="font-size:11px;">${buffs.join("")}</div></div>`;
@@ -1626,6 +1794,8 @@ window.onload = function() {
             if (inventory.ETC["Eridium Shard"] === 0) delete inventory.ETC["Eridium Shard"];
             
             forgeSelectedItem.statsRolled++;
+            addRandomStatLineToItem(forgeSelectedItem);
+            
             let prefix = getTierName(forgeSelectedItem.statsRolled);
             forgeSelectedItem.name = `${prefix} ${forgeSelectedItem.type.toUpperCase()} (Lv. ${forgeSelectedItem.stageLevel})`;
             
@@ -1746,7 +1916,7 @@ window.onload = function() {
         
         if (forgeMode === 'tier' && item.statsRolled < 5) {
             previewHtml = `<div style="margin-top:15px; padding:10px; background:#111; border:1px dashed #f1c40f; border-radius:4px; font-size:11px; color:#ccc; text-align:center;">
-                * Star Tier UP preserves current modifiers but allows the item to be tempered further and changes Scrap Yield tier!
+                * Star Tier UP preserves current modifiers and guarantees rolling one completely new random bonus stat line!
             </div>`;
         } else if ((forgeMode === 'temper' && item.temperLevel < getMaxTemper(item.statsRolled)) || forgeMode === 'lvl') {
             previewHtml = `<div style="margin-top:15px; padding:10px; background:#111; border:1px solid #333; border-radius:4px;">
@@ -1760,7 +1930,7 @@ window.onload = function() {
 
     function handleMobDeath() {
         let p = resolvePlayerStats(); 
-        let isBoss = (mob.type === "boss" || mob.type === "dungeon_miniboss" || mob.type === "dungeon_boss");
+        let isBoss = (mob.type === "boss" || mob.type === "dungeon_boss" || mob.type === "dungeon_miniboss");
         
         let xpYield = 0;
         if (playerStats.isDungeonMode) {
@@ -1834,9 +2004,15 @@ window.onload = function() {
         }
         
         playerStats.totalLifetimeKills++;
-        if (playerStats.totalLifetimeKills % 10 === 0 && checkArtifactTrait("frenzy")) {
-            playerStats.frenzyTimer = checkArtifactTrait("extend_buffs") ? 900 : 600;
-            pushLog(`<strong style='color:#e67e22;'>[BERSERKER RAGE]</strong> 100% Critical Frenzy Unleashed!`);
+        if (checkArtifactTrait("frenzy")) {
+            if (playerStats.frenzyTimer <= 0) {
+                playerStats.frenzyKillCount++;
+                if (playerStats.frenzyKillCount >= 10) {
+                    playerStats.frenzyTimer = checkArtifactTrait("extend_buffs") ? 900 : 600;
+                    playerStats.frenzyKillCount = 0;
+                    pushLog(`<strong style='color:#e67e22;'>[BERSERKER RAGE]</strong> 100% Critical Frenzy Unleashed!`);
+                }
+            }
         }
         
         if (playerStats.isDungeonMode) {
@@ -1876,6 +2052,7 @@ window.onload = function() {
     function handlePlayerDefeat() {
         isGamePaused = true; playerStats.isBossMode = false; playerStats.isFarmingLoop = false; playerStats.isUberBoss = false; playerStats.isDungeonMode = false;
         playerStats.killCount = 0; playerStats.targetsRequired = 5; playerStats.usedSecondWind = false;
+        playerStats.frenzyTimer = 0; playerStats.frenzyKillCount = 0; playerStats.adrenalineTimer = 0;
         hero.attackTimer = 0; hero.slashFrame = false; mob = null; updateUI();
         pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[DEFEATED] Progress reset. Stage restarted!</span>`);
         document.getElementById('death-overlay').style.display = "flex"; window.saveGame();
@@ -1898,10 +2075,12 @@ window.onload = function() {
             
             mob.hp -= finalDamage; mob.flashTimer = 5;
             effects.push({ x: mob.x + 5, y: mob.y - 10, text: isCrit ? "💥 " + finalDamage : "-" + finalDamage, color: isCrit ? "#e74c3c" : "#ecf0f1", life: 22 });
-            
+            damageHistory.push({ time: Date.now(), amount: finalDamage });
+
             if (checkArtifactTrait("echo_strike")) {
                 let echoDmg = Math.max(1, Math.ceil(finalDamage * 0.5)); mob.hp -= echoDmg;
                 effects.push({ x: mob.x + 20, y: mob.y - 20, text: "👻 " + echoDmg, color: "#9b59b6", life: 20 });
+                damageHistory.push({ time: Date.now(), amount: echoDmg });
             }
             if (checkArtifactTrait("vampirism")) {
                 let heal = Math.max(1, Math.floor(finalDamage * 0.10)); playerStats.currentHp = Math.min(p.maxHp, playerStats.currentHp + heal);
@@ -1974,6 +2153,23 @@ window.onload = function() {
         document.getElementById('star-rate-3').innerText = p3.toFixed(2) + "%";
         document.getElementById('star-rate-2').innerText = p2.toFixed(2) + "%";
         document.getElementById('star-rate-1').innerText = p1.toFixed(2) + "%";
+
+        let activeBuffs = [];
+        if (playerStats.frenzyTimer > 0) activeBuffs.push("🔥 Frenzy");
+        if (playerStats.adrenalineTimer > 0) activeBuffs.push("⚡ Adrenaline");
+        if (playerStats.atkPotionTimer > 0) activeBuffs.push("⚔️ Potion");
+        if (playerStats.hpPotionTimer > 0) activeBuffs.push("❤️ Potion");
+        if (playerStats.defPotionTimer > 0) activeBuffs.push("🛡️ Potion");
+        if (playerStats.hastePotionTimer > 0) activeBuffs.push("👟 Potion");
+        
+        let buffEl = document.getElementById('hud-buff');
+        if (activeBuffs.length > 0) {
+            buffEl.innerText = activeBuffs.join(", ");
+            buffEl.style.color = "#2ecc71";
+        } else {
+            buffEl.innerText = "None";
+            buffEl.style.color = "#aaa";
+        }
         
         makeSlotHtml('weapon', 'Weapon'); makeSlotHtml('subweapon', 'Sub-weapon'); makeSlotHtml('helmet', 'Helmet'); makeSlotHtml('chest', 'Chest Armor');
         makeSlotHtml('leggings', 'Leggings'); makeSlotHtml('overall', 'Overall Suit'); makeSlotHtml('boots', 'Boots'); makeSlotHtml('art1', 'Artifact 1'); makeSlotHtml('art2', 'Artifact 2'); makeSlotHtml('art3', 'Artifact 3');
@@ -1998,15 +2194,29 @@ window.onload = function() {
         }
         let etcBox = document.getElementById('bag-etc'); let etcKeys = Object.keys(inventory.ETC);
         if (etcKeys.length === 0) { etcBox.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No materials collected.</div>"; }
-        else { etcBox.innerHTML = etcKeys.map(key => `<div class="bag-item" style="cursor:help;" onmouseenter="showEtcTooltip(event, '${key}')" ontouchstart="showEtcTooltip(event, '${key}')" onmouseleave="hideTooltip()"><span>📦 ${key}</span><strong>x${inventory.ETC[key]}</strong></div>`).join(""); }
+        else { etcBox.innerHTML = etcKeys.map(key => `<div class="bag-item" style="cursor:help;" onmouseenter="showEtcTooltip(event, this.dataset.key)" ontouchstart="showEtcTooltip(event, this.dataset.key)" onmouseleave="hideTooltip()" data-key="${key}"><span>📦 ${key}</span><strong>x${inventory.ETC[key]}</strong></div>`).join(""); }
+
+        let useBox = document.getElementById('bag-use'); let useKeys = Object.keys(inventory.USE || {});
+        if (useKeys.length === 0) { useBox.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No usable items. Purchase potions/scrolls at the Market!</div>"; }
+        else {
+            useBox.innerHTML = useKeys.map(key => {
+                let count = inventory.USE[key];
+                return `<div class="bag-item">
+                    <div><strong>${key}</strong><br><span style="font-size:10px; color:#aaa;">Qty: ${count}</span></div>
+                    <button class="btn-action" style="background:#2ecc71;" onclick="useItem('${key}')">Consume</button>
+                </div>`;
+            }).join("");
+        }
     }
 
     window.switchSubTab = function(type) {
         window.hideTooltip(); state.currentSubTab = type;
         document.getElementById('sub-tab-eq').className = type === 'EQUIP' ? "sub-tab-btn active" : "sub-tab-btn";
         document.getElementById('sub-tab-etc').className = type === 'ETC' ? "sub-tab-btn active" : "sub-tab-btn";
+        document.getElementById('sub-tab-use').className = type === 'USE' ? "sub-tab-btn active" : "sub-tab-btn";
         document.getElementById('bag-equip').style.display = type === 'EQUIP' ? "block" : "none";
         document.getElementById('bag-etc').style.display = type === 'ETC' ? "block" : "none";
+        document.getElementById('bag-use').style.display = type === 'USE' ? "block" : "none";
     };
 
     function update() {
@@ -2045,12 +2255,18 @@ window.onload = function() {
             }
         }
 
-        let p = resolvePlayerStats(); let scrollSpeed = p.moveSpeed * 0.3;
+        let p = resolvePlayerStats(); 
+        let scrollSpeed = 2 + (p.moveSpeed * 0.05);
 
         if (hero.attackTimer > 0) hero.attackTimer--; hero.slashFrame = (hero.attackTimer > 0 && hero.attackTimer < (p.activeAttackSpeed/2));
         if (mob && mob.flashTimer > 0) mob.flashTimer--; 
         if (playerStats.frenzyTimer > 0) playerStats.frenzyTimer--;
         if (playerStats.adrenalineTimer > 0) playerStats.adrenalineTimer--;
+        
+        if (playerStats.atkPotionTimer > 0) playerStats.atkPotionTimer--;
+        if (playerStats.hpPotionTimer > 0) playerStats.hpPotionTimer--;
+        if (playerStats.defPotionTimer > 0) playerStats.defPotionTimer--;
+        if (playerStats.hastePotionTimer > 0) playerStats.hastePotionTimer--;
         
         logicClock++;
         
@@ -2081,6 +2297,7 @@ window.onload = function() {
                         if (checkArtifactTrait("parry_strike")) {
                             let counterDmg = p.atk * (playerStats.adrenalineTimer > 0 ? 2 : 1); mob.hp -= counterDmg;
                             effects.push({ x: mob.x, y: mob.y, text: "⚔️ " + counterDmg, color: "#f1c40f", life: 20 });
+                            damageHistory.push({ time: Date.now(), amount: counterDmg });
                             if (mob.hp <= 0) { handleMobDeath(); return; }
                         }
                     }
@@ -2181,10 +2398,22 @@ window.onload = function() {
                     }
                 } else {
                     let bx = s.x, by = s.y, bs = s.size;
-                    let c1 = tier===1?"#5d6d7e": (tier===2?"#641e16": (tier===3?"#114f2b": (tier===4?"#34495e": "#1e8449")));
-                    let c2 = tier===1?"#7f8c8d": (tier===2?"#922b21": (tier===3?"#145a32": (tier===4?"#5d6d7e": "#27ae60")));
-                    ctx.fillStyle = c1; ctx.beginPath(); ctx.arc(bx, by - 8 * bs, 14 * bs, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = c2; ctx.beginPath(); ctx.arc(bx + 10 * bs, by - 6 * bs, 10 * bs, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(bx - 10 * bs, by - 6 * bs, 10 * bs, 0, Math.PI*2); ctx.fill();
+                    if (tier === 0) {
+                        ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(bx, by - 8 * bs, 14 * bs, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.arc(bx + 10 * bs, by - 6 * bs, 10 * bs, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(bx - 10 * bs, by - 6 * bs, 10 * bs, 0, Math.PI*2); ctx.fill();
+                    } else if (tier === 1) { 
+                        ctx.fillStyle = "#7f8c8d"; ctx.beginPath(); ctx.roundRect(bx - 15*bs, by - 12*bs, 30*bs, 12*bs, 4*bs); ctx.fill();
+                        ctx.fillStyle = "#95a5a6"; ctx.beginPath(); ctx.roundRect(bx - 8*bs, by - 18*bs, 16*bs, 8*bs, 3*bs); ctx.fill();
+                    } else if (tier === 2) { 
+                        ctx.fillStyle = "#3e3a39"; ctx.beginPath(); ctx.ellipse(bx, by, 25*bs, 12*bs, 0, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = "#2b2a29"; ctx.beginPath(); ctx.ellipse(bx - 5*bs, by - 2*bs, 16*bs, 8*bs, 0, 0, Math.PI*2); ctx.fill();
+                    } else if (tier === 3) { 
+                        ctx.fillStyle = "#145a32"; ctx.beginPath(); ctx.ellipse(bx, by, 30*bs, 8*bs, 0, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = "#196f3d"; ctx.beginPath(); ctx.ellipse(bx, by - 1*bs, 20*bs, 5*bs, 0, 0, Math.PI*2); ctx.fill();
+                    } else if (tier === 4) { 
+                        ctx.fillStyle = "rgba(142, 68, 173, 0.3)"; ctx.beginPath(); ctx.arc(bx, by - 10*bs, 25*bs, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = "rgba(52, 152, 219, 0.2)"; ctx.beginPath(); ctx.arc(bx + 12*bs, by - 8*bs, 18*bs, 0, Math.PI*2); ctx.beginPath(); ctx.arc(bx - 12*bs, by - 8*bs, 18*bs, 0, Math.PI*2); ctx.fill();
+                    }
                 }
             });
         }
@@ -2317,31 +2546,102 @@ window.onload = function() {
         }
 
         if (!playerStats.isDungeonMode) {
-            let tier = getStageTier();
-            let cGrass = tier===1?"#7f8c8d": (tier===2?"#c0392b": (tier===3?"#1e8449": (tier===4?"#34495e": "#2ecc71")));
-            let cFlowerStem = tier===1?"#5d6d7e": (tier===2?"#922b21": (tier===3?"#145a32": (tier===4?"#2c3e50": "#27ae60")));
-            let cBush1 = tier===1?"#34495e": (tier===2?"#641e16": (tier===3?"#0b2b18": (tier===4?"#1c2833": "#145a32")));
-            let cBush2 = tier===1?"#5d6d7e": (tier===2?"#922b21": (tier===3?"#145a32": (tier===4?"#2c3e50": "#1e8449")));
-            let cBush3 = tier===1?"#7f8c8d": (tier===2?"#c0392b": (tier===3?"#1e8449": (tier===4?"#34495e": "#27ae60")));
-
             fgScenery.forEach(s => {
                 let sx = s.x, sy = s.y, ss = s.size;
-                if (s.type === 'grass') {
-                    ctx.fillStyle = cGrass;
-                    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx-5*ss, sy-10*ss, sx-8*ss, sy-15*ss); ctx.lineTo(sx-4*ss, sy); ctx.fill();
-                    ctx.beginPath(); ctx.moveTo(sx+2*ss, sy); ctx.quadraticCurveTo(sx+5*ss, sy-12*ss, sx+2*ss, sy-18*ss); ctx.lineTo(sx+6*ss, sy); ctx.fill();
-                    ctx.beginPath(); ctx.moveTo(sx+8*ss, sy); ctx.quadraticCurveTo(sx+12*ss, sy-8*ss, sx+15*ss, sy-12*ss); ctx.lineTo(sx+10*ss, sy); ctx.fill();
-                } else if (s.type === 'flower') {
-                    ctx.fillStyle = cFlowerStem; ctx.strokeStyle = cFlowerStem;
-                    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx+3*ss, sy-10*ss, sx+1*ss, sy-18*ss); ctx.lineWidth=2; ctx.stroke();
-                    ctx.beginPath(); ctx.ellipse(sx+4*ss, sy-8*ss, 4*ss, 2*ss, Math.PI/4, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.ellipse(sx-2*ss, sy-12*ss, 4*ss, 2*ss, -Math.PI/4, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = s.color; let px = sx+1*ss, py = sy-18*ss;
-                    for(let p=0; p<5; p++) { ctx.beginPath(); ctx.arc(px + Math.cos(p*Math.PI*2/5)*4*ss, py + Math.sin(p*Math.PI*2/5)*4*ss, 3*ss, 0, Math.PI*2); ctx.fill(); }
-                    ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(px, py, 2.5*ss, 0, Math.PI*2); ctx.fill();
-                } else if (s.type === 'bush') {
-                    ctx.fillStyle = cBush1; ctx.beginPath(); ctx.arc(sx, sy, 14*ss, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = cBush2; ctx.beginPath(); ctx.arc(sx-8*ss, sy-4*ss, 10*ss, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(sx+10*ss, sy-2*ss, 11*ss, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(sx+2*ss, sy-8*ss, 12*ss, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = cBush3; ctx.beginPath(); ctx.arc(sx-4*ss, sy-10*ss, 6*ss, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(sx+6*ss, sy-8*ss, 5*ss, 0, Math.PI*2); ctx.fill();
+                if (tier === 0) { 
+                    if (s.type === 'grass') {
+                        ctx.fillStyle = "#2ecc71";
+                        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx-5*ss, sy-10*ss, sx-8*ss, sy-15*ss); ctx.lineTo(sx-4*ss, sy); ctx.fill();
+                        ctx.beginPath(); ctx.moveTo(sx+2*ss, sy); ctx.quadraticCurveTo(sx+5*ss, sy-12*ss, sx+2*ss, sy-18*ss); ctx.lineTo(sx+6*ss, sy); ctx.fill();
+                    } else if (s.type === 'flower') {
+                        ctx.fillStyle = "#27ae60"; ctx.strokeStyle = "#27ae60";
+                        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx+3*ss, sy-10*ss, sx+1*ss, sy-18*ss); ctx.lineWidth=2; ctx.stroke();
+                        ctx.fillStyle = s.color; let px = sx+1*ss, py = sy-18*ss;
+                        for(let p=0; p<5; p++) { ctx.beginPath(); ctx.arc(px + Math.cos(p*Math.PI*2/5)*4*ss, py + Math.sin(p*Math.PI*2/5)*4*ss, 3*ss, 0, Math.PI*2); ctx.fill(); }
+                        ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(px, py, 2.5*ss, 0, Math.PI*2); ctx.fill();
+                    } else if (s.type === 'bush') {
+                        ctx.fillStyle = "#145a32"; ctx.beginPath(); ctx.arc(sx, sy, 14*ss, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(sx-8*ss, sy-4*ss, 10*ss, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(sx+10*ss, sy-2*ss, 11*ss, 0, Math.PI*2); ctx.fill();
+                    }
+                } else if (tier === 1) { 
+                    if (s.type === 'grass') { 
+                        ctx.fillStyle = "#7f8c8d";
+                        ctx.beginPath(); ctx.arc(sx, sy - 2*ss, 4*ss, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = "#95a5a6";
+                        ctx.beginPath(); ctx.arc(sx + 6*ss, sy - 1*ss, 2.5*ss, 0, Math.PI*2); ctx.fill();
+                    } else if (s.type === 'flower') { 
+                        ctx.fillStyle = "#5d6d7e";
+                        ctx.fillRect(sx - 8*ss, sy - 6*ss, 16*ss, 6*ss);
+                        ctx.fillStyle = "#34495e";
+                        ctx.fillRect(sx - 4*ss, sy - 10*ss, 10*ss, 4*ss);
+                    } else if (s.type === 'bush') { 
+                        ctx.strokeStyle = "#5c4033"; ctx.lineWidth = 1.5;
+                        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 10*ss, sy - 15*ss);
+                        ctx.moveTo(sx, sy); ctx.lineTo(sx + 10*ss, sy - 18*ss);
+                        ctx.moveTo(sx, sy); ctx.lineTo(sx, sy - 22*ss);
+                        ctx.moveTo(sx - 4*ss, sy - 8*ss); ctx.lineTo(sx - 12*ss, sy - 10*ss);
+                        ctx.stroke();
+                    }
+                } else if (tier === 2) { 
+                    if (s.type === 'grass') { 
+                        let hover = (Date.now() / 15 + sx) % 30;
+                        ctx.fillStyle = "rgba(231, 76, 60, " + (1 - hover/30) + ")";
+                        ctx.beginPath(); ctx.arc(sx, sy - hover, 3*ss, 0, Math.PI*2); ctx.fill();
+                    } else if (s.type === 'flower') { 
+                        ctx.fillStyle = "#111111";
+                        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx - 3*ss, sy - 8*ss, sx - 6*ss, sy - 12*ss); ctx.lineTo(sx + 6*ss, sy); ctx.fill();
+                        ctx.fillStyle = "#2c3e50";
+                        ctx.beginPath(); ctx.moveTo(sx + 3*ss, sy); ctx.quadraticCurveTo(sx + 6*ss, sy - 5*ss, sx + 10*ss, sy - 8*ss); ctx.lineTo(sx + 12*ss, sy); ctx.fill();
+                    } else if (s.type === 'bush') { 
+                        ctx.fillStyle = "#c0392b";
+                        ctx.beginPath(); ctx.moveTo(sx - 15*ss, sy); ctx.lineTo(sx, sy - 4*ss); ctx.lineTo(sx + 15*ss, sy); ctx.closePath(); ctx.fill();
+                        ctx.fillStyle = "#f1c40f";
+                        ctx.beginPath(); ctx.moveTo(sx - 10*ss, sy); ctx.lineTo(sx, sy - 2*ss); ctx.lineTo(sx + 10*ss, sy); ctx.closePath(); ctx.fill();
+                    }
+                } else if (tier === 3) { 
+                    if (s.type === 'grass') { 
+                        ctx.fillStyle = "#2ecc71";
+                        ctx.beginPath(); ctx.ellipse(sx, sy - 2*ss, 12*ss, 4*ss, 0, 0, Math.PI*2); ctx.fill();
+                        let bub = Math.abs(Math.sin(Date.now() / 400 + sx)) * 4 * ss;
+                        ctx.fillStyle = "#27ae60";
+                        ctx.beginPath(); ctx.arc(sx - 3*ss, sy - 3*ss - bub/2, bub/2, 0, Math.PI*2); ctx.fill();
+                    } else if (s.type === 'flower') { 
+                        ctx.fillStyle = "#ecf0f1";
+                        ctx.fillRect(sx - 2*ss, sy - 12*ss, 4*ss, 12*ss);
+                        ctx.fillStyle = "#9b59b6";
+                        ctx.beginPath(); ctx.arc(sx, sy - 12*ss, 8*ss, Math.PI, 0); ctx.fill();
+                        ctx.fillStyle = "#2ecc71";
+                        ctx.beginPath(); ctx.arc(sx - 3*ss, sy - 15*ss, 1.5*ss, 0, Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(sx + 3*ss, sy - 14*ss, 1.5*ss, 0, Math.PI*2); ctx.fill();
+                    } else if (s.type === 'bush') { 
+                        ctx.fillStyle = "#0e331c";
+                        ctx.beginPath(); ctx.ellipse(sx, sy, 16*ss, 8*ss, 0, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = "#2ecc71";
+                        ctx.beginPath(); ctx.ellipse(sx, sy - 2*ss, 12*ss, 6*ss, 0, 0, Math.PI*2); ctx.fill();
+                    }
+                } else if (tier === 4) { 
+                    if (s.type === 'grass') { 
+                        let rot = Date.now() / 800 + sx;
+                        ctx.fillStyle = "rgba(52, 152, 219, 0.8)";
+                        ctx.save(); ctx.translate(sx, sy - 10); ctx.rotate(rot);
+                        ctx.fillRect(-2*ss, -2*ss, 4*ss, 4*ss);
+                        ctx.restore();
+                    } else if (s.type === 'flower') { 
+                        let hover = Math.sin(Date.now() / 300 + sx) * 6;
+                        ctx.fillStyle = "#9b59b6";
+                        ctx.beginPath(); ctx.moveTo(sx, sy - 20 + hover); ctx.lineTo(sx + 5*ss, sy - 10 + hover); ctx.lineTo(sx, sy + hover); ctx.lineTo(sx - 5*ss, sy - 10 + hover); ctx.closePath(); ctx.fill();
+                        ctx.fillStyle = "#3498db";
+                        ctx.beginPath(); ctx.moveTo(sx, sy - 20 + hover); ctx.lineTo(sx + 2*ss, sy - 10 + hover); ctx.lineTo(sx, sy + hover); ctx.closePath(); ctx.fill();
+                    } else if (s.type === 'bush') { 
+                        let angle = Date.now() / 200;
+                        ctx.save(); ctx.translate(sx, sy - 5);
+                        ctx.rotate(angle);
+                        let grad = ctx.createRadialGradient(0, 0, 1, 0, 0, 15*ss);
+                        grad.addColorStop(0, "#000"); grad.addColorStop(0.5, "#8e44ad"); grad.addColorStop(1, "rgba(26,188,156,0)");
+                        ctx.fillStyle = grad;
+                        ctx.beginPath(); ctx.ellipse(0, 0, 18*ss, 8*ss, 0, 0, Math.PI*2); ctx.fill();
+                        ctx.restore();
+                    }
                 }
             });
         }
@@ -2359,6 +2659,20 @@ window.onload = function() {
             ctx.restore();
             reviveTimer--;
         }
+
+        let actDps = calculateActiveDps();
+        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillRect(canvas.width - 150, 10, 140, 32);
+        ctx.strokeStyle = "#9b59b6";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(canvas.width - 150, 10, 140, 32);
+        
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 10px sans-serif";
+        ctx.fillText("ACTIVE DPS", canvas.width - 140, 24);
+        ctx.fillStyle = "#e74c3c";
+        ctx.font = "bold 13px sans-serif";
+        ctx.fillText(actDps, canvas.width - 70, 25);
 
         particles.forEach(pt => { ctx.fillStyle = pt.color; ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2); ctx.fill(); });
         effects.forEach(eff => { ctx.fillStyle = eff.color; ctx.font = "bold 18px sans-serif"; ctx.fillText(eff.text, eff.x, eff.y); });
