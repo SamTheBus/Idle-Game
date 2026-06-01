@@ -1471,7 +1471,7 @@ window.onload = function() {
         if (p.block > 0.75) p.block = 0.75;
         if (p.parry > 0.35) p.parry = 0.35; 
 
-        // Any subweapon allows blocking. Shields provide a massive flat and multiplicative defense boost.
+        // Any subweapon allows blocking. Shields provide a balanced flat and multiplicative defense boost.
         const hasSubweapon = !!equippedSlots.subweapon;
         if (!hasSubweapon) {
             p.block = 0.0;
@@ -1479,13 +1479,9 @@ window.onload = function() {
 
         const hasShield = equippedSlots.subweapon && equippedSlots.subweapon.subType === "shield";
         if (hasShield) {
-            p.def = Math.ceil((p.def + 40 + (equippedSlots.subweapon.stageLevel * 8)) * 1.6);
+            // Toned down to prevent early-game invincibility while retaining its robust defensive identity
+            p.def = Math.ceil((p.def + 15 + (equippedSlots.subweapon.stageLevel * 3)) * 1.25);
         }
-
-        // Standardize decimal scales into final integer profiles for core gameplay metrics
-        p.atk = Math.floor(p.atk);
-        p.maxHp = Math.floor(p.maxHp);
-        p.def = Math.floor(p.def);
 
         // Standardize decimal scales into final integer profiles for core gameplay metrics
         p.atk = Math.floor(p.atk);
@@ -2850,7 +2846,13 @@ window.onload = function() {
                         if (checkArtifactTrait("dodge_buff")) playerStats.adrenalineTimer = checkArtifactTrait("extend_buffs") ? 900 : 600;
                     }
                     else {
-                        let netDamage = Math.max(1, mob.damage - p.def); playerStats.currentHp -= netDamage; 
+                        // Smooth Diminishing Returns Mitigation Formula:
+                        // Prevents the binary "1 damage or instant death" bottleneck at higher stages
+                        let effStage = playerStats.isDungeonMode ? (playerStats.maxStage || 1) : playerStats.stage;
+                        let mitigation = p.def / (p.def + 100 + (effStage * 12));
+                        let netDamage = Math.max(1, Math.ceil(mob.damage * (1 - mitigation)));
+                        
+                        playerStats.currentHp -= netDamage; 
                         effects.push({ x: hero.x, y: hero.y, text: "-" + netDamage, color: "#e74c3c", life: 40 });
                         if (playerStats.currentHp <= 0) { 
                             if (checkArtifactTrait("second_wind") && !playerStats.usedSecondWind) {
