@@ -2548,6 +2548,31 @@ window.onload = function() {
         document.getElementById('bag-use').style.display = type === 'USE' ? "block" : "none";
     };
 
+    // Infinitely randomizes foliage assets on wrap-around to eliminate repeating visual loops
+    function scrollScenery(scrollSpeed) {
+        groundScroll = (groundScroll + scrollSpeed) % canvas.width; 
+        bgScenery.forEach(s => { 
+            s.x -= scrollSpeed * 0.6; 
+            if (s.x < -50) { 
+                s.x = canvas.width + Math.random() * 50; 
+                s.seed = Math.random(); 
+                s.size = Math.random() * 0.5 + 0.5;
+                s.type = Math.random() > 0.5 ? 'tree' : 'bush';
+            } 
+        });
+        fgScenery.forEach(s => { 
+            s.x -= scrollSpeed; 
+            if (s.x < -60) { 
+                s.x = canvas.width + Math.random() * 50; 
+                s.seed = Math.random(); 
+                s.size = Math.random() * 0.7 + 0.5;
+                let fgType = Math.random();
+                s.type = fgType > 0.8 ? 'bush' : (fgType > 0.5 ? 'flower' : 'grass');
+                s.color = flowerColors[Math.floor(Math.random() * flowerColors.length)];
+            } 
+        });
+    }
+
     function update() {
         if (isGamePaused) return;
         
@@ -2604,18 +2629,15 @@ window.onload = function() {
 
         if (!mob) { 
             processEnemySpawn(); 
-            groundScroll = (groundScroll + scrollSpeed) % canvas.width; 
-            bgScenery.forEach(s => { s.x -= scrollSpeed * 0.6; if(s.x < -50) s.x = canvas.width + Math.random() * 50; });
-            fgScenery.forEach(s => { s.x -= scrollSpeed; if(s.x < -60) s.x = canvas.width + Math.random() * 50; });
+            scrollScenery(scrollSpeed);
         } else {
             if (mob.isRare && Math.random() < 0.1) {
                 particles.push({ x: mob.x + Math.random()*mob.w, y: mob.y + Math.random()*mob.h, vx: (Math.random()-0.5)*2, vy: -Math.random()*3, radius: Math.random()*2+1, color: "#f1c40f", alpha: 1, life: 20 });
             }
             
             if (mob.x > (hero.x + hero.w + 30)) { 
-                mob.x -= (4 + scrollSpeed); mob.isStopped = false; groundScroll = (groundScroll + scrollSpeed) % canvas.width; 
-                bgScenery.forEach(s => { s.x -= scrollSpeed * 0.6; if(s.x < -50) s.x = canvas.width + Math.random() * 50; });
-                fgScenery.forEach(s => { s.x -= scrollSpeed; if(s.x < -60) s.x = canvas.width + Math.random() * 50; });
+                mob.x -= (4 + scrollSpeed); mob.isStopped = false; 
+                scrollScenery(scrollSpeed);
             } else {
                 mob.isStopped = true; 
                 if (logicClock % p.idleAttackSpeed === 0) { if (state.autoAttack) window.triggerPlayerSlash(); }
@@ -2738,7 +2760,7 @@ window.onload = function() {
             }
         }
 
-        // 2. BACKGROUND SCENERY & VEGETATION
+        // 2. BACKGROUND SCENERY & VEGETATION (With procedural structural variety)
         bgScenery.forEach(s => {
             s.seed = s.seed || Math.random();
             let ts = s.size;
@@ -2779,22 +2801,69 @@ window.onload = function() {
             } else {
                 if (s.type === 'tree') {
                     let tx = s.x, ty = s.y - 40 * ts;
-                    if (tier===0) { 
-                        ctx.fillStyle = "#5c4033"; ctx.fillRect(tx - 6*ts, ty, 12*ts, 40 * ts); ctx.fillStyle = "#3e2723"; ctx.fillRect(tx + 2*ts, ty, 4*ts, 40 * ts); 
-                        ctx.fillStyle = "#165e34"; ctx.beginPath(); ctx.arc(tx, ty - 12*ts, 24 * ts, 0, Math.PI*2); ctx.fill();
-                        ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(tx - 10*ts, ty - 5*ts, 18 * ts, 0, Math.PI*2); ctx.arc(tx + 10*ts, ty - 5*ts, 18 * ts, 0, Math.PI*2); ctx.fill(); 
-                        ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(tx, ty - 18*ts, 15 * ts, 0, Math.PI*2); ctx.fill(); 
-                    } else if (tier===1) { 
-                        ctx.fillStyle = "#34495e"; ctx.beginPath(); ctx.moveTo(tx - 15*ts, 180); ctx.lineTo(tx, ty - 10*ts); ctx.lineTo(tx + 15*ts, 180); ctx.fill(); 
-                        ctx.fillStyle = "#7f8c8d"; ctx.beginPath(); ctx.moveTo(tx - 5*ts, 180); ctx.lineTo(tx + 5*ts, ty + 10*ts); ctx.lineTo(tx + 15*ts, 180); ctx.fill(); 
-                    } else if (tier===2) { 
-                        ctx.fillStyle = "#110502"; ctx.beginPath(); ctx.moveTo(tx - 12*ts, 180); ctx.lineTo(tx, ty - 15*ts); ctx.lineTo(tx + 12*ts, 180); ctx.fill(); 
-                        ctx.fillStyle = "#e67e22"; ctx.beginPath(); ctx.arc(tx, ty - 15*ts, 4*ts, 0, Math.PI*2); ctx.fill();
-                    } else if (tier===3) { 
-                        ctx.fillStyle = "#5c503b"; ctx.fillRect(tx - 4*ts, ty, 8*ts, 40 * ts);
-                        ctx.fillStyle = "#144222"; ctx.beginPath(); ctx.ellipse(tx, ty, 20*ts, 15*ts, 0, 0, Math.PI*2); ctx.fill();
-                        ctx.fillStyle = "#1b5e30"; ctx.beginPath(); ctx.ellipse(tx - 6*ts, ty + 5*ts, 15*ts, 10*ts, 0, 0, Math.PI*2); ctx.fill();
-                   } else if (tier===4) { 
+                    if (tier === 0) { 
+                        if (s.seed < 0.35) {
+                            // Variant A: Oak (Round canopy, standard)
+                            ctx.fillStyle = "#5c4033"; ctx.fillRect(tx - 6*ts, ty, 12*ts, 40 * ts); ctx.fillStyle = "#3e2723"; ctx.fillRect(tx + 2*ts, ty, 4*ts, 40 * ts); 
+                            ctx.fillStyle = "#165e34"; ctx.beginPath(); ctx.arc(tx, ty - 12*ts, 24 * ts, 0, Math.PI*2); ctx.fill();
+                            ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(tx - 10*ts, ty - 5*ts, 18 * ts, 0, Math.PI*2); ctx.arc(tx + 10*ts, ty - 5*ts, 18 * ts, 0, Math.PI*2); ctx.fill(); 
+                            ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(tx, ty - 18*ts, 15 * ts, 0, Math.PI*2); ctx.fill(); 
+                        } else if (s.seed < 0.7) {
+                            // Variant B: Spruce/Pine (Triangular layered structures)
+                            ctx.fillStyle = "#3d2a1d"; ctx.fillRect(tx - 4*ts, ty, 8*ts, 40 * ts);
+                            ctx.fillStyle = "#0e3a1d"; ctx.beginPath(); ctx.moveTo(tx - 25*ts, ty + 15*ts); ctx.lineTo(tx, ty - 15*ts); ctx.lineTo(tx + 25*ts, ty + 15*ts); ctx.closePath(); ctx.fill();
+                            ctx.fillStyle = "#145229"; ctx.beginPath(); ctx.moveTo(tx - 20*ts, ty - 2*ts); ctx.lineTo(tx, ty - 25*ts); ctx.lineTo(tx + 20*ts, ty - 2*ts); ctx.closePath(); ctx.fill();
+                            ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.moveTo(tx - 14*ts, ty - 15*ts); ctx.lineTo(tx, ty - 32*ts); ctx.lineTo(tx + 14*ts, ty - 15*ts); ctx.closePath(); ctx.fill();
+                        } else {
+                            // Variant C: Slender Aspen (White trunks, high canopies)
+                            ctx.fillStyle = "#dcdde1"; ctx.fillRect(tx - 3*ts, ty - 15*ts, 6*ts, 55 * ts);
+                            ctx.fillStyle = "#2f3640"; ctx.fillRect(tx - 3*ts, ty + 15*ts, 3*ts, 2); ctx.fillRect(tx, ty - 5*ts, 3*ts, 2);
+                            ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.ellipse(tx, ty - 20*ts, 16*ts, 22*ts, 0, 0, Math.PI*2); ctx.fill();
+                            ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.ellipse(tx - 6*ts, ty - 18*ts, 10*ts, 14*ts, 0, 0, Math.PI*2); ctx.ellipse(tx + 6*ts, ty - 24*ts, 8*ts, 12*ts, 0, 0, Math.PI*2); ctx.fill();
+                        }
+                    } else if (tier === 1) { 
+                        if (s.seed < 0.5) {
+                            // Variant A: Dead gnarled tree
+                            ctx.strokeStyle = "#34495e"; ctx.lineWidth = 4 * ts; ctx.beginPath();
+                            ctx.moveTo(tx, 180); ctx.lineTo(tx, ty + 10 * ts);
+                            ctx.quadraticCurveTo(tx - 10 * ts, ty, tx - 18 * ts, ty - 10 * ts);
+                            ctx.moveTo(tx, ty + 15 * ts);
+                            ctx.quadraticCurveTo(tx + 8 * ts, ty + 5 * ts, tx + 14 * ts, ty - 5 * ts);
+                            ctx.stroke();
+                        } else {
+                            // Variant B: Snowy alpine fir
+                            ctx.fillStyle = "#2c3e50"; ctx.beginPath(); ctx.moveTo(tx - 15*ts, 180); ctx.lineTo(tx, ty - 10*ts); ctx.lineTo(tx + 15*ts, 180); ctx.fill(); 
+                            ctx.fillStyle = "#ecf0f1"; ctx.beginPath(); ctx.moveTo(tx - 5*ts, 180); ctx.lineTo(tx + 5*ts, ty + 10*ts); ctx.lineTo(tx + 15*ts, 180); ctx.fill(); 
+                        }
+                    } else if (tier === 2) { 
+                        if (s.seed < 0.5) {
+                            // Variant A: Scorched Obsidian Spire
+                            ctx.fillStyle = "#110502"; ctx.beginPath(); ctx.moveTo(tx - 12*ts, 180); ctx.lineTo(tx, ty - 15*ts); ctx.lineTo(tx + 12*ts, 180); ctx.fill(); 
+                            ctx.fillStyle = "#e67e22"; ctx.beginPath(); ctx.arc(tx, ty - 15*ts, 4*ts, 0, Math.PI*2); ctx.fill();
+                        } else {
+                            // Variant B: Smoke Volcanic Vent
+                            ctx.fillStyle = "#210904"; ctx.beginPath(); ctx.moveTo(tx - 16*ts, 180); ctx.lineTo(tx - 6*ts, ty + 10*ts); ctx.lineTo(tx + 6*ts, ty + 10*ts); ctx.lineTo(tx + 16*ts, 180); ctx.closePath(); ctx.fill();
+                            let pulse = Math.sin(Date.now() / 100 + s.seed * 50) * 4 + 6;
+                            ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.ellipse(tx, ty + 10*ts, pulse*ts, 3*ts, 0, 0, Math.PI*2); ctx.fill();
+                        }
+                    } else if (tier === 3) { 
+                        if (s.seed < 0.5) {
+                            // Variant A: Mangrove (roots spreading out)
+                            ctx.fillStyle = "#5c503b"; ctx.fillRect(tx - 4*ts, ty, 8*ts, 40 * ts);
+                            ctx.fillStyle = "#144222"; ctx.beginPath(); ctx.ellipse(tx, ty, 20*ts, 15*ts, 0, 0, Math.PI*2); ctx.fill();
+                            ctx.fillStyle = "#1b5e30"; ctx.beginPath(); ctx.ellipse(tx - 6*ts, ty + 5*ts, 15*ts, 10*ts, 0, 0, Math.PI*2); ctx.fill();
+                            ctx.strokeStyle = "#3e321e"; ctx.lineWidth = 3*ts; ctx.beginPath();
+                            ctx.moveTo(tx - 4*ts, 160); ctx.quadraticCurveTo(tx - 12*ts, 170, tx - 18*ts, 180);
+                            ctx.moveTo(tx + 4*ts, 160); ctx.quadraticCurveTo(tx + 12*ts, 170, tx + 18*ts, 180); ctx.stroke();
+                        } else {
+                            // Variant B: Mossy swamp willow
+                            ctx.fillStyle = "#4a3c28"; ctx.fillRect(tx - 3*ts, ty, 6*ts, 40 * ts);
+                            ctx.fillStyle = "#0c2b18"; ctx.beginPath(); ctx.arc(tx, ty, 16*ts, 0, Math.PI*2); ctx.fill();
+                            ctx.strokeStyle = "#1b4f30"; ctx.lineWidth = 2*ts; ctx.beginPath();
+                            ctx.moveTo(tx - 10*ts, ty); ctx.lineTo(tx - 10*ts, ty + 25*ts);
+                            ctx.moveTo(tx + 8*ts, ty + 3*ts); ctx.lineTo(tx + 8*ts, ty + 30*ts); ctx.stroke();
+                        }
+                    } else if (tier === 4) { 
                         ctx.fillStyle = "#4a154b"; let hover = Math.sin(Date.now() / 200 + s.seed * 100) * 4;
                         ctx.beginPath(); ctx.moveTo(tx, ty + hover - 12*ts); ctx.lineTo(tx + 12*ts, ty + hover + 8*ts); ctx.lineTo(tx, ty + hover + 28*ts); ctx.lineTo(tx - 12*ts, ty + hover + 8*ts); ctx.fill();
                         ctx.fillStyle = "#8e44ad"; ctx.beginPath(); ctx.moveTo(tx, ty + hover - 12*ts); ctx.lineTo(tx + 5*ts, ty + hover + 8*ts); ctx.lineTo(tx, ty + hover + 28*ts); ctx.fill();
@@ -2802,14 +2871,53 @@ window.onload = function() {
                 } else {
                     let bx = s.x, by = s.y, bs = ts;
                     if (tier === 0) {
-                        ctx.fillStyle = "#113f21"; ctx.beginPath(); ctx.arc(bx, by, 16 * bs, 0, Math.PI*2); ctx.fill();
-                        ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(bx + 8 * bs, by, 12 * bs, 0, Math.PI*2); ctx.arc(bx - 8 * bs, by, 12 * bs, 0, Math.PI*2); ctx.fill();
+                        if (s.seed < 0.4) {
+                            // Variant A: Red Berry Bush
+                            ctx.fillStyle = "#113f21"; ctx.beginPath(); ctx.arc(bx, by, 16 * bs, 0, Math.PI*2); ctx.fill();
+                            ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.arc(bx + 8 * bs, by, 12 * bs, 0, Math.PI*2); ctx.arc(bx - 8 * bs, by, 12 * bs, 0, Math.PI*2); ctx.fill();
+                            ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(bx - 6*bs, by - 4*bs, 2, 0, Math.PI*2); ctx.arc(bx + 4*bs, by + 2*bs, 2, 0, Math.PI*2); ctx.arc(bx + 8*bs, by - 6*bs, 2, 0, Math.PI*2); ctx.fill();
+                        } else if (s.seed < 0.75) {
+                            // Variant B: Fern clumps
+                            ctx.fillStyle = "#27ae60";
+                            for (let i = 0; i < 5; i++) {
+                                ctx.save(); ctx.translate(bx, by); ctx.rotate(-Math.PI/4 + (i * Math.PI/8));
+                                ctx.beginPath(); ctx.ellipse(0, -10*bs, 4*bs, 12*bs, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
+                            }
+                        } else {
+                            // Variant C: Flowering wild rosebush
+                            ctx.fillStyle = "#1e3d29"; ctx.beginPath(); ctx.arc(bx, by, 14 * bs, 0, Math.PI*2); ctx.fill();
+                            ctx.fillStyle = "#e84393"; ctx.beginPath(); ctx.arc(bx - 4*bs, by - 6*bs, 3, 0, Math.PI*2); ctx.arc(bx + 6*bs, by - 2*bs, 3, 0, Math.PI*2); ctx.arc(bx + 1*bs, by + 4*bs, 2, 0, Math.PI*2); ctx.fill();
+                        }
                     } else if (tier === 1) { 
-                        ctx.fillStyle = "#5d6d7e"; ctx.beginPath(); ctx.roundRect(bx - 16*bs, by - 12*bs, 32*bs, 12*bs, [4*bs, 4*bs, 0, 0]); ctx.fill();
+                        if (s.seed < 0.5) {
+                            // Variant A: Fallen brick ruins
+                            ctx.fillStyle = "#5d6d7e"; ctx.beginPath(); ctx.roundRect(bx - 16*bs, by - 12*bs, 32*bs, 12*bs, [4*bs, 4*bs, 0, 0]); ctx.fill();
+                        } else {
+                            // Variant B: Mossy grey boulder
+                            ctx.fillStyle = "#47525e"; ctx.beginPath(); ctx.arc(bx, by, 12*bs, 0, Math.PI*2); ctx.fill();
+                            ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.ellipse(bx - 3*bs, by - 6*bs, 8*bs, 4*bs, 0, 0, Math.PI*2); ctx.fill();
+                        }
                     } else if (tier === 2) { 
-                        ctx.fillStyle = "#2c1e1c"; ctx.beginPath(); ctx.ellipse(bx, by, 22*bs, 10*bs, 0, 0, Math.PI*2); ctx.fill();
+                        if (s.seed < 0.5) {
+                            // Variant A: Sulfur stone cluster
+                            ctx.fillStyle = "#2c1e1c"; ctx.beginPath(); ctx.ellipse(bx, by, 22*bs, 10*bs, 0, 0, Math.PI*2); ctx.fill();
+                            ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.moveTo(bx - 8*bs, by); ctx.lineTo(bx, by - 6*bs); ctx.lineTo(bx + 8*bs, by); ctx.closePath(); ctx.fill();
+                        } else {
+                            // Variant B: Magma bubbles
+                            ctx.fillStyle = "#3d0e05"; ctx.beginPath(); ctx.arc(bx, by, 10*bs, Math.PI, 0); ctx.fill();
+                            let sizePulse = Math.abs(Math.sin(Date.now() / 300 + s.seed * 10)) * 4 + 2;
+                            ctx.fillStyle = "#e67e22"; ctx.beginPath(); ctx.arc(bx - 2*bs, by - 3*bs, sizePulse*bs*0.4, 0, Math.PI*2); ctx.fill();
+                        }
                     } else if (tier === 3) { 
-                        ctx.fillStyle = "#0a2614"; ctx.beginPath(); ctx.ellipse(bx, by, 26*bs, 7*bs, 0, 0, Math.PI*2); ctx.fill();
+                        if (s.seed < 0.5) {
+                            // Variant A: Swamp pad lilies
+                            ctx.fillStyle = "#0a2614"; ctx.beginPath(); ctx.ellipse(bx, by, 26*bs, 7*bs, 0, 0, Math.PI*2); ctx.fill();
+                        } else {
+                            // Variant B: Tall Wild Cattails
+                            ctx.strokeStyle = "#1b4f30"; ctx.lineWidth = 2; ctx.beginPath();
+                            ctx.moveTo(bx - 4, by); ctx.lineTo(bx - 2, by - 14*bs); ctx.moveTo(bx + 4, by); ctx.lineTo(bx + 2, by - 12*bs); ctx.stroke();
+                            ctx.fillStyle = "#5c3d1e"; ctx.fillRect(bx - 3.5, by - 14*bs, 3, 5*bs); ctx.fillRect(bx + 2.5, by - 12*bs, 3, 4*bs);
+                        }
                     } else if (tier === 4) { 
                         ctx.fillStyle = "rgba(142, 68, 173, 0.25)"; ctx.beginPath(); ctx.arc(bx, by, 22*bs, 0, Math.PI*2); ctx.fill();
                     }
@@ -2871,6 +2979,23 @@ window.onload = function() {
             }
         } else {
             if (tier === 0) {
+                let groundGrad = ctx.createLinearGradient(0, 180, 0, 250);
+                groundGrad.addColorStop(0, "#194d22"); groundGrad.addColorStop(0.15, "#223d1c"); groundGrad.addColorStop(1, "#0c1a0c");
+                ctx.fillStyle = groundGrad; ctx.fillRect(0, 180, canvas.width, 70);
+                
+                // Detailed organic sway grass blades along the horizon to eliminate the low-poly "green triangle" artifacts
+                ctx.fillStyle = "#1e4d22";
+                for (let i = -20; i < canvas.width + 20; i += 8) {
+                    let gx = i - (groundScroll % 8);
+                    let h = 4 + Math.sin(i * 1.7) * 3;
+                    let bend = Math.sin(Date.now() / 300 + i) * 2.5;
+                    ctx.beginPath();
+                    ctx.moveTo(gx, 180);
+                    ctx.quadraticCurveTo(gx + bend, 180 - h, gx + bend + 1, 180 - h);
+                    ctx.quadraticCurveTo(gx + 3, 180, gx + 6, 180);
+                    ctx.fill();
+                }
+            } else if (tier === 1) {
                 let groundGrad = ctx.createLinearGradient(0, 180, 0, 250);
                 groundGrad.addColorStop(0, "#194d22"); groundGrad.addColorStop(0.15, "#223d1c"); groundGrad.addColorStop(1, "#0c1a0c");
                 ctx.fillStyle = groundGrad; ctx.fillRect(0, 180, canvas.width, 70);
@@ -3541,18 +3666,43 @@ ctx.fill();
                     ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx - 3*ss + sway, sy - 15*ss, sx - 8*ss + sway, sy - 22*ss); ctx.quadraticCurveTo(sx - 2*ss + sway, sy - 10*ss, sx + 2*ss, sy);
                     ctx.moveTo(sx + 3*ss, sy); ctx.quadraticCurveTo(sx + 5*ss + sway, sy - 18*ss, sx + 2*ss + sway, sy - 26*ss); ctx.quadraticCurveTo(sx + 7*ss + sway, sy - 12*ss, sx + 8*ss, sy); ctx.fill();
                 } else if (s.type === 'flower') {
+                    let swayF = Math.sin(Date.now() / 200 + s.seed * 100) * 3 * ss; let fx = sx + swayF, fy = sy - 14*ss;
                     ctx.fillStyle = "#27ae60"; ctx.fillRect(sx - 1*ss, sy - 14*ss, 2*ss, 14*ss);
                     ctx.beginPath(); ctx.ellipse(sx - 4*ss, sy - 6*ss, 4*ss, 2*ss, Math.PI/4, 0, Math.PI*2); ctx.ellipse(sx + 4*ss, sy - 10*ss, 4*ss, 2*ss, -Math.PI/4, 0, Math.PI*2); ctx.fill();
-                    let swayF = Math.sin(Date.now() / 200 + s.seed * 100) * 3 * ss; let fx = sx + swayF, fy = sy - 14*ss;
-                    ctx.fillStyle = s.color;
-                    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 3) {
-                        ctx.beginPath(); ctx.arc(fx + Math.cos(angle)*5*ss, fy + Math.sin(angle)*5*ss, 4*ss, 0, Math.PI*2); ctx.fill();
+                    
+                    if (s.seed < 0.5) {
+                        // Variant A: Daisy (6 circular petals)
+                        ctx.fillStyle = s.color;
+                        for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 3) {
+                            ctx.beginPath(); ctx.arc(fx + Math.cos(angle)*5*ss, fy + Math.sin(angle)*5*ss, 4*ss, 0, Math.PI*2); ctx.fill();
+                        }
+                        ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(fx, fy, 3.5*ss, 0, Math.PI*2); ctx.fill();
+                    } else {
+                        // Variant B: Tulip Cup
+                        ctx.fillStyle = s.color; ctx.beginPath();
+                        ctx.moveTo(fx - 4*ss, fy + 4*ss);
+                        ctx.quadraticCurveTo(fx - 6*ss, fy - 6*ss, fx - 5*ss, fy - 8*ss);
+                        ctx.lineTo(fx - 2*ss, fy - 2*ss); ctx.lineTo(fx, fy - 10*ss); ctx.lineTo(fx + 2*ss, fy - 2*ss);
+                        ctx.lineTo(fx + 5*ss, fy - 8*ss);
+                        ctx.quadraticCurveTo(fx + 6*ss, fy - 6*ss, fx + 4*ss, fy + 4*ss);
+                        ctx.closePath(); ctx.fill();
                     }
-                    ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(fx, fy, 3.5*ss, 0, Math.PI*2); ctx.fill();
                 } else {
-                    ctx.fillStyle = "#196f3d"; ctx.beginPath(); ctx.arc(sx, sy - 10*ss, 16*ss, 0, Math.PI*2); ctx.arc(sx - 12*ss, sy - 6*ss, 12*ss, 0, Math.PI*2); ctx.arc(sx + 12*ss, sy - 6*ss, 12*ss, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.arc(sx - 4*ss, sy - 12*ss, 12*ss, 0, Math.PI*2); ctx.arc(sx + 4*ss, sy - 12*ss, 12*ss, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(sx - 6*ss, sy - 8*ss, 2.5*ss, 0, Math.PI*2); ctx.arc(sx + 8*ss, sy - 14*ss, 2.5*ss, 0, Math.PI*2); ctx.arc(sx + 2*ss, sy - 6*ss, 2.5*ss, 0, Math.PI*2); ctx.fill();
+                    if (s.seed < 0.5) {
+                        // Variant A: Dense round berry bush
+                        ctx.fillStyle = "#196f3d"; ctx.beginPath(); ctx.arc(sx, sy - 10*ss, 16*ss, 0, Math.PI*2); ctx.arc(sx - 12*ss, sy - 6*ss, 12*ss, 0, Math.PI*2); ctx.arc(sx + 12*ss, sy - 6*ss, 12*ss, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.arc(sx - 4*ss, sy - 12*ss, 12*ss, 0, Math.PI*2); ctx.arc(sx + 4*ss, sy - 12*ss, 12*ss, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(sx - 6*ss, sy - 8*ss, 2.5*ss, 0, Math.PI*2); ctx.arc(sx + 8*ss, sy - 14*ss, 2.5*ss, 0, Math.PI*2); ctx.arc(sx + 2*ss, sy - 6*ss, 2.5*ss, 0, Math.PI*2); ctx.fill();
+                    } else {
+                        // Variant B: Upright Tall Fern bunches
+                        ctx.fillStyle = "#1e824c";
+                        for (let i = 0; i < 4; i++) {
+                            let curve = Math.sin(Date.now() / 180 + s.seed * 50 + i) * 3;
+                            ctx.beginPath(); ctx.moveTo(sx - 6 + i*4, sy);
+                            ctx.quadraticCurveTo(sx + curve, sy - 25*ss, sx - 10 + i*6 + curve, sy - 28*ss);
+                            ctx.quadraticCurveTo(sx + curve, sy - 10, sx + 6, sy); ctx.fill();
+                        }
+                    }
                 }
             } else if (tier === 1) {
                 if (s.type === 'grass') { 
