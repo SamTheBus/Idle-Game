@@ -1540,7 +1540,8 @@ window.onload = function() {
     function pushHeaderToast(text, color) { pushToast("", null, color, false, 0, text); }
 
     function processEnemySpawn() {
-        let scale = Math.pow(1.15, playerStats.stage);
+        // Scale dungeon entities based on the player's highest historic stage peak to prevent low-level farming bottlenecks
+        let scale = Math.pow(1.15, playerStats.isDungeonMode ? (playerStats.maxStage || 1) : playerStats.stage);
         if (playerStats.isDungeonMode) {
             let hpScale = playerStats.currentDungeon === 'gold' ? 1.5 : 1; 
             
@@ -3509,16 +3510,250 @@ beams.forEach(bm => {
                 }
             } 
             else if (mob.type === "boss" || mob.type === "dungeon_boss") {
-                let currentTier = t !== undefined ? t : getStageTier();
-                
-                if (currentTier === 0) {
-                    ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#a97026";
-                    for (let i = 0; i < 4; i++) {
-                        let rx = mob.x + mob.w * (0.2 + i * 0.2);
+                if (mob.type === "dungeon_boss") {
+                    let dType = playerStats.currentDungeon || 'gold';
+                    if (dType === 'gold') {
+                        // GOBLIN COIN KING
+                        let hover = Math.sin(Date.now() / 150) * 3;
+                        let baseColor = mob.flashTimer > 0 ? "#ffffff" : "#27ae60";
+                        let goldColor1 = "#f1c40f";
+                        let goldColor2 = "#f39c12";
+
+                        // Shifting Hoard Base
+                        ctx.fillStyle = goldColor2;
                         ctx.beginPath();
-                        ctx.arc(rx, mob.y + mob.h, mob.w * 0.15, Math.PI, 0);
+                        ctx.ellipse(mob.x + mob.w / 2, mob.y + mob.h - 10, mob.w * 0.9, 15, 0, 0, Math.PI * 2);
                         ctx.fill();
+                        ctx.fillStyle = goldColor1;
+                        ctx.beginPath();
+                        ctx.ellipse(mob.x + mob.w / 2 - 5, mob.y + mob.h - 13, mob.w * 0.7, 10, 0, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Sparkles
+                        ctx.fillStyle = "#fff";
+                        for (let i = 0; i < 5; i++) {
+                            ctx.fillRect(mob.x + 8 + i * 8, mob.y + mob.h - 16 + Math.sin(i) * 3, 2, 2);
+                        }
+
+                        // Squatted Body
+                        ctx.fillStyle = baseColor;
+                        ctx.beginPath();
+                        ctx.ellipse(mob.x + mob.w / 2, mob.y + mob.h - 32 + hover, mob.w * 0.55, 20, 0, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Goblin Face
+                        ctx.beginPath();
+                        ctx.arc(mob.x + mob.w / 2, mob.y + mob.h - 52 + hover, 14, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Pointed Ears
+                        ctx.beginPath();
+                        ctx.moveTo(mob.x + mob.w / 2 - 11, mob.y + mob.h - 54 + hover);
+                        ctx.lineTo(mob.x + mob.w / 2 - 26, mob.y + mob.h - 60 + hover);
+                        ctx.lineTo(mob.x + mob.w / 2 - 11, mob.y + mob.h - 46 + hover);
+                        ctx.closePath();
+                        ctx.fill();
+
+                        ctx.beginPath();
+                        ctx.moveTo(mob.x + mob.w / 2 + 11, mob.y + mob.h - 54 + hover);
+                        ctx.lineTo(mob.x + mob.w / 2 + 26, mob.y + mob.h - 60 + hover);
+                        ctx.lineTo(mob.x + mob.w / 2 + 11, mob.y + mob.h - 46 + hover);
+                        ctx.closePath();
+                        ctx.fill();
+
+                        // Goblin Crown
+                        ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#f1c40f";
+                        ctx.beginPath();
+                        ctx.moveTo(mob.x + mob.w / 2 - 10, mob.y + mob.h - 64 + hover);
+                        ctx.lineTo(mob.x + mob.w / 2 - 10, mob.y + mob.h - 73 + hover);
+                        ctx.lineTo(mob.x + mob.w / 2 - 4, mob.y + mob.h - 67 + hover);
+                        ctx.lineTo(mob.x + mob.w / 2, mob.y + mob.h - 75 + hover);
+                        ctx.lineTo(mob.x + mob.w / 2 + 4, mob.y + mob.h - 67 + hover);
+                        ctx.lineTo(mob.x + mob.w / 2 + 10, mob.y + mob.h - 73 + hover);
+                        ctx.lineTo(mob.x + mob.w / 2 + 10, mob.y + mob.h - 64 + hover);
+                        ctx.closePath();
+                        ctx.fill();
+
+                        if (mob.flashTimer === 0) {
+                            ctx.fillStyle = "#e74c3c";
+                            ctx.beginPath();
+                            ctx.arc(mob.x + mob.w / 2, mob.y + mob.h - 67 + hover, 2, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+
+                        // Eyes
+                        if (mob.flashTimer === 0) {
+                            ctx.fillStyle = "#f1c40f";
+                            ctx.beginPath();
+                            ctx.arc(mob.x + mob.w / 2 - 5, mob.y + mob.h - 54 + hover, 1.5, 0, Math.PI * 2);
+                            ctx.arc(mob.x + mob.w / 2 + 5, mob.y + mob.h - 54 + hover, 1.5, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+
+                        // Smug Smile
+                        ctx.strokeStyle = "#111";
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        ctx.arc(mob.x + mob.w / 2, mob.y + mob.h - 48 + hover, 5, 0, Math.PI);
+                        ctx.stroke();
+
+                        // Canvas Loot Bag
+                        ctx.fillStyle = "#d35400";
+                        ctx.beginPath();
+                        ctx.arc(mob.x + mob.w / 2 - 15, mob.y + mob.h - 30 + hover, 10, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.strokeStyle = "#f1c40f";
+                        ctx.lineWidth = 1.5;
+                        ctx.strokeRect(mob.x + mob.w / 2 - 18, mob.y + mob.h - 38 + hover, 5, 1.5);
+                    } else if (dType === 'mat') {
+                        // NOXIOUS SLUDGE ELEMENTAL
+                        let pulse = Math.sin(Date.now() / 100) * 4;
+                        let baseColor = mob.flashTimer > 0 ? "#ffffff" : "rgba(46, 204, 113, 0.85)";
+
+                        // Floor slime puddle
+                        ctx.fillStyle = "rgba(39, 174, 96, 0.6)";
+                        ctx.beginPath();
+                        ctx.ellipse(mob.x + mob.w / 2, mob.y + mob.h - 10, mob.w * 0.7, 10, 0, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // slime body curves
+                        ctx.fillStyle = baseColor;
+                        ctx.beginPath();
+                        ctx.moveTo(mob.x + 5 - pulse / 2, mob.y + mob.h);
+                        ctx.bezierCurveTo(
+                            mob.x - 10 - pulse, mob.y + mob.h - 45, 
+                            mob.x + 5, mob.y + 10 + pulse, 
+                            mob.x + mob.w / 2, mob.y + 10 + pulse
+                        );
+                        ctx.bezierCurveTo(
+                            mob.x + mob.w - 5, mob.y + 10 + pulse, 
+                            mob.x + mob.w + 10 + pulse, mob.y + mob.h - 45, 
+                            mob.x + mob.w - 5 + pulse / 2, mob.y + mob.h
+                        );
+                        ctx.closePath();
+                        ctx.fill();
+
+                        // Hazard Purple eyes inside slurry
+                        if (mob.flashTimer === 0) {
+                            ctx.fillStyle = "#9b59b6";
+                            ctx.shadowBlur = 8;
+                            ctx.shadowColor = "#9b59b6";
+                            ctx.beginPath();
+                            ctx.arc(mob.x + mob.w / 2 - 8, mob.y + mob.h / 2 + pulse / 2, 3, 0, Math.PI * 2);
+                            ctx.arc(mob.x + mob.w / 2 + 8, mob.y + mob.h / 2 + pulse / 2, 3, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.shadowBlur = 0;
+                        }
+
+                        // Escape fumes
+                        ctx.fillStyle = "rgba(46, 204, 113, 0.9)";
+                        let bubY = (Date.now() / 15) % 45;
+                        ctx.beginPath();
+                        ctx.arc(mob.x + mob.w / 2 - 10, mob.y + mob.h - bubY, 2.5, 0, Math.PI * 2);
+                        ctx.arc(mob.x + mob.w / 2 + 7, mob.y + mob.h - 8 - ((bubY + 12) % 45), 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else if (dType === 'equip') {
+                        // FORGEMASTER COLOSSUS
+                        let bounce = Math.sin(Date.now() / 200) * 3;
+                        let armorColor = mob.flashTimer > 0 ? "#ffffff" : "#34495e";
+                        let jointColor = "#1a252f";
+                        let fireGlow = "#e67e22";
+
+                        // Heavy limbs
+                        ctx.fillStyle = jointColor;
+                        ctx.fillRect(mob.x + 8, mob.y + mob.h - 20, 10, 20);
+                        ctx.fillRect(mob.x + mob.w - 18, mob.y + mob.h - 20, 10, 20);
+                        ctx.fillStyle = armorColor;
+                        ctx.fillRect(mob.x + 6, mob.y + mob.h - 10, 14, 10);
+                        ctx.fillRect(mob.x + mob.w - 20, mob.y + mob.h - 10, 14, 10);
+
+                        // Plate Core Torso
+                        ctx.fillStyle = jointColor;
+                        ctx.fillRect(mob.x, mob.y + 22 + bounce, mob.w, mob.h - 40);
+                        ctx.fillStyle = armorColor;
+                        ctx.beginPath();
+                        ctx.roundRect(mob.x - 3, mob.y + 18 + bounce, mob.w + 6, mob.h - 45, [5]);
+                        ctx.fill();
+
+                        // Fire Core Reactor
+                        if (mob.flashTimer === 0) {
+                            let coreRadius = 7 + Math.sin(Date.now() / 80) * 2;
+                            ctx.fillStyle = fireGlow;
+                            ctx.shadowBlur = 10;
+                            ctx.shadowColor = fireGlow;
+                            ctx.beginPath();
+                            ctx.arc(mob.x + mob.w / 2, mob.y + mob.h / 2 - 4 + bounce, coreRadius, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.shadowBlur = 0;
+                        }
+
+                        // Spiked iron shoulders
+                        ctx.fillStyle = armorColor;
+                        ctx.beginPath();
+                        ctx.moveTo(mob.x - 5, mob.y + 20 + bounce);
+                        ctx.lineTo(mob.x - 12, mob.y + 11 + bounce);
+                        ctx.lineTo(mob.x + 2, mob.y + 18 + bounce);
+                        ctx.closePath();
+                        ctx.fill();
+
+                        ctx.beginPath();
+                        ctx.moveTo(mob.x + mob.w + 5, mob.y + 20 + bounce);
+                        ctx.lineTo(mob.x + mob.w + 12, mob.y + 11 + bounce);
+                        ctx.lineTo(mob.x + mob.w - 2, mob.y + 18 + bounce);
+                        ctx.closePath();
+                        ctx.fill();
+
+                        // Arm holding colossal blacksmith hammer
+                        ctx.fillStyle = armorColor;
+                        ctx.fillRect(mob.x - 10, mob.y + mob.h / 2 - 5 + bounce, 7, 12);
+                        ctx.strokeStyle = "#5d6d7e";
+                        ctx.lineWidth = 2.5;
+                        ctx.beginPath();
+                        ctx.moveTo(mob.x - 6, mob.y + 8 + bounce);
+                        ctx.lineTo(mob.x - 6, mob.y + mob.h - 8 + bounce);
+                        ctx.stroke();
+
+                        ctx.fillStyle = "#2c3e50";
+                        ctx.fillRect(mob.x - 15, mob.y + 4 + bounce, 18, 9);
+
+                        // Great-helm
+                        ctx.fillStyle = armorColor;
+                        ctx.beginPath();
+                        ctx.roundRect(mob.x + 9, mob.y + bounce, mob.w - 18, 20, [3]);
+                        ctx.fill();
+
+                        // Golem horns
+                        ctx.fillStyle = jointColor;
+                        ctx.beginPath();
+                        ctx.moveTo(mob.x + 11, mob.y + 4 + bounce);
+                        ctx.quadraticCurveTo(mob.x + 2, mob.y - 8 + bounce, mob.x + 4, mob.y - 10 + bounce);
+                        ctx.lineTo(mob.x + 14, mob.y + 8 + bounce);
+                        ctx.closePath();
+                        ctx.fill();
+
+                        ctx.beginPath();
+                        ctx.moveTo(mob.x + mob.w - 11, mob.y + 4 + bounce);
+                        ctx.quadraticCurveTo(mob.x + mob.w - 2, mob.y - 8 + bounce, mob.x + mob.w - 4, mob.y - 10 + bounce);
+                        ctx.lineTo(mob.x + mob.w - 14, mob.y + 8 + bounce);
+                        ctx.closePath();
+                        ctx.fill();
+
+                        // Fire visor glow
+                        if (mob.flashTimer === 0) {
+                            ctx.fillStyle = fireGlow;
+                            ctx.fillRect(mob.x + 12, mob.y + 7 + bounce, mob.w - 24, 2);
+                        }
                     }
+                } else {
+                    let currentTier = t !== undefined ? t : getStageTier();
+                    if (currentTier === 0) {
+                        ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#a97026";
+                        for (let i = 0; i < 4; i++) {
+                            let rx = mob.x + mob.w * (0.2 + i * 0.2);
+                            ctx.beginPath();
+                            ctx.arc(rx, mob.y + mob.h, mob.w * 0.15, Math.PI, 0);
+                            ctx.fill();
+                        }
 
                     ctx.fillStyle = mob.flashTimer > 0 ? "#ffffff" : "#dca04c";
                     ctx.beginPath();
