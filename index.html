@@ -3127,18 +3127,61 @@ beams.forEach(bm => {
         ctx.translate(hx + 12, hy + 15);
         let bounce = (!mob || !mob.isStopped) ? Math.abs(Math.sin(Date.now() / 150)) * 3 : 0;
         
-        if (equippedSlots.subweapon && equippedSlots.subweapon.subType === "shield") {
-            ctx.save();
-            ctx.translate(8, 4 + bounce);
-            ctx.fillStyle = "#7f8c8d";
-            ctx.beginPath();
-            ctx.moveTo(-6, -8); ctx.lineTo(6, -8); ctx.lineTo(8, 0); ctx.lineTo(0, 10); ctx.lineTo(-8, 0);
-            ctx.closePath();
-            ctx.fill();
-            ctx.strokeStyle = "#f1c40f";
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-            ctx.restore();
+        if (equippedSlots.subweapon) {
+            const subType = equippedSlots.subweapon.subType;
+            if (subType === "shield") {
+                ctx.save();
+                ctx.translate(8, 4 + bounce);
+                ctx.fillStyle = "#7f8c8d";
+                ctx.beginPath();
+                ctx.moveTo(-6, -8); ctx.lineTo(6, -8); ctx.lineTo(8, 0); ctx.lineTo(0, 10); ctx.lineTo(-8, 0);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = "#f1c40f";
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                ctx.restore();
+            } else if (subType === "dagger") {
+                ctx.save();
+                // Positioned lower in the offhand grip, angled downward for a tactical offhand stance
+                ctx.translate(8, 8 + bounce);
+                ctx.rotate(Math.PI / 4);
+                // Leather hilt handle
+                ctx.fillStyle = "#8a5a36";
+                ctx.fillRect(-1.5, 4, 3, 5);
+                // Metallic crossguard
+                ctx.fillStyle = "#f1c40f";
+                ctx.fillRect(-4, 3, 8, 1.5);
+                // Silver blade tapering to a fine point
+                ctx.fillStyle = "#bdc3c7";
+                ctx.beginPath();
+                ctx.moveTo(-2, 3);
+                ctx.lineTo(2, 3);
+                ctx.lineTo(0, -9);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            } else if (subType === "tome") {
+                ctx.save();
+                // The magical tome floats gently in the offhand area using an independent sine wave
+                let tomeFloat = Math.sin(Date.now() / 200) * 2;
+                ctx.translate(10, 2 + bounce + tomeFloat);
+                ctx.rotate(-Math.PI / 12);
+                // Thick leather mystical cover
+                ctx.fillStyle = "#8e44ad";
+                ctx.beginPath();
+                ctx.roundRect(-6, -8, 12, 14, [1.5]);
+                ctx.fill();
+                // Aged paper page edges
+                ctx.fillStyle = "#f5f5dc";
+                ctx.fillRect(4, -7, 1.5, 12);
+                // Gold foil magical emblem on front cover
+                ctx.fillStyle = "#f1c40f";
+                ctx.beginPath();
+                ctx.arc(0, -1, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
         }
 
         ctx.fillStyle = "#c0392b"; ctx.beginPath(); ctx.moveTo(-6, bounce); ctx.lineTo(-18, 15); ctx.lineTo(-2, 18); ctx.fill(); 
