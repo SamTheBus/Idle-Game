@@ -475,17 +475,27 @@
             </div>
             
             <div id="tab-forge" class="tab-content" onscroll="hideTooltip()" ontouchmove="hideTooltip()">
-                <div style="display:flex; gap:10px; margin-bottom:10px;">
-                    <button id="btn-mode-temper" class="btn-toggle active" style="flex:1; background:#2980b9;" onclick="setForgeMode('temper')">Mode: TEMPER</button>
-                    <button id="btn-mode-lvl" class="btn-toggle" style="flex:1; background:transparent;" onclick="setForgeMode('lvl')">Mode: UPGRADE LVL</button>
-                    <button id="btn-mode-tier" class="btn-toggle" style="flex:1; background:transparent;" onclick="setForgeMode('tier')">Mode: TIER UP</button>
+                <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px; background:#1a1d20; padding:6px; border-radius:4px; border:1px solid #333;">
+                    <span style="font-size:11px; font-weight:bold; color:#e67e22; white-space:nowrap;">🔨 FORGING POST:</span>
+                    <select id="forge-station-select" onchange="switchForgeStation(this.value)" style="flex:1; background:#111; color:#fff; border:1px solid #e67e22; padding:4px 6px; border-radius:4px; font-weight:bold; font-size:11px;">
+                        <option value="blacksmith">🛡️ Blacksmith Station (Temper / Level / Tier)</option>
+                        <option value="enchanter">🔮 Mystical Enchanter (Infuse / Purge)</option>
+                    </select>
+                </div>
+                <div id="blacksmith-modes" style="display:flex; gap:5px; margin-bottom:10px;">
+                    <button id="btn-mode-temper" class="btn-toggle active" style="flex:1; background:#2980b9; padding:6px 2px; font-size:11px;" onclick="setForgeMode('temper')">Mode: TEMPER</button>
+                    <button id="btn-mode-lvl" class="btn-toggle" style="flex:1; background:transparent; padding:6px 2px; font-size:11px;" onclick="setForgeMode('lvl')">Mode: UPGRADE LVL</button>
+                    <button id="btn-mode-tier" class="btn-toggle" style="flex:1; background:transparent; padding:6px 2px; font-size:11px;" onclick="setForgeMode('tier')">Mode: TIER UP</button>
+                </div>
+                <div id="enchanter-modes" style="display:none; gap:5px; margin-bottom:10px;">
+                    <button id="btn-mode-enchant" class="btn-toggle" style="flex:1; background:transparent; padding:6px 2px; font-size:11px;" onclick="setForgeMode('enchant')">Mode: ENCHANT</button>
+                    <button id="btn-mode-reset-enchant" class="btn-toggle" style="flex:1; background:transparent; padding:6px 2px; font-size:11px;" onclick="setForgeMode('reset_enchant')">Mode: RESET ENCHANTS</button>
                 </div>
                 <div class="forge-grid">
                     <div class="forge-card" id="forge-details"></div>
                     <div class="bag-container" id="forge-list" style="height: 250px;"></div>
                 </div>
             </div>
-
             <div id="tab-market" class="tab-content" onscroll="hideTooltip()" ontouchmove="hideTooltip()">
                 <div class="market-grid">
                     <div class="market-card" style="border-color: #f1c40f;" onmouseenter="showGachaTooltip(event)" onmouseleave="hideTooltip()" ontouchstart="showGachaTooltip(event)">
@@ -727,7 +737,11 @@ window.onload = function() {
         window.hideTooltip(); 
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        event.target.classList.add('active'); 
+        
+        // Robust element lookup prevents ReferenceErrors in strictly compliant engines
+        let activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick')?.includes(`'${id}'`));
+        if (activeBtn) activeBtn.classList.add('active');
+        
         document.getElementById('tab-' + id).classList.add('active');
         if (id === 'forge') renderForgeTab();
         if (id === 'market') {
@@ -1780,7 +1794,7 @@ window.onload = function() {
         html += badge;
 
         let tierColor = getTierColor(item.statsRolled); let titleColor = item.type === "artifact" ? "#1abc9c" : tierColor;
-        let tierName = getTierName(item.statsRolled); let tierDisplay = item.statsRolled === "UNIQUE" ? "UNIQUE" : `${item.statsRolled}★ ${tierName}`;
+        let tierName = getTierName(item.statsRolled); let tierDisplay = item.statsRolled === "UNIQUE" ? "UNIQUE" : `${item.statsRolled}★ ${getTierName(item.statsRolled)}`;
         let labelDisplay = item.type.toUpperCase();
         if (item.type === "subweapon" && item.subType) {
             labelDisplay = `SUBWEAPON (${item.subType.toUpperCase()})`;
@@ -1792,34 +1806,32 @@ window.onload = function() {
         html += `<div class="tt-title" style="color:${titleColor}; white-space:normal;">${item.name}${temperTag}${lockTag}</div>`;
         html += `<div class="tt-subtitle">${subtitle}</div>`;
 
-        if (item.id === "dummy") {
-            html += `<div class="tt-stat-line" style="color:#d2b4de; margin-bottom: 6px; white-space:normal;">• Effect: ${item.desc}</div>`;
-            html += `<div class="tt-trait">${item.breakdown}</div>`;
-            html += `<div style="font-weight:bold; color:#bdc3c7; margin-top:8px; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Bonus Parameters:</div>`;
-            html += `<div class="tt-stat-line" style="color:#aaa; font-style:italic;">* Rolls 3 random stat modifiers upon drop.</div>`;
-        } else if (item.type === "artifact") {
+        if (item.id !== "dummy" && item.type === "artifact") {
             html += `<div class="tt-stat-line" style="color:#d2b4de; margin-bottom: 6px; white-space:normal;">• Effect: ${item.desc}</div>`;
             html += `<div class="tt-trait">${item.breakdown}</div>`;
             html += `<div style="font-weight:bold; color:#aaa; margin-top:8px; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Bonus Parameters:</div>`;
-        } else {
+        } else if (item.id !== "dummy") {
+            if (item.totalEnchants > 0) {
+                html += `<div style="color:#9b59b6; font-size:10px; font-weight:bold; margin-bottom:6px; letter-spacing:0.5px; border: 1px dashed #9b59b6; padding: 3px; border-radius: 3px; background: rgba(155, 89, 182, 0.05); text-align: center;">🔮 MYSTICAL ENCHANTS: ${item.totalEnchants} ACTIVE</div>`;
+            }
             html += `<div style="font-weight:bold; color:#aaa; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Current Parameters:</div>`;
         }
 
         if (item.id !== "dummy") {
-            if (item.atk > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• ⚔️ Attack: +${item.atk}</div>`;
-            if (item.maxHp > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• ❤️ Max HP: +${item.maxHp}</div>`;
-            if (item.def > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 🛡️ Defense: +${item.def}</div>`;
-            if (item.moveSpeed > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 👟 Move Speed: +${item.moveSpeed}</div>`;
-            if (item.str > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 💪 STR (Strength): +${item.str}</div>`;
-            if (item.dex > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 🎯 DEX (Dexterity): +${item.dex}</div>`;
-            if (item.int > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 🧠 INT (Intelligence): +${item.int}</div>`;
+            if (item.atk > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• ⚔️ Attack: +${item.atk}${getStatEnchantSuffix(item, 'atk')}</div>`;
+            if (item.maxHp > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• ❤️ Max HP: +${item.maxHp}${getStatEnchantSuffix(item, 'maxHp')}</div>`;
+            if (item.def > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 🛡️ Defense: +${item.def}${getStatEnchantSuffix(item, 'def')}</div>`;
+            if (item.moveSpeed > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 👟 Move Speed: +${item.moveSpeed}${getStatEnchantSuffix(item, 'moveSpeed')}</div>`;
+            if (item.str > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 💪 STR (Strength): +${item.str}${getStatEnchantSuffix(item, 'str')}</div>`;
+            if (item.dex > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 🎯 DEX (Dexterity): +${item.dex}${getStatEnchantSuffix(item, 'dex')}</div>`;
+            if (item.int > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 🧠 INT (Intelligence): +${item.int}${getStatEnchantSuffix(item, 'int')}</div>`;
             
-            if (item.critChance > 0) html += `<div class="tt-stat-line" style="color:#e67e22;">• ✨ Crit Chance: +${Math.floor(item.critChance*100)}%</div>`;
-            if (item.critDamage > 0) html += `<div class="tt-stat-line" style="color:#f1c40f;">• 💥 Crit Multi: +${Math.floor(item.critDamage*100)}%</div>`;
-            if (item.block > 0) html += `<div class="tt-stat-line" style="color:#3498db;">• 🛡️ Block Rate: +${Math.floor(item.block*100)}%</div>`;
-            if (item.parry > 0) html += `<div class="tt-stat-line" style="color:#e74c3c;">• ⚡ Parry Rate: +${Math.floor(item.parry*100)}%</div>`;
-            if (item.activeAttackSpeed < 0) html += `<div class="tt-stat-line" style="color:#2ecc71;">• ⚡ Active Atk Spd: ${item.activeAttackSpeed}f</div>`;
-            if (item.idleAttackSpeed < 0) html += `<div class="tt-stat-line" style="color:#1abc9c;">• ⏱️ Idle Atk Spd: ${item.idleAttackSpeed}f</div>`;
+            if (item.critChance > 0) html += `<div class="tt-stat-line" style="color:#e67e22;">• ✨ Crit Chance: +${Math.floor(item.critChance*100)}%${getStatEnchantSuffix(item, 'critChance')}</div>`;
+            if (item.critDamage > 0) html += `<div class="tt-stat-line" style="color:#f1c40f;">• 💥 Crit Multi: +${Math.floor(item.critDamage*100)}%${getStatEnchantSuffix(item, 'critDamage')}</div>`;
+            if (item.block > 0) html += `<div class="tt-stat-line" style="color:#3498db;">• 🛡️ Block Rate: +${Math.floor(item.block*100)}%${getStatEnchantSuffix(item, 'block')}</div>`;
+            if (item.parry > 0) html += `<div class="tt-stat-line" style="color:#e74c3c;">• ⚡ Parry Rate: +${Math.floor(item.parry*100)}%${getStatEnchantSuffix(item, 'parry')}</div>`;
+            if (item.activeAttackSpeed < 0) html += `<div class="tt-stat-line" style="color:#2ecc71;">• ⚡ Active Atk Spd: ${item.activeAttackSpeed}f${getStatEnchantSuffix(item, 'activeAttackSpeed')}</div>`;
+            if (item.idleAttackSpeed < 0) html += `<div class="tt-stat-line" style="color:#1abc9c;">• ⏱️ Idle Atk Spd: ${item.idleAttackSpeed}f${getStatEnchantSuffix(item, 'idleAttackSpeed')}</div>`;
             
             if (item.rareSpawn > 0) html += `<div class="tt-stat-line" style="color:#ffb6c1;">• ✨ Rare Spawn: +${(item.rareSpawn*100).toFixed(2)}%</div>`;
             if (item.dropRate > 0) html += `<div class="tt-stat-line" style="color:#2ecc71;">• 🍀 Drop Rate: +${Math.floor(item.dropRate*100)}%</div>`;
@@ -2107,13 +2119,197 @@ window.onload = function() {
 
     window.setForgeMode = function(mode) {
         forgeMode = mode;
-        document.getElementById('btn-mode-temper').className = mode === 'temper' ? "btn-toggle active" : "btn-toggle";
-        document.getElementById('btn-mode-lvl').className = mode === 'lvl' ? "btn-toggle active" : "btn-toggle";
-        document.getElementById('btn-mode-tier').className = mode === 'tier' ? "btn-toggle active" : "btn-toggle";
-        document.getElementById('btn-mode-temper').style.background = mode === 'temper' ? "#2980b9" : "transparent";
-        document.getElementById('btn-mode-lvl').style.background = mode === 'lvl' ? "#8e44ad" : "transparent";
-        document.getElementById('btn-mode-tier').style.background = mode === 'tier' ? "#e67e22" : "transparent";
+        const modes = ['temper', 'lvl', 'tier', 'enchant', 'reset_enchant'];
+        modes.forEach(m => {
+            let el = document.getElementById('btn-mode-' + (m === 'reset_enchant' ? 'reset-enchant' : m));
+            if (el) {
+                el.className = "btn-toggle";
+                el.style.background = "transparent";
+            }
+        });
+
+        let activeEl = document.getElementById('btn-mode-' + (mode === 'reset_enchant' ? 'reset-enchant' : mode));
+        if (activeEl) {
+            activeEl.className = "btn-toggle active";
+            if (mode === 'temper') activeEl.style.background = "#2980b9";
+            if (mode === 'lvl') activeEl.style.background = "#8e44ad";
+            if (mode === 'tier') activeEl.style.background = "#e67e22";
+            if (mode === 'enchant') activeEl.style.background = "#9b59b6";
+            if (mode === 'reset_enchant') activeEl.style.background = "#c0392b";
+        }
         renderForgeTab();
+    };
+
+    window.switchForgeStation = function(station) {
+        if (station === 'blacksmith') {
+            document.getElementById('blacksmith-modes').style.display = 'flex';
+            document.getElementById('enchanter-modes').style.display = 'none';
+            setForgeMode('temper');
+        } else {
+            document.getElementById('blacksmith-modes').style.display = 'none';
+            document.getElementById('enchanter-modes').style.display = 'flex';
+            setForgeMode('enchant');
+        }
+    };
+
+    function getMaxEnchants(item) {
+        if (item.statsRolled === "UNIQUE" || !item.statsRolled) return 0;
+        if (item.statsRolled === 2) return 1;
+        if (item.statsRolled === 3) return 2;
+        if (item.statsRolled === 4) return 3;
+        if (item.statsRolled === 5) return 4;
+        return 0;
+    }
+
+    function getEnchantmentSymbol(count) {
+        if (!count || count <= 0) return "";
+        if (count === 1) return "✦";
+        if (count === 2) return "✹";
+        if (count === 3) return "❂";
+        return "🌌";
+    }
+
+    function getStatEnchantSuffix(item, statKey) {
+        if (item.enchantments && item.enchantments[statKey]) {
+            let count = item.enchantments[statKey];
+            let symbol = getEnchantmentSymbol(count);
+            return ` <span style="color:#9b59b6; font-weight:bold;" title="Enchanted ${count} time(s)">${symbol}</span>`;
+        }
+        return "";
+    }
+
+    function getStatIcon(stat) {
+        const icons = {
+            atk: "⚔️", maxHp: "❤️", def: "🛡️", moveSpeed: "👟",
+            critChance: "✨", critDamage: "💥", block: "🛡️", parry: "⚡",
+            str: "💪", dex: "🎯", int: "🧠",
+            activeAttackSpeed: "⚡", idleAttackSpeed: "⏱️"
+        };
+        return icons[stat] || "❖";
+    }
+
+    window.enchantItem = function() {
+        if (!forgeSelectedItem) return;
+        let item = forgeSelectedItem;
+        let maxEnchants = getMaxEnchants(item);
+        let currentEnchants = item.totalEnchants || 0;
+        if (currentEnchants >= maxEnchants) { pushHeaderToast("Max Enchantments Reached!", "#e74c3c"); return; }
+        
+        let playerEssence = inventory.ETC["Astral Essence"] || 0;
+        if (playerEssence < 1) { pushHeaderToast("Requires 1 Astral Essence!", "#e74c3c"); return; }
+        
+        let validStats = [];
+        const ENCHANTABLE_STATS = ["atk", "maxHp", "def", "moveSpeed", "critChance", "critDamage", "block", "parry", "str", "dex", "int", "activeAttackSpeed", "idleAttackSpeed"];
+        ENCHANTABLE_STATS.forEach(stat => {
+            if (stat === "activeAttackSpeed" || stat === "idleAttackSpeed") {
+                if (item[stat] < 0) validStats.push(stat);
+            } else {
+                if (item[stat] > 0) validStats.push(stat);
+            }
+        });
+        
+        if (validStats.length === 0) {
+            pushHeaderToast("This item has no stat lines to enchant!", "#e74c3c");
+            return;
+        }
+        
+        inventory.ETC["Astral Essence"]--;
+        if (inventory.ETC["Astral Essence"] === 0) delete inventory.ETC["Astral Essence"];
+        
+        if (!item.originalStats) {
+            item.originalStats = {
+                atk: item.atk,
+                maxHp: item.maxHp,
+                def: item.def,
+                moveSpeed: item.moveSpeed,
+                critChance: item.critChance,
+                critDamage: item.critDamage,
+                block: item.block,
+                parry: item.parry,
+                activeAttackSpeed: item.activeAttackSpeed,
+                idleAttackSpeed: item.idleAttackSpeed,
+                str: item.str,
+                dex: item.dex,
+                int: item.int
+            };
+        }
+        
+        let selectedStat = validStats[Math.floor(Math.random() * validStats.length)];
+        
+        item.enchantments = item.enchantments || {};
+        item.enchantments[selectedStat] = (item.enchantments[selectedStat] || 0) + 1;
+        item.totalEnchants = (item.totalEnchants || 0) + 1;
+        
+        const integerStats = ["atk", "maxHp", "def", "str", "dex", "int"];
+        if (integerStats.includes(selectedStat)) {
+            item[selectedStat] = Math.ceil(item[selectedStat] * 1.25);
+        } else if (selectedStat === "activeAttackSpeed" || selectedStat === "idleAttackSpeed") {
+            item[selectedStat] = Math.floor(item[selectedStat] * 1.25);
+        } else {
+            item[selectedStat] = parseFloat((item[selectedStat] * 1.25).toFixed(4));
+        }
+        
+        pushLog(`<span style='color:#9b59b6;'>[ENCHANTER]</span> Successfully infused <strong style='color:#9b59b6;'>${getStatIcon(selectedStat)} ${selectedStat.toUpperCase()}</strong> by 25% on ${item.name}!`);
+        pushHeaderToast(`🔮 Enchanted: +25% ${selectedStat.toUpperCase()}!`, "#9b59b6");
+        
+        for(let i=0; i<35; i++) {
+            particles.push({
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                vx: (Math.random() - 0.5) * 10,
+                vy: (Math.random() - 0.5) * 10,
+                radius: Math.random() * 3 + 1,
+                color: "#9b59b6",
+                alpha: 1,
+                life: 40
+            });
+        }
+        
+        let newMaxHp = resolvePlayerStats().maxHp;
+        playerStats.currentHp = Math.min(playerStats.currentHp, newMaxHp);
+        
+        updateUI(); renderInventory(); renderForgeTab(); window.saveGame();
+    };
+
+    window.resetItemEnchants = function() {
+        if (!forgeSelectedItem) return;
+        let item = forgeSelectedItem;
+        if (!item.totalEnchants || item.totalEnchants === 0) { pushHeaderToast("No enchants to reset!", "#e74c3c"); return; }
+        
+        let resetGoldCost = 1000 * item.stageLevel * (item.statsRolled || 1);
+        if (playerStats.coins < resetGoldCost) { pushHeaderToast("Not enough Gold to reset!", "#e74c3c"); return; }
+        
+        playerStats.coins -= resetGoldCost;
+        
+        if (item.originalStats) {
+            for (let key in item.originalStats) {
+                item[key] = item.originalStats[key];
+            }
+            delete item.originalStats;
+        }
+        delete item.enchantments;
+        item.totalEnchants = 0;
+        
+        pushLog(`<span style='color:#e74c3c;'>[ENCHANTER]</span> Purged all enchantments from ${item.name}!`);
+        pushHeaderToast(`🧹 Purged Enchantments!`, "#e74c3c");
+        
+        for(let i=0; i<35; i++) {
+            particles.push({
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 0.5) * 8,
+                radius: Math.random() * 2 + 1,
+                color: "#7f8c8d",
+                alpha: 1,
+                life: 30
+            });
+        }
+        
+        let newMaxHp = resolvePlayerStats().maxHp;
+        playerStats.currentHp = Math.min(playerStats.currentHp, newMaxHp);
+        
+        updateUI(); renderInventory(); renderForgeTab(); window.saveGame();
     };
 
     /* ==========================================================================
@@ -2172,18 +2368,68 @@ window.onload = function() {
                 applyTemperUpgrades(forgeSelectedItem, isArt);
                 forgeSelectedItem.temperLevel++;
                 pushLog(`<span style='color:#e67e22;'>[FORGE]</span> Successfully tempered ${forgeSelectedItem.name} to [+${forgeSelectedItem.temperLevel}]!`);
-                pushHeaderToast(`🔨 Success! [+${forgeSelectedItem.temperLevel}]`, "#2ecc71");
+                pushHeaderToast("🔨 Success! [+" + forgeSelectedItem.temperLevel + "]", "#2ecc71");
                 spawnTemperParticles(true);
             } else {
                 pushLog(`<span style='color:#e74c3c;'>[FORGE]</span> Temper failed on ${forgeSelectedItem.name}! Materials lost.`);
                 pushHeaderToast(`💥 Temper Failed!`, "#e74c3c");
                 spawnTemperParticles(false);
             }
+        } else if (forgeMode === 'lvl') {
+            let currentTier = forgeSelectedItem.stageLevel;
+            let costGold = currentTier * 500;
+            let scrapReq = getTierUpScrapName(forgeSelectedItem.statsRolled);
+            let scrapReqAmount = currentTier * 2;
+            let playerScrap = inventory.ETC[scrapReq] || 0;
+
+            if (playerStats.coins < costGold) { pushLog(`<span style='color:#e74c3c;'>Not enough Gold to upgrade level!</span>`); return; }
+            if (playerScrap < scrapReqAmount) { pushLog(`<span style='color:#e74c3c;'>Not enough ${scrapReq} to upgrade level!</span>`); return; }
+
+            playerStats.coins -= costGold;
+            inventory.ETC[scrapReq] -= scrapReqAmount;
+            if (inventory.ETC[scrapReq] === 0) delete inventory.ETC[scrapReq];
+
+            // Apply level mutations to stats
+            forgeSelectedItem.stageLevel++;
+            if (forgeSelectedItem.baseAtk > 0) forgeSelectedItem.atk += 2;
+            if (forgeSelectedItem.baseMaxHp > 0) forgeSelectedItem.maxHp += 10;
+            if (forgeSelectedItem.baseDef > 0) forgeSelectedItem.def += 1;
+            if (forgeSelectedItem.baseMoveSpeed > 0) forgeSelectedItem.moveSpeed += 1;
+            
+            // Re-generate item name to match new Level suffix
+            forgeSelectedItem.name = buildProceduralName(forgeSelectedItem);
+
+            pushLog(`<span style='color:#8e44ad;'>[FORGE]</span> Successfully upgraded level of ${forgeSelectedItem.name} to Lv. ${forgeSelectedItem.stageLevel}!`);
+            pushHeaderToast("🔨 Level Up! Lv. " + forgeSelectedItem.stageLevel, "#8e44ad");
+            spawnTemperParticles(true);
+        } else if (forgeMode === 'tier') {
+            if (forgeSelectedItem.statsRolled >= 5) return;
+            let currentStars = forgeSelectedItem.statsRolled;
+            let costGold = (currentStars + 1) * 2500;
+            let scrapReqAmount = currentStars + 1;
+            let playerScrap = inventory.ETC["Eridium Shard"] || 0;
+
+            if (playerStats.coins < costGold) { pushLog(`<span style='color:#e74c3c;'>Not enough Gold to Tier Up!</span>`); return; }
+            if (playerScrap < scrapReqAmount) { pushLog(`<span style='color:#e74c3c;'>Not enough Eridium Shards!</span>`); return; }
+
+            playerStats.coins -= costGold;
+            inventory.ETC["Eridium Shard"] -= scrapReqAmount;
+            if (inventory.ETC["Eridium Shard"] === 0) delete inventory.ETC["Eridium Shard"];
+
+            // Awaken to next star level and inherit 1 new fully functional random stat modifier
+            forgeSelectedItem.statsRolled++;
+            addRandomStatLineToItem(forgeSelectedItem);
+            
+            // Re-generate name prefix reflecting the updated quality tier
+            forgeSelectedItem.name = buildProceduralName(forgeSelectedItem);
+
+            pushLog(`<span style='color:#e67e22;'>[FORGE]</span> Successfully Tiered Up ${forgeSelectedItem.name} to ${forgeSelectedItem.statsRolled}★!`);
+            pushHeaderToast("⭐ Tier Up! " + forgeSelectedItem.statsRolled + "★", "#e67e22");
+            spawnTemperParticles(true);
         }
 
         updateUI(); renderInventory(); renderForgeTab(); window.saveGame();
     };
-
     function renderForgeTab() {
         let listEl = document.getElementById('forge-list'); let detailEl = document.getElementById('forge-details');
         
@@ -2199,7 +2445,7 @@ window.onload = function() {
         else {
             listEl.innerHTML = allValidItems.map(item => {
                 let isArt = item.type === "artifact";
-                if ((forgeMode === 'lvl' || forgeMode === 'tier') && isArt) return ""; 
+                if ((forgeMode === 'lvl' || forgeMode === 'tier' || forgeMode === 'enchant' || forgeMode === 'reset_enchant') && isArt) return ""; 
                 
                 let nameColor = getTierColor(item.statsRolled); let temperTag = item.temperLevel > 0 ? ` [+${item.temperLevel}]` : "";
                 let lockTag = item.locked ? " 🔒" : "";
@@ -2212,14 +2458,16 @@ window.onload = function() {
             }).join("");
         }
 
-        if (!forgeSelectedItem || ((forgeMode === 'lvl' || forgeMode === 'tier') && forgeSelectedItem.type === "artifact")) { 
+        if (!forgeSelectedItem || ((forgeMode === 'lvl' || forgeMode === 'tier' || forgeMode === 'enchant' || forgeMode === 'reset_enchant') && forgeSelectedItem.type === "artifact")) { 
             detailEl.innerHTML = `<div style='color:#aaa; text-align:center; padding-top:10px;'>
                 <div style='color:#e67e22; font-weight:bold; font-size:14px; margin-bottom:10px;'>🔨 Mystical Anvil</div>
                 <div style='font-size:11px; line-height:1.8; background:#111; padding:10px; border-radius:4px; border:1px solid #333; text-align:left;'>
-                    Select an item from your list.<br><br>
+                    Select an eligible item from your list.<br><br>
                     <b>TEMPER:</b> Refines stats with tier-appropriate material scraps. Failure consumes raw items.<br><br>
                     <b>UPGRADE LEVEL:</b> Permanently upgrades base level. 100% Success.<br><br>
-                    <b>TIER UP:</b> Infuses Eridium Shards to permanently elevate stars and unlock <b>1 additional random stat modifier</b>!
+                    <b>TIER UP:</b> Infuses Eridium Shards to permanently elevate stars and unlock 1 additional random stat modifier!<br><br>
+                    <b>ENCHANT:</b> Infuse powerful magic using salvaged <b>Astral Essence</b>. Boosts 1 random stat line by 25%. Slots scale with rarity.<br><br>
+                    <b>RESET ENCHANTS:</b> Resets all enchants on an item. Costs gold based on level.
                 </div>
             </div>`;
             return; 
@@ -2294,11 +2542,46 @@ window.onload = function() {
                 html += `<div style="font-size:11px; color:#2ecc71; font-weight:bold; margin-bottom:15px;">✨ 100% Awakening Guaranteed</div>`;
                 html += `<button class="forge-anvil-button" style="width:100%; border-color:#e67e22;" ${(playerStats.coins >= costGold) && (playerScrap >= scrapReqAmount) ? '' : 'disabled'} onclick="temperItem()">Awaken Rarity</button>`;
             }
+        } else if (forgeMode === 'enchant') {
+            let maxEnchants = getMaxEnchants(item);
+            let currentEnchants = item.totalEnchants || 0;
+            if (maxEnchants === 0) {
+                html += `<div style="color:#e74c3c; font-weight:bold; text-align:center; padding: 20px 0; font-size:11px;">THIS ITEM QUALITY CANNOT HOLD ENCHANTMENTS.<br><br><span style="color:#aaa; font-weight:normal;">Only Magic (2★), Epic (3★), Legendary (4★), and Mythic (5★) items can hold enchantments.</span></div>`;
+            } else if (currentEnchants >= maxEnchants) {
+                html += `<div style="color:#e74c3c; font-weight:bold; text-align:center; padding: 20px 0; font-size:11px;">MAXIMUM ENCHANTMENT LIMIT REACHED (${maxEnchants}/${maxEnchants})<br><br><span style="color:#aaa; font-weight:normal;">Reset this item's enchantments in "Reset Enchants" mode to enchant again.</span></div>`;
+            } else {
+                let playerEssence = inventory.ETC["Astral Essence"] || 0;
+                let essenceColor = playerEssence >= 1 ? "#2ecc71" : "#e74c3c";
+                
+                html += `<div style="font-size:11px; margin-bottom:10px; color:#aaa;">Enchantment Slots: <span style="color:#fff; font-weight:bold;">${currentEnchants} / ${maxEnchants}</span></div>`;
+                let pct = (currentEnchants / maxEnchants) * 100;
+                html += `<div class="forge-progress-bg"><div class="forge-progress-fill" style="width:${pct}%; background: linear-gradient(90deg, #9b59b6, #e84393);"></div></div>`;
+                html += `<div style="font-size:11px; color:${essenceColor}; margin-bottom:15px;">• 1x Astral Essence Required (Owned: ${playerEssence})</div>`;
+                html += `<div style="font-size:11px; color:#9b59b6; font-weight:bold; margin-bottom:15px;">🔮 Randomly boosts one active parameter by +25%!</div>`;
+                html += `<button class="forge-anvil-button" style="width:100%; border-color:#9b59b6; background: linear-gradient(135deg, #4a154b, #1a0221);" ${playerEssence >= 1 ? '' : 'disabled'} onclick="enchantItem()">Infuse Enchantment</button>`;
+            }
+        } else if (forgeMode === 'reset_enchant') {
+            let currentEnchants = item.totalEnchants || 0;
+            if (currentEnchants === 0) {
+                html += `<div style="color:#7f8c8d; font-weight:bold; text-align:center; padding: 20px 0; font-size:11px;">THIS ITEM HAS NO ACTIVE ENCHANTMENTS</div>`;
+            } else {
+                let resetGoldCost = 1000 * item.stageLevel * (item.statsRolled || 1);
+                let goldColor = playerStats.coins >= resetGoldCost ? "#f1c40f" : "#e74c3c";
+                
+                html += `<div style="font-size:11px; margin-bottom:10px; color:#aaa;">Active Enchantments to Purge: <span style="color:#9b59b6; font-weight:bold;">${currentEnchants}</span></div>`;
+                html += `<div style="font-size:11px; color:${goldColor}; margin-bottom:15px;">• ${resetGoldCost} Gold Required (Owned: ${Math.floor(playerStats.coins)})</div>`;
+                html += `<div style="font-size:11px; color:#e74c3c; font-weight:bold; margin-bottom:15px;">⚠️ Restores all enchanted parameters to their original pre-enchanted values. Material scraps are non-refundable.</div>`;
+                html += `<button class="forge-anvil-button" style="width:100%; border-color:#e74c3c; background: linear-gradient(135deg, #c0392b, #111);" ${playerStats.coins >= resetGoldCost ? '' : 'disabled'} onclick="resetItemEnchants()">Purge Enchantments</button>`;
+            }
         }
         
         if (forgeMode === 'tier' && item.statsRolled < 5) {
             previewHtml = `<div style="margin-top:15px; padding:10px; background:#111; border:1px dashed #f1c40f; border-radius:4px; font-size:11px; color:#ccc; text-align:center;">
                 * Star Tier UP preserves current modifiers, increases base multipliers, and unlocks <b>1 completely new random attribute parameter</b>!
+            </div>`;
+        } else if (forgeMode === 'enchant' && item.totalEnchants < getMaxEnchants(item) && getMaxEnchants(item) > 0) {
+            previewHtml = `<div style="margin-top:15px; padding:10px; background:#111; border:1px dashed #9b59b6; border-radius:4px; font-size:11px; color:#ccc; text-align:center;">
+                * Enchanting will permanently snapshot pre-enchant stats, then select 1 parameter at random to scale by <b>+25%</b>.
             </div>`;
         } else if ((forgeMode === 'temper' && item.temperLevel < getMaxTemper(item.statsRolled)) || forgeMode === 'lvl') {
             previewHtml = `<div style="margin-top:15px; padding:10px; background:#111; border:1px solid #333; border-radius:4px;">
