@@ -1147,7 +1147,7 @@ window.onload = function() {
                 c.lineTo(segX + spacing/2 + 4, m.y + 24 + (i%2 === 0 ? -legCycle : legCycle));
                 c.stroke();
             }
-        } 
+        }
         else if (m.type === "boss" || m.type === "dungeon_boss") {
             c.lineWidth = 2.4;
 
@@ -1360,22 +1360,23 @@ window.onload = function() {
                     c.fill();
                     c.stroke();
 
-                    c.fillStyle = jointColor;
-                    c.beginPath();
-                    c.moveTo(m.x + 11, m.y + 4 + bounce);
-                    c.quadraticCurveTo(m.x + 2, m.y - 8 + bounce, m.x + 4, m.y - 10 + bounce);
-                    c.lineTo(m.x + 14, m.y + 8 + bounce);
-                    c.closePath();
-                    c.fill();
-                    c.stroke();
+                    // Golem horns
+                        c.fillStyle = jointColor;
+                        c.beginPath();
+                        c.moveTo(m.x + 11, m.y + 4 + bounce);
+                        c.quadraticCurveTo(m.x + 2, m.y - 8 + bounce, m.x + 4, m.y - 10 + bounce);
+                        c.lineTo(m.x + 14, m.y + 8 + bounce);
+                        c.closePath();
+                        c.fill();
+                        c.stroke();
 
-                    c.beginPath();
-                    c.moveTo(m.x + m.w - 11, m.y + 4 + bounce);
-                    c.quadraticCurveTo(m.x + m.w - 2, m.y - 8 + bounce, m.x + m.w - 4, m.y - 10 + bounce);
-                    c.lineTo(m.x + m.w - 14, m.y + 8 + bounce);
-                    c.closePath();
-                    c.fill();
-                    c.stroke();
+                        c.beginPath();
+                        c.moveTo(m.x + m.w - 11, m.y + 4 + bounce);
+                        c.quadraticCurveTo(m.x + m.w - 2, m.y - 8 + bounce, m.x + m.w - 4, m.y - 10 + bounce);
+                        c.lineTo(m.x + m.w - 14, m.y + 8 + bounce);
+                        c.closePath();
+                        c.fill();
+                        c.stroke();
 
                     if (m.flashTimer === 0) {
                         c.fillStyle = fireGlow;
