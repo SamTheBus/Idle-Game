@@ -151,6 +151,13 @@
         .btn-action {
             background: var(--accent-green); color: white; border: none; padding: 4px 6px;
             font-size: 10px; font-weight: bold; border-radius: 3px; cursor: pointer;
+            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.1s ease;
+        }
+        .btn-action:hover {
+            filter: brightness(1.15);
+        }
+        .btn-action:active {
+            transform: scale(0.92);
         }
         .btn-action.un { background: #e74c3c; }
         .btn-action.forge { background: var(--accent-orange); margin-top: 5px; width: 100%; padding: 6px; font-size: 12px; }
@@ -173,8 +180,25 @@
         @keyframes pulseBtn { 0% { background: #c0392b; } 50% { background: #e74c3c; } 100% { background: #c0392b; } }
         .btn-pulse { animation: pulseBtn 1.5s infinite; border: 1px solid #e74c3c; }
         
-        .market-card { background: #151515; border: 1px solid #444; padding: 12px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;}
-        .shop-row { display: flex; justify-content: space-between; align-items: center; background: #111; padding: 8px; border: 1px solid #333; margin-bottom: 4px; border-radius: 4px; text-align: left; position: relative; cursor: help;}
+        .market-card { 
+            background: #151515; border: 1px solid #444; padding: 12px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .market-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+        }
+        .shop-row { 
+            display: flex; justify-content: space-between; align-items: center; background: #111; padding: 8px; border: 1px solid #333; margin-bottom: 4px; border-radius: 4px; text-align: left; position: relative; cursor: help;
+            transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+        }
+        .shop-row:hover {
+            background: #161a22;
+            border-color: #555;
+        }
+        .shop-row:active {
+            transform: scale(0.98);
+        }
         .shop-row.iotd { border-color: var(--text-gold); background: rgba(241, 196, 15, 0.05); }
 
         .tooltip-base {
@@ -2714,6 +2738,11 @@ window.onload = function() {
         
         pushLog(`<strong style='color:#9b59b6;'>[ALCHEMY]</strong> Acquired: <span style='color:${item.color};'>${item.name}</span>`);
         
+        // Trigger rich purchase animation on canvas
+        if (typeof window.spawnPurchaseCelebration === "function") {
+            window.spawnPurchaseCelebration('alchemy', item.color);
+        }
+
         updateUI(); renderInventory(); renderMysticalShop(); window.saveGame();
     };
 
@@ -2796,6 +2825,11 @@ window.onload = function() {
         pushLog(`<strong style='color:#f1c40f;'>[SHOP]</strong> Purchased: <span style='color:${getTierColor(purchasedItem.statsRolled)};'>${purchasedItem.name}</span>`, purchasedItem.id);
         pushToast(purchasedItem.name, purchasedItem.statsRolled, getTierColor(purchasedItem.statsRolled));
         
+        // Trigger responsive gold shop purchase burst on canvas
+        if (typeof window.spawnPurchaseCelebration === "function") {
+            window.spawnPurchaseCelebration('gold', getTierColor(purchasedItem.statsRolled), purchasedItem.statsRolled);
+        }
+
         renderMarketShop(); updateUI(); renderInventory(); renderForgeTab(); window.saveGame();
     };
 
@@ -3038,6 +3072,12 @@ window.onload = function() {
         } else {
             inventory.EQUIP.push(item);
         }
+
+        // Trigger dynamic, high-fidelity gacha capsule drop celebration on purchase
+        if (sourceName === "Gacha" && !silent && typeof window.spawnPurchaseCelebration === "function") {
+            window.spawnPurchaseCelebration('gacha', getTierColor(item.statsRolled), item.statsRolled);
+        }
+
         if(!silent) { renderInventory(); renderForgeTab(); updateUI(); }
     }
 
@@ -3359,6 +3399,76 @@ window.onload = function() {
         for(let i=0; i<50; i++) { particles.push({ x: canvas.width / 2, y: canvas.height / 2, vx: (Math.random() - 0.5) * 16, vy: (Math.random() - 0.5) * 16, radius: Math.random() * 4 + 1.5, color: colors[Math.floor(Math.random() * colors.length)], alpha: 1, life: isSuccess ? 45 : 30 }); }
     }
 
+    window.spawnPurchaseCelebration = function(theme, color, rarity) {
+        let spawnX = canvas.width / 2;
+        let spawnY = canvas.height / 2;
+        
+        let count = 25;
+        let speed = 5;
+        let text = "PURCHASED!";
+        
+        if (theme === 'gacha') {
+            count = 55;
+            speed = 8;
+            text = "🎰 DISPENSED! 🎰";
+        } else if (theme === 'altar') {
+            count = 65;
+            speed = 11;
+            text = "🔮 RIFT OPENED! 🔮";
+        } else if (theme === 'alchemy') {
+            count = 20;
+            speed = 4;
+            text = "🧪 BREWED!";
+        }
+        
+        // Elevate visual weight dramatically based on rarity [12]
+        if (rarity === 5 || rarity === "UNIQUE") {
+            count = Math.floor(count * 2.5);
+            speed *= 1.4;
+            text = "🔥 MYTHIC PULL! 🔥";
+            if (rarity === "UNIQUE") text = "✨ UNIQUE TROPHY! ✨";
+        } else if (rarity === 4) {
+            count = Math.floor(count * 1.8);
+            speed *= 1.2;
+            text = "🌟 LEGENDARY PULL! 🌟";
+        }
+        
+        for (let i = 0; i < count; i++) {
+            particles.push({
+                x: spawnX + randFloat(-15, 15),
+                y: spawnY + randFloat(-10, 10),
+                vx: (Math.random() - 0.5) * speed,
+                vy: (Math.random() - 0.7) * speed - 2.5,
+                radius: randFloat(1.5, (rarity === 5 || rarity === "UNIQUE") ? 5.0 : 3.5),
+                color: color || "#f1c40f",
+                alpha: 1,
+                life: randInt(25, 60)
+            });
+        }
+        
+        effects.push({
+            x: spawnX - 70,
+            y: spawnY - 15,
+            text: text,
+            color: color || "#f1c40f",
+            life: 80
+        });
+        
+        // Spawn celestial graphic columns on legendary+ outputs
+        if (rarity === 5 || rarity === 4 || rarity === "UNIQUE" || theme === 'altar') {
+            beams.push({
+                x: spawnX,
+                color: color || "#f1c40f",
+                life: 50,
+                maxLife: 50
+            });
+            
+            // Re-trigger screen shake physics engine
+            canvas.classList.add('shake');
+            setTimeout(() => canvas.classList.remove('shake'), 400);
+        }
+    };
+
     function getTierColor(stars) {
         if (stars === "UNIQUE") return "#1abc9c"; if (stars === 5) return "#e74c3c"; if (stars === 4) return "#f1c40f"; 
         if (stars === 3) return "#e67e22"; if (stars === 2) return "#9b59b6"; if (stars === 1) return "#3498db"; return "#ffffff"; 
@@ -3567,6 +3677,12 @@ window.onload = function() {
         let p = resolvePlayerStats(); playerStats.currentHp = p.maxHp; 
         
         pushLog("<span style='color:#9b59b6; font-weight:bold;'>[ALTAR] A reality rift tears open! An Enraged Rift Guardian approaches!</span>");
+        
+        // Trigger colossal rift tear screen effect
+        if (typeof window.spawnPurchaseCelebration === "function") {
+            window.spawnPurchaseCelebration('altar', '#9b59b6', 'UNIQUE');
+        }
+
         updateUI(); renderInventory(); window.saveGame();
     };
 
