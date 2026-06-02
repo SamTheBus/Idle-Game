@@ -227,6 +227,28 @@
         .live-drop-cols { display: flex; justify-content: space-between; margin-bottom: 10px; }
         .stat-hover { cursor: help; border-bottom: 1px dotted #888; pointer-events: auto; display:flex; justify-content:space-between; align-items:center; }
 
+        #toast-container {
+            position: fixed;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 420px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 20000;
+            pointer-events: none;
+        }
+        @keyframes toastFadeIn {
+            0% { opacity: 0; transform: translateY(-10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes toastFadeOut {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+
         #altar-modal {
             display:none; position:fixed; top:10%; left:50%; transform:translateX(-50%); 
             width:90%; max-width:500px; background:#111; border:2px solid var(--accent-purple); border-radius:8px; 
@@ -694,6 +716,7 @@ window.onload = function() {
     let lastUpdateTime = Date.now(); // High-resolution timestamp for gap detection
 
     let beams = [];
+    let canvasToasts = [];
     /* ==========================================================================
        6. PROCEDURAL NAME GENERATOR
        ========================================================================== */
@@ -1778,17 +1801,57 @@ window.onload = function() {
         document.getElementById('log-box').innerHTML = logsHistory.join("<br><br>");
     }
 
+   function isCanvasInViewport() {
+        const rect = canvas.getBoundingClientRect();
+        const viewHeight = window.innerHeight || document.documentElement.clientHeight;
+        // Strictly checks if at least 15 pixels of the canvas are inside the viewport boundaries
+        return (rect.bottom > 15 && rect.top < viewHeight - 15);
+    }
+
     function pushToast(name, stars, color, isEtc = false, quantity = 1, customText = null) {
-        let container = document.getElementById('toast-container'); let toast = document.createElement('div');
-        toast.style.background = "rgba(11, 15, 18, 0.95)"; toast.style.border = `2px solid ${color}`; toast.style.color = "#fff";
-        toast.style.padding = "8px 16px"; toast.style.borderRadius = "6px"; toast.style.fontSize = "11px"; toast.style.fontWeight = "bold";
-        toast.style.textAlign = "center"; toast.style.boxShadow = "0 4px 15px rgba(0,0,0,0.6)"; toast.style.animation = "toastFadeIn 0.3s ease-out";
-        toast.style.maxWidth = "100%"; toast.style.pointerEvents = "none";
-        
-        if (customText) { toast.innerHTML = customText; } 
-        else { let label = isEtc ? `📦 +${quantity} Loot` : (stars === "UNIQUE" ? "⭐ UNIQUE DETECTED!" : `⚔️ ITEM FOUND (${stars}★)`); toast.innerHTML = `${label} : <span style="color:${color}">${name}</span>`; }
-        container.prepend(toast); 
-        setTimeout(() => { toast.style.animation = "toastFadeOut 0.5s ease-in forwards"; setTimeout(() => toast.remove(), 450); }, 2800);
+        if (isCanvasInViewport()) {
+            canvasToasts.push({
+                name: name,
+                stars: stars,
+                color: color,
+                isEtc: isEtc,
+                quantity: quantity,
+                customText: customText,
+                life: 180, // Displays for 3 seconds (at 60 FPS)
+                maxLife: 180
+            });
+            // Keep up to 4 concurrent toasts on screen to prevent canvas clutter
+            if (canvasToasts.length > 4) {
+                canvasToasts.shift();
+            }
+        } else {
+            let container = document.getElementById('toast-container'); 
+            let toast = document.createElement('div');
+            toast.style.background = "rgba(11, 15, 18, 0.95)"; 
+            toast.style.border = `2px solid ${color}`; 
+            toast.style.color = "#fff";
+            toast.style.padding = "8px 16px"; 
+            toast.style.borderRadius = "6px"; 
+            toast.style.fontSize = "11px"; 
+            toast.style.fontWeight = "bold";
+            toast.style.textAlign = "center"; 
+            toast.style.boxShadow = "0 4px 15px rgba(0,0,0,0.6)"; 
+            toast.style.animation = "toastFadeIn 0.3s ease-out";
+            toast.style.maxWidth = "100%"; 
+            toast.style.pointerEvents = "none";
+            
+            if (customText) { 
+                toast.innerHTML = customText; 
+            } else { 
+                let label = isEtc ? `📦 +${quantity} Loot` : (stars === "UNIQUE" ? "⭐ UNIQUE DETECTED!" : `⚔️ ITEM FOUND (${stars}★)`); 
+                toast.innerHTML = `${label} : <span style="color:${color}">${name}</span>`; 
+            }
+            container.prepend(toast); 
+            setTimeout(() => { 
+                toast.style.animation = "toastFadeOut 0.5s ease-in forwards"; 
+                setTimeout(() => toast.remove(), 450); 
+            }, 2800);
+        }
     }
     
     function pushHeaderToast(text, color) { pushToast("", null, color, false, 0, text); }
@@ -3466,6 +3529,13 @@ window.onload = function() {
         if (playerStats.hpPotionTimer > 0) playerStats.hpPotionTimer--;
         if (playerStats.defPotionTimer > 0) playerStats.defPotionTimer--;
         if (playerStats.hastePotionTimer > 0) playerStats.hastePotionTimer--;
+        
+        for (let i = canvasToasts.length - 1; i >= 0; i--) {
+            canvasToasts[i].life--;
+            if (canvasToasts[i].life <= 0) {
+                canvasToasts.splice(i, 1);
+            }
+        }
         
         logicClock++;
         
@@ -5170,6 +5240,74 @@ window.onload = function() {
         ctx.font = "bold 13px sans-serif";
         ctx.strokeText(actDps, canvas.width - 70, 25);
         ctx.fillText(actDps, canvas.width - 70, 25);
+
+       // 6.5. Canvas Toasts Rendering
+        let toastW = Math.min(320, canvas.width - 40);
+        let toastH = 28;
+        let startY = 15;
+        let spacing = 34;
+
+        canvasToasts.forEach((toast, idx) => {
+            let ty = startY + (idx * spacing);
+            let tx = canvas.width / 2 - toastW / 2;
+            
+            let alpha = 1.0;
+            if (toast.life < 15) alpha = toast.life / 15;
+            else if (toast.maxLife - toast.life < 10) alpha = (toast.maxLife - toast.life) / 10;
+            
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            
+            // Toon black background shadow outline
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(tx - 2, ty - 2, toastW + 4, toastH + 4);
+            
+            // Fill background plate
+            ctx.fillStyle = "rgba(11, 15, 18, 0.95)";
+            ctx.fillRect(tx, ty, toastW, toastH);
+            
+            // Inner colored border matching item rarity
+            ctx.strokeStyle = toast.color;
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(tx + 1, ty + 1, toastW - 2, toastH - 2);
+            
+            // Scaled responsive typography styling (prevents overlap issues)
+            let fontSize = canvas.width > 420 ? "11px" : "10px";
+            ctx.font = `bold ${fontSize} sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            
+            let textX = canvas.width / 2;
+            let textY = ty + toastH / 2;
+            
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 2.5;
+            
+            if (toast.customText) {
+                let cleanText = toast.customText.replace(/<[^>]*>/g, "");
+                ctx.strokeText(cleanText, textX, textY);
+                ctx.fillStyle = "#ffffff";
+                ctx.fillText(cleanText, textX, textY);
+            } else {
+                let headerLabel = toast.isEtc ? `📦 +${toast.quantity} Loot` : (toast.stars === "UNIQUE" ? "⭐ UNIQUE DETECTED!" : `⚔️ ITEM FOUND (${toast.stars}★)`);
+                let fullPrefix = `${headerLabel} : `;
+                let nameText = toast.name;
+                
+                let fullW = ctx.measureText(fullPrefix + nameText).width;
+                let startX = textX - fullW / 2;
+                
+                ctx.textAlign = "left";
+                ctx.fillStyle = "#ffffff";
+                ctx.strokeText(fullPrefix, startX, textY);
+                ctx.fillText(fullPrefix, startX, textY);
+                
+                let prefixW = ctx.measureText(fullPrefix).width;
+                ctx.fillStyle = toast.color;
+                ctx.strokeText(nameText, startX + prefixW, textY);
+                ctx.fillText(nameText, startX + prefixW, textY);
+            }
+            ctx.restore();
+        });
 
         // 7. Dynamic particles & Comic-styled floaters (With heavy dark text outlines)
         particles.forEach(pt => { ctx.fillStyle = pt.color; ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2); ctx.fill(); });
