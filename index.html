@@ -1974,7 +1974,10 @@ window.onload = function() {
             let killsNeededForStage = 5 - playerStats.killCount; 
             let timeNeededForStage = (killsNeededForStage + 1) * cycleTime; // Standard kills + boss fight
             
-            if (timeNeededForStage <= remainingSeconds && stagesAdvancedCount < maxStagesToAdvance && !diedOffline && !playerStats.isFarmingLoop) {
+            // Do not allow offline gains to advance past the player's peak stage cap
+            let hitStageCap = currentStage >= (playerStats.maxStage || 1);
+
+            if (timeNeededForStage <= remainingSeconds && stagesAdvancedCount < maxStagesToAdvance && !diedOffline && !playerStats.isFarmingLoop && !hitStageCap) {
                 // Progressively clear this stage
                 remainingSeconds -= timeNeededForStage;
                 elapsedSeconds += timeNeededForStage;
@@ -4544,6 +4547,9 @@ window.onload = function() {
         playerStats.isUberBoss = false; 
         playerStats.isDungeonMode = false;
         
+        // Clear active mob to prevent holding the boss instance on respawn/retreat
+        mob = null;
+        
         // Reset phoenix second wind flag upon run defeat to allow reuse on subsequent attempts
         playerStats.usedSecondWind = false;
         
@@ -4600,6 +4606,9 @@ window.onload = function() {
         document.getElementById('death-overlay').style.display = "none";
         let p = resolvePlayerStats(); 
         playerStats.currentHp = p.maxHp; 
+        
+        // Clear active mob to guarantee a clean respawn state in the retreated stage
+        mob = null;
         
         // Reset Run Statistics for the next adventure
         playerStats.runKills = 0;
