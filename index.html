@@ -879,6 +879,103 @@ window.onload = function() {
     // Procedural decoration asset definitions
     const flowerColors = ["#e74c3c", "#9b59b6", "#f1c40f", "#3498db", "#e67e22", "#e84393"];
     
+    /* ==========================================================================
+       PROCEDURAL AUDIO SYNTHESIS ENGINE (SWORD SWING)
+       ========================================================================== */
+    let audioCtx = null;
+    let activeSlashCount = 0;
+    const MAX_SLASH_CONCURRENT = 3; // Keep concurrent overlays light to prevent ear fatigue
+
+    function playSlashSound() {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+
+        // Initialize/resume context to comply with browser autoplay gesture rules
+        if (!audioCtx) {
+            audioCtx = new AudioContextClass();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        // Drop sound if triggering faster than humanly/mechanically comfortable
+        if (activeSlashCount >= MAX_SLASH_CONCURRENT) return;
+        activeSlashCount++;
+
+        const now = audioCtx.currentTime;
+        const duration = randFloat(0.08, 0.13); // Snappy durations avoid mud
+
+        // Setup master gain node for this instance
+        const mainGain = audioCtx.createGain();
+        mainGain.gain.setValueAtTime(0, now);
+        // Balance volume to remain present but comfortable under spamming conditions
+        mainGain.gain.linearRampToValueAtTime(0.18, now + 0.008);
+        mainGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+        // 1. Air displacement swoosh (Synthesized white noise + sweeping bandpass filter)
+        const bufferSize = audioCtx.sampleRate * duration;
+        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+
+        const noiseSource = audioCtx.createBufferSource();
+        noiseSource.buffer = noiseBuffer;
+
+        const noiseFilter = audioCtx.createBiquadFilter();
+        noiseFilter.type = "bandpass";
+        
+        // Pitch variation breaks up machine-gun aesthetic
+        const startFreq = randFloat(1100, 1500);
+        const endFreq = randFloat(300, 450);
+        noiseFilter.frequency.setValueAtTime(startFreq, now);
+        noiseFilter.frequency.exponentialRampToValueAtTime(endFreq, now + duration);
+        noiseFilter.Q.setValueAtTime(3.5, now);
+
+        noiseSource.connect(noiseFilter);
+        noiseFilter.connect(mainGain);
+
+        // 2. Blade physical heft (Short sweeping triangle oscillator)
+        const osc = audioCtx.createOscillator();
+        osc.type = "triangle";
+        const startPitch = randFloat(240, 310);
+        const endPitch = randFloat(70, 95);
+        osc.frequency.setValueAtTime(startPitch, now);
+        osc.frequency.exponentialRampToValueAtTime(endPitch, now + duration);
+
+        const oscGain = audioCtx.createGain();
+        oscGain.gain.setValueAtTime(0, now);
+        oscGain.gain.linearRampToValueAtTime(0.08, now + 0.006);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, now + duration * 0.8);
+
+        osc.connect(oscGain);
+        oscGain.connect(mainGain);
+
+        // 3. Dynamic compression limiting to clamp sudden volume gains when overlapping
+        const compressor = audioCtx.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-20, now);
+        compressor.knee.setValueAtTime(25, now);
+        compressor.ratio.setValueAtTime(12, now);
+        compressor.attack.setValueAtTime(0.003, now);
+        compressor.release.setValueAtTime(0.08, now);
+
+        mainGain.connect(compressor);
+        compressor.connect(audioCtx.destination);
+
+        // Playback trigger
+        noiseSource.start(now);
+        osc.start(now);
+
+        noiseSource.stop(now + duration);
+        osc.stop(now + duration);
+
+        // Release the concurrent voice lock
+        setTimeout(() => {
+            activeSlashCount = Math.max(0, activeSlashCount - 1);
+        }, duration * 1000 + 40);
+    }
+
     const MYSTICAL_STOCK = [
         { name: "SP Reset Scroll", cost: 2500, currency: "Gold", color: "#9b59b6", desc: "Refunds all spent Skill Points from the Attribute Matrix." },
         { name: "Attack Elixir", cost: 500, currency: "Gold", color: "#2ecc71", desc: "Increases your Attack power by 10% temporarily." },
@@ -2922,6 +3019,10 @@ window.onload = function() {
         if (isGamePaused) return;
         let p = resolvePlayerStats(); let cooldownCap = playerStats.frenzyTimer > 0 ? 4 : p.activeAttackSpeed;
         if (hero.attackTimer > 0) return; 
+        
+        // Execute synthesized swing audio safely within user-gesture rules
+        playSlashSound();
+        
         hero.attackTimer = cooldownCap; executeHitCalculations();
     };
 
