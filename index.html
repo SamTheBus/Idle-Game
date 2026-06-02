@@ -2595,7 +2595,7 @@ window.onload = function() {
                 // Normal monster farming rewards
                 for (let k = 0; k < killsNeededForStage; k++) {
                     let isRare = Math.random() < p.rareSpawn;
-                    let baseGold = isRare ? Math.floor(1 + Math.pow(1.06, currentStage) * 2) : Math.floor(1 + Math.pow(1.06, currentStage) * 0.5);
+                    let baseGold = isRare ? Math.floor((2 + Math.pow(1.08, currentStage) * 0.65) * 4) : Math.floor(2 + Math.pow(1.08, currentStage) * 0.65);
                     totalGold += Math.ceil(baseGold * p.gold);
                     totalXp += isRare ? (currentStage * 30) : (currentStage * 10);
                     
@@ -2610,7 +2610,7 @@ window.onload = function() {
                 }
                 
                 // Boss clearance rewards
-                let baseBossGold = Math.floor(10 * Math.pow(1.06, currentStage));
+                let baseBossGold = Math.floor(15 * Math.pow(1.08, currentStage));
                 totalGold += Math.ceil(baseBossGold * p.gold);
                 totalXp += currentStage * 50;
                 
@@ -2635,7 +2635,7 @@ window.onload = function() {
                     
                     for (let k = 0; k < partialKills; k++) {
                         let isRare = Math.random() < p.rareSpawn;
-                        let baseGold = isRare ? Math.floor(1 + Math.pow(1.06, currentStage) * 2) : Math.floor(1 + Math.pow(1.06, currentStage) * 0.5);
+                        let baseGold = isRare ? Math.floor((2 + Math.pow(1.08, currentStage) * 0.65) * 4) : Math.floor(2 + Math.pow(1.08, currentStage) * 0.65);
                         totalGold += Math.ceil(baseGold * p.gold);
                         totalXp += isRare ? (currentStage * 30) : (currentStage * 10);
                         
@@ -5271,7 +5271,7 @@ window.onload = function() {
         gainXp(xpYield);
         
         // Exponential gold scaling aligned with upgrade costs and enemy health progression
-        let baseCoin = isBoss ? Math.floor(10 * Math.pow(1.06, playerStats.stage)) : Math.floor(1 + Math.pow(1.06, playerStats.stage) * 0.5);
+        let baseCoin = isBoss ? Math.floor(15 * Math.pow(1.08, playerStats.stage)) : Math.floor(2 + Math.pow(1.08, playerStats.stage) * 0.65);
         
         if (playerStats.isDungeonMode && playerStats.currentDungeon === 'gold') {
             baseCoin *= 5; if (mob.type === "dungeon_boss") baseCoin *= 4; 
