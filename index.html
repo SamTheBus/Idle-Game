@@ -2435,11 +2435,17 @@ window.onload = function() {
             }
         }
         
+        let oldMaxHp = resolvePlayerStats().maxHp;
         playerStats.sp--;
         playerStats.spAllocations[statKey]++;
         
         let p = resolvePlayerStats();
-        playerStats.currentHp = Math.min(playerStats.currentHp + (statKey === 'spHp' ? 10 : 0), p.maxHp);
+        // Visceral impact: instantly heal your current health bar by the amount your Max HP expanded
+        let hpDiff = p.maxHp - oldMaxHp;
+        if (hpDiff > 0) {
+            playerStats.currentHp += hpDiff;
+        }
+        playerStats.currentHp = Math.min(playerStats.currentHp, p.maxHp);
         updateUI(); window.saveGame();
     };
 
@@ -3117,13 +3123,13 @@ window.onload = function() {
         
         let alloc = playerStats.spAllocations;
         
-        p.str += (alloc.spStr || 0);
-        p.dex += (alloc.spDex || 0);
-        p.int += (alloc.spInt || 0);
+        p.str += (alloc.spStr || 0) * 3;  // +3 Strength per spent SP
+        p.dex += (alloc.spDex || 0) * 3;  // +3 Dexterity per spent SP
+        p.int += (alloc.spInt || 0) * 3;  // +3 Intelligence per spent SP
 
-        p.maxHp += (alloc.spHp * 10);
-        p.atk += (alloc.spAtk * 2);
-        p.def += (alloc.spDef * 1);
+        p.maxHp += (alloc.spHp * 40);      // +40 Max HP per spent SP
+        p.atk += (alloc.spAtk * 6);        // +6 Attack per spent SP
+        p.def += (alloc.spDef * 3);        // +3 Defense per spent SP
         p.critChance += (alloc.spCrit * 0.005);
         p.critDamage += (alloc.spCritDmg * 0.02);
         p.block += (alloc.spBlock * 0.005);
@@ -3144,17 +3150,17 @@ window.onload = function() {
             }
         }
 
-        // Primary attributes hybrid cross-scaling
-        p.atk += p.str * 0.75;
-        p.maxHp += p.str * 3;
+        // Primary attributes hybrid cross-scaling (Significantly amplified)
+        p.atk += p.str * 1.5;              // 1 STR = +1.5 Attack
+        p.maxHp += p.str * 10;             // 1 STR = +10 Max HP
 
-        p.critChance += p.dex * 0.001;
-        p.critDamage += p.dex * 0.005;
-        p.moveSpeed += p.dex * 0.1;
+        p.critChance += p.dex * 0.002;     // 1 DEX = +0.2% Crit Chance
+        p.critDamage += p.dex * 0.01;      // 1 DEX = +1% Crit Multiplier
+        p.moveSpeed += p.dex * 0.25;       // 1 DEX = +0.25 Move Speed
 
-        p.block += p.int * 0.001;
-        p.parry += p.int * 0.001;
-        p.def += p.int * 0.2;
+        p.block += p.int * 0.002;          // 1 INT = +0.2% Block Rate
+        p.parry += p.int * 0.002;          // 1 INT = +0.2% Parry Rate
+        p.def += p.int * 0.75;             // 1 INT = +0.75 Defense
         
         if (playerStats.atkPotionTimer > 0) p.atk = Math.ceil(p.atk * 1.10);
         if (playerStats.hpPotionTimer > 0) p.maxHp = Math.ceil(p.maxHp * 1.10);
@@ -3724,12 +3730,12 @@ window.onload = function() {
         let alloc = playerStats.spAllocations;
         
         let map = {
-            'str': { title: "💪 STR (Strength)", base: playerStats.baseStr, lvl: alloc.spStr || 0, color: "#fff" },
-            'dex': { title: "🎯 DEX (Dexterity)", base: playerStats.baseDex, lvl: alloc.spDex || 0, color: "#fff" },
-            'int': { title: "🧠 INT (Intelligence)", base: playerStats.baseInt, lvl: alloc.spInt || 0, color: "#fff" },
-            'atk': { title: "⚔️ Total Attack", base: playerStats.baseAtk, lvl: alloc.spAtk * 2, color: "#fff" },
-            'maxHp': { title: "❤️ Max Health", base: playerStats.baseMaxHp, lvl: alloc.spHp * 10, color: "#fff" },
-            'def': { title: "🛡️ Total Defense", base: playerStats.baseDef, lvl: alloc.spDef * 1, color: "#fff" },
+            'str': { title: "💪 STR (Strength)", base: playerStats.baseStr, lvl: (alloc.spStr || 0) * 3, color: "#fff" },
+            'dex': { title: "🎯 DEX (Dexterity)", base: playerStats.baseDex, lvl: (alloc.spDex || 0) * 3, color: "#fff" },
+            'int': { title: "🧠 INT (Intelligence)", base: playerStats.baseInt, lvl: (alloc.spInt || 0) * 3, color: "#fff" },
+            'atk': { title: "⚔️ Total Attack", base: playerStats.baseAtk, lvl: alloc.spAtk * 6, color: "#fff" },
+            'maxHp': { title: "❤️ Max Health", base: playerStats.baseMaxHp, lvl: alloc.spHp * 40, color: "#fff" },
+            'def': { title: "🛡️ Total Defense", base: playerStats.baseDef, lvl: alloc.spDef * 3, color: "#fff" },
             'moveSpeed': { title: "👟 Move Speed", base: playerStats.baseMoveSpeed, lvl: alloc.spSpd * 1, color: "#fff" },
             'critChance': { title: "✨ Crit Chance", base: playerStats.baseCritChance, lvl: alloc.spCrit * 0.005, color: "#e67e22" },
             'critDamage': { title: "💥 Crit Multiplier", base: playerStats.baseCritDamage, lvl: alloc.spCritDmg * 0.02, color: "#f1c40f" },
@@ -3751,9 +3757,9 @@ window.onload = function() {
             }
         }
 
-        if (statKey === 'atk' && playerStats.atkPotionTimer > 0) gearTotal += Math.ceil((playerStats.baseAtk + alloc.spAtk * 2 + gearTotal + artTotal) * 0.10);
-        if (statKey === 'maxHp' && playerStats.hpPotionTimer > 0) gearTotal += Math.ceil((playerStats.baseMaxHp + alloc.spHp * 10 + gearTotal + artTotal) * 0.10);
-        if (statKey === 'def' && playerStats.defPotionTimer > 0) gearTotal += Math.ceil((playerStats.baseDef + alloc.spDef * 1 + gearTotal + artTotal) * 0.10);
+        if (statKey === 'atk' && playerStats.atkPotionTimer > 0) gearTotal += Math.ceil((playerStats.baseAtk + alloc.spAtk * 6 + gearTotal + artTotal) * 0.10);
+        if (statKey === 'maxHp' && playerStats.hpPotionTimer > 0) gearTotal += Math.ceil((playerStats.baseMaxHp + alloc.spHp * 40 + gearTotal + artTotal) * 0.10);
+        if (statKey === 'def' && playerStats.defPotionTimer > 0) gearTotal += Math.ceil((playerStats.baseDef + alloc.spDef * 3 + gearTotal + artTotal) * 0.10);
         if (statKey === 'moveSpeed' && playerStats.hastePotionTimer > 0) gearTotal += 3;
         
         if (statKey === 'moveSpeed' && checkArtifactTrait("move_speed")) artTotal += 10;
@@ -3779,18 +3785,18 @@ window.onload = function() {
         let totalVal = data.base + data.lvl + gearTotal + artTotal;
         if (statKey === 'str') {
             html += `<div style="margin: 6px 0; border-top: 1px dashed #444; padding-top: 4px; color: #ffb6c1; font-weight: bold;">Scaling Contributions:</div>`;
-            html += `<div class="tt-stat-line" style="color:#2ecc71;">• ⚔️ Attack: +${Math.floor(totalVal * 0.75)}</div>`;
-            html += `<div class="tt-stat-line" style="color:#e74c3c;">• ❤️ Max HP: +${Math.floor(totalVal * 3)}</div>`;
+            html += `<div class="tt-stat-line" style="color:#2ecc71;">• ⚔️ Attack: +${Math.floor(totalVal * 1.5)}</div>`;
+            html += `<div class="tt-stat-line" style="color:#e74c3c;">• ❤️ Max HP: +${Math.floor(totalVal * 10)}</div>`;
         } else if (statKey === 'dex') {
             html += `<div style="margin: 6px 0; border-top: 1px dashed #444; padding-top: 4px; color: #ffb6c1; font-weight: bold;">Scaling Contributions:</div>`;
-            html += `<div class="tt-stat-line" style="color:#e67e22;">• ✨ Crit Chance: +${(totalVal * 0.1).toFixed(1)}%</div>`;
-            html += `<div class="tt-stat-line" style="color:#f1c40f;">• 💥 Crit Multi: +${(totalVal * 0.5).toFixed(1)}%</div>`;
-            html += `<div class="tt-stat-line" style="color:#3498db;">• 👟 Move Speed: +${(totalVal * 0.1).toFixed(1)}</div>`;
+            html += `<div class="tt-stat-line" style="color:#e67e22;">• ✨ Crit Chance: +${(totalVal * 0.2).toFixed(1)}%</div>`;
+            html += `<div class="tt-stat-line" style="color:#f1c40f;">• 💥 Crit Multi: +${(totalVal * 1.0).toFixed(1)}%</div>`;
+            html += `<div class="tt-stat-line" style="color:#3498db;">• 👟 Move Speed: +${(totalVal * 0.25).toFixed(1)}</div>`;
         } else if (statKey === 'int') {
             html += `<div style="margin: 6px 0; border-top: 1px dashed #444; padding-top: 4px; color: #ffb6c1; font-weight: bold;">Scaling Contributions:</div>`;
-            html += `<div class="tt-stat-line" style="color:#3498db;">• 🛡️ Block Rate: +${(totalVal * 0.1).toFixed(1)}%</div>`;
-            html += `<div class="tt-stat-line" style="color:#e74c3c;">• ⚡ Parry Rate: +${(totalVal * 0.1).toFixed(1)}%</div>`;
-            html += `<div class="tt-stat-line" style="color:#2ecc71;">• 🛡️ Defense: +${(totalVal * 0.2).toFixed(1)}</div>`;
+            html += `<div class="tt-stat-line" style="color:#3498db;">• 🛡️ Block Rate: +${(totalVal * 0.2).toFixed(1)}%</div>`;
+            html += `<div class="tt-stat-line" style="color:#e74c3c;">• ⚡ Parry Rate: +${(totalVal * 0.2).toFixed(1)}%</div>`;
+            html += `<div class="tt-stat-line" style="color:#2ecc71;">• 🛡️ Defense: +${(totalVal * 0.75).toFixed(1)}</div>`;
             html += `<div class="tt-stat-line" style="color:#9b59b6;">• 🧪 Potion Dur: +${Math.floor(totalVal)}%</div>`;
         }
         
