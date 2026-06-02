@@ -276,10 +276,128 @@
         .log-item-link { cursor: help; text-decoration: underline; text-decoration-style: dashed; pointer-events: auto; }
         
         #death-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 250px;
-            background: rgba(192, 57, 43, 0.90); color: white; display: none;
-            justify-content: center; align-items: center; flex-direction: column;
-            z-index: 5000; text-shadow: 2px 2px 5px black; pointer-events: auto; cursor: pointer; text-align:center;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 3, 3, 0.88); color: white; display: none;
+            justify-content: center; align-items: center;
+            z-index: 15000; pointer-events: auto;
+            backdrop-filter: blur(5px);
+            border-radius: 8px;
+            animation: deathFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes deathFadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        #death-card {
+            background: linear-gradient(135deg, #1d0707, #080101);
+            border: 2px solid #a32e2e;
+            border-radius: 8px;
+            padding: 24px;
+            width: 90%;
+            max-width: 440px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.95), inset 0 0 25px rgba(163, 46, 46, 0.25);
+            text-align: center;
+            transform: scale(0.9);
+            animation: deathCardPop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
+        }
+
+        @keyframes deathCardPop {
+            0% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+
+        #death-header {
+            font-size: 32px;
+            font-weight: 900;
+            color: #e74c3c;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+            margin-bottom: 4px;
+        }
+
+        #death-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #e74c3c, transparent);
+            margin: 12px 0;
+        }
+
+        #death-quote {
+            font-style: italic;
+            font-size: 11px;
+            color: #bfa6a6;
+            margin-bottom: 20px;
+        }
+
+        #death-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .death-stat-box {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #5a1919;
+            border-radius: 4px;
+            padding: 10px 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .death-stat-label {
+            font-size: 9px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .death-stat-val {
+            font-size: 13px;
+            font-weight: bold;
+            color: #f1c40f;
+        }
+
+        #death-tip-container {
+            background: rgba(192, 57, 43, 0.08);
+            border: 1px solid rgba(192, 57, 43, 0.3);
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #ddd;
+            text-align: left;
+            margin-bottom: 24px;
+        }
+
+        #death-respawn-btn {
+            background: linear-gradient(135deg, #c0392b, #8e2020);
+            border: 1px solid #e74c3c;
+            color: white;
+            font-weight: bold;
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        #death-respawn-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(231, 76, 60, 0.45);
+            border-color: #f1c40f;
+        }
+
+        #death-respawn-btn:active {
+            transform: translateY(1px);
         }
         
         .live-drop-cols { display: flex; justify-content: space-between; margin-bottom: 10px; }
@@ -364,9 +482,34 @@
             <div id="altar-list" style="display:flex; flex-direction:column; gap:8px;" onscroll="hideTooltip()" ontouchmove="hideTooltip()"></div>
         </div>
 
-        <div id="death-overlay" onclick="respawnHero()">
-            <div style="font-size: 42px; font-weight: bold;">DEFEATED</div>
-            <div style="font-size: 16px; margin-top: 10px; text-align:center;">Your hero has been defeated!<br><br><span style="color:#f1c40f; font-weight:bold; font-size:20px;">[ Click to Respawn ]</span></div>
+        <div id="death-overlay">
+            <div id="death-card">
+                <div id="death-header">DEFEATED</div>
+                <div id="death-divider"></div>
+                <div id="death-quote">"The path to glory is paved with countless falls."</div>
+                
+                <div id="death-stats-grid">
+                    <div class="death-stat-box">
+                        <span class="death-stat-label">Historic Peak</span>
+                        <span class="death-stat-val" id="death-stat-peak">Stage 1</span>
+                    </div>
+                    <div class="death-stat-box">
+                        <span class="death-stat-label">Retreat Safe</span>
+                        <span class="death-stat-val" id="death-stat-retreat" style="color: #e74c3c;">Stage 1</span>
+                    </div>
+                    <div class="death-stat-box">
+                        <span class="death-stat-label">Lifetime Slain</span>
+                        <span class="death-stat-val" id="death-stat-kills">0</span>
+                    </div>
+                </div>
+
+                <div id="death-tip-container">
+                    <strong style="color: #e74c3c; display: block; margin-bottom: 4px;">💡 VALKYRIE'S ADVICE:</strong>
+                    <span id="death-tip-text">Optimize your attributes to better match this environment.</span>
+                </div>
+
+                <button id="death-respawn-btn" onclick="respawnHero()">Arise & Reclaim</button>
+            </div>
         </div>
 
         <div id="control-bar">
@@ -3506,24 +3649,57 @@ window.onload = function() {
    function handlePlayerDefeat() {
         // Ensure cumulative damage values clear on player defeat
         effects = effects.filter(e => !e.isCumulative);
-        isGamePaused = true; playerStats.isBossMode = false; playerStats.isFarmingLoop = false; playerStats.isUberBoss = false; playerStats.isDungeonMode = false;
+        isGamePaused = true; 
+        playerStats.isBossMode = false; 
+        playerStats.isFarmingLoop = false; 
+        playerStats.isUberBoss = false; 
+        playerStats.isDungeonMode = false;
         
         // Reset phoenix second wind flag upon run defeat to allow reuse on subsequent attempts
         playerStats.usedSecondWind = false;
         
         // Rogue-lite restart stage (70% of maximum reached stage, floor minimum 1)
         let restartStage = Math.max(1, Math.floor((playerStats.maxStage || 1) * 0.70));
+        
+        // Populate Death Screen Metrics
+        document.getElementById('death-stat-peak').innerText = `Stage ${playerStats.maxStage || 1}`;
+        document.getElementById('death-stat-retreat').innerText = `Stage ${restartStage}`;
+        document.getElementById('death-stat-kills').innerText = (playerStats.totalLifetimeKills || 0).toLocaleString();
+        
+        // Attribute Audit and Dynamic Advice
+        let p = resolvePlayerStats();
+        let stage = playerStats.stage;
+        let adviceText = "Tempering your Primary Weapon is highly effective. Shorter fight durations naturally decrease the dynamic damage sustained from enemies.";
+        
+        if (p.def < stage * 1.5) {
+            adviceText = "Your Defense rating is currently trailing behind this Stage's curve. Re-allocate Skill Points into Strength or Intelligence, or Temper defensive gear to mitigate heavy hits.";
+        } else if (p.maxHp < stage * 15) {
+            adviceText = "Your Max HP pool is too shallow to absorb critical strikes. Allocate Skill Points to HP or find chest/overall armor with solid vitality parameters.";
+        } else if (p.critChance < 0.20) {
+            adviceText = "Your critical strike rate is sub-optimal. Invest points into Dexterity to dramatically increase your burst damage output during progression.";
+        } else if (p.idleAttackSpeed > 45) {
+            adviceText = "Your automatic attack delay is sluggish. Equip relics like Sloth's Blessing or consume temporary Haste Potions to narrow the attack frame gap.";
+        }
+        
+        document.getElementById('death-tip-text').innerText = adviceText;
+        
+        // Set restart coordinates
         playerStats.stage = restartStage;
         
         updateUI();
         pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[DEFEATED] Your hero fell in battle! Returned to Stage ${restartStage} (70% of Max Stage ${playerStats.maxStage || 1}). All attributes, stats, level, and items remain intact!</span>`);
-        document.getElementById('death-overlay').style.display = "flex"; window.saveGame();
+        
+        document.getElementById('death-overlay').style.display = "flex"; 
+        window.saveGame();
     }
 
     window.respawnHero = function() {
         document.getElementById('death-overlay').style.display = "none";
-        let p = resolvePlayerStats(); playerStats.currentHp = p.maxHp; 
-        updateUI(); reviveTimer = 90; isGamePaused = false;
+        let p = resolvePlayerStats(); 
+        playerStats.currentHp = p.maxHp; 
+        updateUI(); 
+        reviveTimer = 90; 
+        isGamePaused = false;
     };
 
     window.rechallengeBoss = function() { playerStats.isBossMode = true; playerStats.isFarmingLoop = false; mob = null; updateUI(); };
