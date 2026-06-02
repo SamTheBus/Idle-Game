@@ -2808,7 +2808,7 @@ window.onload = function() {
             id: idCounter++, name: "", type: chosenType, statsRolled: isArt ? "UNIQUE" : statLinesCount, temperLevel: 0, stageLevel: stageScale,
             atk: 0, maxHp: 0, def: 0, moveSpeed: 0, critChance: 0, critDamage: 0, block: 0, parry: 0, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0,
             activeAttackSpeed: 0, idleAttackSpeed: 0,
-            baseAtk: 0, baseMaxHp: 0, baseDef: 0, baseMoveSpeed: 0,
+            baseAtk: 0, baseMaxHp: 0, baseDef: 0, baseMoveSpeed: 0, baseBlock: 0, baseParry: 0,
             bonusAtk: 0, bonusMaxHp: 0, bonusDef: 0, bonusMoveSpeed: 0, bonusCritChance: 0, bonusCritDamage: 0, bonusBlock: 0, bonusParry: 0,
             bonusActiveSpeed: 0, bonusIdleSpeed: 0,
             bonusStr: 0, bonusDex: 0, bonusInt: 0, str: 0, dex: 0, int: 0,
@@ -6700,6 +6700,68 @@ window.onload = function() {
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.restore();
         }
+
+        // 5.6. Active Buffs HUD Overlay (Toon Styled)
+        let pStats = resolvePlayerStats();
+        let activeBuffsList = [];
+        let potDurationMax = 18000 * (1 + pStats.int * 0.01);
+        let normalBuffMax = checkArtifactTrait("extend_buffs") ? 900 : 600;
+
+        if (playerStats.frenzyTimer > 0) activeBuffsList.push({ icon: "🔥", timer: playerStats.frenzyTimer, max: normalBuffMax, color: "#e67e22" });
+        if (playerStats.adrenalineTimer > 0) activeBuffsList.push({ icon: "⚡", timer: playerStats.adrenalineTimer, max: normalBuffMax, color: "#f1c40f" });
+        if (playerStats.atkPotionTimer > 0) activeBuffsList.push({ icon: "⚔️", timer: playerStats.atkPotionTimer, max: potDurationMax, color: "#2ecc71" });
+        if (playerStats.hpPotionTimer > 0) activeBuffsList.push({ icon: "❤️", timer: playerStats.hpPotionTimer, max: potDurationMax, color: "#e74c3c" });
+        if (playerStats.defPotionTimer > 0) activeBuffsList.push({ icon: "🛡️", timer: playerStats.defPotionTimer, max: potDurationMax, color: "#3498db" });
+        if (playerStats.hastePotionTimer > 0) activeBuffsList.push({ icon: "👟", timer: playerStats.hastePotionTimer, max: potDurationMax, color: "#f1c40f" });
+
+        let startX = 15;
+        let startY = 15;
+        let iconSize = 28;
+        let spacing = 8;
+
+        activeBuffsList.forEach((buff, idx) => {
+            let bx = startX + idx * (iconSize + spacing);
+            let by = startY;
+
+            ctx.save();
+            ctx.fillStyle = "#1c1c1c";
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            // Legacy-safe rounded rect support
+            if (ctx.roundRect) {
+                ctx.roundRect(bx, by, iconSize, iconSize, 4);
+            } else {
+                ctx.rect(bx, by, iconSize, iconSize);
+            }
+            ctx.fill();
+            ctx.stroke();
+
+            // Draw radial cooldown indicator circle sweep
+            let progressPct = Math.min(1, buff.timer / buff.max);
+            ctx.beginPath();
+            ctx.arc(bx + iconSize / 2, by + iconSize / 2, iconSize / 2 - 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * progressPct));
+            ctx.strokeStyle = buff.color;
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // Draw centered buff icon
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "12px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(buff.icon, bx + iconSize / 2, by + iconSize / 2);
+
+            // Draw duration text underneath card
+            let secondsLeft = Math.ceil(buff.timer / 60);
+            ctx.font = "bold 8px monospace";
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 2;
+            ctx.strokeText(secondsLeft + "s", bx + iconSize / 2, by + iconSize + 6);
+            ctx.fillText(secondsLeft + "s", bx + iconSize / 2, by + iconSize + 6);
+            ctx.restore();
+        });
 
         // 6. Active DPS Box (Cel-shaded block)
         let actDps = calculateActiveDps();
