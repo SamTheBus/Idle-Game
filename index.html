@@ -336,10 +336,12 @@
             <div id="tab-inv" class="tab-content">
                 <div class="sub-tabs">
                     <button id="sub-tab-eq" class="sub-tab-btn active" onclick="switchSubTab('EQUIP')">Equipment (<span id="btn-bag-count">0</span>/<span id="btn-bag-max">20</span>)</button>
+                    <button id="sub-tab-art" class="sub-tab-btn" onclick="switchSubTab('ART')">Artifacts (<span id="btn-art-count">0</span>/<span id="btn-art-max">20</span>)</button>
                     <button id="sub-tab-etc" class="sub-tab-btn" onclick="switchSubTab('ETC')">ETC Items</button>
                     <button id="sub-tab-use" class="sub-tab-btn" onclick="switchSubTab('USE')">Use Items</button>
                 </div>
                 <div id="bag-equip" class="bag-container" onscroll="hideTooltip()" ontouchmove="hideTooltip()"></div>
+                <div id="bag-art" class="bag-container" style="display:none;" onscroll="hideTooltip()" ontouchmove="hideTooltip()"></div>
                 <div id="bag-etc" class="bag-container" style="display:none;" onscroll="hideTooltip()" ontouchmove="hideTooltip()"></div>
                 <div id="bag-use" class="bag-container" style="display:none;" onscroll="hideTooltip()" ontouchmove="hideTooltip()"></div>
             </div>
@@ -597,7 +599,7 @@ window.onload = function() {
     };
 
     window.toggleLock = function(id) {
-        let item = inventory.EQUIP.find(i => i.id === id);
+        let item = inventory.EQUIP.find(i => i.id === id) || (inventory.ARTIFACT && inventory.ARTIFACT.find(i => i.id === id));
         if (!item) {
             for (let k in equippedSlots) {
                 if (equippedSlots[k] && equippedSlots[k].id === id) {
@@ -666,7 +668,7 @@ window.onload = function() {
     };
 
     let equippedSlots = { weapon: null, subweapon: null, helmet: null, chest: null, leggings: null, overall: null, boots: null, art1: null, art2: null, art3: null };
-    let inventory = { EQUIP: [], ETC: {}, USE: {} };
+    let inventory = { EQUIP: [], ARTIFACT: [], ETC: {}, USE: {} };
     let logsHistory = [];
     let frozenItemDb = {}; 
     let idCounter = 0;
@@ -818,24 +820,128 @@ window.onload = function() {
             if (gachaKeyDrop > 0) addEtcDrop("Gacha Key", gachaKeyDrop);
             
             let actualItems = 0; 
-            let scraps = 0;
+            let actualArtifacts = 0;
+            let scrapsGainedMap = {}; 
             let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
 
+            function recordScrapGained(name, amount) {
+                if (!scrapsGainedMap[name]) scrapsGainedMap[name] = 0;
+                scrapsGainedMap[name] += amount;
+                addEtcDrop(name, amount);
+            }
+
+            // Snapshot existing items at the beginning of offline calculation to protect them from auto-salvaging
+            let initialEquipIds = new Set(inventory.EQUIP.map(item => item.id));
+            let initialArtifactIds = new Set(inventory.ARTIFACT.map(item => item.id));
+            let equipTypesList = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+
             for (let i = 0; i < dropsEarned; i++) {
-                if (inventory.EQUIP.length < maxBag) { 
-                    rollEquipmentDrop(false, true); 
-                    actualItems++; 
-                } else { 
-                    scraps++; 
+                let isRareMob = Math.random() < p.rareSpawn;
+                let artifactChance = playerStats.isUberBoss ? 0.30 : 0.05;
+                let isBossKill = false;
+                let allowArtifact = isBossKill && (Math.random() < artifactChance);
+
+                let chosenType = allowArtifact ? "artifact" : equipTypesList[Math.floor(Math.random() * equipTypesList.length)];
+                let statLinesCount = 0;
+                let luckMultiplier = p.qly;
+                let rollVal = Math.random() * 100;
+
+                if (rollVal < (0.02 * luckMultiplier)) statLinesCount = 5;
+                else if (rollVal < (0.18 * luckMultiplier)) statLinesCount = 4;
+                else if (rollVal < (0.80 * luckMultiplier)) statLinesCount = 3;
+                else if (rollVal < (4.00 * luckMultiplier)) statLinesCount = 2;
+                else if (rollVal < (15.00 * luckMultiplier)) statLinesCount = 1;
+                else statLinesCount = 0;
+
+                let stageScale = Math.floor((playerStats.stage - 1) / 10) + 1;
+                let newItem = createItemObject(chosenType, statLinesCount, stageScale, 0);
+
+                if (newItem.type === "artifact") {
+                    if (inventory.ARTIFACT.length < maxBag) {
+                        inventory.ARTIFACT.push(newItem);
+                        actualArtifacts++;
+                    } else {
+                        // Artifact Sack is full. Look only at candidates dropped during this session that are unlocked.
+                        let newlyAddedArts = inventory.ARTIFACT.filter(item => !initialArtifactIds.has(item.id) && !item.locked);
+                        if (newlyAddedArts.length > 0) {
+                            // Unique artifacts are sorted by level
+                            newlyAddedArts.sort((a, b) => a.stageLevel - b.stageLevel);
+                            let worstArt = newlyAddedArts[0];
+                            if (newItem.stageLevel > worstArt.stageLevel) {
+                                recordScrapGained("Astral Essence", Math.floor(Math.random() * 2) + 1);
+                                let wIndex = inventory.ARTIFACT.findIndex(item => item.id === worstArt.id);
+                                if (wIndex !== -1) inventory.ARTIFACT.splice(wIndex, 1);
+                                inventory.ARTIFACT.push(newItem);
+                            } else {
+                                recordScrapGained("Astral Essence", Math.floor(Math.random() * 2) + 1);
+                            }
+                        } else {
+                            recordScrapGained("Astral Essence", Math.floor(Math.random() * 2) + 1);
+                        }
+                    }
+                } else {
+                    if (inventory.EQUIP.length < maxBag) {
+                        inventory.EQUIP.push(newItem);
+                        actualItems++;
+                    } else {
+                        // Equipment Sack is full. Look only at candidates dropped during this session that are unlocked.
+                        let newlyAddedEquip = inventory.EQUIP.filter(item => !initialEquipIds.has(item.id) && !item.locked);
+                        if (newlyAddedEquip.length > 0) {
+                            newlyAddedEquip.sort((a, b) => {
+                                if (a.statsRolled !== b.statsRolled) return a.statsRolled - b.statsRolled;
+                                return a.stageLevel - b.stageLevel;
+                            });
+                            let worstEquip = newlyAddedEquip[0];
+                            // Replace worst item if the new item is higher tier (or same tier but higher level)
+                            if (newItem.statsRolled > worstEquip.statsRolled || (newItem.statsRolled === worstEquip.statsRolled && newItem.stageLevel > worstEquip.stageLevel)) {
+                                let rolledTier = worstEquip.statsRolled;
+                                let scrapName = getScrapYieldName(rolledTier);
+                                let yieldAmount = Math.floor(Math.random() * 3) + 1;
+                                recordScrapGained(scrapName, yieldAmount);
+                                for (let t = rolledTier - 1; t >= 0; t--) {
+                                    if (Math.random() < 0.60) {
+                                        recordScrapGained(getScrapYieldName(t), Math.floor(Math.random() * 2) + 1);
+                                    }
+                                }
+                                let wIndex = inventory.EQUIP.findIndex(item => item.id === worstEquip.id);
+                                if (wIndex !== -1) inventory.EQUIP.splice(wIndex, 1);
+                                inventory.EQUIP.push(newItem);
+                            } else {
+                                let rolledTier = newItem.statsRolled;
+                                let scrapName = getScrapYieldName(rolledTier);
+                                let yieldAmount = Math.floor(Math.random() * 3) + 1;
+                                recordScrapGained(scrapName, yieldAmount);
+                                for (let t = rolledTier - 1; t >= 0; t--) {
+                                    if (Math.random() < 0.60) {
+                                        recordScrapGained(getScrapYieldName(t), Math.floor(Math.random() * 2) + 1);
+                                    }
+                                }
+                            }
+                        } else {
+                            // Entire sack is composed of pre-existing/locked items; salvage the new item directly
+                            let rolledTier = newItem.statsRolled;
+                            let scrapName = getScrapYieldName(rolledTier);
+                            let yieldAmount = Math.floor(Math.random() * 3) + 1;
+                            recordScrapGained(scrapName, yieldAmount);
+                            for (let t = rolledTier - 1; t >= 0; t--) {
+                                if (Math.random() < 0.60) {
+                                    recordScrapGained(getScrapYieldName(t), Math.floor(Math.random() * 2) + 1);
+                                }
+                            }
+                        }
+                    }
                 }
             }
-            if (scraps > 0) addEtcDrop("Monster Soul", scraps);
-            
+
+            let salvageReport = Object.keys(scrapsGainedMap).map(k => `x${scrapsGainedMap[k]} ${k}`).join(", ");
+            let salvageText = salvageReport ? `. Auto-salvaged: ${salvageReport}` : "";
+
             setTimeout(() => {
-                pushLog(`<span style='color:#3498db; font-weight:bold;'>[OFFLINE GAINS] Gone for ${Math.floor(offlineSeconds/60)} mins. Kills: ${simulatedKills}. XP: +${totalXpEarned}. Gold: +${goldEarned}. Items: +${actualItems}. Souls: +${scraps}. Gacha Keys: +${gachaKeyDrop}</span>`);
+                pushLog(`<span style='color:#3498db; font-weight:bold;'>[OFFLINE GAINS] Gone for ${Math.floor(offlineSeconds/60)} mins. Kills: ${simulatedKills}. XP: +${totalXpEarned}. Gold: +${goldEarned}. Items: +${actualItems}${actualArtifacts > 0 ? `, Artifacts: +${actualArtifacts}` : ""}. Gacha Keys: +${gachaKeyDrop}${salvageText}</span>`);
                 // Provide high-feedback visual confirmation of offline earnings
                 pushHeaderToast(`💤 Welcome Back! Offline Gains: +${goldEarned} Gold, +${totalXpEarned} XP!`, "#3498db");
             }, 500);
+
             return simulatedKills * timePerKill * 1000; // Return exact time consumed
         }
         return 0;
@@ -848,7 +954,19 @@ window.onload = function() {
                 let parsed = JSON.parse(data);
                 playerStats = { ...playerStats, ...parsed.playerStats };
                 equippedSlots = parsed.equippedSlots || equippedSlots;
-                inventory = parsed.inventory || { EQUIP: [], ETC: {}, USE: {} };
+                inventory = parsed.inventory || { EQUIP: [], ARTIFACT: [], ETC: {}, USE: {} };
+                if (!inventory.ARTIFACT) { inventory.ARTIFACT = []; }
+                
+                // Migrate legacy artifacts that were stored in the EQUIP sack to the ARTIFACT sack
+                if (inventory.EQUIP) {
+                    for (let i = inventory.EQUIP.length - 1; i >= 0; i--) {
+                        if (inventory.EQUIP[i] && inventory.EQUIP[i].type === "artifact") {
+                            inventory.ARTIFACT.push(inventory.EQUIP[i]);
+                            inventory.EQUIP.splice(i, 1);
+                        }
+                    }
+                }
+                
                 idCounter = parsed.idCounter || idCounter;
                 logsHistory = parsed.logsHistory || logsHistory;
                 frozenItemDb = parsed.frozenItemDb || frozenItemDb;
@@ -1253,7 +1371,11 @@ window.onload = function() {
         if (shopItem.purchased || playerStats.coins < shopItem.cost) return;
 
         let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
-        if (inventory.EQUIP.length >= maxBag) { pushHeaderToast(`Inventory Full!`, "#e74c3c"); return; }
+        if (shopItem.type === "artifact") {
+            if (inventory.ARTIFACT.length >= maxBag) { pushHeaderToast(`Artifact Sack Full!`, "#e74c3c"); return; }
+        } else {
+            if (inventory.EQUIP.length >= maxBag) { pushHeaderToast(`Inventory Full!`, "#e74c3c"); return; }
+        }
 
         playerStats.coins -= shopItem.cost; shopItem.purchased = true;
         
@@ -1261,7 +1383,11 @@ window.onload = function() {
         purchasedItem.id = idCounter++;
         delete purchasedItem.cost; delete purchasedItem.purchased; delete purchasedItem.isIOTD;
         
-        inventory.EQUIP.push(purchasedItem);
+        if (purchasedItem.type === "artifact") {
+            inventory.ARTIFACT.push(purchasedItem);
+        } else {
+            inventory.EQUIP.push(purchasedItem);
+        }
         pushLog(`<strong style='color:#f1c40f;'>[SHOP]</strong> Purchased: <span style='color:${getTierColor(purchasedItem.statsRolled)};'>${purchasedItem.name}</span>`, purchasedItem.id);
         pushToast(purchasedItem.name, purchasedItem.statsRolled, getTierColor(purchasedItem.statsRolled));
         
@@ -1444,25 +1570,36 @@ window.onload = function() {
         }
 
         if(!silent) pushToast(item.name, item.statsRolled, getTierColor(item.statsRolled));
-        inventory.EQUIP.push(item);
+        if (item.type === "artifact") {
+            inventory.ARTIFACT.push(item);
+        } else {
+            inventory.EQUIP.push(item);
+        }
         if(!silent) { renderInventory(); renderForgeTab(); updateUI(); }
     }
 
     function rollEquipmentDrop(isBossKill, silent = false, minStars = 0, isRareMob = false) {
-        let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+    let p = resolvePlayerStats();
+    let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+    let artifactChance = playerStats.isUberBoss ? 0.30 : 0.05;
+    let allowArtifact = isBossKill && (Math.random() < artifactChance); 
+    
+    let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+    let chosenType = allowArtifact ? "artifact" : types[Math.floor(Math.random() * types.length)];
+
+    if (chosenType === "artifact") {
+        if (inventory.ARTIFACT.length >= maxBag) {
+            if(!silent) { pushHeaderToast(`Artifact Sack Full! Astral Essence gained.`, "#e74c3c"); addEtcDrop("Astral Essence", 1); }
+            return;
+        }
+    } else {
         if (inventory.EQUIP.length >= maxBag) {
             if(!silent) { pushHeaderToast(`Bag Full! Soul gained.`, "#e74c3c"); addEtcDrop(isBossKill ? "Ancient Core" : (isRareMob ? "Luminous Soul" : "Monster Soul"), 1); }
             return;
         }
+    }
 
-        let p = resolvePlayerStats();
-        let artifactChance = playerStats.isUberBoss ? 0.30 : 0.05;
-        let allowArtifact = isBossKill && (Math.random() < artifactChance); 
-        
-        let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
-        let chosenType = allowArtifact ? "artifact" : types[Math.floor(Math.random() * types.length)];
-
-        let statLinesCount = 0; let luckMultiplier = p.qly; let roll = Math.random() * 100;
+    let statLinesCount = 0; let luckMultiplier = p.qly; let roll = Math.random() * 100;
         
         if (minStars === 1) {
             if (roll < (0.5 * luckMultiplier)) statLinesCount = 5; else if (roll < (5.0 * luckMultiplier)) statLinesCount = 4;
@@ -1479,11 +1616,19 @@ window.onload = function() {
     }
 
     function rollGachaDrop() {
-        let p = resolvePlayerStats();
-        let allowArtifact = (Math.random() < 0.01); 
-        let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
-        let chosenType = allowArtifact ? "artifact" : types[Math.floor(Math.random() * types.length)];
-        let statLinesCount = 1; let luckMultiplier = p.qly; let roll = Math.random() * 100;
+    let p = resolvePlayerStats();
+    let allowArtifact = (Math.random() < 0.01); 
+    let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+    let chosenType = allowArtifact ? "artifact" : types[Math.floor(Math.random() * types.length)];
+    
+    let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+    if (chosenType === "artifact") {
+        if (inventory.ARTIFACT.length >= maxBag) { pushHeaderToast(`Artifact Sack Full!`, "#e74c3c"); return; }
+    } else {
+        if (inventory.EQUIP.length >= maxBag) { pushHeaderToast(`Inventory Full!`, "#e74c3c"); return; }
+    }
+    
+    let statLinesCount = 1; let luckMultiplier = p.qly; let roll = Math.random() * 100;
         
         if (roll < (0.5 * luckMultiplier)) statLinesCount = 5; else if (roll < (2.0 * luckMultiplier)) statLinesCount = 4;
         else if (roll < (10.0 * luckMultiplier)) statLinesCount = 3; else if (roll < (30.0 * luckMultiplier)) statLinesCount = 2; else statLinesCount = 1; 
@@ -1622,7 +1767,7 @@ window.onload = function() {
 
     function pushLog(text, itemId = null) {
         if (itemId !== null) {
-            let item = inventory.EQUIP.find(i => i.id === itemId);
+            let item = inventory.EQUIP.find(i => i.id === itemId) || (inventory.ARTIFACT && inventory.ARTIFACT.find(i => i.id === itemId));
             if (!item) { for (let k in equippedSlots) { if (equippedSlots[k] && equippedSlots[k].id === itemId) item = equippedSlots[k]; } }
             if (item) {
                 frozenItemDb[itemId] = JSON.parse(JSON.stringify(item));
@@ -1754,8 +1899,26 @@ window.onload = function() {
     }
 
     window.salvageItem = function(id) {
-        window.hideTooltip(); let item = inventory.EQUIP.find(i => i.id === id); let isEquipped = false; let slotToClear = null;
-        if (!item) { for (let k in equippedSlots) { if (equippedSlots[k] && equippedSlots[k].id === id) { item = equippedSlots[k]; isEquipped = true; slotToClear = k; break; } } }
+        window.hideTooltip(); 
+        let item = inventory.EQUIP.find(i => i.id === id); 
+        let isEquipped = false; 
+        let slotToClear = null;
+        let isArtifactSack = false;
+
+        if (!item && inventory.ARTIFACT) {
+            item = inventory.ARTIFACT.find(i => i.id === id);
+            if (item) isArtifactSack = true;
+        }
+        if (!item) { 
+            for (let k in equippedSlots) { 
+                if (equippedSlots[k] && equippedSlots[k].id === id) { 
+                    item = equippedSlots[k]; 
+                    isEquipped = true; 
+                    slotToClear = k; 
+                    break; 
+                } 
+            } 
+        }
         if (!item) return;
 
         if (item.locked) {
@@ -1763,7 +1926,13 @@ window.onload = function() {
             return;
         }
 
-        if (isEquipped) { equippedSlots[slotToClear] = null; } else { inventory.EQUIP.splice(inventory.EQUIP.indexOf(item), 1); }
+        if (isEquipped) { 
+            equippedSlots[slotToClear] = null; 
+        } else if (isArtifactSack) {
+            inventory.ARTIFACT.splice(inventory.ARTIFACT.indexOf(item), 1);
+        } else { 
+            inventory.EQUIP.splice(inventory.EQUIP.indexOf(item), 1); 
+        }
         
         let rolledTier = item.statsRolled; 
         let scrapsGained = []; 
@@ -1918,13 +2087,16 @@ window.onload = function() {
     }
 
     window.showInventoryTooltip = function(e, itemId) {
-        e.stopPropagation(); let item = inventory.EQUIP.find(i => i.id === itemId); if (!item) return;
+        e.stopPropagation(); 
+        let item = inventory.EQUIP.find(i => i.id === itemId) || (inventory.ARTIFACT && inventory.ARTIFACT.find(i => i.id === itemId)); 
+        if (!item) return;
         let tt = document.getElementById('game-tooltip'); tt.innerHTML = buildGeneralTooltipHtml(item, true); 
         tt.style.borderColor = getTierColor(item.statsRolled); tt.style.display = "block"; window.positionTooltip(e, tt);
     };
 
     window.showForgeTooltip = function(e, itemId) {
-        e.stopPropagation(); let item = inventory.EQUIP.find(i => i.id === itemId); 
+        e.stopPropagation(); 
+        let item = inventory.EQUIP.find(i => i.id === itemId) || (inventory.ARTIFACT && inventory.ARTIFACT.find(i => i.id === itemId)); 
         if (!item) { for (let k in equippedSlots) { if(equippedSlots[k] && equippedSlots[k].id === itemId) { item = equippedSlots[k]; item.isEquippedSlot = k; break;} } }
         if (!item) return;
         let tt = document.getElementById('game-tooltip'); tt.innerHTML = buildGeneralTooltipHtml(item, false); 
@@ -2100,8 +2272,15 @@ window.onload = function() {
     };
 
     window.equipItem = function(id) {
-        window.hideTooltip(); let index = inventory.EQUIP.findIndex(i => i.id === id); if (index === -1) return;
-        let item = inventory.EQUIP[index];
+        window.hideTooltip(); 
+        let isArtifactSack = false;
+        let index = inventory.EQUIP.findIndex(i => i.id === id); 
+        if (index === -1 && inventory.ARTIFACT) {
+            index = inventory.ARTIFACT.findIndex(i => i.id === id);
+            if (index !== -1) isArtifactSack = true;
+        }
+        if (index === -1) return;
+        let item = isArtifactSack ? inventory.ARTIFACT[index] : inventory.EQUIP[index];
         
         let oldMaxHp = resolvePlayerStats().maxHp;
         
@@ -2116,12 +2295,22 @@ window.onload = function() {
             equippedSlots[item.type] = item;
         } else if (item.type === "artifact") {
             if (!equippedSlots.art1) equippedSlots.art1 = item; else if (!equippedSlots.art2) equippedSlots.art2 = item;
-            else { if (equippedSlots.art3) inventory.EQUIP.push(equippedSlots.art3); equippedSlots.art3 = item; }
+            else { 
+                if (equippedSlots.art3) {
+                    inventory.ARTIFACT.push(equippedSlots.art3); 
+                }
+                equippedSlots.art3 = item; 
+            }
         } else {
             if (equippedSlots[item.type]) inventory.EQUIP.push(equippedSlots[item.type]);
             equippedSlots[item.type] = item;
         }
-        inventory.EQUIP.splice(index, 1); 
+        
+        if (isArtifactSack) {
+            inventory.ARTIFACT.splice(index, 1);
+        } else {
+            inventory.EQUIP.splice(index, 1);
+        }
         
         let newMaxHp = resolvePlayerStats().maxHp;
         playerStats.currentHp = Math.max(1, Math.min(newMaxHp, Math.floor((playerStats.currentHp / oldMaxHp) * newMaxHp)));
@@ -2131,20 +2320,26 @@ window.onload = function() {
 
     window.unequipItem = function(slotKey) {
         let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
-        if (inventory.EQUIP.length >= maxBag) { pushHeaderToast(`Inventory Full!`, "#e74c3c"); return; }
         window.hideTooltip(); let item = equippedSlots[slotKey]; if (!item) return;
         
         let oldMaxHp = resolvePlayerStats().maxHp;
-        equippedSlots[slotKey] = null; inventory.EQUIP.push(item); 
+        if (item.type === "artifact") {
+            if (inventory.ARTIFACT.length >= maxBag) { pushHeaderToast(`Artifact Sack Full!`, "#e74c3c"); return; }
+            equippedSlots[slotKey] = null; 
+            inventory.ARTIFACT.push(item);
+        } else {
+            if (inventory.EQUIP.length >= maxBag) { pushHeaderToast(`Inventory Full!`, "#e74c3c"); return; }
+            equippedSlots[slotKey] = null; 
+            inventory.EQUIP.push(item);
+        }
         
         let newMaxHp = resolvePlayerStats().maxHp;
         playerStats.currentHp = Math.max(1, Math.min(newMaxHp, Math.floor((playerStats.currentHp / oldMaxHp) * newMaxHp)));
         
         updateUI(); renderInventory(); renderForgeTab(); window.saveGame();
     };
-
-    window.selectForgeItem = function(id) { 
-        let item = inventory.EQUIP.find(i => i.id === id);
+     window.selectForgeItem = function(id) { 
+        let item = inventory.EQUIP.find(i => i.id === id) || (inventory.ARTIFACT && inventory.ARTIFACT.find(i => i.id === id));
         if (!item) { for (let k in equippedSlots) { if (equippedSlots[k] && equippedSlots[k].id === id) { item = equippedSlots[k]; break; } } }
         forgeSelectedItem = item; renderForgeTab(); 
     };
@@ -2473,7 +2668,7 @@ window.onload = function() {
     function renderForgeTab() {
         let listEl = document.getElementById('forge-list'); let detailEl = document.getElementById('forge-details');
         
-        let allValidItems = [...inventory.EQUIP];
+         let allValidItems = [...inventory.EQUIP, ...(inventory.ARTIFACT || [])];
         for(let key in equippedSlots) {
             if(equippedSlots[key]) {
                 let eqClone = {...equippedSlots[key], isEquippedSlot: key};
@@ -3000,8 +3195,13 @@ window.onload = function() {
 
         let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
         document.getElementById('hud-hp').innerText = `${playerStats.currentHp}/${p.maxHp}`; document.getElementById('hud-coins').innerText = Math.floor(playerStats.coins);
-        document.getElementById('hud-bag').innerText = `${inventory.EQUIP.length}/${maxBag}`; document.getElementById('hud-bag').style.color = inventory.EQUIP.length >= maxBag ? "#e74c3c" : "#2ecc71";
+        document.getElementById('hud-bag').innerText = `${inventory.EQUIP.length}/${maxBag} (A:${inventory.ARTIFACT.length})`; document.getElementById('hud-bag').style.color = (inventory.EQUIP.length >= maxBag || inventory.ARTIFACT.length >= maxBag) ? "#e74c3c" : "#2ecc71";
         document.getElementById('btn-bag-count').innerText = inventory.EQUIP.length; document.getElementById('btn-bag-max').innerText = maxBag;
+        let btnArtCount = document.getElementById('btn-art-count');
+        if (btnArtCount) btnArtCount.innerText = inventory.ARTIFACT.length;
+        let btnArtMax = document.getElementById('btn-art-max');
+        if (btnArtMax) btnArtMax.innerText = maxBag;
+
         
         document.getElementById('stat-str').innerText = p.str;
         document.getElementById('stat-dex').innerText = p.dex;
@@ -3075,6 +3275,7 @@ window.onload = function() {
     }
 
     function renderInventory() {
+        let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
         let eqBox = document.getElementById('bag-equip');
         if (inventory.EQUIP.length === 0) { eqBox.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No equipment in sack.</div>"; }
         else {
@@ -3100,6 +3301,30 @@ window.onload = function() {
                 </div>`;
             }).join("");
         }
+
+        let artBox = document.getElementById('bag-art');
+        if (artBox) {
+            if (!inventory.ARTIFACT) inventory.ARTIFACT = [];
+            if (inventory.ARTIFACT.length === 0) { artBox.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No artifacts in sack.</div>"; }
+            else {
+                artBox.innerHTML = inventory.ARTIFACT.map(item => {
+                    let nameColor = getTierColor(item.statsRolled);
+                    let lockTag = item.locked ? " 🔒" : "";
+                    let lockBg = item.locked ? "#e74c3c" : "#7f8c8d";
+                    let lockIcon = item.locked ? "🔒" : "🔓";
+                    let details = `<span style="font-size:10px;color:#d2b4de;font-weight:bold;">Trait: ${item.desc}</span>`;
+                    return `<div class="bag-item" onmouseenter="showInventoryTooltip(event, ${item.id})" ontouchstart="showInventoryTooltip(event, ${item.id})" onmouseleave="hideTooltip()">
+                        <div><strong style="color:${nameColor};">${item.name}${lockTag}</strong><br>${details}</div>
+                        <div style="position:relative; z-index:10; white-space:nowrap;">
+                            <button class="btn-action" onclick="equipItem(${item.id})">Equip</button>
+                            <button class="btn-action" style="background:${lockBg}; margin-left:2px;" onclick="toggleLock(${item.id})">${lockIcon}</button>
+                            <button class="btn-action un" style="margin-left:12px;" onclick="salvageItem(${item.id})">Salvage</button>
+                        </div>
+                    </div>`;
+                }).join("");
+            }
+        }
+
         let etcBox = document.getElementById('bag-etc'); let etcKeys = Object.keys(inventory.ETC);
         if (etcKeys.length === 0) { etcBox.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No materials collected.</div>"; }
         else { etcBox.innerHTML = etcKeys.map(key => `<div class="bag-item" style="cursor:help;" onmouseenter="showEtcTooltip(event, this.dataset.key)" ontouchstart="showEtcTooltip(event, this.dataset.key)" onmouseleave="hideTooltip()" data-key="${key}"><span>📦 ${key}</span><strong>x${inventory.ETC[key]}</strong></div>`).join(""); }
@@ -3120,9 +3345,11 @@ window.onload = function() {
     window.switchSubTab = function(type) {
         window.hideTooltip(); state.currentSubTab = type;
         document.getElementById('sub-tab-eq').className = type === 'EQUIP' ? "sub-tab-btn active" : "sub-tab-btn";
+        document.getElementById('sub-tab-art').className = type === 'ART' ? "sub-tab-btn active" : "sub-tab-btn";
         document.getElementById('sub-tab-etc').className = type === 'ETC' ? "sub-tab-btn active" : "sub-tab-btn";
         document.getElementById('sub-tab-use').className = type === 'USE' ? "sub-tab-btn active" : "sub-tab-btn";
         document.getElementById('bag-equip').style.display = type === 'EQUIP' ? "block" : "none";
+        document.getElementById('bag-art').style.display = type === 'ART' ? "block" : "none";
         document.getElementById('bag-etc').style.display = type === 'ETC' ? "block" : "none";
         document.getElementById('bag-use').style.display = type === 'USE' ? "block" : "none";
     };
