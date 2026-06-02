@@ -1774,6 +1774,8 @@ window.onload = function() {
     let state = { autoAttack: true, efficiency: 1.0, currentSubTab: 'EQUIP' };
     let isGamePaused = false;
     let reviveTimer = 0;
+    let deathAnimationTimer = 0;
+    const deathMaxFrames = 90; // 1.5 seconds of dramatic visual slowdown on death
     let lastUpdateTime = Date.now(); // High-resolution timestamp for gap detection
 
     let beams = [];
@@ -4542,6 +4544,7 @@ window.onload = function() {
         // Ensure cumulative damage values clear on player defeat
         effects = effects.filter(e => !e.isCumulative);
         isGamePaused = true; 
+        deathAnimationTimer = 0; // Clear dynamic sequence
         playerStats.isBossMode = false; 
         playerStats.isFarmingLoop = false; 
         playerStats.isUberBoss = false; 
@@ -4617,8 +4620,11 @@ window.onload = function() {
         playerStats.killedBy = "Unknown Foe";
         playerStats.killedByMob = null;
         
+        // Reset dynamic death sequence variables
+        deathAnimationTimer = 0;
+        
         updateUI(); 
-        reviveTimer = 90; 
+        reviveTimer = 90; // Triggers the overhauled visual revive cascade
         isGamePaused = false;
     };
 
@@ -5034,8 +5040,41 @@ window.onload = function() {
             lastUpdateTime = now;
             return;
         }
-        
-        let gapMs = now - lastUpdateTime;
+
+        // Handle Visual Death Animation Countdown before popping HTML Overlay
+        let p = resolvePlayerStats(); 
+        if (deathAnimationTimer > 0) {
+            deathAnimationTimer--;
+            
+            // Grind scrolling background down to a dramatic halt
+            let speedFactor = deathAnimationTimer / deathMaxFrames; 
+            let scrollSpeed = (2 + (p.moveSpeed * 0.05)) * speedFactor;
+            scrollScenery(scrollSpeed);
+            
+            // Spawn dark/crimson particles dissolving from the hero
+            if (Math.random() < 0.7) {
+                particles.push({
+                    x: hero.x + 12 + randFloat(-10, 10),
+                    y: hero.y + 15 + randFloat(-15, 15),
+                    vx: randFloat(-2, 2),
+                    vy: randFloat(-3, -0.5),
+                    radius: randFloat(1.5, 3),
+                    color: Math.random() > 0.4 ? "#c0392b" : "#2c3e50",
+                    alpha: 1,
+                    life: randInt(20, 40)
+                });
+            }
+            
+            // Safely age effects and active particles, but freeze active combat logic
+            for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0.4; eff.life--; if (eff.life <= 0) effects.splice(i, 1); }
+            for (let i = particles.length - 1; i >= 0; i--) { let pt = particles[i]; pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.25; pt.life--; if (pt.life <= 0) particles.splice(i, 1); }
+            for (let i = beams.length - 1; i >= 0; i--) { let bm = beams[i]; bm.life--; if (bm.life <= 0) beams.splice(i, 1); }
+            
+            if (deathAnimationTimer === 0) {
+                handlePlayerDefeat();
+            }
+            return; // Halt normal combat/potions/fairy ticks during the collapse animation
+        }
         let maxOfflineMs = 28800 * 1000; // 8 hours maximum cap
         
         if (gapMs > maxOfflineMs) {
@@ -5174,7 +5213,10 @@ window.onload = function() {
                                     playerStats.killedBy = mob.isRare ? "Rare Monster" : "Standard Monster";
                                 }
                                 playerStats.killedByMob = JSON.parse(JSON.stringify(mob));
-                                handlePlayerDefeat(); 
+                                
+                                // Set up on-canvas slow motion death sequence
+                                playerStats.currentHp = 0;
+                                deathAnimationTimer = deathMaxFrames;
                                 return;
                             }
                         }
@@ -5674,8 +5716,25 @@ window.onload = function() {
            ========================================================================== */
         let hx = hero.x; let hy = hero.y;
         ctx.save();
-        ctx.translate(hx + 12, hy + 15);
-        let bounce = (!mob || !mob.isStopped) ? Math.abs(Math.sin(Date.now() / 150)) * 3 : 0;
+        
+        let bounce = 0;
+        let slumpRotation = 0;
+        let Yoffset = 0;
+        let deathOpacity = 1.0;
+        
+        if (deathAnimationTimer > 0) {
+            let t = (deathMaxFrames - deathAnimationTimer) / deathMaxFrames;
+            slumpRotation = t * Math.PI / 2.2; // Slump backward dramatically
+            Yoffset = t * 18; // Sink down into the terrain slightly
+            bounce = 0;
+            deathOpacity = Math.max(0, 1.0 - t * 0.85); // Dissolve opacity
+            ctx.translate(hx + 12, hy + 15 + Yoffset);
+            ctx.rotate(-slumpRotation);
+            ctx.globalAlpha = deathOpacity;
+        } else {
+            ctx.translate(hx + 12, hy + 15);
+            bounce = (!mob || !mob.isStopped) ? Math.abs(Math.sin(Date.now() / 150)) * 3 : 0;
+        }
         
         // Setup base cel stroke outline style
         ctx.strokeStyle = "#000000";
@@ -6020,21 +6079,88 @@ window.onload = function() {
             ctx.restore();
         });
 
-        // 5. Revive effect (clean, un-outlined atmospheric overlay)
+        // 5. Overhauled Gorgeous Revive Effect (Valkyrie divine light pillar + concentric rings + floating embers)
         if (reviveTimer > 0) {
             ctx.save();
-            ctx.globalAlpha = reviveTimer / 90;
-            let grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            grad.addColorStop(0, "rgba(255, 255, 200, 0.8)"); 
-            grad.addColorStop(1, "rgba(255, 255, 200, 0)");
-            ctx.fillStyle = grad;
-            ctx.beginPath(); 
-            ctx.moveTo(hero.x + 12, -10); 
-            ctx.lineTo(hero.x - 60, canvas.height); 
-            ctx.lineTo(hero.x + 80, canvas.height); 
-            ctx.fill();
+            let t = (90 - reviveTimer) / 90; // progress from 0 to 1
+            let beamX = hero.x + 12;
+            let groundY = 180;
+
+            // 5a. Concentric light shockwaves expanding outward along the ground
+            ctx.lineWidth = 3 * (1 - t);
+            for (let i = 0; i < 3; i++) {
+                let ringProgress = (t + i * 0.25) % 1.0;
+                let ringAlpha = (1 - ringProgress) * 0.8;
+                let radiusX = ringProgress * 120;
+                let radiusY = ringProgress * 25; // elliptical mapping
+                
+                ctx.strokeStyle = `rgba(241, 196, 15, ${ringAlpha})`;
+                ctx.beginPath();
+                ctx.ellipse(beamX, groundY, radiusX, radiusY, 0, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // 5b. Sacred Divine Light Pillars (Multiple layered gradients)
+            // Outer soft teal-blue glow
+            let outerBeam = ctx.createLinearGradient(beamX - 45, 0, beamX + 45, 0);
+            outerBeam.addColorStop(0, "rgba(26, 188, 156, 0)");
+            outerBeam.addColorStop(0.5, "rgba(26, 188, 156, " + (0.35 * (1 - t)) + ")");
+            outerBeam.addColorStop(1, "rgba(26, 188, 156, 0)");
+            ctx.fillStyle = outerBeam;
+            ctx.fillRect(beamX - 45, 0, 90, groundY);
+
+            // Inner high-energy golden pillar
+            let innerBeam = ctx.createLinearGradient(beamX - 15, 0, beamX + 15, 0);
+            innerBeam.addColorStop(0, "rgba(255, 255, 255, 0)");
+            innerBeam.addColorStop(0.5, "rgba(255, 243, 176, " + (0.85 * (1 - t)) + ")");
+            innerBeam.addColorStop(1, "rgba(255, 255, 255, 0)");
+            ctx.fillStyle = innerBeam;
+            ctx.fillRect(beamX - 15, 0, 30, groundY);
+
+            // 5c. Rising solar spark particles inside the beam
+            let numSparks = 10;
+            ctx.fillStyle = "rgba(254, 211, 48, " + (1 - t) + ")";
+            for (let i = 0; i < numSparks; i++) {
+                let sparkSeed = Math.sin(i * 45.3) * 0.5 + 0.5;
+                let sparkY = groundY - (((t * 220) + (sparkSeed * 180)) % 180);
+                let sparkX = beamX + Math.sin(t * 8 + i) * 12 * sparkSeed;
+                let sparkRadius = (2 + sparkSeed * 3.5) * (1 - t);
+                
+                ctx.beginPath();
+                ctx.arc(sparkX, sparkY, sparkRadius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 5d. Divine screen wash (Fades out rapidly in the first 30% of the animation)
+            if (t < 0.3) {
+                let flashOpacity = (1 - (t / 0.3)) * 0.5;
+                ctx.fillStyle = `rgba(255, 253, 235, ${flashOpacity})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
             ctx.restore();
             reviveTimer--;
+        }
+
+        // 5.5. Death Vignette Overlay (Closing darkness centering on the hero)
+        if (deathAnimationTimer > 0) {
+            ctx.save();
+            let t = (deathMaxFrames - deathAnimationTimer) / deathMaxFrames;
+            let centerX = hero.x + 12;
+            let centerY = hero.y + 15;
+            
+            // Smoothly tightening radial gradient vignette
+            let innerRadius = Math.max(10, 200 * (1 - t));
+            let outerRadius = Math.max(100, 600 * (1 - t));
+            let vignette = ctx.createRadialGradient(centerX, centerY, innerRadius, centerX, centerY, outerRadius);
+            
+            vignette.addColorStop(0, "rgba(0, 0, 0, 0)");
+            vignette.addColorStop(0.5, "rgba(20, 0, 0, " + (t * 0.60) + ")"); // Deep blood crimson tint midway
+            vignette.addColorStop(1, "rgba(0, 0, 0, " + (t * 0.95) + ")");
+            
+            ctx.fillStyle = vignette;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.restore();
         }
 
         // 6. Active DPS Box (Cel-shaded block)
