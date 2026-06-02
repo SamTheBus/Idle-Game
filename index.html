@@ -421,18 +421,29 @@
                     <button id="sub-tab-use" class="sub-tab-btn" onclick="switchSubTab('USE')">Use Items</button>
                 </div>
                 
-                <!-- Non-blocking Bulk Salvage controls for standard gear -->
-                <div id="bulk-salvage-bar" style="display: flex; gap: 8px; margin-bottom: 8px; background: #151515; padding: 6px; border-radius: 4px; border: 1px dashed #444; align-items: center;">
-                    <span style="font-size: 11px; font-weight: bold; color: #e74c3c; white-space: nowrap;">♻️ BULK SALVAGE:</span>
-                    <select id="bulk-salvage-rarity" style="flex: 1; background: #222; color: #fff; border: 1px solid #444; padding: 4px; border-radius: 3px; font-size: 11px;">
-                        <option value="0">Common Gear (0★)</option>
-                        <option value="1">Rare & Under (1★)</option>
-                        <option value="2">Magic & Under (2★)</option>
-                        <option value="3">Epic & Under (3★)</option>
-                    </select>
-                    <button class="btn-action un" onclick="triggerBulkSalvage()" style="font-size: 11px; padding: 4px 8px; font-weight: bold;">Deconstruct</button>
+               <!-- Dynamic Bulk Salvage & Active Auto-Salvage Controls -->
+                <div id="bulk-salvage-bar" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; background: #151515; padding: 8px; border-radius: 4px; border: 1px dashed #444;">
+                    <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
+                        <span style="font-size: 11px; font-weight: bold; color: #e74c3c; white-space: nowrap;">♻️ BULK SALVAGE:</span>
+                        <select id="bulk-salvage-rarity" style="flex: 1; background: #222; color: #fff; border: 1px solid #444; padding: 4px; border-radius: 3px; font-size: 11px;">
+                            <option value="0">Common Gear (0★)</option>
+                            <option value="1">Rare & Under (1★)</option>
+                            <option value="2">Magic & Under (2★)</option>
+                            <option value="3">Epic & Under (3★)</option>
+                        </select>
+                        <button class="btn-action un" onclick="triggerBulkSalvage()" style="font-size: 11px; padding: 4px 8px; font-weight: bold;">Deconstruct</button>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center; width: 100%; border-top: 1px dashed #333; padding-top: 6px;">
+                        <span style="font-size: 11px; font-weight: bold; color: #2ecc71; white-space: nowrap;">⚡ AUTO-SALVAGE:</span>
+                        <select id="auto-salvage-setting" onchange="changeAutoSalvage(this.value)" style="flex: 1; background: #222; color: #fff; border: 1px solid #444; padding: 4px; border-radius: 3px; font-size: 11px;">
+                            <option value="-1">None (Keep All Drops)</option>
+                            <option value="0">Common Gear (0★)</option>
+                            <option value="1">Rare & Under (1★)</option>
+                            <option value="2">Magic & Under (2★)</option>
+                            <option value="3">Epic & Under (3★)</option>
+                        </select>
+                    </div>
                 </div>
-
                 <div id="bag-equip" class="bag-container" onscroll="hideTooltip()" ontouchmove="hideTooltip()"></div>
                 <div id="bag-art" class="bag-container" style="display:none;" onscroll="hideTooltip()" ontouchmove="hideTooltip()"></div>
                 <div id="bag-etc" class="bag-container" style="display:none;" onscroll="hideTooltip()" ontouchmove="hideTooltip()"></div>
@@ -757,7 +768,8 @@ window.onload = function() {
         equipKeys: 3, goldKeys: 3, matKeys: 3, nextEquipKeyTime: 0, nextGoldKeyTime: 0, nextMatKeyTime: 0,
         shopRefreshTime: 0, shopItems: [],
         
-        atkPotionTimer: 0, hpPotionTimer: 0, defPotionTimer: 0, hastePotionTimer: 0
+        atkPotionTimer: 0, hpPotionTimer: 0, defPotionTimer: 0, hastePotionTimer: 0,
+        autoSalvageThreshold: -1 // -1 = Disabled, 0 = Common, 1 = Rare, 2 = Magic, 3 = Epic
     };
 
     let equippedSlots = { weapon: null, subweapon: null, helmet: null, chest: null, leggings: null, overall: null, boots: null, art1: null, art2: null, art3: null };
@@ -1303,6 +1315,11 @@ window.onload = function() {
                 let parsed = JSON.parse(data);
                 playerStats = { ...playerStats, ...parsed.playerStats };
                 equippedSlots = parsed.equippedSlots || equippedSlots;
+                
+                // Assure backwards compatibility and data migration integrity for auto-salvage settings
+                if (playerStats.autoSalvageThreshold === undefined) {
+                    playerStats.autoSalvageThreshold = -1;
+                }
                 inventory = parsed.inventory || { EQUIP: [], ARTIFACT: [], ETC: {}, USE: {} };
                 if (!inventory.ARTIFACT) { inventory.ARTIFACT = []; }
                 
@@ -1383,6 +1400,13 @@ window.onload = function() {
                 setTimeout(() => { pushLog(`<span style='color:#3498db; font-weight:bold;'>[SYSTEM] Local save loaded successfully.</span>`); }, 500);
             } catch(e) { console.error("Save load failed", e); }
         }
+        
+        // Sync the Auto-Salvage UI select element with loaded player stats
+        let autoSalvageSelect = document.getElementById('auto-salvage-setting');
+        if (autoSalvageSelect && playerStats.autoSalvageThreshold !== undefined) {
+            autoSalvageSelect.value = playerStats.autoSalvageThreshold;
+        }
+        
         refreshMarketShopIfNeeded();
     };
     
@@ -1906,6 +1930,34 @@ window.onload = function() {
     function generateEquipment(chosenType, statLinesCount, stageScale, sourceName, silent = false, minStars = 0) {
         let item = createItemObject(chosenType, statLinesCount, stageScale, minStars);
         
+        // Active real-time Auto-Salvage Check to bypass bag limits
+        if (item.type !== "artifact" && playerStats.autoSalvageThreshold !== undefined && playerStats.autoSalvageThreshold >= 0) {
+            if (item.statsRolled <= playerStats.autoSalvageThreshold) {
+                let rolledTier = item.statsRolled;
+                let scrapName = getScrapYieldName(rolledTier);
+                let yieldAmount = Math.floor(Math.random() * 3) + 1;
+                let activeHarvest = [];
+                
+                addEtcDrop(scrapName, yieldAmount);
+                activeHarvest.push(`x${yieldAmount} ${scrapName}`);
+
+                for (let t = rolledTier - 1; t >= 0; t--) {
+                    if (Math.random() < 0.60) {
+                        let lowerYield = Math.floor(Math.random() * 2) + 1;
+                        let lowerName = getScrapYieldName(t);
+                        addEtcDrop(lowerName, lowerYield);
+                        activeHarvest.push(`x${lowerYield} ${lowerName}`);
+                    }
+                }
+                
+                if (!silent) {
+                    pushLog(`<span style='color:#e74c3c;'>[AUTO-SALVAGE]</span> Automatically deconstructed ${item.name} into: ${activeHarvest.join(", ")}`);
+                    pushToast(item.name, item.statsRolled, getTierColor(item.statsRolled), true, 1, `⚡ Auto-Salvaged: <span style="color:#e74c3c;">${item.name}</span>`);
+                }
+                return; // Cease item generation here, preventing bag pollution
+            }
+        }
+        
         if (!silent) {
             if (item.type === "artifact") {
                 pushLog(`<strong style='color:#1abc9c;'>⭐ UNIQUE ARTIFACT DROPPED!</strong> Extracted: <span style='color:#1abc9c;'>${item.name}</span>!`, item.id);
@@ -2339,6 +2391,12 @@ window.onload = function() {
         updateUI(); renderInventory(); window.saveGame();
     };
 
+    window.changeAutoSalvage = function(val) {
+        playerStats.autoSalvageThreshold = parseInt(val, 10);
+        window.saveGame();
+        pushHeaderToast("⚡ Auto-Salvage Filter updated!", "#2ecc71");
+    };
+
     window.triggerBulkSalvage = function() {
         window.hideTooltip();
         let raritySelect = document.getElementById('bulk-salvage-rarity');
@@ -2382,13 +2440,11 @@ window.onload = function() {
             if (forgeSelectedItem && forgeSelectedItem.id === item.id) {
                 forgeSelectedItem = null;
             }
-
-            // Safely de-reference from inventory list
-            let idx = inventory.EQUIP.indexOf(item);
-            if (idx !== -1) {
-                inventory.EQUIP.splice(idx, 1);
-            }
         });
+
+        // Safe non-blocking batch de-reference of items from EQUIP array (avoiding inline splice shifting anomalies)
+        let targetIds = new Set(targetItems.map(item => item.id));
+        inventory.EQUIP = inventory.EQUIP.filter(item => !targetIds.has(item.id));
 
         // Spawn a high-feedback visual particle explosion at center screen
         for (let i = 0; i < 45; i++) {
@@ -2408,7 +2464,7 @@ window.onload = function() {
         let outputReport = Object.keys(bulkScrapsHarvested).map(k => `x${bulkScrapsHarvested[k]} ${k}`).join(", ");
         
         pushLog(`<span style='color:#e74c3c;'>[BULK SALVAGE]</span> Dismantled ${targetItems.length} items. Harvested: ${outputReport}`);
-        pushHeaderToast(`♻️ Bulk Salvaged ${targetItems.length} Items!`, "#e74c3c");
+        pushHeaderToast("♻️ Bulk Salvaged " + targetItems.length + " Items!", "#e74c3c");
 
         // Recalculate and scale player HP dynamically in case attributes changed
         let newMaxHp = resolvePlayerStats().maxHp;
