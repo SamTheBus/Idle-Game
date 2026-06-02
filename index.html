@@ -991,62 +991,145 @@ window.onload = function() {
         },
 
         synthesizeBlock(now, dest) {
-            const duration = 0.08;
+            const duration = 0.16;
             const gainNode = this.ctx.createGain();
             gainNode.gain.setValueAtTime(0, now);
-            gainNode.gain.linearRampToValueAtTime(0.18, now + 0.004);
+            gainNode.gain.linearRampToValueAtTime(0.14, now + 0.004);
             gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
-            // Solid wood/metal impact thump
-            const osc = this.ctx.createOscillator();
-            osc.type = "triangle";
-            osc.frequency.setValueAtTime(160, now);
-            osc.frequency.exponentialRampToValueAtTime(40, now + duration);
+            // Heavy wood/buckler thump base
+            const baseOsc = this.ctx.createOscillator();
+            baseOsc.type = "triangle";
+            baseOsc.frequency.setValueAtTime(130, now);
+            baseOsc.frequency.exponentialRampToValueAtTime(45, now + 0.09);
 
-            // Lowpass filter makes the hit sound heavy and muffled
-            const lpFilter = this.ctx.createBiquadFilter();
-            lpFilter.type = "lowpass";
-            lpFilter.frequency.setValueAtTime(250, now);
+            const baseGain = this.ctx.createGain();
+            baseGain.gain.setValueAtTime(0.08, now);
+            baseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+            baseOsc.connect(baseGain);
+            baseGain.connect(gainNode);
 
-            osc.connect(lpFilter);
-            lpFilter.connect(gainNode);
+            // Metallic iron rim deflection chime (E5 + Perfect 5th harmonics)
+            const ironChime1 = this.ctx.createOscillator();
+            ironChime1.type = "sine";
+            ironChime1.frequency.setValueAtTime(440, now);
+            const ironChime2 = this.ctx.createOscillator();
+            ironChime2.type = "sine";
+            ironChime2.frequency.setValueAtTime(659.25, now);
+
+            const chimeGain = this.ctx.createGain();
+            chimeGain.gain.setValueAtTime(0.04, now);
+            chimeGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+            ironChime1.connect(chimeGain);
+            ironChime2.connect(chimeGain);
+            chimeGain.connect(gainNode);
+
+            // High-pass scrape noise simulating friction deflection
+            const noiseLength = this.ctx.sampleRate * 0.06;
+            const noiseBuffer = this.ctx.createBuffer(1, noiseLength, this.ctx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < noiseLength; i++) output[i] = Math.random() * 2 - 1;
+
+            const noiseSource = this.ctx.createBufferSource();
+            noiseSource.buffer = noiseBuffer;
+
+            const noiseFilter = this.ctx.createBiquadFilter();
+            noiseFilter.type = "highpass";
+            noiseFilter.frequency.setValueAtTime(1400, now);
+
+            const noiseGain = this.ctx.createGain();
+            noiseGain.gain.setValueAtTime(0.03, now);
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+
+            noiseSource.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(gainNode);
+
             gainNode.connect(dest);
 
-            osc.start(now);
-            osc.stop(now + duration);
+            baseOsc.start(now);
+            ironChime1.start(now);
+            ironChime2.start(now);
+            noiseSource.start(now);
+
+            baseOsc.stop(now + duration);
+            ironChime1.stop(now + duration);
+            ironChime2.stop(now + duration);
+            noiseSource.stop(now + duration);
 
             setTimeout(() => this.activeChannelCount = Math.max(0, this.activeChannelCount - 1), duration * 1000 + 40);
         },
 
         synthesizeParry(now, dest) {
-            const duration = 0.28;
+            const duration = 0.45;
             const gainNode = this.ctx.createGain();
             gainNode.gain.setValueAtTime(0, now);
-            gainNode.gain.linearRampToValueAtTime(0.15, now + 0.005);
+            gainNode.gain.linearRampToValueAtTime(0.12, now + 0.004);
             gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
-            // High-pitched dual-sine detune for metallic ring
-            const osc1 = this.ctx.createOscillator();
-            const osc2 = this.ctx.createOscillator();
-            osc1.type = "sine";
-            osc2.type = "sine";
+            // High fantasy steel clash chord structure (A minor/major shimmer)
+            const frequencies = [880, 1046.5, 1318.5, 1760];
+            const oscillators = [];
+            const metalGain = this.ctx.createGain();
+            metalGain.gain.setValueAtTime(0.05, now);
+            metalGain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+
+            frequencies.forEach(f => {
+                const osc = this.ctx.createOscillator();
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(f, now);
+                // Real-time pitch vibrato shimmer
+                osc.frequency.linearRampToValueAtTime(f + randFloat(-10, 10), now + 0.18);
+                osc.connect(metalGain);
+                oscillators.push(osc);
+            });
+
+            // Instant high-velocity "clink" transient
+            const pingOsc = this.ctx.createOscillator();
+            pingOsc.type = "triangle";
+            pingOsc.frequency.setValueAtTime(2400, now);
+            pingOsc.frequency.exponentialRampToValueAtTime(1100, now + 0.045);
             
-            osc1.frequency.setValueAtTime(920 + randFloat(-15, 15), now);
-            osc2.frequency.setValueAtTime(1380 + randFloat(-25, 25), now);
+            const pingGain = this.ctx.createGain();
+            pingGain.gain.setValueAtTime(0.07, now);
+            pingGain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+            
+            pingOsc.connect(pingGain);
+            pingGain.connect(gainNode);
 
-            const hpFilter = this.ctx.createBiquadFilter();
-            hpFilter.type = "highpass";
-            hpFilter.frequency.setValueAtTime(800, now);
+            // Shimmering high-pass air ring decay
+            const noiseLength = this.ctx.sampleRate * duration;
+            const noiseBuffer = this.ctx.createBuffer(1, noiseLength, this.ctx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < noiseLength; i++) output[i] = Math.random() * 2 - 1;
 
-            osc1.connect(hpFilter);
-            osc2.connect(hpFilter);
-            hpFilter.connect(gainNode);
+            const noiseSource = this.ctx.createBufferSource();
+            noiseSource.buffer = noiseBuffer;
+
+            const noiseFilter = this.ctx.createBiquadFilter();
+            noiseFilter.type = "bandpass";
+            noiseFilter.frequency.setValueAtTime(3200, now);
+            noiseFilter.Q.setValueAtTime(3.5, now);
+
+            const noiseGain = this.ctx.createGain();
+            noiseGain.gain.setValueAtTime(0.025, now);
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+            noiseSource.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(gainNode);
+
+            metalGain.connect(gainNode);
             gainNode.connect(dest);
 
-            osc1.start(now);
-            osc2.start(now);
-            osc1.stop(now + duration);
-            osc2.stop(now + duration);
+            oscillators.forEach(o => o.start(now));
+            pingOsc.start(now);
+            noiseSource.start(now);
+
+            oscillators.forEach(o => o.stop(now + duration));
+            pingOsc.stop(now + duration);
+            noiseSource.stop(now + duration);
 
             setTimeout(() => this.activeChannelCount = Math.max(0, this.activeChannelCount - 1), duration * 1000 + 40);
         },
