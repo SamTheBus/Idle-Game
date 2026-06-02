@@ -1804,8 +1804,16 @@ window.onload = function() {
    function isCanvasInViewport() {
         const rect = canvas.getBoundingClientRect();
         const viewHeight = window.innerHeight || document.documentElement.clientHeight;
-        // Strictly checks if at least 15 pixels of the canvas are inside the viewport boundaries
-        return (rect.bottom > 15 && rect.top < viewHeight - 15);
+        
+        // Calculate the physical height scale factor in case the canvas is resized responsively
+        const scaleY = rect.height / 250;
+        
+        // Translate the canvas local render zone (Y: 15 to 100) to precise viewport coordinates
+        const toastTopViewportY = rect.top + (15 * scaleY);
+        const toastBottomViewportY = rect.top + (100 * scaleY);
+        
+        // Force fallback to viewport DOM notification if the toast rendering zone goes off-screen
+        return (toastTopViewportY > 10 && toastBottomViewportY < viewHeight - 10);
     }
 
     function pushToast(name, stars, color, isEtc = false, quantity = 1, customText = null) {
