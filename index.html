@@ -4762,17 +4762,6 @@ window.onload = function() {
                 }
             } else if (tier === 1) {
                 let groundGrad = ctx.createLinearGradient(0, 180, 0, 250);
-                groundGrad.addColorStop(0, "#194d22"); groundGrad.addColorStop(0.15, "#223d1c"); groundGrad.addColorStop(1, "#0c1a0c");
-                ctx.fillStyle = groundGrad; ctx.fillRect(0, 180, canvas.width, 70);
-                
-                ctx.fillStyle = "#27ae60";
-                for (let i = -20; i < canvas.width + 20; i += 12) {
-                    let gx = i - (groundScroll % 12);
-                    let h = 4 + Math.sin(i) * 3;
-                    ctx.beginPath(); ctx.moveTo(gx, 180); ctx.lineTo(gx + 4, 180 - h); ctx.lineTo(gx + 8, 180); ctx.fill();
-                }
-            } else if (tier === 1) {
-                let groundGrad = ctx.createLinearGradient(0, 180, 0, 250);
                 groundGrad.addColorStop(0, "#2c3e50"); groundGrad.addColorStop(1, "#111a24");
                 ctx.fillStyle = groundGrad; ctx.fillRect(0, 180, canvas.width, 70);
 
