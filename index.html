@@ -716,7 +716,6 @@ window.onload = function() {
     let lastUpdateTime = Date.now(); // High-resolution timestamp for gap detection
 
     let beams = [];
-    let canvasToasts = [];
     /* ==========================================================================
        6. PROCEDURAL NAME GENERATOR
        ========================================================================== */
@@ -1801,65 +1800,43 @@ window.onload = function() {
         document.getElementById('log-box').innerHTML = logsHistory.join("<br><br>");
     }
 
-   function isCanvasInViewport() {
-        const rect = canvas.getBoundingClientRect();
-        const viewHeight = window.innerHeight || document.documentElement.clientHeight;
-        
-        // Calculate the physical height scale factor in case the canvas is resized responsively
-        const scaleY = rect.height / 250;
-        
-        // Translate the canvas local render zone (Y: 15 to 100) to precise viewport coordinates
-        const toastTopViewportY = rect.top + (15 * scaleY);
-        const toastBottomViewportY = rect.top + (100 * scaleY);
-        
-        // Force fallback to viewport DOM notification if the toast rendering zone goes off-screen
-        return (toastTopViewportY > 10 && toastBottomViewportY < viewHeight - 10);
-    }
+     function pushToast(name, stars, color, isEtc = false, quantity = 1, customText = null) {
+        let container = document.getElementById('toast-container'); 
+        if (!container) return;
 
-    function pushToast(name, stars, color, isEtc = false, quantity = 1, customText = null) {
-        if (isCanvasInViewport()) {
-            canvasToasts.push({
-                name: name,
-                stars: stars,
-                color: color,
-                isEtc: isEtc,
-                quantity: quantity,
-                customText: customText,
-                life: 180, // Displays for 3 seconds (at 60 FPS)
-                maxLife: 180
-            });
-            // Keep up to 4 concurrent toasts on screen to prevent canvas clutter
-            if (canvasToasts.length > 4) {
-                canvasToasts.shift();
-            }
-        } else {
-            let container = document.getElementById('toast-container'); 
-            let toast = document.createElement('div');
-            toast.style.background = "rgba(11, 15, 18, 0.95)"; 
-            toast.style.border = `2px solid ${color}`; 
-            toast.style.color = "#fff";
-            toast.style.padding = "8px 16px"; 
-            toast.style.borderRadius = "6px"; 
-            toast.style.fontSize = "11px"; 
-            toast.style.fontWeight = "bold";
-            toast.style.textAlign = "center"; 
-            toast.style.boxShadow = "0 4px 15px rgba(0,0,0,0.6)"; 
-            toast.style.animation = "toastFadeIn 0.3s ease-out";
-            toast.style.maxWidth = "100%"; 
-            toast.style.pointerEvents = "none";
-            
-            if (customText) { 
-                toast.innerHTML = customText; 
-            } else { 
-                let label = isEtc ? `📦 +${quantity} Loot` : (stars === "UNIQUE" ? "⭐ UNIQUE DETECTED!" : `⚔️ ITEM FOUND (${stars}★)`); 
-                toast.innerHTML = `${label} : <span style="color:${color}">${name}</span>`; 
-            }
-            container.prepend(toast); 
-            setTimeout(() => { 
-                toast.style.animation = "toastFadeOut 0.5s ease-in forwards"; 
-                setTimeout(() => toast.remove(), 450); 
-            }, 2800);
+        let toast = document.createElement('div');
+        toast.style.background = "rgba(11, 15, 18, 0.95)"; 
+        toast.style.border = `2px solid ${color}`; 
+        toast.style.color = "#fff";
+        toast.style.padding = "8px 16px"; 
+        toast.style.borderRadius = "6px"; 
+        toast.style.fontSize = "11px"; 
+        toast.style.fontWeight = "bold";
+        toast.style.textAlign = "center"; 
+        toast.style.boxShadow = "0 4px 15px rgba(0,0,0,0.6)"; 
+        toast.style.animation = "toastFadeIn 0.3s ease-out";
+        toast.style.maxWidth = "100%"; 
+        toast.style.pointerEvents = "none";
+        
+        if (customText) { 
+            toast.innerHTML = customText; 
+        } else { 
+            let label = isEtc ? `📦 +${quantity} Loot` : (stars === "UNIQUE" ? "⭐ UNIQUE DETECTED!" : `⚔️ ITEM FOUND (${stars}★)`); 
+            toast.innerHTML = `${label} : <span style="color:${color}">${name}</span>`; 
         }
+
+        container.prepend(toast); 
+
+        // Limit concurrent DOM toasts to prevent screen-covering clutter
+        if (container.children.length > 5) {
+            let oldest = container.lastElementChild;
+            if (oldest) oldest.remove();
+        }
+
+        setTimeout(() => { 
+            toast.style.animation = "toastFadeOut 0.5s ease-in forwards"; 
+            setTimeout(() => toast.remove(), 450); 
+        }, 2800);
     }
     
     function pushHeaderToast(text, color) { pushToast("", null, color, false, 0, text); }
@@ -3537,13 +3514,6 @@ window.onload = function() {
         if (playerStats.hpPotionTimer > 0) playerStats.hpPotionTimer--;
         if (playerStats.defPotionTimer > 0) playerStats.defPotionTimer--;
         if (playerStats.hastePotionTimer > 0) playerStats.hastePotionTimer--;
-        
-        for (let i = canvasToasts.length - 1; i >= 0; i--) {
-            canvasToasts[i].life--;
-            if (canvasToasts[i].life <= 0) {
-                canvasToasts.splice(i, 1);
-            }
-        }
         
         logicClock++;
         
@@ -5248,109 +5218,6 @@ window.onload = function() {
         ctx.font = "bold 13px sans-serif";
         ctx.strokeText(actDps, canvas.width - 70, 25);
         ctx.fillText(actDps, canvas.width - 70, 25);
-
-       // 6.5. Canvas Toasts Rendering
-        let startY = 15;
-        let spacing = 34;
-        let toastH = 28;
-
-        canvasToasts.forEach((toast, idx) => {
-            let ty = startY + (idx * spacing);
-            
-            let alpha = 1.0;
-            if (toast.life < 15) alpha = toast.life / 15;
-            else if (toast.maxLife - toast.life < 10) alpha = (toast.maxLife - toast.life) / 10;
-            
-            ctx.save();
-            ctx.globalAlpha = alpha;
-            
-            // Set typography context before measurement calculations
-            let fontSize = canvas.width > 420 ? "11px" : "10px";
-            ctx.font = `bold ${fontSize} sans-serif`;
-            ctx.textBaseline = "middle";
-            
-            let labelWidth = 0;
-            let fullPrefix = "";
-            let nameText = "";
-            
-            if (toast.customText) {
-                fullPrefix = toast.customText.replace(/<[^>]*>/g, "");
-                labelWidth = ctx.measureText(fullPrefix).width;
-            } else {
-                let headerLabel = toast.isEtc ? `📦 +${toast.quantity} Loot` : (toast.stars === "UNIQUE" ? "⭐ UNIQUE DETECTED!" : `⚔️ ITEM FOUND (${toast.stars}★)`);
-                fullPrefix = `${headerLabel} : `;
-                nameText = toast.name;
-                labelWidth = ctx.measureText(fullPrefix + nameText).width;
-            }
-            
-            // Generate a padded dynamic box width capped slightly below canvas limits
-            let horizontalPadding = 24;
-            let toastW = Math.min(canvas.width - 40, labelWidth + horizontalPadding);
-            let tx = canvas.width / 2 - toastW / 2;
-            let maxTextWidth = toastW - horizontalPadding;
-            
-            // Toon black background shadow outline
-            ctx.fillStyle = "#000000";
-            ctx.fillRect(tx - 2, ty - 2, toastW + 4, toastH + 4);
-            
-            // Fill background plate
-            ctx.fillStyle = "rgba(11, 15, 18, 0.95)";
-            ctx.fillRect(tx, ty, toastW, toastH);
-            
-            // Inner colored border matching item rarity
-            ctx.strokeStyle = toast.color;
-            ctx.lineWidth = 1.5;
-            ctx.strokeRect(tx + 1, ty + 1, toastW - 2, toastH - 2);
-            
-            let textX = canvas.width / 2;
-            let textY = ty + toastH / 2;
-            
-            ctx.strokeStyle = "#000000";
-            ctx.lineWidth = 2.5;
-            
-            if (toast.customText) {
-                ctx.textAlign = "center";
-                ctx.strokeText(fullPrefix, textX, textY, maxTextWidth);
-                ctx.fillStyle = "#ffffff";
-                ctx.fillText(fullPrefix, textX, textY, maxTextWidth);
-            } else {
-                let fullPrefixW = ctx.measureText(fullPrefix).width;
-                let nameTextW = ctx.measureText(nameText).width;
-                let totalTextW = fullPrefixW + nameTextW;
-                
-                if (totalTextW > maxTextWidth) {
-                    // Squeeze long text blocks proportionally into the layout boundaries
-                    ctx.save();
-                    ctx.translate(textX, textY);
-                    let scaleX = maxTextWidth / totalTextW;
-                    ctx.scale(scaleX, 1);
-                    
-                    ctx.textAlign = "left";
-                    let startX = -totalTextW / 2;
-                    
-                    ctx.fillStyle = "#ffffff";
-                    ctx.strokeText(fullPrefix, startX, 0);
-                    ctx.fillText(fullPrefix, startX, 0);
-                    
-                    ctx.fillStyle = toast.color;
-                    ctx.strokeText(nameText, startX + fullPrefixW, 0);
-                    ctx.fillText(nameText, startX + fullPrefixW, 0);
-                    ctx.restore();
-                } else {
-                    ctx.textAlign = "left";
-                    let startX = textX - totalTextW / 2;
-                    
-                    ctx.fillStyle = "#ffffff";
-                    ctx.strokeText(fullPrefix, startX, textY);
-                    ctx.fillText(fullPrefix, startX, textY);
-                    
-                    ctx.fillStyle = toast.color;
-                    ctx.strokeText(nameText, startX + fullPrefixW, textY);
-                    ctx.fillText(nameText, startX + fullPrefixW, textY);
-                }
-            }
-            ctx.restore();
-        });
 
         // 7. Dynamic particles & Comic-styled floaters (With heavy dark text outlines)
         particles.forEach(pt => { ctx.fillStyle = pt.color; ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2); ctx.fill(); });
