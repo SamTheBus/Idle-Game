@@ -880,101 +880,263 @@ window.onload = function() {
     const flowerColors = ["#e74c3c", "#9b59b6", "#f1c40f", "#3498db", "#e67e22", "#e84393"];
     
     /* ==========================================================================
-       PROCEDURAL AUDIO SYNTHESIS ENGINE (SWORD SWING)
+       PROCEDURAL AUDIO SYNTHESIS SYSTEM (SOUND MANAGER)
        ========================================================================== */
-    let audioCtx = null;
-    let activeSlashCount = 0;
-    const MAX_SLASH_CONCURRENT = 3; // Keep concurrent overlays light to prevent ear fatigue
+    const SoundManager = {
+        ctx: null,
+        activeChannelCount: 0,
+        maxConcurrent: 5, // Cap total overlapping sounds to maintain performance
 
-    function playSlashSound() {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContextClass) return;
+        init() {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) return false;
+            if (!this.ctx) {
+                this.ctx = new AudioContextClass();
+            }
+            if (this.ctx.state === 'suspended') {
+                this.ctx.resume();
+            }
+            return true;
+        },
 
-        // Initialize/resume context to comply with browser autoplay gesture rules
-        if (!audioCtx) {
-            audioCtx = new AudioContextClass();
+        // Creates a master compressor to prevent clipping across overlapping channels
+        getCompressor(now) {
+            const compressor = this.ctx.createDynamicsCompressor();
+            compressor.threshold.setValueAtTime(-18, now);
+            compressor.knee.setValueAtTime(20, now);
+            compressor.ratio.setValueAtTime(10, now);
+            compressor.attack.setValueAtTime(0.003, now);
+            compressor.release.setValueAtTime(0.08, now);
+            compressor.connect(this.ctx.destination);
+            return compressor;
+        },
+
+        play(type) {
+            if (!this.init()) return;
+            if (this.activeChannelCount >= this.maxConcurrent) return;
+            
+            this.activeChannelCount++;
+            const now = this.ctx.currentTime;
+            const dest = this.getCompressor(now);
+
+            switch (type) {
+                case 'swing':
+                    this.synthesizeSwing(now, dest);
+                    break;
+                case 'block':
+                    this.synthesizeBlock(now, dest);
+                    break;
+                case 'parry':
+                    this.synthesizeParry(now, dest);
+                    break;
+                case 'spell':
+                    this.synthesizeSpell(now, dest);
+                    break;
+                case 'fairy':
+                    this.synthesizeFairy(now, dest);
+                    break;
+                case 'death':
+                    this.synthesizeDeath(now, dest);
+                    break;
+            }
+        },
+
+        synthesizeSwing(now, dest) {
+            const duration = randFloat(0.08, 0.12);
+            const gainNode = this.ctx.createGain();
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.15, now + 0.008);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+            // Swept bandpass white noise for wind resistance
+            const bufferSize = this.ctx.sampleRate * duration;
+            const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+
+            const noiseSource = this.ctx.createBufferSource();
+            noiseSource.buffer = noiseBuffer;
+
+            const noiseFilter = this.ctx.createBiquadFilter();
+            noiseFilter.type = "bandpass";
+            noiseFilter.frequency.setValueAtTime(randFloat(1100, 1500), now);
+            noiseFilter.frequency.exponentialRampToValueAtTime(randFloat(300, 450), now + duration);
+            noiseFilter.Q.setValueAtTime(3.5, now);
+
+            noiseSource.connect(noiseFilter);
+            noiseFilter.connect(gainNode);
+
+            // Triangle sweep for physical weight
+            const osc = this.ctx.createOscillator();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(randFloat(240, 310), now);
+            osc.frequency.exponentialRampToValueAtTime(randFloat(70, 95), now + duration);
+
+            const oscGain = this.ctx.createGain();
+            oscGain.gain.setValueAtTime(0, now);
+            oscGain.gain.linearRampToValueAtTime(0.06, now + 0.006);
+            oscGain.gain.exponentialRampToValueAtTime(0.001, now + duration * 0.85);
+
+            osc.connect(oscGain);
+            oscGain.connect(gainNode);
+
+            gainNode.connect(dest);
+
+            noiseSource.start(now);
+            osc.start(now);
+            noiseSource.stop(now + duration);
+            osc.stop(now + duration);
+
+            setTimeout(() => this.activeChannelCount = Math.max(0, this.activeChannelCount - 1), duration * 1000 + 40);
+        },
+
+        synthesizeBlock(now, dest) {
+            const duration = 0.08;
+            const gainNode = this.ctx.createGain();
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.18, now + 0.004);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+            // Solid wood/metal impact thump
+            const osc = this.ctx.createOscillator();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(160, now);
+            osc.frequency.exponentialRampToValueAtTime(40, now + duration);
+
+            // Lowpass filter makes the hit sound heavy and muffled
+            const lpFilter = this.ctx.createBiquadFilter();
+            lpFilter.type = "lowpass";
+            lpFilter.frequency.setValueAtTime(250, now);
+
+            osc.connect(lpFilter);
+            lpFilter.connect(gainNode);
+            gainNode.connect(dest);
+
+            osc.start(now);
+            osc.stop(now + duration);
+
+            setTimeout(() => this.activeChannelCount = Math.max(0, this.activeChannelCount - 1), duration * 1000 + 40);
+        },
+
+        synthesizeParry(now, dest) {
+            const duration = 0.28;
+            const gainNode = this.ctx.createGain();
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.15, now + 0.005);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+            // High-pitched dual-sine detune for metallic ring
+            const osc1 = this.ctx.createOscillator();
+            const osc2 = this.ctx.createOscillator();
+            osc1.type = "sine";
+            osc2.type = "sine";
+            
+            osc1.frequency.setValueAtTime(920 + randFloat(-15, 15), now);
+            osc2.frequency.setValueAtTime(1380 + randFloat(-25, 25), now);
+
+            const hpFilter = this.ctx.createBiquadFilter();
+            hpFilter.type = "highpass";
+            hpFilter.frequency.setValueAtTime(800, now);
+
+            osc1.connect(hpFilter);
+            osc2.connect(hpFilter);
+            hpFilter.connect(gainNode);
+            gainNode.connect(dest);
+
+            osc1.start(now);
+            osc2.start(now);
+            osc1.stop(now + duration);
+            osc2.stop(now + duration);
+
+            setTimeout(() => this.activeChannelCount = Math.max(0, this.activeChannelCount - 1), duration * 1000 + 40);
+        },
+
+        synthesizeSpell(now, dest) {
+            const duration = 0.22;
+            const gainNode = this.ctx.createGain();
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.10, now + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+            // Upward saw sweep for zapping elemental magic resonance
+            const osc = this.ctx.createOscillator();
+            osc.type = "sawtooth";
+            osc.frequency.setValueAtTime(180, now);
+            osc.frequency.exponentialRampToValueAtTime(1400, now + duration);
+
+            const bpFilter = this.ctx.createBiquadFilter();
+            bpFilter.type = "bandpass";
+            bpFilter.frequency.setValueAtTime(300, now);
+            bpFilter.frequency.exponentialRampToValueAtTime(1400, now + duration);
+            bpFilter.Q.setValueAtTime(2.0, now);
+
+            osc.connect(bpFilter);
+            bpFilter.connect(gainNode);
+            gainNode.connect(dest);
+
+            osc.start(now);
+            osc.stop(now + duration);
+
+            setTimeout(() => this.activeChannelCount = Math.max(0, this.activeChannelCount - 1), duration * 1000 + 40);
+        },
+
+        synthesizeFairy(now, dest) {
+            // Magical 3-note chiptune arpeggio (B5 -> E6 -> B6) scheduled precisely
+            const notes = [987.77, 1318.51, 1975.53];
+            const noteLength = 0.05;
+
+            notes.forEach((freq, idx) => {
+                const noteTime = now + (idx * 0.045);
+                const osc = this.ctx.createOscillator();
+                const noteGain = this.ctx.createGain();
+                
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(freq, noteTime);
+
+                noteGain.gain.setValueAtTime(0, noteTime);
+                noteGain.gain.linearRampToValueAtTime(0.08, noteTime + 0.005);
+                noteGain.gain.exponentialRampToValueAtTime(0.001, noteTime + noteLength);
+
+                osc.connect(noteGain);
+                noteGain.connect(dest);
+
+                osc.start(noteTime);
+                osc.stop(noteTime + noteLength);
+            });
+
+            setTimeout(() => this.activeChannelCount = Math.max(0, this.activeChannelCount - 1), 250);
+        },
+
+        synthesizeDeath(now, dest) {
+            const duration = 0.16;
+            const gainNode = this.ctx.createGain();
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.12, now + 0.005);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+            // Muffled noise burst for mob defeat dissipation
+            const bufferSize = this.ctx.sampleRate * duration;
+            const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+
+            const noiseSource = this.ctx.createBufferSource();
+            noiseSource.buffer = noiseBuffer;
+
+            const lpFilter = this.ctx.createBiquadFilter();
+            lpFilter.type = "lowpass";
+            lpFilter.frequency.setValueAtTime(280, now);
+
+            noiseSource.connect(lpFilter);
+            lpFilter.connect(gainNode);
+            gainNode.connect(dest);
+
+            noiseSource.start(now);
+            noiseSource.stop(now + duration);
+
+            setTimeout(() => this.activeChannelCount = Math.max(0, this.activeChannelCount - 1), duration * 1000 + 40);
         }
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
-
-        // Drop sound if triggering faster than humanly/mechanically comfortable
-        if (activeSlashCount >= MAX_SLASH_CONCURRENT) return;
-        activeSlashCount++;
-
-        const now = audioCtx.currentTime;
-        const duration = randFloat(0.08, 0.13); // Snappy durations avoid mud
-
-        // Setup master gain node for this instance
-        const mainGain = audioCtx.createGain();
-        mainGain.gain.setValueAtTime(0, now);
-        // Balance volume to remain present but comfortable under spamming conditions
-        mainGain.gain.linearRampToValueAtTime(0.18, now + 0.008);
-        mainGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-
-        // 1. Air displacement swoosh (Synthesized white noise + sweeping bandpass filter)
-        const bufferSize = audioCtx.sampleRate * duration;
-        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        const output = noiseBuffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            output[i] = Math.random() * 2 - 1;
-        }
-
-        const noiseSource = audioCtx.createBufferSource();
-        noiseSource.buffer = noiseBuffer;
-
-        const noiseFilter = audioCtx.createBiquadFilter();
-        noiseFilter.type = "bandpass";
-        
-        // Pitch variation breaks up machine-gun aesthetic
-        const startFreq = randFloat(1100, 1500);
-        const endFreq = randFloat(300, 450);
-        noiseFilter.frequency.setValueAtTime(startFreq, now);
-        noiseFilter.frequency.exponentialRampToValueAtTime(endFreq, now + duration);
-        noiseFilter.Q.setValueAtTime(3.5, now);
-
-        noiseSource.connect(noiseFilter);
-        noiseFilter.connect(mainGain);
-
-        // 2. Blade physical heft (Short sweeping triangle oscillator)
-        const osc = audioCtx.createOscillator();
-        osc.type = "triangle";
-        const startPitch = randFloat(240, 310);
-        const endPitch = randFloat(70, 95);
-        osc.frequency.setValueAtTime(startPitch, now);
-        osc.frequency.exponentialRampToValueAtTime(endPitch, now + duration);
-
-        const oscGain = audioCtx.createGain();
-        oscGain.gain.setValueAtTime(0, now);
-        oscGain.gain.linearRampToValueAtTime(0.08, now + 0.006);
-        oscGain.gain.exponentialRampToValueAtTime(0.001, now + duration * 0.8);
-
-        osc.connect(oscGain);
-        oscGain.connect(mainGain);
-
-        // 3. Dynamic compression limiting to clamp sudden volume gains when overlapping
-        const compressor = audioCtx.createDynamicsCompressor();
-        compressor.threshold.setValueAtTime(-20, now);
-        compressor.knee.setValueAtTime(25, now);
-        compressor.ratio.setValueAtTime(12, now);
-        compressor.attack.setValueAtTime(0.003, now);
-        compressor.release.setValueAtTime(0.08, now);
-
-        mainGain.connect(compressor);
-        compressor.connect(audioCtx.destination);
-
-        // Playback trigger
-        noiseSource.start(now);
-        osc.start(now);
-
-        noiseSource.stop(now + duration);
-        osc.stop(now + duration);
-
-        // Release the concurrent voice lock
-        setTimeout(() => {
-            activeSlashCount = Math.max(0, activeSlashCount - 1);
-        }, duration * 1000 + 40);
-    }
+    };
 
     const MYSTICAL_STOCK = [
         { name: "SP Reset Scroll", cost: 2500, currency: "Gold", color: "#9b59b6", desc: "Refunds all spent Skill Points from the Attribute Matrix." },
@@ -3020,8 +3182,8 @@ window.onload = function() {
         let p = resolvePlayerStats(); let cooldownCap = playerStats.frenzyTimer > 0 ? 4 : p.activeAttackSpeed;
         if (hero.attackTimer > 0) return; 
         
-        // Execute synthesized swing audio safely within user-gesture rules
-        playSlashSound();
+        // Schedule sword swing SFX safely via user-gesture action
+        SoundManager.play('swing');
         
         hero.attackTimer = cooldownCap; executeHitCalculations();
     };
@@ -3060,6 +3222,7 @@ window.onload = function() {
         let spawnY = fairy.y;
         
         fairy.active = false; 
+        SoundManager.play('fairy');
 
         for (let i = 0; i < 15; i++) {
             particles.push({
@@ -4681,6 +4844,8 @@ window.onload = function() {
         let p = resolvePlayerStats(); 
         let isBoss = (mob.type === "boss" || mob.type === "dungeon_boss" || mob.type === "dungeon_miniboss");
         
+        SoundManager.play('death');
+        
         let xpYield = 0;
         if (playerStats.isDungeonMode) {
             xpYield = mob.type === "dungeon_boss" ? playerStats.stage * 150 : playerStats.stage * 30;
@@ -4984,9 +5149,11 @@ window.onload = function() {
             const hasTome = equippedSlots.subweapon && equippedSlots.subweapon.subType === "tome";
             if (hasTome) {
                 let spellDmgBase = Math.max(1, Math.ceil((p.atk * (playerStats.adrenalineTimer > 0 ? 2 : 1)) * 0.5));
+                let triggeredSpell = false;
 
                 // 1. Lightning Spell Roll
                 if (Math.random() < 0.20) {
+                    triggeredSpell = true;
                     let lightningDmg = spellDmgBase;
                     let isSpellCrit = Math.random() < p.critChance;
                     if (isSpellCrit) lightningDmg = Math.ceil(lightningDmg * p.critDamage);
@@ -5012,6 +5179,7 @@ window.onload = function() {
 
                 // 2. Fire Spell Roll
                 if (Math.random() < 0.20) {
+                    triggeredSpell = true;
                     let fireDmg = spellDmgBase;
                     let isSpellCrit = Math.random() < p.critChance;
                     if (isSpellCrit) fireDmg = Math.ceil(fireDmg * p.critDamage);
@@ -5037,6 +5205,7 @@ window.onload = function() {
 
                 // 3. Frost Spell Roll
                 if (Math.random() < 0.20) {
+                    triggeredSpell = true;
                     let frostDmg = spellDmgBase;
                     let isSpellCrit = Math.random() < p.critChance;
                     if (isSpellCrit) frostDmg = Math.ceil(frostDmg * p.critDamage);
@@ -5058,6 +5227,10 @@ window.onload = function() {
                             life: randInt(15, 28)
                         });
                     }
+                }
+
+                if (triggeredSpell) {
+                    SoundManager.play('spell');
                 }
             }
 
@@ -5467,22 +5640,24 @@ window.onload = function() {
                 scrollScenery(scrollSpeed);
             } else {
                 mob.isStopped = true; 
-                if (logicClock % p.idleAttackSpeed === 0) { if (state.autoAttack) window.triggerPlayerSlash(); }
-                if (logicClock % 120 === 0 && mob && mob.hp > 0) {
-                    if (Math.random() < p.parry) { 
-                        effects.push({ x: hero.x, y: hero.y - 15, text: "⚡ PARRY COUNTER!", color: "#9b59b6", life: 50 }); 
-                        if (checkArtifactTrait("dodge_buff")) playerStats.adrenalineTimer = checkArtifactTrait("extend_buffs") ? 900 : 600;
-                        if (checkArtifactTrait("parry_strike")) {
-                            let counterDmg = p.atk * (playerStats.adrenalineTimer > 0 ? 2 : 1); mob.hp -= counterDmg;
-                            spawnDamageEffect(counterDmg, 'counter', false);
-                            damageHistory.push({ time: Date.now(), amount: counterDmg });
-                            if (mob.hp <= 0) { handleMobDeath(); return; }
-                        }
+            if (logicClock % p.idleAttackSpeed === 0) { if (state.autoAttack) window.triggerPlayerSlash(); }
+            if (logicClock % 120 === 0 && mob && mob.hp > 0) {
+                if (Math.random() < p.parry) { 
+                    effects.push({ x: hero.x, y: hero.y - 15, text: "⚡ PARRY COUNTER!", color: "#9b59b6", life: 50 }); 
+                    SoundManager.play('parry');
+                    if (checkArtifactTrait("dodge_buff")) playerStats.adrenalineTimer = checkArtifactTrait("extend_buffs") ? 900 : 600;
+                    if (checkArtifactTrait("parry_strike")) {
+                        let counterDmg = p.atk * (playerStats.adrenalineTimer > 0 ? 2 : 1); mob.hp -= counterDmg;
+                        spawnDamageEffect(counterDmg, 'counter', false);
+                        damageHistory.push({ time: Date.now(), amount: counterDmg });
+                        if (mob.hp <= 0) { handleMobDeath(); return; }
                     }
-                    else if (Math.random() < p.block) { 
-                        effects.push({ x: hero.x, y: hero.y, text: "🛡️ BLOCKED", color: "#3498db", life: 40 }); 
-                        if (checkArtifactTrait("dodge_buff")) playerStats.adrenalineTimer = checkArtifactTrait("extend_buffs") ? 900 : 600;
-                    }
+                }
+                else if (Math.random() < p.block) { 
+                    effects.push({ x: hero.x, y: hero.y, text: "🛡️ BLOCKED", color: "#3498db", life: 40 }); 
+                    SoundManager.play('block');
+                    if (checkArtifactTrait("dodge_buff")) playerStats.adrenalineTimer = checkArtifactTrait("extend_buffs") ? 900 : 600;
+                }
                     else {
                         // Smooth Diminishing Returns Mitigation Formula:
                         // Prevents the binary "1 damage or instant death" bottleneck at higher stages
