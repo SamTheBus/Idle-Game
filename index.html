@@ -986,6 +986,12 @@ window.onload = function() {
                 case 'death':
                     this.synthesizeDeath(now, dest);
                     break;
+                case 'defeat':
+                    this.synthesizeDefeat(now, dest);
+                    break;
+                case 'revive':
+                    this.synthesizeRevive(now, dest);
+                    break;
             }
         },
 
@@ -1183,30 +1189,68 @@ window.onload = function() {
         },
 
         synthesizeSpell(now, dest) {
-            const duration = 0.22;
+            const duration = 0.45;
             const gainNode = this.ctx.createGain();
             gainNode.gain.setValueAtTime(0, now);
-            gainNode.gain.linearRampToValueAtTime(0.10, now + 0.01);
+            gainNode.gain.linearRampToValueAtTime(0.12, now + 0.05);
             gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
-            // Upward saw sweep for zapping elemental magic resonance
-            const osc = this.ctx.createOscillator();
-            osc.type = "sawtooth";
-            osc.frequency.setValueAtTime(180, now);
-            osc.frequency.exponentialRampToValueAtTime(1400, now + duration);
+            // Create a mystical minor 7th chord swell (E4, G4, B4, D5) representing elemental magic
+            const freqs = [329.63, 392.00, 493.88, 587.33];
+            const oscillators = [];
 
+            const chordGain = this.ctx.createGain();
+            chordGain.gain.setValueAtTime(0, now);
+            chordGain.gain.linearRampToValueAtTime(0.05, now + 0.08);
+            chordGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+            // High-resonance bandpass sweeps upwards like howling magical wind
             const bpFilter = this.ctx.createBiquadFilter();
             bpFilter.type = "bandpass";
             bpFilter.frequency.setValueAtTime(300, now);
-            bpFilter.frequency.exponentialRampToValueAtTime(1400, now + duration);
-            bpFilter.Q.setValueAtTime(2.0, now);
+            bpFilter.frequency.exponentialRampToValueAtTime(3000, now + duration);
+            bpFilter.Q.setValueAtTime(4.0, now);
 
-            osc.connect(bpFilter);
-            bpFilter.connect(gainNode);
+            freqs.forEach((f, idx) => {
+                const osc = this.ctx.createOscillator();
+                osc.type = (idx % 2 === 0) ? "triangle" : "sine";
+                osc.frequency.setValueAtTime(f, now);
+                osc.frequency.linearRampToValueAtTime(f * 1.015, now + duration);
+                osc.connect(bpFilter);
+                oscillators.push(osc);
+            });
+
+            bpFilter.connect(chordGain);
+            chordGain.connect(gainNode);
+
+            // Shimmering sparkles (High-passed noise crackles)
+            const noiseLength = this.ctx.sampleRate * 0.15;
+            const noiseBuffer = this.ctx.createBuffer(1, noiseLength, this.ctx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < noiseLength; i++) output[i] = Math.random() * 2 - 1;
+
+            const noiseSource = this.ctx.createBufferSource();
+            noiseSource.buffer = noiseBuffer;
+
+            const hpFilter = this.ctx.createBiquadFilter();
+            hpFilter.type = "highpass";
+            hpFilter.frequency.setValueAtTime(4000, now);
+
+            const noiseGain = this.ctx.createGain();
+            noiseGain.gain.setValueAtTime(0.03, now);
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+            noiseSource.connect(hpFilter);
+            hpFilter.connect(noiseGain);
+            noiseGain.connect(gainNode);
+
             gainNode.connect(dest);
 
-            osc.start(now);
-            osc.stop(now + duration);
+            oscillators.forEach(osc => osc.start(now));
+            noiseSource.start(now);
+
+            oscillators.forEach(osc => osc.stop(now + duration));
+            noiseSource.stop(now + duration);
 
             setTimeout(() => this.activeChannelCount = Math.max(0, this.activeChannelCount - 1), duration * 1000 + 40);
         },
@@ -1239,31 +1283,172 @@ window.onload = function() {
         },
 
         synthesizeDeath(now, dest) {
-            const duration = 0.16;
+            const duration = 0.35;
             const gainNode = this.ctx.createGain();
             gainNode.gain.setValueAtTime(0, now);
-            gainNode.gain.linearRampToValueAtTime(0.12, now + 0.005);
+            gainNode.gain.linearRampToValueAtTime(0.12, now + 0.01);
             gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
-            // Muffled noise burst for mob defeat dissipation
-            const bufferSize = this.ctx.sampleRate * duration;
-            const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+            // Low frequency crumble/dissolution thump
+            const lowOsc = this.ctx.createOscillator();
+            lowOsc.type = "triangle";
+            lowOsc.frequency.setValueAtTime(120, now);
+            lowOsc.frequency.exponentialRampToValueAtTime(25, now + 0.12);
+            
+            const lowGain = this.ctx.createGain();
+            lowGain.gain.setValueAtTime(0.08, now);
+            lowGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+            lowOsc.connect(lowGain);
+            lowGain.connect(gainNode);
+
+            // Dusty/rustling white noise burst representing physical dissolution
+            const noiseLength = this.ctx.sampleRate * duration;
+            const noiseBuffer = this.ctx.createBuffer(1, noiseLength, this.ctx.sampleRate);
             const output = noiseBuffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+            for (let i = 0; i < noiseLength; i++) output[i] = Math.random() * 2 - 1;
 
             const noiseSource = this.ctx.createBufferSource();
             noiseSource.buffer = noiseBuffer;
 
             const lpFilter = this.ctx.createBiquadFilter();
             lpFilter.type = "lowpass";
-            lpFilter.frequency.setValueAtTime(280, now);
+            lpFilter.frequency.setValueAtTime(600, now);
+            lpFilter.frequency.exponentialRampToValueAtTime(80, now + duration);
+
+            const noiseGain = this.ctx.createGain();
+            noiseGain.gain.setValueAtTime(0.06, now);
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
             noiseSource.connect(lpFilter);
-            lpFilter.connect(gainNode);
+            lpFilter.connect(noiseGain);
+            noiseGain.connect(gainNode);
+
+            // Shimmering fading high-pitch (dissolving soul release)
+            const soulOsc = this.ctx.createOscillator();
+            soulOsc.type = "sine";
+            soulOsc.frequency.setValueAtTime(800, now);
+            soulOsc.frequency.exponentialRampToValueAtTime(100, now + duration);
+            
+            const soulGain = this.ctx.createGain();
+            soulGain.gain.setValueAtTime(0.02, now);
+            soulGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+            soulOsc.connect(soulGain);
+            soulGain.connect(gainNode);
+
             gainNode.connect(dest);
 
+            lowOsc.start(now);
             noiseSource.start(now);
+            soulOsc.start(now);
+
+            lowOsc.stop(now + duration);
             noiseSource.stop(now + duration);
+            soulOsc.stop(now + duration);
+
+            setTimeout(() => this.activeChannelCount = Math.max(0, this.activeChannelCount - 1), duration * 1000 + 40);
+        },
+
+        synthesizeDefeat(now, dest) {
+            const duration = 1.6;
+            const gainNode = this.ctx.createGain();
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.25, now + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+            // Heavy brassy saw waves tuned to an ominous deep F minor chord
+            const freqs = [87.31, 110.0, 130.81, 174.61]; // F2, A2, C3, F3
+            const oscillators = [];
+            const lowpass = this.ctx.createBiquadFilter();
+            lowpass.type = "lowpass";
+            lowpass.frequency.setValueAtTime(350, now);
+            lowpass.frequency.exponentialRampToValueAtTime(80, now + duration);
+
+            freqs.forEach(f => {
+                const osc = this.ctx.createOscillator();
+                osc.type = "sawtooth";
+                osc.frequency.setValueAtTime(f, now);
+                osc.frequency.linearRampToValueAtTime(f * 0.99, now + duration);
+                osc.connect(lowpass);
+                oscillators.push(osc);
+            });
+
+            // Sub bass rumble for absolute impact weight
+            const subOsc = this.ctx.createOscillator();
+            subOsc.type = "triangle";
+            subOsc.frequency.setValueAtTime(43.65, now); // F1
+            const subGain = this.ctx.createGain();
+            subGain.gain.setValueAtTime(0.15, now);
+            subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+            subOsc.connect(subGain);
+            subGain.connect(gainNode);
+
+            lowpass.connect(gainNode);
+            gainNode.connect(dest);
+
+            oscillators.forEach(o => o.start(now));
+            subOsc.start(now);
+
+            oscillators.forEach(o => o.stop(now + duration));
+            subOsc.stop(now + duration);
+
+            setTimeout(() => this.activeChannelCount = Math.max(0, this.activeChannelCount - 1), duration * 1000 + 40);
+        },
+
+        synthesizeRevive(now, dest) {
+            const duration = 1.8;
+            const gainNode = this.ctx.createGain();
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.20, now + 0.15);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+            // 1. Ascending angelic chime sequence (C Major triad) representing ascending divine light
+            const chord = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50]; // C4, E4, G4, C5, E5, G5, C6
+            const chimers = [];
+            
+            chord.forEach((freq, idx) => {
+                const delay = idx * 0.08;
+                const noteTime = now + delay;
+                
+                const chimeOsc = this.ctx.createOscillator();
+                chimeOsc.type = "sine";
+                chimeOsc.frequency.setValueAtTime(freq, noteTime);
+                
+                const chimeGain = this.ctx.createGain();
+                chimeGain.gain.setValueAtTime(0, noteTime);
+                chimeGain.gain.linearRampToValueAtTime(0.05, noteTime + 0.01);
+                chimeGain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.6);
+                
+                chimeOsc.connect(chimeGain);
+                chimeGain.connect(gainNode);
+                
+                chimeOsc.start(noteTime);
+                chimeOsc.stop(noteTime + 0.65);
+            });
+
+            // 2. Swelling warm synth pad base (restored health envelope)
+            const padOsc1 = this.ctx.createOscillator();
+            padOsc1.type = "triangle";
+            padOsc1.frequency.setValueAtTime(130.81, now); // C3
+            
+            const padOsc2 = this.ctx.createOscillator();
+            padOsc2.type = "triangle";
+            padOsc2.frequency.setValueAtTime(164.81, now); // E3
+
+            const padGain = this.ctx.createGain();
+            padGain.gain.setValueAtTime(0, now);
+            padGain.gain.linearRampToValueAtTime(0.08, now + 0.4);
+            padGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+            padOsc1.connect(padGain);
+            padOsc2.connect(padGain);
+            padGain.connect(gainNode);
+
+            gainNode.connect(dest);
+
+            padOsc1.start(now);
+            padOsc2.start(now);
+            padOsc1.stop(now + duration);
+            padOsc2.stop(now + duration);
 
             setTimeout(() => this.activeChannelCount = Math.max(0, this.activeChannelCount - 1), duration * 1000 + 40);
         }
@@ -5223,6 +5408,9 @@ window.onload = function() {
         // Reset phoenix second wind flag upon run defeat to allow reuse on subsequent attempts
         playerStats.usedSecondWind = false;
         
+        // Play cinema dark doom chords
+        SoundManager.play('defeat');
+        
         // Rogue-lite restart stage (70% of maximum reached stage, floor minimum 1)
         let restartStage = Math.max(1, Math.floor((playerStats.maxStage || 1) * 0.70));
         
@@ -5289,6 +5477,9 @@ window.onload = function() {
         
         // Reset dynamic death sequence variables
         deathAnimationTimer = 0;
+        
+        // Play divine healing chimes and warm synth pad
+        SoundManager.play('revive');
         
         updateUI(); 
         reviveTimer = 90; // Triggers the overhauled visual revive cascade
