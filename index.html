@@ -503,28 +503,55 @@
     <div id="game-container">
         
         <div id="top-nav">
-            <div style="position: relative;">
-                <button onclick="toggleDungeonMenu()" style="background: #2c3e50; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">🏰 Activities ▼</button>
-                <div id="dungeon-menu" style="display: none; position: absolute; top: 35px; left: 0; background: #151515; border: 1px solid #444; border-radius: 6px; padding: 12px; width: 260px; z-index: 10000; box-shadow: 0 4px 15px rgba(0,0,0,0.9);">
-                    <div style="color: #f1c40f; font-weight: bold; margin-bottom: 8px; font-size: 14px; text-align:center; border-bottom:1px solid #333; padding-bottom:5px;">🏰 Active Dungeons</div>
-                    
-                    <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; align-items:center;">
-                        <span style="color:#3498db; font-weight:bold;">⚔️ Equip: <span id="dk-equip">3</span>/3</span>
-                        <span id="dt-equip" style="color:#aaa;">(Full)</span>
+            <div style="display: flex; gap: 8px; position: relative;">
+                <div style="position: relative;">
+                    <button onclick="toggleDungeonMenu()" style="background: #2c3e50; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">🏰 Activities ▼</button>
+                    <div id="dungeon-menu" style="display: none; position: absolute; top: 35px; left: 0; background: #151515; border: 1px solid #444; border-radius: 6px; padding: 12px; width: 260px; z-index: 10000; box-shadow: 0 4px 15px rgba(0,0,0,0.9);">
+                        <div style="color: #f1c40f; font-weight: bold; margin-bottom: 8px; font-size: 14px; text-align:center; border-bottom:1px solid #333; padding-bottom:5px;">🏰 Active Dungeons</div>
+                        
+                        <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; align-items:center;">
+                            <span style="color:#3498db; font-weight:bold;">⚔️ Equip: <span id="dk-equip">3</span>/3</span>
+                            <span id="dt-equip" style="color:#aaa;">(Full)</span>
+                        </div>
+                        <button onclick="enterDungeon('equip')" style="width: 100%; background: #3498db; color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; margin-bottom:12px;">Enter Equipment Dungeon</button>
+                        
+                        <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; align-items:center;">
+                            <span style="color:#f1c40f; font-weight:bold;">💰 Gold: <span id="dk-gold">3</span>/3</span>
+                            <span id="dt-gold" style="color:#aaa;">(Full)</span>
+                        </div>
+                        <button onclick="enterDungeon('gold')" style="width: 100%; background: #f1c40f; color: #111; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; margin-bottom:12px;">Enter Gold Mine Caverns</button>
+                        
+                        <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; align-items:center;">
+                            <span style="color:#2ecc71; font-weight:bold;">📦 Mats: <span id="dk-mat">3</span>/3</span>
+                            <span id="dt-mat" style="color:#aaa;">(Full)</span>
+                        </div>
+                        <button onclick="enterDungeon('mat')" style="width: 100%; background: #2ecc71; color: #111; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px;">Enter Toxic Material Pit</button>
                     </div>
-                    <button onclick="enterDungeon('equip')" style="width: 100%; background: #3498db; color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; margin-bottom:12px;">Enter Equipment Dungeon</button>
-                    
-                    <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; align-items:center;">
-                        <span style="color:#f1c40f; font-weight:bold;">💰 Gold: <span id="dk-gold">3</span>/3</span>
-                        <span id="dt-gold" style="color:#aaa;">(Full)</span>
+                </div>
+                
+                <div style="position: relative;">
+                    <button onclick="toggleAudioMenu()" style="background: #2c3e50; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">🔊 Sound ▼</button>
+                    <div id="audio-menu" style="display: none; position: absolute; top: 35px; left: 0; background: #151515; border: 1px solid #444; border-radius: 6px; padding: 12px; width: 220px; z-index: 10000; box-shadow: 0 4px 15px rgba(0,0,0,0.9);">
+                        <div style="color: #f1c40f; font-weight: bold; margin-bottom: 10px; font-size: 14px; text-align:center; border-bottom:1px solid #333; padding-bottom:5px;">🔊 Sound Control</div>
+                        
+                        <div style="margin-bottom: 10px;">
+                            <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
+                                <span style="color:#aaa;">Master Vol:</span>
+                                <span id="vol-master-label" style="color:#3498db; font-weight:bold;">50%</span>
+                            </div>
+                            <input type="range" id="slider-vol-master" min="0" max="1" step="0.05" value="0.5" oninput="changeVolume('master', this.value)" style="width: 100%; background:#333; outline:none; height:4px; border-radius:2px; appearance:none; cursor:pointer;">
+                        </div>
+                        
+                        <div style="margin-bottom: 12px;">
+                            <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
+                                <span style="color:#aaa;">SFX Vol:</span>
+                                <span id="vol-sfx-label" style="color:#2ecc71; font-weight:bold;">80%</span>
+                            </div>
+                            <input type="range" id="slider-vol-sfx" min="0" max="1" step="0.05" value="0.8" oninput="changeVolume('sfx', this.value)" style="width: 100%; background:#333; outline:none; height:4px; border-radius:2px; appearance:none; cursor:pointer;">
+                        </div>
+                        
+                        <button id="btn-audio-mute" onclick="toggleMute()" style="width: 100%; background: #c0392b; color: white; border: none; padding: 6px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; transition: background 0.2s;">Mute Audio</button>
                     </div>
-                    <button onclick="enterDungeon('gold')" style="width: 100%; background: #f1c40f; color: #111; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; margin-bottom:12px;">Enter Gold Mine Caverns</button>
-                    
-                    <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; align-items:center;">
-                        <span style="color:#2ecc71; font-weight:bold;">📦 Mats: <span id="dk-mat">3</span>/3</span>
-                        <span id="dt-mat" style="color:#aaa;">(Full)</span>
-                    </div>
-                    <button onclick="enterDungeon('mat')" style="width: 100%; background: #2ecc71; color: #111; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px;">Enter Toxic Material Pit</button>
                 </div>
             </div>
             <div style="font-size: 13px; color: #7f8c8d; font-weight: bold; align-self: center; letter-spacing: 1px;">Idle SAQ: Slaying and Questing</div>
@@ -886,12 +913,33 @@ window.onload = function() {
         ctx: null,
         activeChannelCount: 0,
         maxConcurrent: 5, // Cap total overlapping sounds to maintain performance
+        masterGain: null,
+        sfxGain: null,
 
         init() {
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
             if (!AudioContextClass) return false;
             if (!this.ctx) {
                 this.ctx = new AudioContextClass();
+                
+                // Create dedicated gain node tree to control master and categorical levels safely
+                this.masterGain = this.ctx.createGain();
+                this.sfxGain = this.ctx.createGain();
+                
+                this.sfxGain.connect(this.masterGain);
+                
+                // Create single unified master dynamic compressor to optimize system resources on overlapping channels
+                const compressor = this.ctx.createDynamicsCompressor();
+                compressor.threshold.setValueAtTime(-18, this.ctx.currentTime);
+                compressor.knee.setValueAtTime(20, this.ctx.currentTime);
+                compressor.ratio.setValueAtTime(10, this.ctx.currentTime);
+                compressor.attack.setValueAtTime(0.003, this.ctx.currentTime);
+                compressor.release.setValueAtTime(0.08, this.ctx.currentTime);
+                
+                this.masterGain.connect(compressor);
+                compressor.connect(this.ctx.destination);
+                
+                this.updateVolumes();
             }
             if (this.ctx.state === 'suspended') {
                 this.ctx.resume();
@@ -899,25 +947,25 @@ window.onload = function() {
             return true;
         },
 
-        // Creates a master compressor to prevent clipping across overlapping channels
-        getCompressor(now) {
-            const compressor = this.ctx.createDynamicsCompressor();
-            compressor.threshold.setValueAtTime(-18, now);
-            compressor.knee.setValueAtTime(20, now);
-            compressor.ratio.setValueAtTime(10, now);
-            compressor.attack.setValueAtTime(0.003, now);
-            compressor.release.setValueAtTime(0.08, now);
-            compressor.connect(this.ctx.destination);
-            return compressor;
+        updateVolumes() {
+            if (!this.ctx) return;
+            const now = this.ctx.currentTime;
+            const targetMaster = playerStats.mute ? 0 : playerStats.volumeMaster;
+            const targetSFX = playerStats.volumeSFX;
+            
+            // Protect against clipping and ramp volumes smoothly to avoid speaker clicks/pops
+            this.masterGain.gain.setTargetAtTime(Math.max(0, Math.min(1, targetMaster)), now, 0.015);
+            this.sfxGain.gain.setTargetAtTime(Math.max(0, Math.min(1, targetSFX)), now, 0.015);
         },
 
         play(type) {
+            if (playerStats.mute) return; // Save synthesis CPU cycles entirely when muted
             if (!this.init()) return;
             if (this.activeChannelCount >= this.maxConcurrent) return;
             
             this.activeChannelCount++;
             const now = this.ctx.currentTime;
-            const dest = this.getCompressor(now);
+            const dest = this.sfxGain; // Route signals directly into the persistent gain node
 
             switch (type) {
                 case 'swing':
@@ -2111,6 +2159,10 @@ window.onload = function() {
         atkPotionTimer: 0, hpPotionTimer: 0, defPotionTimer: 0, hastePotionTimer: 0,
         autoSalvageThreshold: -1, // -1 = Disabled, 0 = Common, 1 = Rare, 2 = Magic, 3 = Epic
         
+        volumeMaster: 0.5,
+        volumeSFX: 0.8,
+        mute: false,
+        
         // Run specific metrics for Death Screen summary reports
         runKills: 0,
         runGold: 0,
@@ -2721,18 +2773,29 @@ window.onload = function() {
                     playerStats.shopRefreshTime = 0; 
                 }
 
-                if (!inventory.USE) { inventory.USE = {}; }
+                 if (!inventory.USE) { inventory.USE = {}; }
                 if (playerStats.frenzyKillCount === undefined) playerStats.frenzyKillCount = 0;
                 if (playerStats.atkPotionTimer === undefined) playerStats.atkPotionTimer = 0;
                 if (playerStats.hpPotionTimer === undefined) playerStats.hpPotionTimer = 0;
                 if (playerStats.defPotionTimer === undefined) playerStats.defPotionTimer = 0;
                 if (playerStats.hastePotionTimer === undefined) playerStats.hastePotionTimer = 0;
                 
+                // Audio setting migration checks
+                if (playerStats.volumeMaster === undefined) playerStats.volumeMaster = 0.5;
+                if (playerStats.volumeSFX === undefined) playerStats.volumeSFX = 0.8;
+                if (playerStats.mute === undefined) playerStats.mute = false;
+                
                 if (inventory.ETC["Iron Scrap"]) { addEtcDrop("Monster Soul", inventory.ETC["Iron Scrap"]); delete inventory.ETC["Iron Scrap"]; }
                 if (inventory.ETC["Sticky Gel"]) { addEtcDrop("Monster Soul", inventory.ETC["Sticky Gel"]); delete inventory.ETC["Sticky Gel"]; }
                 
                 let box = document.getElementById('log-box');
                 box.innerHTML = logsHistory.join("<br><br>");
+                
+                // Initialize range sliders and sync variables
+                updateAudioUI();
+                if (SoundManager.ctx) {
+                    SoundManager.updateVolumes();
+                }
                 
                 if (parsed.lastSaveTime) {
                     let now = Date.now();
@@ -3207,9 +3270,66 @@ window.onload = function() {
 
     window.toggleDungeonMenu = function() {
         let menu = document.getElementById('dungeon-menu');
+        let otherMenu = document.getElementById('audio-menu');
+        if (otherMenu) otherMenu.style.display = 'none';
         menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
     };
 
+    window.toggleAudioMenu = function() {
+        let menu = document.getElementById('audio-menu');
+        let otherMenu = document.getElementById('dungeon-menu');
+        if (otherMenu) otherMenu.style.display = 'none';
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        
+        // Refresh slider UI state
+        updateAudioUI();
+    };
+
+    window.changeVolume = function(type, val) {
+        let numVal = parseFloat(val);
+        if (type === 'master') {
+            playerStats.volumeMaster = numVal;
+            let label = document.getElementById('vol-master-label');
+            if (label) label.innerText = Math.round(numVal * 100) + "%";
+        } else if (type === 'sfx') {
+            playerStats.volumeSFX = numVal;
+            let label = document.getElementById('vol-sfx-label');
+            if (label) label.innerText = Math.round(numVal * 100) + "%";
+        }
+        
+        SoundManager.updateVolumes();
+        window.saveGame();
+    };
+
+    window.toggleMute = function() {
+        playerStats.mute = !playerStats.mute;
+        updateAudioUI();
+        SoundManager.updateVolumes();
+        window.saveGame();
+    };
+
+    function updateAudioUI() {
+        let masterSlider = document.getElementById('slider-vol-master');
+        let sfxSlider = document.getElementById('slider-vol-sfx');
+        let masterLabel = document.getElementById('vol-master-label');
+        let sfxLabel = document.getElementById('vol-sfx-label');
+        let muteBtn = document.getElementById('btn-audio-mute');
+
+        if (masterSlider) masterSlider.value = playerStats.volumeMaster;
+        if (sfxSlider) sfxSlider.value = playerStats.volumeSFX;
+        if (masterLabel) masterLabel.innerText = Math.round(playerStats.volumeMaster * 100) + "%";
+        if (sfxLabel) sfxLabel.innerText = Math.round(playerStats.volumeSFX * 100) + "%";
+
+        if (muteBtn) {
+            if (playerStats.mute) {
+                muteBtn.innerText = "Unmute Audio";
+                muteBtn.style.background = "#2ecc71";
+            } else {
+                muteBtn.innerText = "Mute Audio";
+                muteBtn.style.background = "#c0392b";
+            }
+        }
+    }
     window.enterDungeon = function(type) {
         let countField = type + 'Keys'; let timeField = 'next' + type.charAt(0).toUpperCase() + type.slice(1) + 'KeyTime';
         if (playerStats[countField] < 1) { pushHeaderToast("Not enough keys!", "#e74c3c"); return; }
@@ -6934,6 +7054,7 @@ function engineCycle() {
 window.loadGame(); 
 updateUI(); 
 renderInventory(); 
+updateAudioUI();
 engineCycle();
 };
 </script>
