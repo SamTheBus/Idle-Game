@@ -5855,9 +5855,8 @@ window.onload = function() {
                 ctx.fill();
 
                 ctx.restore();
-            }
-            } else if (subType === "tome") {
-                ctx.save();
+                } else if (subType === "tome") {
+                    ctx.save();
                 let tomeFloat = Math.sin(Date.now() / 200) * 5;
                 ctx.translate(24, -6 + bounce + tomeFloat);
                 ctx.rotate(-Math.PI / 12);
