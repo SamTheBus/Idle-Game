@@ -5242,14 +5242,12 @@ window.onload = function() {
         ctx.fillText(actDps, canvas.width - 70, 25);
 
        // 6.5. Canvas Toasts Rendering
-        let toastW = Math.min(320, canvas.width - 40);
-        let toastH = 28;
         let startY = 15;
         let spacing = 34;
+        let toastH = 28;
 
         canvasToasts.forEach((toast, idx) => {
             let ty = startY + (idx * spacing);
-            let tx = canvas.width / 2 - toastW / 2;
             
             let alpha = 1.0;
             if (toast.life < 15) alpha = toast.life / 15;
@@ -5257,6 +5255,31 @@ window.onload = function() {
             
             ctx.save();
             ctx.globalAlpha = alpha;
+            
+            // Set typography context before measurement calculations
+            let fontSize = canvas.width > 420 ? "11px" : "10px";
+            ctx.font = `bold ${fontSize} sans-serif`;
+            ctx.textBaseline = "middle";
+            
+            let labelWidth = 0;
+            let fullPrefix = "";
+            let nameText = "";
+            
+            if (toast.customText) {
+                fullPrefix = toast.customText.replace(/<[^>]*>/g, "");
+                labelWidth = ctx.measureText(fullPrefix).width;
+            } else {
+                let headerLabel = toast.isEtc ? `📦 +${toast.quantity} Loot` : (toast.stars === "UNIQUE" ? "⭐ UNIQUE DETECTED!" : `⚔️ ITEM FOUND (${toast.stars}★)`);
+                fullPrefix = `${headerLabel} : `;
+                nameText = toast.name;
+                labelWidth = ctx.measureText(fullPrefix + nameText).width;
+            }
+            
+            // Generate a padded dynamic box width capped slightly below canvas limits
+            let horizontalPadding = 24;
+            let toastW = Math.min(canvas.width - 40, labelWidth + horizontalPadding);
+            let tx = canvas.width / 2 - toastW / 2;
+            let maxTextWidth = toastW - horizontalPadding;
             
             // Toon black background shadow outline
             ctx.fillStyle = "#000000";
@@ -5271,12 +5294,6 @@ window.onload = function() {
             ctx.lineWidth = 1.5;
             ctx.strokeRect(tx + 1, ty + 1, toastW - 2, toastH - 2);
             
-            // Scaled responsive typography styling (prevents overlap issues)
-            let fontSize = canvas.width > 420 ? "11px" : "10px";
-            ctx.font = `bold ${fontSize} sans-serif`;
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            
             let textX = canvas.width / 2;
             let textY = ty + toastH / 2;
             
@@ -5284,27 +5301,45 @@ window.onload = function() {
             ctx.lineWidth = 2.5;
             
             if (toast.customText) {
-                let cleanText = toast.customText.replace(/<[^>]*>/g, "");
-                ctx.strokeText(cleanText, textX, textY);
+                ctx.textAlign = "center";
+                ctx.strokeText(fullPrefix, textX, textY, maxTextWidth);
                 ctx.fillStyle = "#ffffff";
-                ctx.fillText(cleanText, textX, textY);
+                ctx.fillText(fullPrefix, textX, textY, maxTextWidth);
             } else {
-                let headerLabel = toast.isEtc ? `📦 +${toast.quantity} Loot` : (toast.stars === "UNIQUE" ? "⭐ UNIQUE DETECTED!" : `⚔️ ITEM FOUND (${toast.stars}★)`);
-                let fullPrefix = `${headerLabel} : `;
-                let nameText = toast.name;
+                let fullPrefixW = ctx.measureText(fullPrefix).width;
+                let nameTextW = ctx.measureText(nameText).width;
+                let totalTextW = fullPrefixW + nameTextW;
                 
-                let fullW = ctx.measureText(fullPrefix + nameText).width;
-                let startX = textX - fullW / 2;
-                
-                ctx.textAlign = "left";
-                ctx.fillStyle = "#ffffff";
-                ctx.strokeText(fullPrefix, startX, textY);
-                ctx.fillText(fullPrefix, startX, textY);
-                
-                let prefixW = ctx.measureText(fullPrefix).width;
-                ctx.fillStyle = toast.color;
-                ctx.strokeText(nameText, startX + prefixW, textY);
-                ctx.fillText(nameText, startX + prefixW, textY);
+                if (totalTextW > maxTextWidth) {
+                    // Squeeze long text blocks proportionally into the layout boundaries
+                    ctx.save();
+                    ctx.translate(textX, textY);
+                    let scaleX = maxTextWidth / totalTextW;
+                    ctx.scale(scaleX, 1);
+                    
+                    ctx.textAlign = "left";
+                    let startX = -totalTextW / 2;
+                    
+                    ctx.fillStyle = "#ffffff";
+                    ctx.strokeText(fullPrefix, startX, 0);
+                    ctx.fillText(fullPrefix, startX, 0);
+                    
+                    ctx.fillStyle = toast.color;
+                    ctx.strokeText(nameText, startX + fullPrefixW, 0);
+                    ctx.fillText(nameText, startX + fullPrefixW, 0);
+                    ctx.restore();
+                } else {
+                    ctx.textAlign = "left";
+                    let startX = textX - totalTextW / 2;
+                    
+                    ctx.fillStyle = "#ffffff";
+                    ctx.strokeText(fullPrefix, startX, textY);
+                    ctx.fillText(fullPrefix, startX, textY);
+                    
+                    ctx.fillStyle = toast.color;
+                    ctx.strokeText(nameText, startX + fullPrefixW, textY);
+                    ctx.fillText(nameText, startX + fullPrefixW, textY);
+                }
             }
             ctx.restore();
         });
