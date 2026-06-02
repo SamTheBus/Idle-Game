@@ -299,13 +299,13 @@
         #log-box { height: 220px; overflow-y: auto; background: #111; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 11px; line-height: 1.5; pointer-events: auto; overscroll-behavior: contain; }
         .log-item-link { cursor: help; text-decoration: underline; text-decoration-style: dashed; pointer-events: auto; }
         
-        #death-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+         #death-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(8, 2, 2, 0.92); color: white; display: none;
             justify-content: center; align-items: center;
             z-index: 15000; pointer-events: auto;
             backdrop-filter: blur(6px);
-            border-radius: 8px;
+            border-radius: 0;
             animation: deathFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
@@ -4036,7 +4036,9 @@ window.onload = function() {
             html += `<div class="tooltip-card compare-border">${generateItemCardHtml(eq, null, true)}</div>`;
             html += `<div class="tooltip-card">${generateItemCardHtml(item, eq, false)}</div>`;
         } else {
-            html += `<div class="tooltip-card">${generateItemCardHtml(item, null, item.isEquippedSlot != null)}</div>`;
+            // Force isEquipped to false if rendering from any inventory bag tab
+            let isEquipped = isBagItem ? false : (item.isEquippedSlot != null);
+            html += `<div class="tooltip-card">${generateItemCardHtml(item, null, isEquipped)}</div>`;
         }
         return `<div class="tooltip-flex-container">${html}</div>`;
     }
@@ -4095,6 +4097,7 @@ window.onload = function() {
 
     window.showSlotTooltip = function(e, slotKey) {
         e.stopPropagation(); let item = equippedSlots[slotKey]; if (!item) return;
+        item.isEquippedSlot = slotKey; // Assign tracking flag dynamically on render
         let tt = document.getElementById('game-tooltip'); tt.innerHTML = buildGeneralTooltipHtml(item, false); 
         tt.style.borderColor = getTierColor(item.statsRolled); tt.style.display = "block"; window.positionTooltip(e, tt);
     };
@@ -4287,24 +4290,46 @@ window.onload = function() {
         let oldMaxHp = resolvePlayerStats().maxHp;
         
         if (item.type === "overall") {
-            if (equippedSlots.chest) { inventory.EQUIP.push(equippedSlots.chest); equippedSlots.chest = null; }
-            if (equippedSlots.leggings) { inventory.EQUIP.push(equippedSlots.leggings); equippedSlots.leggings = null; }
-            if (equippedSlots.overall) { inventory.EQUIP.push(equippedSlots.overall); }
+            if (equippedSlots.chest) { 
+                delete equippedSlots.chest.isEquippedSlot;
+                inventory.EQUIP.push(equippedSlots.chest); 
+                equippedSlots.chest = null; 
+            }
+            if (equippedSlots.leggings) { 
+                delete equippedSlots.leggings.isEquippedSlot;
+                inventory.EQUIP.push(equippedSlots.leggings); 
+                equippedSlots.leggings = null; 
+            }
+            if (equippedSlots.overall) { 
+                delete equippedSlots.overall.isEquippedSlot;
+                inventory.EQUIP.push(equippedSlots.overall); 
+            }
             equippedSlots.overall = item;
         } else if (item.type === "chest" || item.type === "leggings") {
-            if (equippedSlots.overall) { inventory.EQUIP.push(equippedSlots.overall); equippedSlots.overall = null; }
-            if (equippedSlots[item.type]) { inventory.EQUIP.push(equippedSlots[item.type]); }
+            if (equippedSlots.overall) { 
+                delete equippedSlots.overall.isEquippedSlot;
+                inventory.EQUIP.push(equippedSlots.overall); 
+                equippedSlots.overall = null; 
+            }
+            if (equippedSlots[item.type]) { 
+                delete equippedSlots[item.type].isEquippedSlot;
+                inventory.EQUIP.push(equippedSlots[item.type]); 
+            }
             equippedSlots[item.type] = item;
         } else if (item.type === "artifact") {
             if (!equippedSlots.art1) equippedSlots.art1 = item; else if (!equippedSlots.art2) equippedSlots.art2 = item;
             else { 
                 if (equippedSlots.art3) {
+                    delete equippedSlots.art3.isEquippedSlot;
                     inventory.ARTIFACT.push(equippedSlots.art3); 
                 }
                 equippedSlots.art3 = item; 
             }
         } else {
-            if (equippedSlots[item.type]) inventory.EQUIP.push(equippedSlots[item.type]);
+            if (equippedSlots[item.type]) {
+                delete equippedSlots[item.type].isEquippedSlot;
+                inventory.EQUIP.push(equippedSlots[item.type]);
+            }
             equippedSlots[item.type] = item;
         }
         
@@ -4323,6 +4348,9 @@ window.onload = function() {
     window.unequipItem = function(slotKey) {
         let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
         window.hideTooltip(); let item = equippedSlots[slotKey]; if (!item) return;
+        
+        // Remove tracking references when unequipping items
+        delete item.isEquippedSlot;
         
         let oldMaxHp = resolvePlayerStats().maxHp;
         if (item.type === "artifact") {
