@@ -2403,7 +2403,7 @@ window.onload = function() {
     let particles = []; 
     let bgScenery = [];
     let fgScenery = [];
-    let fairy = { active: false, x: -50, y: 50 };
+    let activeFairies = [];
     let damageHistory = [];
     
     let groundScroll = 0;
@@ -4105,9 +4105,14 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         const clickX = ((e.clientX || (e.touches && e.touches[0].clientX)) - rect.left) * scaleX;
         const clickY = ((e.clientY || (e.touches && e.touches[0].clientY)) - rect.top) * scaleY;
 
-        if (fairy.active) {
-            const dist = Math.hypot(clickX - fairy.x, clickY - fairy.y);
-            if (dist < 40) { triggerFairyLoot(); return; }
+        // Check if user clicked any of the active floating fairies
+        let clickedFairy = activeFairies.find(f => {
+            let hover = Math.sin(Date.now() / 200 + f.offset) * 10;
+            return Math.hypot(clickX - f.x, clickY - (f.y + hover)) < 40;
+        });
+        if (clickedFairy) {
+            triggerFairyLoot(clickedFairy);
+            return;
         }
         window.triggerPlayerSlash(); 
     });
@@ -4121,13 +4126,14 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     /* ==========================================================================
        8. FAIRY CLICK INTERACTION OVERHAUL (PHYSICS SPLASH + LIGHT BEAMS)
        ========================================================================== */
-    function triggerFairyLoot() {
+    function triggerFairyLoot(targetFairy) {
         let p = resolvePlayerStats();
         let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
-        let spawnX = fairy.x;
-        let spawnY = fairy.y;
+        let spawnX = targetFairy.x;
+        let spawnY = targetFairy.y + Math.sin(Date.now() / 200 + targetFairy.offset) * 10;
         
-        fairy.active = false; 
+        // Remove the captured fairy from our array
+        activeFairies = activeFairies.filter(f => f.id !== targetFairy.id); 
         SoundManager.play('fairy');
 
         for (let i = 0; i < 15; i++) {
@@ -4137,7 +4143,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 vx: randFloat(-4, 4),
                 vy: randFloat(-6, -1),
                 radius: randFloat(2, 4),
-                color: "#f1c40f", 
+                color: targetFairy.color || "#f1c40f", 
                 alpha: 1,
                 life: randInt(25, 45)
             });
@@ -7028,11 +7034,41 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         
         logicClock++;
         
-        let adjustedFairyChance = 0.00005 * p.fairySpawn;
-        if (!fairy.active && Math.random() < adjustedFairyChance) { fairy.active = true; fairy.x = -50; fairy.y = 30 + Math.random() * 60; }
-        if (fairy.active) { fairy.x += 1.2; if (fairy.x > canvas.width + 50) fairy.active = false; }
+        // Calculate multi-fairy surge checks based on spawn coefficient limits
+        if (activeFairies.length === 0 && Math.random() < 0.00005) {
+            let val = p.fairySpawn;
+            let numToSpawn = 0;
+            if (val < 1.0) {
+                if (Math.random() < val) numToSpawn = 1;
+            } else {
+                numToSpawn = Math.floor(val);
+                let remainder = val - numToSpawn;
+                if (Math.random() < remainder) {
+                    numToSpawn++;
+                }
+            }
+            for (let i = 0; i < numToSpawn; i++) {
+                activeFairies.push({
+                    id: idCounter++,
+                    x: -50 - (i * 35), // Spatially offset so they fly in a tidy line
+                    y: 30 + Math.random() * 60,
+                    offset: i * 2, // Desynchronizes wing flutter and hover waves
+                    speed: randFloat(1.0, 1.4), // Slightly offset individual velocities
+                    color: i === 0 ? "#ffb6c1" : (i === 1 ? "#74b9ff" : (i === 2 ? "#55efc4" : "#ffeaa7")) // Pink, Blue, Green, Yellow neon glows
+                });
+            }
+        }
+        
+        // Move floating fairies and cleanup offscreen targets
+        for (let i = activeFairies.length - 1; i >= 0; i--) {
+            let f = activeFairies[i];
+            f.x += f.speed;
+            if (f.x > canvas.width + 50) {
+                activeFairies.splice(i, 1);
+            }
+        }
 
-        if (!mob) { 
+        if (!mob) {
             processEnemySpawn(); 
             scrollScenery(scrollSpeed);
         } else {
@@ -7948,14 +7984,14 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         }
 
         // 3. Fairy rendering with clean outlines
-        if (fairy.active) {
-            let flap = Math.abs(Math.sin(Date.now() / 100)) * 8 + 2; 
-            let hover = Math.sin(Date.now() / 200) * 10;
-            let fx = fairy.x; let fy = fairy.y + hover;
+        activeFairies.forEach(f => {
+            let flap = Math.abs(Math.sin(Date.now() / 100 + f.offset)) * 8 + 2; 
+            let hover = Math.sin(Date.now() / 200 + f.offset) * 10;
+            let fx = f.x; let fy = f.y + hover;
 
             ctx.save(); 
             ctx.shadowBlur = 15; 
-            ctx.shadowColor = "#ffb6c1";
+            ctx.shadowColor = f.color || "#ffb6c1";
             
             // Wings with dark border
             ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
@@ -7966,14 +8002,14 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             ctx.strokeStyle = "#000000"; ctx.lineWidth = 1.5; ctx.stroke();
 
             // Head/Body with dark border
-            ctx.fillStyle = "#ffb6c1"; 
+            ctx.fillStyle = f.color || "#ffb6c1"; 
             ctx.beginPath(); 
             ctx.arc(fx, fy, 6, 0, Math.PI*2); 
             ctx.fill();
             ctx.stroke();
             
             ctx.restore();
-        }
+        });
 
         // 4. Foreground Scenery Objects (Outlines unified)
         fgScenery.forEach(s => {
