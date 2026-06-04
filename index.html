@@ -2993,6 +2993,8 @@ window.onload = function() {
                 if (playerStats.totalTempers === undefined) playerStats.totalTempers = 0;
                 if (playerStats.totalEnchants === undefined) playerStats.totalEnchants = 0;
                 if (playerStats.riftGuardiansSlain === undefined) playerStats.riftGuardiansSlain = 0;
+                if (playerStats.elixirsConsumed === undefined) playerStats.elixirsConsumed = 0;
+                if (playerStats.itemsSalvaged === undefined) playerStats.itemsSalvaged = 0;
                 
                 // Audio setting migration checks
                 if (playerStats.volumeMaster === undefined) playerStats.volumeMaster = 0.5;
@@ -3412,10 +3414,12 @@ window.onload = function() {
         }
         
         function consumeUseItem(name) {
-            inventory.USE[name]--;
-            if (inventory.USE[name] === 0) delete inventory.USE[name];
-            pushHeaderToast(`Consumed ${name}!`, "#2ecc71");
-        }
+        inventory.USE[name]--;
+        if (inventory.USE[name] === 0) delete inventory.USE[name];
+        playerStats.elixirsConsumed = (playerStats.elixirsConsumed || 0) + 1;
+        window.checkAchievements();
+        pushHeaderToast(`Consumed ${name}!`, "#2ecc71");
+    }
         
         let pAfter = resolvePlayerStats();
         playerStats.currentHp = Math.max(1, Math.min(pAfter.maxHp, Math.floor((playerStats.currentHp / pBefore.maxHp) * pAfter.maxHp)));
@@ -3851,6 +3855,15 @@ window.onload = function() {
         let achAtk = 0, achMaxHp = 0, achDef = 0, achMoveSpeed = 0;
         let achCritChance = 0, achCritDamage = 0, achBlock = 0, achParry = 0;
         let achDrop = 0, achQly = 0, achGold = 0, achStr = 0, achDex = 0, achInt = 0, achFairySpawn = 0;
+        
+        // Additive percentage multipliers (1.0 base)
+        let achAtkPct = 1.0;
+        let achMaxHpPct = 1.0;
+        let achDefPct = 1.0;
+        let achMoveSpeedPct = 1.0;
+        let achStrPct = 1.0;
+        let achDexPct = 1.0;
+        let achIntPct = 1.0;
 
         if (playerStats.unlockedAchievements && window.AchievementsData) {
             playerStats.unlockedAchievements.forEach(id => {
@@ -3871,6 +3884,15 @@ window.onload = function() {
                     if (ach.stats.dex) achDex += ach.stats.dex;
                     if (ach.stats.int) achInt += ach.stats.int;
                     if (ach.stats.fairySpawn) achFairySpawn += ach.stats.fairySpawn;
+                    
+                    // Accumulate percentage modifications additively
+                    if (ach.stats.atkPct) achAtkPct += ach.stats.atkPct;
+                    if (ach.stats.maxHpPct) achMaxHpPct += ach.stats.maxHpPct;
+                    if (ach.stats.defPct) achDefPct += ach.stats.defPct;
+                    if (ach.stats.moveSpeedPct) achMoveSpeedPct += ach.stats.moveSpeedPct;
+                    if (ach.stats.strPct) achStrPct += ach.stats.strPct;
+                    if (ach.stats.dexPct) achDexPct += ach.stats.dexPct;
+                    if (ach.stats.intPct) achIntPct += ach.stats.intPct;
                 }
             });
         }
@@ -3907,10 +3929,6 @@ window.onload = function() {
         p.parry += (alloc.spParry * 0.005);
         p.moveSpeed += (alloc.spSpd * 1);
         
-         // Initialize base Defense scaling with SP and Intelligence allocation
-        let flatDef = playerStats.baseDef + (alloc.spDef * 3) + (p.int * 0.75);
-        let defMultiplier = 1.0;
-
         for (let key in equippedSlots) {
             let item = equippedSlots[key];
             if (item) {
@@ -3931,17 +3949,13 @@ window.onload = function() {
                 p.int += (item.int || 0);
                 p.rareSpawn += (item.rareSpawn || 0);
                 p.fairySpawn += (item.fairySpawn || 0);
-                
-                // Track flat defense from non-shield items
-                flatDef += (item.def || 0);
-                
-                // Derive multiplicative % defense from high-quality structural armor
-                if (["chest", "leggings", "overall", "helmet"].includes(item.type)) {
-                    let stars = item.statsRolled === "UNIQUE" ? 5 : (item.statsRolled || 0);
-                    defMultiplier += (stars * 0.03) + (item.temperLevel * 0.01);
-                }
             }
         }
+
+        // Apply attribute multipliers prior to cross-scaling to dynamically scale cross-dependencies
+        p.str = Math.floor(p.str * achStrPct);
+        p.dex = Math.floor(p.dex * achDexPct);
+        p.int = Math.floor(p.int * achIntPct);
 
         // Primary attributes hybrid cross-scaling
         p.atk += p.str * 1.5;              // 1 STR = +1.5 Attack
@@ -3954,10 +3968,23 @@ window.onload = function() {
         p.block += p.int * 0.002;          // 1 INT = +0.2% Block Rate
         p.parry += p.int * 0.002;          // 1 INT = +0.2% Parry Rate
         
-        // Add flat defense from checking special artifact buffs
+        // Initialize base Defense scaling with SP and Intelligence allocation
+        let flatDef = playerStats.baseDef + (alloc.spDef * 3) + (p.int * 0.75);
+        let defMultiplier = 1.0;
+
+        for (let key in equippedSlots) {
+            let item = equippedSlots[key];
+            if (item) {
+                flatDef += (item.def || 0);
+                if (["chest", "leggings", "overall", "helmet"].includes(item.type)) {
+                    let stars = item.statsRolled === "UNIQUE" ? 5 : (item.statsRolled || 0);
+                    defMultiplier += (stars * 0.03) + (item.temperLevel * 0.01);
+                }
+            }
+        }
+
         if (checkArtifactTrait("defense")) flatDef += 15;
 
-        // Any subweapon allows blocking. Shields provide a balanced flat and multiplicative defense boost.
         const hasSubweapon = !!equippedSlots.subweapon;
         if (!hasSubweapon) {
             p.block = 0.0;
@@ -3967,14 +3994,15 @@ window.onload = function() {
         if (hasShield) {
             let shield = equippedSlots.subweapon;
             let shieldStars = shield.statsRolled === "UNIQUE" ? 5 : (shield.statsRolled || 0);
-            
-            // Shields provide a massive flat defense and a solid multiplicative boost
             flatDef += 15 + (shield.stageLevel * 3);
             defMultiplier += 0.25 + (shieldStars * 0.02) + (shield.temperLevel * 0.01);
         }
 
-        // Apply final derived flat and multiplicative calculations to player profile
-        p.def = Math.ceil(flatDef * defMultiplier);
+        // Apply final derived flat and multiplicative calculations with achievement multipliers
+        p.atk = Math.floor(p.atk * achAtkPct);
+        p.maxHp = Math.floor(p.maxHp * achMaxHpPct);
+        p.def = Math.ceil(flatDef * defMultiplier * achDefPct);
+        p.moveSpeed = p.moveSpeed * achMoveSpeedPct;
 
         if (playerStats.atkPotionTimer > 0) p.atk = Math.ceil(p.atk * 1.10);
         if (playerStats.hpPotionTimer > 0) p.maxHp = Math.ceil(p.maxHp * 1.10);
@@ -3995,7 +4023,6 @@ window.onload = function() {
         if (p.block > 0.75) p.block = 0.75;
         if (p.parry > 0.35) p.parry = 0.35;
 
-        // Standardize decimal scales into final integer profiles for core gameplay metrics
         p.atk = Math.floor(p.atk);
         p.maxHp = Math.floor(p.maxHp);
         p.def = Math.floor(p.def);
@@ -4302,6 +4329,7 @@ window.onload = function() {
         } else { 
             inventory.EQUIP.splice(inventory.EQUIP.indexOf(item), 1); 
         }
+        playerStats.itemsSalvaged = (playerStats.itemsSalvaged || 0) + 1;
         
         let rolledTier = item.statsRolled; 
         let scrapsGained = []; 
@@ -4383,6 +4411,8 @@ window.onload = function() {
                 forgeSelectedItem = null;
             }
         });
+
+        playerStats.itemsSalvaged = (playerStats.itemsSalvaged || 0) + targetItems.length;
 
         // Safe non-blocking batch de-reference of items from EQUIP array (avoiding inline splice shifting anomalies)
         let targetIds = new Set(targetItems.map(item => item.id));
@@ -4647,11 +4677,18 @@ window.onload = function() {
 
         // Compute total contributions from unlocked Achievements
         let achTotal = 0;
+        let achPctTotal = 0;
         if (playerStats.unlockedAchievements && window.AchievementsData) {
             playerStats.unlockedAchievements.forEach(id => {
                 let ach = window.AchievementsData.find(a => a.id === id);
-                if (ach && ach.stats && ach.stats[statKey] !== undefined) {
-                    achTotal += ach.stats[statKey];
+                if (ach && ach.stats) {
+                    if (ach.stats[statKey] !== undefined) {
+                        achTotal += ach.stats[statKey];
+                    }
+                    let pctKey = statKey + "Pct";
+                    if (ach.stats[pctKey] !== undefined) {
+                        achPctTotal += ach.stats[pctKey];
+                    }
                 }
             });
         }
@@ -4675,7 +4712,8 @@ window.onload = function() {
         if (data.lvl > 0) html += `<div class="tt-stat-line" style="color:#3498db;">• Level Stats (SP): ${formatVal(data.lvl)}</div>`;
         if (gearTotal > 0) html += `<div class="tt-stat-line" style="color:#2ecc71;">• Equipment / Elixirs: ${formatVal(gearTotal)}</div>`;
         if (artTotal > 0) html += `<div class="tt-stat-line" style="color:#9b59b6;">• Artifacts: ${formatVal(artTotal)}</div>`;
-        if (achTotal > 0) html += `<div class="tt-stat-line" style="color:#f1c40f;">• Achievements: ${formatVal(achTotal)}</div>`;
+        if (achTotal > 0) html += `<div class="tt-stat-line" style="color:#f1c40f;">• Achievements (Flat): ${formatVal(achTotal)}</div>`;
+        if (achPctTotal > 0) html += `<div class="tt-stat-line" style="color:#f1c40f;">• Achievements (Mult): +${Math.round(achPctTotal * 100)}%</div>`;
         
         if (statKey === 'critChance' || statKey === 'critDamage') {
             if (playerStats.frenzyTimer > 0) html += `<div class="tt-stat-line" style="color:#e67e22; font-weight:bold; margin-top:5px;">• FRENZY BUFF ACTIVE!</div>`;
@@ -4853,6 +4891,7 @@ window.onload = function() {
         let newMaxHp = resolvePlayerStats().maxHp;
         playerStats.currentHp = Math.max(1, Math.min(newMaxHp, Math.floor((playerStats.currentHp / oldMaxHp) * newMaxHp)));
         
+        window.checkAchievements();
         updateUI(); renderInventory(); renderForgeTab(); window.saveGame();
     };
 
@@ -4877,6 +4916,7 @@ window.onload = function() {
         let newMaxHp = resolvePlayerStats().maxHp;
         playerStats.currentHp = Math.max(1, Math.min(newMaxHp, Math.floor((playerStats.currentHp / oldMaxHp) * newMaxHp)));
         
+        window.checkAchievements();
         updateUI(); renderInventory(); renderForgeTab(); window.saveGame();
     };
      window.selectForgeItem = function(id) { 
@@ -7377,21 +7417,63 @@ function engineCycle() {
        ACHIEVEMENTS SYSTEM CORE DATA & UI HANDLERS
        ========================================================================== */
     window.AchievementsData = [
-        { id: "slayer_1", name: "Novice Slayer", icon: "⚔️", desc: "Slay 100 total enemies", reqType: "kills", reqValue: 100, stats: { atk: 2 } },
-        { id: "slayer_2", name: "Adept Slayer", icon: "💀", desc: "Slay 1,000 total enemies", reqType: "kills", reqValue: 1000, stats: { atk: 5 } },
-        { id: "slayer_3", name: "Deathbringer", icon: "😈", desc: "Slay 10,000 total enemies", reqType: "kills", reqValue: 10000, stats: { critChance: 0.01 } },
+        // SLAYERS (Kills)
+        { id: "slayer_1", name: "Novice Slayer", icon: "⚔️", desc: "Slay 100 total enemies", reqType: "kills", reqValue: 100, stats: { atk: 2, atkPct: 0.01 } },
+        { id: "slayer_2", name: "Adept Slayer", icon: "💀", desc: "Slay 1,000 total enemies", reqType: "kills", reqValue: 1000, stats: { atk: 5, atkPct: 0.02 } },
+        { id: "slayer_3", name: "Deathbringer", icon: "😈", desc: "Slay 10,000 total enemies", reqType: "kills", reqValue: 10000, stats: { critChance: 0.01, atkPct: 0.03 } },
+        { id: "slayer_4", name: "God of War", icon: "🤺", desc: "Slay 50,000 total enemies", reqType: "kills", reqValue: 50000, stats: { atkPct: 0.05 } },
+        { id: "slayer_5", name: "Void Reaper", icon: "🌌", desc: "Slay 100,000 total enemies", reqType: "kills", reqValue: 100000, stats: { atkPct: 0.10 } },
         
-        { id: "hoarder_1", name: "Penny Pincher", icon: "🪙", desc: "Collect 5,000 total gold", reqType: "gold", reqValue: 5000, stats: { maxHp: 10 } },
-        { id: "hoarder_2", name: "Merchant's Trust", icon: "💰", desc: "Collect 50,000 total gold", reqType: "gold", reqValue: 50000, stats: { gold: 0.01 } },
-        { id: "hoarder_3", name: "Capitalist Overlord", icon: "💎", desc: "Collect 500,000 total gold", reqType: "gold", reqValue: 500000, stats: { qly: 0.01 } },
+        // HOARDERS (Gold)
+        { id: "hoarder_1", name: "Penny Pincher", icon: "🪙", desc: "Collect 5,000 total gold", reqType: "gold", reqValue: 5000, stats: { maxHp: 10, maxHpPct: 0.01 } },
+        { id: "hoarder_2", name: "Merchant's Trust", icon: "💰", desc: "Collect 50,000 total gold", reqType: "gold", reqValue: 50000, stats: { gold: 0.02, maxHpPct: 0.02 } },
+        { id: "hoarder_3", name: "Capitalist Overlord", icon: "💎", desc: "Collect 500,000 total gold", reqType: "gold", reqValue: 500000, stats: { qly: 0.02, maxHpPct: 0.03 } },
+        { id: "hoarder_4", name: "Vault Guardian", icon: "🏰", desc: "Collect 2,000,000 total gold", reqType: "gold", reqValue: 2000000, stats: { gold: 0.05, maxHpPct: 0.05 } },
+        { id: "hoarder_5", name: "Golden Deity", icon: "👑", desc: "Collect 10,000,000 total gold", reqType: "gold", reqValue: 10000000, stats: { gold: 0.10, maxHpPct: 0.10 } },
         
-        { id: "stage_1", name: "Greenhorn Explorer", icon: "🗺️", desc: "Reach Stage 10", reqType: "stage", reqValue: 10, stats: { def: 1 } },
-        { id: "stage_2", name: "Seasoned Ranger", icon: "🧭", desc: "Reach Stage 50", reqType: "stage", reqValue: 50, stats: { def: 2 } },
-        { id: "stage_3", name: "The Abyss Crawler", icon: "🌋", desc: "Reach Stage 100", reqType: "stage", reqValue: 100, stats: { drop: 0.01 } },
+        // STAGES (Progression)
+        { id: "stage_1", name: "Greenhorn Explorer", icon: "🗺️", desc: "Reach Stage 10", reqType: "stage", reqValue: 10, stats: { def: 1, defPct: 0.01 } },
+        { id: "stage_2", name: "Seasoned Ranger", icon: "🧭", desc: "Reach Stage 50", reqType: "stage", reqValue: 50, stats: { def: 2, defPct: 0.03 } },
+        { id: "stage_3", name: "The Abyss Crawler", icon: "🌋", desc: "Reach Stage 100", reqType: "stage", reqValue: 100, stats: { drop: 0.02, defPct: 0.05 } },
+        { id: "stage_4", name: "The Unstoppable", icon: "🛡️", desc: "Reach Stage 150", reqType: "stage", reqValue: 150, stats: { defPct: 0.08 } },
+        { id: "stage_5", name: "Transcendent Traveler", icon: "🪐", desc: "Reach Stage 200", reqType: "stage", reqValue: 200, stats: { maxHpPct: 0.08 } },
+        { id: "stage_6", name: "Voidwalker", icon: "🌌", desc: "Reach Stage 300", reqType: "stage", reqValue: 300, stats: { moveSpeedPct: 0.10 } },
         
-        { id: "forge_1", name: "Bronze Anvil", icon: "🔨", desc: "Temper any equipment gear item", reqType: "temper", reqValue: 1, stats: { str: 2 } },
-        { id: "enchant_1", name: "Magic Infusion", icon: "🔮", desc: "Enchant any fully-tempered equipment item", reqType: "enchant", reqValue: 1, stats: { int: 2 } },
-        { id: "rift_1", name: "Reality Breaker", icon: "🌌", desc: "Summon and defeat an Enraged Rift Guardian", reqType: "rift", reqValue: 1, stats: { fairySpawn: 0.01 } }
+        // BLACKSMITH (Tempers)
+        { id: "forge_1", name: "Bronze Anvil", icon: "🔨", desc: "Temper any equipment gear item", reqType: "temper", reqValue: 1, stats: { str: 2, strPct: 0.02 } },
+        { id: "forge_2", name: "Iron Hammer", icon: "⚒️", desc: "Temper items 10 times", reqType: "temper", reqValue: 10, stats: { strPct: 0.04 } },
+        { id: "forge_3", name: "Master Blacksmith", icon: "🔥", desc: "Temper items 50 times", reqType: "temper", reqValue: 50, stats: { strPct: 0.08 } },
+        { id: "forge_4", name: "God of the Forge", icon: "🔱", desc: "Temper items 250 times", reqType: "temper", reqValue: 250, stats: { strPct: 0.15 } },
+        
+        // ENCHANTER (Enchants)
+        { id: "enchant_1", name: "Magic Infusion", icon: "🔮", desc: "Enchant any fully-tempered equipment item", reqType: "enchant", reqValue: 1, stats: { int: 2, intPct: 0.02 } },
+        { id: "enchant_2", name: "Mystic Scholar", icon: "📜", desc: "Enchant items 5 times", reqType: "enchant", reqValue: 5, stats: { intPct: 0.04 } },
+        { id: "enchant_3", name: "Eldritch Weaver", icon: "🕸️", desc: "Enchant items 20 times", reqType: "enchant", reqValue: 20, stats: { intPct: 0.08 } },
+        { id: "enchant_4", name: "Enchantment Archmage", icon: "🧙", desc: "Enchant items 100 times", reqType: "enchant", reqValue: 100, stats: { intPct: 0.15 } },
+        
+        // RIFT (Boss Summoning)
+        { id: "rift_1", name: "Reality Breaker", icon: "🌌", desc: "Summon and defeat an Enraged Rift Guardian", reqType: "rift", reqValue: 1, stats: { fairySpawn: 0.02, dexPct: 0.02 } },
+        { id: "rift_2", name: "Rift Conqueror", icon: "🌀", desc: "Summon & defeat 5 Rift Guardians", reqType: "rift", reqValue: 5, stats: { dexPct: 0.04 } },
+        { id: "rift_3", name: "Guardian's Bane", icon: "⚔️", desc: "Summon & defeat 25 Rift Guardians", reqType: "rift", reqValue: 25, stats: { dexPct: 0.08 } },
+        { id: "rift_4", name: "Cosmic Arbiter", icon: "🛸", desc: "Summon & defeat 100 Rift Guardians", reqType: "rift", reqValue: 100, stats: { dexPct: 0.15 } },
+        
+        // LEVEL (Milestones)
+        { id: "level_1", name: "Novice Adventurer", icon: "🔰", desc: "Reach Character Level 10", reqType: "level", reqValue: 10, stats: { atkPct: 0.02, maxHpPct: 0.02 } },
+        { id: "level_2", name: "Elite Hero", icon: "🛡️", desc: "Reach Character Level 30", reqType: "level", reqValue: 30, stats: { atkPct: 0.04, maxHpPct: 0.04 } },
+        { id: "level_3", name: "Transcendent Being", icon: "🌟", desc: "Reach Character Level 75", reqType: "level", reqValue: 75, stats: { atkPct: 0.06, maxHpPct: 0.06, defPct: 0.06 } },
+        { id: "level_4", name: "Immortal Legend", icon: "👑", desc: "Reach Character Level 150", reqType: "level", reqValue: 150, stats: { atkPct: 0.10, maxHpPct: 0.10, defPct: 0.10, strPct: 0.10, dexPct: 0.10, intPct: 0.10 } },
+        
+        // POTIONS (Utility)
+        { id: "potion_1", name: "Alchemical Initiate", icon: "🧪", desc: "Consume 10 Elixirs", reqType: "elixirs", reqValue: 10, stats: { intPct: 0.03 } },
+        { id: "potion_2", name: "Potion Addict", icon: "🍺", desc: "Consume 50 Elixirs", reqType: "elixirs", reqValue: 50, stats: { intPct: 0.07 } },
+        
+        // SACKS (Inventory Management)
+        { id: "bag_1", name: "Sack Stuffer", icon: "🎒", desc: "Have 15 items in Equipment Sack", reqType: "bag_count", reqValue: 15, stats: { qly: 0.02 } },
+        { id: "bag_2", name: "Pack Rat", icon: "🧳", desc: "Have 30 items in Equipment Sack", reqType: "bag_count", reqValue: 30, stats: { qly: 0.05 } },
+        
+        // SALVAGING (Resource Recycling)
+        { id: "salvage_1", name: "Scrap Collector", icon: "♻️", desc: "Salvage 10 total items", reqType: "salvage", reqValue: 10, stats: { drop: 0.02 } },
+        { id: "salvage_2", name: "Deconstruction Derby", icon: "🚜", desc: "Salvage 100 total items", reqType: "salvage", reqValue: 100, stats: { drop: 0.05 } }
     ];
 
     window.getAchievementProgress = function(ach) {
@@ -7401,6 +7483,10 @@ function engineCycle() {
         if (ach.reqType === "temper") return playerStats.totalTempers || 0;
         if (ach.reqType === "enchant") return playerStats.totalEnchants || 0;
         if (ach.reqType === "rift") return playerStats.riftGuardiansSlain || 0;
+        if (ach.reqType === "level") return playerStats.level || 1;
+        if (ach.reqType === "elixirs") return playerStats.elixirsConsumed || 0;
+        if (ach.reqType === "bag_count") return inventory.EQUIP.length || 0;
+        if (ach.reqType === "salvage") return playerStats.itemsSalvaged || 0;
         return 0;
     };
 
@@ -7476,13 +7562,15 @@ function engineCycle() {
         
         let statsDesc = Object.keys(ach.stats).map(k => {
             let val = ach.stats[k];
-            let isPct = ["critChance", "critDamage", "block", "parry", "drop", "qly", "gold", "fairySpawn", "rareSpawn"].includes(k);
+            let isPct = ["critChance", "critDamage", "block", "parry", "drop", "qly", "gold", "fairySpawn", "rareSpawn", "atkPct", "maxHpPct", "defPct", "moveSpeedPct", "strPct", "dexPct", "intPct"].includes(k);
             let labelMap = {
                 atk: "⚔️ Attack", maxHp: "❤️ Max HP", def: "🛡️ Defense", moveSpeed: "👟 Move Speed",
                 critChance: "✨ Crit Chance", critDamage: "💥 Crit Multiplier", block: "🛡️ Block Rate", parry: "⚡ Parry Rate",
                 str: "💪 STR", dex: "🎯 DEX", int: "🧠 INT",
                 drop: "🍀 Drop Rate Mod", qly: "💎 Drop Quality Mod", gold: "🟡 Gold Multiplier",
-                fairySpawn: "🧚 Fairy Spawn Mod", rareSpawn: "✨ Rare Spawn Rate"
+                fairySpawn: "🧚 Fairy Spawn Mod", rareSpawn: "✨ Rare Spawn Rate",
+                atkPct: "⚔️ Attack Multiplier", maxHpPct: "❤️ Max HP Multiplier", defPct: "🛡️ Defense Multiplier",
+                moveSpeedPct: "👟 Move Speed Multiplier", strPct: "💪 STR Multiplier", dexPct: "🎯 DEX Multiplier", intPct: "🧠 INT Multiplier"
             };
             let cleanLabel = labelMap[k] || k.toUpperCase();
             let cleanVal = isPct ? `+${(val * 100).toFixed(0)}%` : `+${val}`;
