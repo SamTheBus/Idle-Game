@@ -2556,6 +2556,9 @@ window.onload = function() {
             let effMultiplier = 1 + (p.critChance * (p.critDamage - 1));
             let playerDps = Math.max(1, p.atk * effMultiplier * (60 / p.idleAttackSpeed));
 
+            // Declare remaining monster count first to prevent initialization access errors
+            let killsNeededForStage = 5 - playerStats.killCount; 
+
             let scale = Math.pow(1.08, currentStage);
             let mobHp = 12 * scale;
             let bossHp = 45 * scale;
@@ -2580,10 +2583,6 @@ window.onload = function() {
             let vampHeal = checkArtifactTrait("vampirism") ? Math.floor((playerDps * ttk) * 0.10) : 0;
             let netDmgTaken = Math.max(0, totalDmgTaken - vampHeal);
             
-            // Post-battle active recovery representation (+15% Max HP on normal mob kill)
-            let activeRecoveryPerKill = Math.floor(p.maxHp * 0.15);
-            let netMobAttrition = Math.max(0, netDmgTaken - activeRecoveryPerKill);
-            
             // Calculate boss fight attrition for this stage
             let bossTtk = bossHp / playerDps;
             let bossHits = Math.floor(bossTtk / 2);
@@ -2594,7 +2593,7 @@ window.onload = function() {
             let bossNetDmgTaken = Math.max(0, bossDmgTaken - bossVampHeal);
             
             // Total cumulative damage attrition for the entire stage (standard mobs + boss)
-            let cumulativeStageDamage = (netMobAttrition * killsNeededForStage) + bossNetDmgTaken;
+            let cumulativeStageDamage = (netDmgTaken * killsNeededForStage) + bossNetDmgTaken;
             
             // Retreat trigger if cumulative stage attrition exceeds safety limits
             if (cumulativeStageDamage > p.maxHp && !checkArtifactTrait("second_wind")) {
@@ -2604,7 +2603,6 @@ window.onload = function() {
                 stagesAdvancedCount = maxStagesToAdvance; // Lock further stage progression
             }
 
-            let killsNeededForStage = 5 - playerStats.killCount; 
             let timeNeededForStage = (killsNeededForStage + 1) * cycleTime; // Standard kills + boss fight
             
             // Do not allow offline gains to advance past the player's peak stage cap
