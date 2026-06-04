@@ -1777,8 +1777,78 @@ window.onload = function() {
             c.lineWidth = 2.4;
 
             if (m.type === "dungeon_boss") {
-                let dType = playerStats.currentDungeon || 'gold';
-                if (dType === 'gold') {
+                if (m.isCrucible) {
+                    let bounce = Math.sin(Date.now() / 150) * 4;
+                    let coreColor = m.flashTimer > 0 ? "#ffffff" : "#9b59b6";
+                    let glowColor = "#e84393";
+                    let shadowColor = "#1a052e";
+
+                    // 1. Floating Ethereal Ring
+                    c.strokeStyle = glowColor;
+                    c.lineWidth = 2;
+                    c.save();
+                    c.translate(m.x + m.w / 2, m.y + m.h / 2 + bounce);
+                    c.rotate(Date.now() / 1000);
+                    c.beginPath();
+                    c.ellipse(0, 0, m.w * 0.75, m.h * 0.2, 0, 0, Math.PI * 2);
+                    c.stroke();
+                    c.restore();
+
+                    // 2. Main Ethereal Body Shape (Prism/Shadowy Phantom)
+                    c.fillStyle = shadowColor;
+                    c.beginPath();
+                    c.moveTo(m.x + m.w / 2, m.y + bounce);
+                    c.lineTo(m.x + m.w, m.y + m.h * 0.4 + bounce);
+                    c.lineTo(m.x + m.w * 0.8, m.y + m.h * 0.95 + bounce);
+                    c.lineTo(m.x + m.w * 0.2, m.y + m.h * 0.95 + bounce);
+                    c.lineTo(m.x, m.y + m.h * 0.4 + bounce);
+                    c.closePath();
+                    c.fill();
+                    c.strokeStyle = "#000000";
+                    c.lineWidth = 2.4;
+                    c.stroke();
+
+                    // 3. Glowing Inner Core / Eye (Pulsing Astral Eye)
+                    if (m.flashTimer === 0) {
+                        let coreRadius = 8 + Math.sin(Date.now() / 100) * 3;
+                        c.fillStyle = coreColor;
+                        c.shadowBlur = 12;
+                        c.shadowColor = coreColor;
+                        c.beginPath();
+                        c.arc(m.x + m.w / 2, m.y + m.h / 2 - 10 + bounce, coreRadius, 0, Math.PI * 2);
+                        c.fill();
+                        c.stroke();
+                        c.shadowBlur = 0;
+                        
+                        // Core Pupil
+                        c.fillStyle = "#ffffff";
+                        c.beginPath();
+                        c.arc(m.x + m.w / 2, m.y + m.h / 2 - 10 + bounce, 3, 0, Math.PI * 2);
+                        c.fill();
+                    }
+
+                    // 4. Crown/Horns of Void Shards
+                    c.fillStyle = "#2c3e50";
+                    c.beginPath();
+                    // Left Void Horn
+                    c.moveTo(m.x + m.w * 0.3, m.y + bounce);
+                    c.quadraticCurveTo(m.x + m.w * 0.1, m.y - 15 + bounce, m.x + m.w * 0.05, m.y - 20 + bounce);
+                    c.lineTo(m.x + m.w * 0.4, m.y - 5 + bounce);
+                    c.closePath();
+                    c.fill();
+                    c.stroke();
+
+                    // Right Void Horn
+                    c.beginPath();
+                    c.moveTo(m.x + m.w * 0.7, m.y + bounce);
+                    c.quadraticCurveTo(m.x + m.w * 0.9, m.y - 15 + bounce, m.x + m.w * 0.95, m.y - 20 + bounce);
+                    c.lineTo(m.x + m.w * 0.6, m.y - 5 + bounce);
+                    c.closePath();
+                    c.fill();
+                    c.stroke();
+                } else {
+                    let dType = playerStats.currentDungeon || 'gold';
+                    if (dType === 'gold') {
                     let hover = Math.sin(Date.now() / 150) * 3;
                     let baseColor = m.flashTimer > 0 ? "#ffffff" : "#27ae60";
                     let goldColor1 = "#f1c40f";
@@ -4667,12 +4737,15 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         if (playerStats.isCrucibleMode) {
             let scale = Math.pow(1.085, playerStats.crucibleWave);
             if (playerStats.killCount >= playerStats.targetsRequired) {
+                if (playerStats.isCrucibleMode) {
+            let scale = Math.pow(1.085, playerStats.crucibleWave);
+            if (playerStats.killCount >= playerStats.targetsRequired) {
                 // Wave Elite Boss
                 let hp = Math.floor(100 * scale);
-                mob = { x: 750, y: 90, w: 45, h: 75, type: "dungeon_boss", isRare: false, hp: hp, maxHp: hp, damage: Math.floor((3 + (3 * scale)) * 5.0), flashTimer: 0, isStopped: false };
+                mob = { x: 750, y: 90, w: 45, h: 75, type: "dungeon_boss", isCrucible: true, isRare: false, hp: hp, maxHp: hp, damage: Math.floor((3 + (3 * scale)) * 5.0), flashTimer: 0, isStopped: false };
             } else {
                 let hp = Math.floor(18 * scale);
-                mob = { x: 750, y: 150, w: 25, h: 30, type: "mob", isRare: false, visualTier: 4, hp: hp, maxHp: hp, damage: Math.floor((2 + scale) * 4.0), flashTimer: 0, isStopped: false };
+                mob = { x: 750, y: 150, w: 25, h: 30, type: "mob", isCrucible: true, isRare: false, visualTier: 4, hp: hp, maxHp: hp, damage: Math.floor((2 + scale) * 4.0), flashTimer: 0, isStopped: false };
             }
             return;
         }
@@ -6265,58 +6338,71 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     }
 
     function handlePlayerDefeat() {
-        effects = effects.filter(e => !e.isCumulative);
-        isGamePaused = true; 
-        deathAnimationTimer = 0;
+    effects = effects.filter(e => !e.isCumulative);
+    isGamePaused = true; 
+    deathAnimationTimer = 0;
+    
+    let wasCrucible = playerStats.isCrucibleMode;
+    let wasDungeon = playerStats.isDungeonMode;
+    let activeDungeon = playerStats.currentDungeon;
+    let dungeonFloor = wasDungeon && activeDungeon ? (playerStats.currentDungeonStage[activeDungeon] || 1) : 1;
+    let finalWave = playerStats.crucibleWave || 1;
+    
+    playerStats.isBossMode = false; 
+    playerStats.isFarmingLoop = false; 
+    playerStats.isUberBoss = false; 
+    playerStats.isDungeonMode = false;
+    playerStats.isCrucibleMode = false;
+    mob = null;
+    playerStats.usedSecondWind = false;
+    
+    SoundManager.play('defeat');
+    
+    if (wasCrucible) {
+        let gainedShards = Math.floor(finalWave * 1.5);
+        let gainedCores = Math.floor(finalWave / 10) + (Math.random() < 0.20 ? 1 : 0);
         
-        let wasCrucible = playerStats.isCrucibleMode;
-        let wasDungeon = playerStats.isDungeonMode;
-        let finalWave = playerStats.crucibleWave || 1;
+        playerStats.astralShards = (playerStats.astralShards || 0) + gainedShards;
+        if (gainedCores > 0) addEtcDrop("Catalyst Core", gainedCores);
         
-        playerStats.isBossMode = false; 
-        playerStats.isFarmingLoop = false; 
-        playerStats.isUberBoss = false; 
-        playerStats.isDungeonMode = false;
-        playerStats.isCrucibleMode = false;
-        mob = null;
-        playerStats.usedSecondWind = false;
-        
-        SoundManager.play('defeat');
-        
-        if (wasCrucible) {
-            let gainedShards = Math.floor(finalWave * 1.5);
-            let gainedCores = Math.floor(finalWave / 10) + (Math.random() < 0.20 ? 1 : 0);
-            
-            playerStats.astralShards = (playerStats.astralShards || 0) + gainedShards;
-            if (gainedCores > 0) addEtcDrop("Catalyst Core", gainedCores);
-            
-            showCrucibleSummaryModal(finalWave, gainedShards, gainedCores);
-            return;
-        }
+        showCrucibleSummaryModal(finalWave, gainedShards, gainedCores);
+        return;
+    }
 
-        let restartStage = Math.max(1, Math.floor((playerStats.maxStage || 1) * 0.80));
-        
+    let restartStage;
+    if (wasDungeon) {
+        // Return to primary campaign progress with no penalty
+        restartStage = playerStats.stage;
+        let dNames = { 'equip': 'Equipment Dungeon', 'gold': 'Gold Mine', 'mat': 'Material Cavern' };
+        let dName = dNames[activeDungeon] || "Dungeon";
+        document.getElementById('death-stat-peak').innerText = `${dName} Floor ${dungeonFloor}`;
+        document.getElementById('death-stat-retreat').innerText = `Campaign Stage ${restartStage}`;
+    } else {
+        // Apply campaign rollback penalty
+        restartStage = Math.max(1, Math.floor((playerStats.maxStage || 1) * 0.80));
+        playerStats.stage = restartStage;
         document.getElementById('death-stat-peak').innerText = `Stage ${playerStats.maxStage || 1}`;
         document.getElementById('death-stat-retreat').innerText = `Stage ${restartStage}`;
-        document.getElementById('death-stat-kills').innerText = (playerStats.runKills || 0).toLocaleString();
-        document.getElementById('death-stat-run-gold').innerText = `+` + (playerStats.runGold || 0).toLocaleString();
-        document.getElementById('death-stat-run-xp').innerText = `+` + (playerStats.runXp || 0).toLocaleString();
-        
-        let adviceText = "Reforging modifiers with Catalyst Cores and tempering weapon components significantly increases battle survivability.";
-        document.getElementById('death-tip-text').innerText = adviceText;
-        
-        playerStats.stage = restartStage;
-        updateUI();
-        
-        if (wasDungeon) {
-            pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[DUNGEON STAGE FAILIURE] Died on Dungeon Floor. Checkpoint updated to starting zone.</span>`);
-        } else {
-            pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[DEFEATED] Returned to Stage ${restartStage} (80% of Max Stage). No equipment lost!</span>`);
-        }
-        
-        document.getElementById('death-overlay').style.display = "flex"; 
-        window.saveGame();
     }
+    
+    document.getElementById('death-stat-kills').innerText = (playerStats.runKills || 0).toLocaleString();
+    document.getElementById('death-stat-run-gold').innerText = `+` + (playerStats.runGold || 0).toLocaleString();
+    document.getElementById('death-stat-run-xp').innerText = `+` + (playerStats.runXp || 0).toLocaleString();
+    
+    let adviceText = "Reforging modifiers with Catalyst Cores and tempering weapon components significantly increases battle survivability.";
+    document.getElementById('death-tip-text').innerText = adviceText;
+    
+    updateUI();
+    
+    if (wasDungeon) {
+        pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[DUNGEON STAGE FAILIURE] Died on Dungeon Floor. Safely returned to Campaign Stage ${restartStage}.</span>`);
+    } else {
+        pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[DEFEATED] Returned to Stage ${restartStage} (80% of Max Stage). No equipment lost!</span>`);
+    }
+    
+    document.getElementById('death-overlay').style.display = "flex"; 
+    window.saveGame();
+}
 
     function showCrucibleSummaryModal(waves, shards, cores) {
         let modal = document.createElement('div');
@@ -6357,7 +6443,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             isGamePaused = false;
             let p = resolvePlayerStats();
             playerStats.currentHp = p.maxHp;
-            playerStats.stage = Math.max(1, Math.floor((playerStats.maxStage || 1) * 0.80));
+            // Campaign stage remains untouched on returning from the Crucible
             updateUI();
             renderInventory();
         };
