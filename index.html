@@ -3994,7 +3994,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let artDef = ARTIFACT_POOL.find(a => a.trait === traitId);
         let dummy = {
             id: "dummy", name: "⭐ UNIQUE " + artDef.name, type: "artifact", statsRolled: "UNIQUE", temperLevel: 0, stageLevel: 1,
-            atk: 0, maxHp: 0, def: 0, moveSpeed: 0, Math: 0, critChance: 0, critDamage: 0, block: 0, parry: 0, dropRate: artDef.dropRate, quality: artDef.quality, goldMulti: artDef.goldMulti,
+            atk: 0, maxHp: 0, def: 0, moveSpeed: 0, critChance: 0, critDamage: 0, block: 0, parry: 0, dropRate: artDef.dropRate, quality: artDef.quality, goldMulti: artDef.goldMulti,
             activeAttackSpeed: 0, idleAttackSpeed: 0, trait: artDef.trait, desc: artDef.desc, breakdown: artDef.breakdown,
             str: 0, dex: 0, int: 0
         };
@@ -4735,9 +4735,6 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let p = resolvePlayerStats();
         
         if (playerStats.isCrucibleMode) {
-            let scale = Math.pow(1.085, playerStats.crucibleWave);
-            if (playerStats.killCount >= playerStats.targetsRequired) {
-                if (playerStats.isCrucibleMode) {
             let scale = Math.pow(1.085, playerStats.crucibleWave);
             if (playerStats.killCount >= playerStats.targetsRequired) {
                 // Wave Elite Boss
@@ -7386,9 +7383,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         // Midground Peak 3 cap
         ctx.beginPath(); ctx.moveTo(700, 120); ctx.lineTo(685, 130); ctx.lineTo(715, 130); ctx.closePath(); ctx.fill(); ctx.stroke();
     } else if (tier === 2) {
-            } else if (tier === 2) {
-                ctx.fillStyle = "rgba(230, 126, 34, 0.08)"; ctx.fillRect(0, 0, canvas.width, 180);
-                for (let i = 0; i < 8; i++) {
+        ctx.fillStyle = "rgba(230, 126, 34, 0.08)"; ctx.fillRect(0, 0, canvas.width, 180);
+        for (let i = 0; i < 8; i++) {
                     ctx.fillStyle = "#e67e22"; ctx.fillRect((Date.now() / 15 + i * 90) % (canvas.width + 20) - 10, 160 - ((Date.now() / 8 + i * 43) % 150), 2, 2);
                 }
                 
