@@ -668,7 +668,7 @@
                 <button class="tab-btn" onclick="switchTab('stats')">Stats</button>
                 <button class="tab-btn" onclick="switchTab('forge')">Forge</button>
                 <button class="tab-btn" onclick="switchTab('market')">Market</button>
-                <button class="tab-btn" onclick="switchTab('feed')">Logs</button>
+                <button class="tab-btn" onclick="switchTab('prestige')">Prestige</button>
             </div>
 
             <div id="tab-gear" class="tab-content active" onscroll="hideTooltip()" ontouchmove="hideTooltip()">
@@ -920,10 +920,21 @@
                 </div>
             </div>
 
-            <div id="tab-feed" class="tab-content" onscroll="hideTooltip()" ontouchmove="hideTooltip()">
-                <button onclick="hardResetGame()" class="btn-action un" style="width:100%; padding:10px; font-weight:bold; margin-bottom:10px;">🚨 HARD RESET GAME (WIPE SAVE) 🚨</button>
-                <div id="log-box"></div>
+            <!-- Prestige Ascension Altar Tab -->
+            <div id="tab-prestige" class="tab-content" onscroll="hideTooltip()" ontouchmove="hideTooltip()">
+                <!-- Populated dynamically via JS -->
             </div>
+        </div>
+    </div>
+
+    <!-- Collapsible Log Box and Save Management Footer -->
+    <div style="width: 100%; max-width: 750px; margin: 10px auto 0 auto; background: var(--bg-card); border: 2px solid var(--border-color); border-radius: 8px; padding: 10px; box-sizing: border-box;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <button onclick="toggleLogPanel()" style="background:#2c3e50; color:white; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:11px; transition: background 0.2s;">📜 Toggle Battle Logs</button>
+            <button onclick="hardResetGame()" class="btn-action un" style="padding:4px 10px; font-weight:bold; font-size:10px;">🚨 Wipe Save</button>
+        </div>
+        <div id="log-panel-container" style="display:none;">
+            <div id="log-box"></div>
         </div>
     </div>
 <script>
@@ -2360,6 +2371,92 @@ window.onload = function() {
                 c.stroke();
             }
         }
+        else if (m.type === "prestige_boss") {
+            let hoverY = Math.sin(Date.now() / 150) * 6;
+            let jawOpen = Math.abs(Math.sin(Date.now() / 400)) * 12; // dropping lower jaw animation
+
+            // Draw overlapping neck scales/segments swaying back from the main head to give massive static depth
+            for (let i = 5; i >= 1; i--) {
+                let segX = m.x + m.w / 2 + (i * 20);
+                let segY = m.y + m.h / 2 + hoverY + Math.sin(Date.now() / 180 + i * 0.7) * 12;
+                
+                c.save();
+                c.fillStyle = "#8a1c14"; // dark crimson dragon scale
+                c.strokeStyle = "#000000";
+                c.lineWidth = 2.4;
+                c.beginPath();
+                c.arc(segX, segY, 24 - (i * 2), 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+                
+                // Scale highlight detail
+                c.fillStyle = "#a8281e";
+                c.beginPath();
+                c.arc(segX - 3, segY - 3, (24 - (i * 2)) * 0.6, 0, Math.PI * 2);
+                c.fill();
+                c.restore();
+            }
+
+            // Draw Massive Dragon Head (Paper Mario: Thousand Year Door stylized style)
+            c.save();
+            c.translate(m.x, m.y + hoverY);
+            
+            c.strokeStyle = "#000000";
+            c.lineWidth = 2.4;
+            c.lineJoin = "round";
+
+            // Upper Head/Skull
+            c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#c0392b";
+            c.beginPath();
+            c.moveTo(m.w - 5, -15); // spike back 1
+            c.lineTo(m.w - 20, 10);
+            c.lineTo(m.w - 15, -25); // spike back 2
+            c.lineTo(m.w - 35, 12);
+            c.lineTo(5, 5); // Forehead
+            c.lineTo(-10, 18); // Snout
+            c.lineTo(-15, 30); // Tip
+            c.lineTo(5, 38); // Jawline joint
+            c.lineTo(m.w - 10, 38);
+            c.lineTo(m.w, 15);
+            c.closePath();
+            c.fill();
+            c.stroke();
+
+            // Glowing yellow pupil and dark eye slot
+            c.fillStyle = "#f1c40f";
+            c.beginPath();
+            c.ellipse(22, 18, 5, 3, Math.PI / 12, 0, Math.PI * 2);
+            c.fill();
+            c.stroke();
+            c.fillStyle = "#ffffff";
+            c.beginPath();
+            c.arc(21, 17, 1.5, 0, Math.PI * 2);
+            c.fill();
+
+            // Lower Jaw with Drop rotation during chomps
+            c.save();
+            c.translate(15, 38);
+            c.rotate(jawOpen * Math.PI / 180);
+            c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#962d22";
+            c.beginPath();
+            c.moveTo(0, 0);
+            c.lineTo(-25, 4); // Chin tip
+            c.lineTo(5, 15);
+            c.lineTo(m.w - 15, 10);
+            c.closePath();
+            c.fill();
+            c.stroke();
+
+            // Razor sharp fangs
+            c.fillStyle = "#ffffff";
+            c.beginPath();
+            c.moveTo(-15, 2); c.lineTo(-12, 6); c.lineTo(-9, 2);
+            c.moveTo(-5, 1); c.lineTo(-2, 5); c.lineTo(1, 1);
+            c.fill();
+
+            c.restore(); // end jaw draw
+            c.restore(); // end translation context
+        }
         c.restore();
     };
 
@@ -2461,7 +2558,15 @@ window.onload = function() {
         runGold: 0,
         runXp: 0,
         killedBy: "Unknown Foe",
-        killedByMob: null
+        killedByMob: null,
+
+        // Prestige System Additions
+        prestigePoints: 0,
+        prestigeUpgrades: { bag: 0, gold: 0, exp: 0, drop: 0 },
+        prestigeCount: 0,
+        lifetimePeakStage: 1,
+        isPrestigeBossMode: false,
+        prestigeApproachTimer: 0
     };
 
     let equippedSlots = { weapon: null, subweapon: null, helmet: null, chest: null, leggings: null, overall: null, boots: null, art1: null, art2: null, art3: null };
@@ -2937,6 +3042,246 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             refreshMarketShopIfNeeded();
             renderMysticalShop();
         }
+        if (id === 'prestige') {
+            renderPrestigeTab();
+        }
+    };
+
+    // Toggle panel view for battle logs footer
+    window.toggleLogPanel = function() {
+        let el = document.getElementById('log-panel-container');
+        if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    };
+
+    // Altar of Ascension Render Loop
+    window.renderPrestigeTab = function() {
+        let el = document.getElementById('tab-prestige');
+        if (!el) return;
+        
+        let p = playerStats;
+        if (p.level < 25) {
+            el.innerHTML = `
+                <div style="text-align:center; padding: 40px 15px; background: #151515; border: 2px dashed #8e44ad; border-radius: 6px; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);">
+                    <div style="font-size: 40px; margin-bottom: 15px;">🔒</div>
+                    <h3 style="margin:0 0 10px 0; color:#9b59b6; letter-spacing:1px; text-transform:uppercase;">Altar of Ascension</h3>
+                    <p style="font-size:11px; color:#aaa; max-width: 320px; margin: 0 auto 15px auto; line-height: 1.5;">
+                        Only legendary heroes of Level 25 or above may unlock the secrets of permanent Ascension. Keep questing to awaken your true potential!
+                    </p>
+                    <div style="font-size: 13px; font-weight: bold; color: #fff;">
+                        Current Level: <span style="color:#e74c3c;">${p.level}</span> / <span style="color:#2ecc71;">25</span>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        let upgrades = p.prestigeUpgrades || { bag: 0, gold: 0, exp: 0, drop: 0 };
+        let bagPts = upgrades.bag || 0;
+        let goldPts = upgrades.gold || 0;
+        let expPts = upgrades.exp || 0;
+        let dropPts = upgrades.drop || 0;
+
+        let bagDisabled = p.prestigePoints < 1 ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
+        let goldDisabled = p.prestigePoints < 1 ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
+        let expDisabled = p.prestigePoints < 1 ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
+        let dropDisabled = p.prestigePoints < 1 ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
+
+        el.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:12px;">
+                <!-- Boss Challenge Trigger Portal -->
+                <div style="background: linear-gradient(135deg, #1f0505, #050000); border: 2px solid #e74c3c; border-radius: 6px; padding: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+                    <h3 style="margin: 0 0 6px 0; color: #e74c3c; font-size:15px; letter-spacing:1px; text-transform:uppercase; text-shadow: 0 0 10px rgba(231, 76, 60, 0.4);">🔥 CHALLENGE HOOKTAIL</h3>
+                    <p style="font-size: 11px; color: #aaa; margin: 0 auto 12px auto; max-width: 440px; line-height: 1.45;">
+                        Sacrifice your campaign peaks. Enter the dragon's lair! Defeating **Hooktail** soft-wipes your level and campaign progress, but rewards you with <span style="color:#f1c40f; font-weight:bold;">3 Prestige Points</span> to purchase massive permanent upgrades.
+                    </p>
+                    <button class="btn-action" style="background:#e74c3c; color:white; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:pointer;" onclick="challengeHooktail()">Challenge Prestige Boss</button>
+                </div>
+
+                <!-- Permanent PP Upgrades Table -->
+                <div style="background:#151515; border: 1px solid #333; border-radius:6px; padding:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding-bottom:8px; margin-bottom:10px;">
+                        <h4 style="margin:0; color:#f1c40f; font-size:13px; text-transform:uppercase;">✨ PERMANENT ASCENSION ALTAR</h4>
+                        <span style="background:#9b59b6; color:#fff; font-weight:bold; font-size:11px; padding:3px 10px; border-radius:10px; box-shadow: 0 0 8px rgba(155, 89, 182, 0.3);">PP Available: <span id="prestige-points-qty">${p.prestigePoints}</span></span>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <!-- Backpack expansion -->
+                        <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
+                            <div>
+                                <strong style="color:#3498db; font-size:12px;">🎒 Dimensional Satchel</strong>
+                                <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +10 permanent backpack slots to carry more gear.</div>
+                                <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">+${bagPts * 10} slots</span></div>
+                            </div>
+                            <button class="btn-action" style="margin-top:8px; background:#3498db;" ${bagDisabled} onclick="buyPrestigeUpgrade('bag')">Upgrade (1 PP)</button>
+                        </div>
+
+                        <!-- Gold Multiplier -->
+                        <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
+                            <div>
+                                <strong style="color:#f1c40f; font-size:12px;">🟡 Midas' Legacy</strong>
+                                <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +25% Global Gold multiplier.</div>
+                                <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">+${goldPts * 25}% Gold</span></div>
+                            </div>
+                            <button class="btn-action" style="margin-top:8px; background:#f1c40f; color:#000;" ${goldDisabled} onclick="buyPrestigeUpgrade('gold')">Upgrade (1 PP)</button>
+                        </div>
+
+                        <!-- EXP Multiplier -->
+                        <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
+                            <div>
+                                <strong style="color:#9b59b6; font-size:12px;">🧠 Ancient Wisdom</strong>
+                                <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +10% Global EXP rate to level back up faster.</div>
+                                <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">+${expPts * 10}% EXP</span></div>
+                            </div>
+                            <button class="btn-action" style="margin-top:8px; background:#9b59b6;" ${expDisabled} onclick="buyPrestigeUpgrade('exp')">Upgrade (1 PP)</button>
+                        </div>
+
+                        <!-- Drop Multiplier -->
+                        <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
+                            <div>
+                                <strong style="color:#2ecc71; font-size:12px;">🍀 Cosmic Fortune</strong>
+                                <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +5% Global Drop Rate.</div>
+                                <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">+${dropPts * 5}% Drop</span></div>
+                            </div>
+                            <button class="btn-action" style="margin-top:8px; background:#2ecc71;" ${dropDisabled} onclick="buyPrestigeUpgrade('drop')">Upgrade (1 PP)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+
+    // Upgrade purchase execution hook
+    window.buyPrestigeUpgrade = function(type) {
+        if (playerStats.prestigePoints < 1) return;
+        playerStats.prestigePoints--;
+        playerStats.prestigeUpgrades[type] = (playerStats.prestigeUpgrades[type] || 0) + 1;
+        
+        pushHeaderToast("🎉 Permanent Upgrade Acquired!", "#9b59b6");
+        
+        let p = resolvePlayerStats();
+        playerStats.currentHp = Math.min(playerStats.currentHp, p.maxHp);
+        
+        updateUI();
+        renderPrestigeTab();
+        renderInventory();
+        window.saveGame();
+    };
+
+    // Challenge portal trigger logic
+    window.challengeHooktail = function() {
+        if (playerStats.level < 25) {
+            pushHeaderToast("Requires Level 25!", "#e74c3c");
+            return;
+        }
+        if (playerStats.isDungeonMode || playerStats.isCrucibleMode) {
+            pushHeaderToast("Cannot challenge while in another activity!", "#e74c3c");
+            return;
+        }
+        if (playerStats.isPrestigeBossMode) {
+            pushHeaderToast("Ascension challenge already active!", "#e74c3c");
+            return;
+        }
+
+        if (!confirm("Are you prepared to face the massive dragon Hooktail? Defeating her will reset campaign peak parameters but award 3 Prestige Points!")) return;
+
+        window.saveGame();
+
+        window.setPauseState(false);
+        playerStats.isPrestigeBossMode = true;
+        playerStats.prestigeApproachTimer = 180; // 3 seconds charging animation (60fps)
+        mob = null;
+        
+        let p = resolvePlayerStats();
+        playerStats.currentHp = p.maxHp;
+
+        pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[ASCENSION] Challenged Hooktail! Sprinting toward her cavern at high speed...</span>`);
+        updateUI();
+        window.switchTab('gear'); // switch screen to allow the user to see the running animation
+    };
+
+    // Trigger soft-wipe and award ascension points
+    window.triggerPrestigeAscension = function() {
+        isGamePaused = true;
+        
+        // Award points and count
+        playerStats.prestigePoints += 3;
+        playerStats.prestigeCount++;
+        
+        // Force autounequip all gear back into inventory to lock items until players hit level requirements
+        for (let slot in equippedSlots) {
+            if (equippedSlots[slot]) {
+                let item = equippedSlots[slot];
+                delete item.isEquippedSlot;
+                if (item.type === "artifact") {
+                    inventory.ARTIFACT.push(item);
+                } else {
+                    inventory.EQUIP.push(item);
+                }
+                equippedSlots[slot] = null;
+            }
+        }
+
+        // Soft-wipe parameters (Option A: Keep spent SP Allocations intact!)
+        playerStats.level = 1;
+        playerStats.xp = 0;
+        playerStats.xpReq = 100;
+        playerStats.stage = 1;
+        playerStats.maxStage = 1;
+        
+        // Reset activity checks
+        playerStats.dungeonPeaks = { equip: 1, gold: 1, mat: 1 };
+        playerStats.currentDungeonStage = { equip: 1, gold: 1, mat: 1 };
+        playerStats.crucibleWave = 1;
+        playerStats.cruciblePeak = 1;
+        playerStats.crucibleStartWave = 1;
+        
+        playerStats.isPrestigeBossMode = false;
+        playerStats.prestigeApproachTimer = 0;
+        mob = null;
+        
+        let p = resolvePlayerStats();
+        playerStats.currentHp = p.maxHp;
+
+        // Visual confirmation modal
+        let modal = document.createElement('div');
+        modal.style.position = 'fixed'; modal.style.top = '0'; modal.style.left = '0';
+        modal.style.width = '100%'; modal.style.height = '100%'; modal.style.backgroundColor = 'rgba(0,0,0,0.92)';
+        modal.style.display = 'flex'; modal.style.justifyContent = 'center'; modal.style.alignItems = 'center';
+        modal.style.zIndex = '35000'; modal.style.padding = '15px';
+        
+        modal.innerHTML = `
+            <div style="background:#151515; border: 3px solid #e74c3c; border-radius: 8px; width:100%; max-width:440px; display:flex; flex-direction:column; box-shadow: 0 10px 40px rgba(0,0,0,0.95); text-align:center; padding:20px; animation: toastFadeIn 0.3s;">
+                <h2 style="margin:0 0 10px 0; color:#e74c3c; letter-spacing:3px; text-transform:uppercase; font-size:22px;">🐉 ASCENSION ACHIEVED!</h2>
+                <div style="height:2px; background:linear-gradient(90deg, transparent, #e74c3c, transparent); margin-bottom:15px;"></div>
+                
+                <p style="font-size:12px; color:#ddd; line-height:1.5; margin-bottom:20px;">
+                    You have slain **Hooktail** and shattered your mortal limits! Your soul ascends into a higher plane of legend.
+                </p>
+
+                <div style="background:#0b0f12; border:1px solid #e74c3c; border-radius:6px; padding:15px; margin-bottom:20px;">
+                    <div style="font-size:11px; color:#aaa; margin-bottom:4px;">REWARDS EARNED:</div>
+                    <div style="font-size:20px; color:#f1c40f; font-weight:bold; margin-bottom:6px;">✨ +3 Prestige Points</div>
+                    <div style="font-size:11px; color:#9b59b6; font-weight:bold;">Total Ascensions: ${playerStats.prestigeCount}</div>
+                </div>
+
+                <p style="font-size:11px; color:#7f8c8d; line-height:1.4; margin-bottom:20px;">
+                    Your raw levels and campaign stage are reset. However, spent Attribute Matrix points, materials, and achievements are **completely preserved**!
+                </p>
+
+                <button id="btn-prestige-ascend-confirm" style="background:linear-gradient(135deg, #e74c3c, #c0392b); color:white; border:1px solid #f1c40f; font-weight:bold; font-size:13px; text-transform:uppercase; letter-spacing:1px; padding:12px 24px; border-radius:4px; cursor:pointer; width:100%; box-shadow:0 4px 10px rgba(0,0,0,0.4);">Arise as an Ascended Hero</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        document.getElementById('btn-prestige-ascend-confirm').onclick = function() {
+            modal.remove();
+            isGamePaused = false;
+            updateUI();
+            renderPrestigeTab();
+            renderInventory();
+            window.saveGame();
+            pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[ASCENSION] Your legacy begins anew! High-level gear in Sacks is now locked until requirements are met.</span>`);
+        };
     };
 
     window.giveKeys = function(amount = 10) {
@@ -3005,7 +3350,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             addEtcDrop(name, amount);
         }
 
-        let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+        let maxBag = getMaxBagSlots();
         let initialEquipIds = new Set(inventory.EQUIP.map(item => item.id));
         let initialArtifactIds = new Set(inventory.ARTIFACT.map(item => item.id));
         let equipTypesList = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
@@ -3493,6 +3838,14 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 if (playerStats.volumeMaster === undefined) playerStats.volumeMaster = 0.5;
                 if (playerStats.volumeSFX === undefined) playerStats.volumeSFX = 0.8;
                 if (playerStats.mute === undefined) playerStats.mute = false;
+
+                // Safe Prestige migrations
+                if (playerStats.prestigePoints === undefined) playerStats.prestigePoints = 0;
+                if (playerStats.prestigeUpgrades === undefined) playerStats.prestigeUpgrades = { bag: 0, gold: 0, exp: 0, drop: 0 };
+                if (playerStats.prestigeCount === undefined) playerStats.prestigeCount = 0;
+                if (playerStats.lifetimePeakStage === undefined) playerStats.lifetimePeakStage = playerStats.maxStage || 1;
+                if (playerStats.isPrestigeBossMode === undefined) playerStats.isPrestigeBossMode = false;
+                if (playerStats.prestigeApproachTimer === undefined) playerStats.prestigeApproachTimer = 0;
                 
                 if (inventory.ETC["Iron Scrap"]) { addEtcDrop("Monster Soul", inventory.ETC["Iron Scrap"]); delete inventory.ETC["Iron Scrap"]; }
                 if (inventory.ETC["Sticky Gel"]) { addEtcDrop("Monster Soul", inventory.ETC["Sticky Gel"]); delete inventory.ETC["Sticky Gel"]; }
@@ -3546,6 +3899,10 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     };
     
     window.gainXp = function(amount, silent = false) {
+        // Incorporate permanent Prestige EXP boost Multiplier
+        let expBonusMult = 1.0 + ((playerStats.prestigeUpgrades?.exp || 0) * 0.10);
+        amount = Math.ceil(amount * expBonusMult);
+
         playerStats.xp += amount;
         if (playerStats.runXp !== undefined) {
             playerStats.runXp += amount;
@@ -3953,7 +4310,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let shopItem = playerStats.shopItems[index];
         if (shopItem.purchased || playerStats.coins < shopItem.cost) return;
 
-        let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+        let maxBag = getMaxBagSlots();
         if (shopItem.type === "artifact") {
             if (inventory.ARTIFACT.length >= maxBag) { pushHeaderToast(`Artifact Sack Full!`, "#e74c3c"); return; }
         } else {
@@ -4287,7 +4644,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
        ========================================================================== */
     function triggerFairyLoot(targetFairy) {
         let p = resolvePlayerStats();
-        let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+        let maxBag = getMaxBagSlots();
         let spawnX = targetFairy.x;
         let spawnY = targetFairy.y + Math.sin(Date.now() / 200 + targetFairy.offset) * 10;
         
@@ -4419,7 +4776,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
 
     function rollEquipmentDrop(isBossKill, silent = false, minStars = 0, isRareMob = false) {
     let p = resolvePlayerStats();
-    let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+    let maxBag = getMaxBagSlots();
     let artifactChance = playerStats.isUberBoss ? 0.30 : 0.05;
     let allowArtifact = isBossKill && (Math.random() < artifactChance); 
     
@@ -4460,7 +4817,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
     let chosenType = allowArtifact ? "artifact" : types[Math.floor(Math.random() * types.length)];
     
-    let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+    let maxBag = getMaxBagSlots();
     if (chosenType === "artifact") {
         if (inventory.ARTIFACT.length >= maxBag) { pushHeaderToast(`Artifact Sack Full!`, "#e74c3c"); return; }
     } else {
@@ -4479,6 +4836,13 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     function checkArtifactTrait(traitName) {
         return (equippedSlots.art1 && equippedSlots.art1.trait === traitName) || (equippedSlots.art2 && equippedSlots.art2.trait === traitName) || (equippedSlots.art3 && equippedSlots.art3.trait === traitName);
     }
+
+    // DRY: Unified calculator for total bag capacity factoring in artifacts and prestige upgrades
+    window.getMaxBagSlots = function() {
+        let baseBag = checkArtifactTrait("bag_space") ? 50 : 20;
+        let prestigeBagBonus = (playerStats.prestigeUpgrades?.bag || 0) * 10;
+        return baseBag + prestigeBagBonus;
+    };
 
     function calculateActiveDps() {
         let now = Date.now();
@@ -4718,6 +5082,13 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         p.maxHp = Math.floor(p.maxHp);
         p.def = Math.floor(p.def);
         p.moveSpeed = parseFloat(p.moveSpeed.toFixed(1));
+
+        // Incorporate permanent Prestige Shop Multipliers (Option A)
+        let prestigeGoldBonus = (playerStats.prestigeUpgrades?.gold || 0) * 0.25;
+        p.gold += prestigeGoldBonus;
+
+        let prestigeDropBonus = (playerStats.prestigeUpgrades?.drop || 0) * 0.05;
+        p.drop += prestigeDropBonus;
 
         return p;
     }
@@ -5173,7 +5544,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
 
     window.buyGachaCrate = function() {
         if (!inventory.ETC["Gacha Key"] || inventory.ETC["Gacha Key"] < 1) { pushHeaderToast("Requires 1 Gacha Key!", "#e74c3c"); return; }
-        let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+        let maxBag = getMaxBagSlots();
         if (inventory.EQUIP.length >= maxBag) { pushHeaderToast(`Inventory Full!`, "#e74c3c"); return; }
         
         inventory.ETC["Gacha Key"] -= 1; if (inventory.ETC["Gacha Key"] === 0) delete inventory.ETC["Gacha Key"];
@@ -5213,7 +5584,12 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         if (item.type === "subweapon" && item.subType) {
             labelDisplay = `SUBWEAPON (${item.subType.toUpperCase()})`;
         }
+        let reqLvl = Math.max(1, ((item.stageLevel || 1) - 1) * 5);
         let subtitle = item.type === "artifact" ? "Unique Boss Trophy Slot" : `${labelDisplay} | <span style="color:${tierColor}; font-weight:bold;">${tierDisplay}</span>`;
+        if (reqLvl > 1) {
+            let reqColor = playerStats.level >= reqLvl ? "#2ecc71" : "#e74c3c";
+            subtitle += `<br><span style="color:${reqColor}; font-weight:bold;">Required Level: ${reqLvl}</span>`;
+        }
         let temperTag = item.temperLevel > 0 ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>` : "";
 
         let lockTag = item.locked ? " 🔒" : "";
@@ -5581,6 +5957,13 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         }
         if (index === -1) return;
         let item = isArtifactSack ? inventory.ARTIFACT[index] : inventory.EQUIP[index];
+
+        // Gated Equipment Level Locks
+        let reqLvl = Math.max(1, ((item.stageLevel || 1) - 1) * 5);
+        if (playerStats.level < reqLvl) {
+            pushHeaderToast(`🔒 Requires Level ${reqLvl} to equip!`, "#e74c3c");
+            return;
+        }
         
         let oldMaxHp = resolvePlayerStats().maxHp;
         
@@ -5641,7 +6024,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         updateUI(); renderInventory(); renderForgeTab(); window.saveGame();
     };
     window.unequipItem = function(slotKey) {
-        let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+        let maxBag = getMaxBagSlots();
         window.hideTooltip(); let item = equippedSlots[slotKey]; if (!item) return;
         
         // Remove tracking references when unequipping items
@@ -6381,6 +6764,12 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         
         playerStats.totalLifetimeKills++;
         if (playerStats.runKills !== undefined) playerStats.runKills++;
+
+        // Handle Prestige Boss death checks and skip normal campaign rewards
+        if (mob && mob.type === "prestige_boss") {
+            triggerPrestigeAscension();
+            return;
+        }
         
         if (checkArtifactTrait("frenzy")) {
             if (playerStats.frenzyTimer <= 0) {
@@ -6812,7 +7201,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             else { progressEl.innerText = `${playerStats.killCount} / ${playerStats.targetsRequired}`; progressEl.style.color = "#f1c40f"; }
         }
 
-        let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+        let maxBag = getMaxBagSlots();
         document.getElementById('hud-hp').innerText = `${playerStats.currentHp}/${p.maxHp}`; document.getElementById('hud-coins').innerText = Math.floor(playerStats.coins);
         document.getElementById('hud-bag').innerText = `${inventory.EQUIP.length}/${maxBag} (A:${inventory.ARTIFACT.length})`; document.getElementById('hud-bag').style.color = (inventory.EQUIP.length >= maxBag || inventory.ARTIFACT.length >= maxBag) ? "#e74c3c" : "#2ecc71";
         document.getElementById('btn-bag-count').innerText = inventory.EQUIP.length; document.getElementById('btn-bag-max').innerText = maxBag;
@@ -6971,7 +7360,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     };
 
     function renderInventory() {
-        let maxBag = checkArtifactTrait("bag_space") ? 50 : 20;
+        let maxBag = getMaxBagSlots();
         let eqBox = document.getElementById('bag-equip');
         if (inventory.EQUIP.length === 0) { eqBox.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No equipment in sack.</div>"; }
         else {
@@ -6986,13 +7375,20 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                     typeText = `${item.type.toUpperCase()} (${item.subType.toUpperCase()})`;
                 }
                 let comparisonBadge = getComparisonDeltaBadge(item);
-                let details = item.type === "artifact" ? `<span style="font-size:10px;color:#d2b4de;font-weight:bold;">Trait: ${item.desc}</span>` : `<span style="font-size:10px;color:#aaa;">Slot: ${typeText} | <span style="color:${nameColor};font-weight:bold;">${tierStr}</span></span>`;
+                let reqLvl = Math.max(1, ((item.stageLevel || 1) - 1) * 5);
+                let lockWarning = "";
+                let disabledAttr = "";
+                if (playerStats.level < reqLvl) {
+                    lockWarning = ` <span style="color:#e74c3c; font-weight:bold; font-size:10px;">[Req. Lv ${reqLvl}]</span>`;
+                    disabledAttr = "disabled style='opacity:0.5; cursor:not-allowed;'";
+                }
+
+                let details = item.type === "artifact" ? `<span style="font-size:10px;color:#d2b4de;font-weight:bold;">Trait: ${item.desc}</span>${lockWarning}` : `<span style="font-size:10px;color:#aaa;">Slot: ${typeText} | <span style="color:${nameColor};font-weight:bold;">${tierStr}</span></span>${lockWarning}`;
                 return `<div class="bag-item" onmouseenter="showInventoryTooltip(event, ${item.id})" ontouchstart="showInventoryTooltip(event, ${item.id})" onmouseleave="hideTooltip()">
                     <div><strong style="color:${nameColor};">${item.name}${temperTag}${lockTag}</strong>${comparisonBadge}<br>${details}</div>
                     <div style="position:relative; z-index:10; white-space:nowrap;">
-                        <button class="btn-action" onclick="equipItem(${item.id})">Equip</button>
+                        <button class="btn-action" ${disabledAttr} onclick="equipItem(${item.id})">Equip</button>
                         <button class="btn-action" style="background:${lockBg}; margin-left:2px;" onclick="toggleLock(${item.id})">${lockIcon}</button>
-                        <!-- Increased margin-left here to physically isolate the destructive Salvage button -->
                         <button class="btn-action un" style="margin-left:12px;" onclick="salvageItem(${item.id})">Salvage</button>
                     </div>
                 </div>`;
@@ -7009,11 +7405,20 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                     let lockTag = item.locked ? " 🔒" : "";
                     let lockBg = item.locked ? "#e74c3c" : "#7f8c8d";
                     let lockIcon = item.locked ? "🔒" : "🔓";
-                    let details = `<span style="font-size:10px;color:#d2b4de;font-weight:bold;">Trait: ${item.desc}</span>`;
+                    
+                    let reqLvl = Math.max(1, ((item.stageLevel || 1) - 1) * 5);
+                    let lockWarning = "";
+                    let disabledAttr = "";
+                    if (playerStats.level < reqLvl) {
+                        lockWarning = ` <span style="color:#e74c3c; font-weight:bold; font-size:10px;">[Req. Lv ${reqLvl}]</span>`;
+                        disabledAttr = "disabled style='opacity:0.5; cursor:not-allowed;'";
+                    }
+
+                    let details = `<span style="font-size:10px;color:#d2b4de;font-weight:bold;">Trait: ${item.desc}</span>${lockWarning}`;
                     return `<div class="bag-item" onmouseenter="showInventoryTooltip(event, ${item.id})" ontouchstart="showInventoryTooltip(event, ${item.id})" onmouseleave="hideTooltip()">
                         <div><strong style="color:${nameColor};">${item.name}${lockTag}</strong><br>${details}</div>
                         <div style="position:relative; z-index:10; white-space:nowrap;">
-                            <button class="btn-action" onclick="equipItem(${item.id})">Equip</button>
+                            <button class="btn-action" ${disabledAttr} onclick="equipItem(${item.id})">Equip</button>
                             <button class="btn-action" style="background:${lockBg}; margin-left:2px;" onclick="toggleLock(${item.id})">${lockIcon}</button>
                             <button class="btn-action un" style="margin-left:12px;" onclick="salvageItem(${item.id})">Salvage</button>
                         </div>
@@ -7153,6 +7558,75 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             }
             return; // Halt normal combat/potions/fairy ticks during the collapse animation
         }
+
+        // Hooktail Challenge High-Speed Charge Scroll Intercept
+        if (playerStats.isPrestigeBossMode) {
+            if (playerStats.prestigeApproachTimer > 0) {
+                playerStats.prestigeApproachTimer--;
+                let chargeScrollSpeed = (2 + (p.moveSpeed * 0.05)) * 3; // Sprinting at 3x speed!
+                scrollScenery(chargeScrollSpeed);
+                
+                // Spawn wind and dust speed lines particles
+                if (Math.random() < 0.5) {
+                    particles.push({
+                        x: canvas.width + 10,
+                        y: 50 + Math.random() * 120,
+                        vx: -randFloat(8, 14),
+                        vy: 0,
+                        radius: randFloat(1, 2),
+                        color: "rgba(255, 255, 255, 0.25)",
+                        alpha: 1,
+                        life: 60
+                    });
+                }
+
+                if (playerStats.prestigeApproachTimer === 0) {
+                    // Spawn Hooktail based on ascension counts
+                    let scaleVal = playerStats.prestigeCount || 0;
+                    let hp = 15000 * Math.pow(3, scaleVal);
+                    let dmg = 120 * Math.pow(1.6, scaleVal);
+                    let def = 40 + (60 * scaleVal);
+                    
+                    mob = {
+                        x: 750, y: 55, w: 70, h: 80,
+                        type: "prestige_boss",
+                        isRare: false,
+                        hp: hp, maxHp: hp,
+                        damage: dmg,
+                        def: def,
+                        flashTimer: 0,
+                        isStopped: false
+                    };
+                    pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[ASCENSION] HOOKTAIL APPEARS! Slay her to Ascend!</span>`);
+                }
+                
+                // Tick down active potions inside speed loops safely
+                if (playerStats.atkPotionTimer > 0) playerStats.atkPotionTimer--;
+                if (playerStats.hpPotionTimer > 0) playerStats.hpPotionTimer--;
+                if (playerStats.defPotionTimer > 0) playerStats.defPotionTimer--;
+                if (playerStats.hastePotionTimer > 0) playerStats.hastePotionTimer--;
+                logicClock++;
+                return; // freeze normal monster spawns during the charge segment
+            } else if (mob) {
+                // Spit flames on a fixed frame frequency
+                if (logicClock % 150 === 0 && !isGamePaused) {
+                    for (let i = 0; i < 12; i++) {
+                        particles.push({
+                            x: mob.x,
+                            y: mob.y + 40,
+                            vx: -randFloat(4, 7),
+                            vy: randFloat(-2, 2),
+                            radius: randFloat(3, 6),
+                            color: Math.random() > 0.4 ? "#e67e22" : "#e74c3c",
+                            alpha: 1,
+                            life: 45
+                        });
+                    }
+                    effects.push({ x: mob.x - 30, y: mob.y + 45, text: "🔥 FIRE BREATH!", color: "#e67e22", life: 40 });
+                }
+            }
+        }
+
         let maxOfflineMs = 28800 * 1000; // 8 hours maximum cap
         
         if (gapMs > maxOfflineMs) {
