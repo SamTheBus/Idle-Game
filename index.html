@@ -2827,7 +2827,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             if (cumulativeStageDamage > p.maxHp && !checkArtifactTrait("second_wind")) {
                 diedOffline = true;
                 deathStage = currentStage;
-                currentStage = Math.max(1, Math.floor(currentStage * 0.80)); // Retreat stage
+                // No stage fallback: hero remains at the highest reached stage to farm
                 stagesAdvancedCount = maxStagesToAdvance; // Lock further stage progression
             }
 
@@ -3057,7 +3057,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         if (died) {
             deathAlert = `
                 <div style="background: rgba(192, 57, 43, 0.2); border: 1px solid #c0392b; border-radius: 4px; padding: 10px; margin-bottom: 15px; font-size: 11px; text-align: left; line-height: 1.4;">
-                    <strong style="color: #e74c3c;">⚠️ RETREAT ENCOUNTERED:</strong> Your hero hit a survival bottleneck at Stage ${dStage}. Progression halted, and safety protocols triggered automatic farming back at Stage ${toStage}.
+                    <strong style="color: #e74c3c;">⚠️ PROGRESSION STALLED:</strong> Your hero hit a survival bottleneck at Stage ${dStage}. Progression halted, and your hero continued to farm at Stage ${toStage}.
                 </div>
             `;
         }
