@@ -2078,8 +2078,9 @@ window.onload = function() {
                         c.beginPath(); c.rect(m.x + 12, m.y + 7 + bounce, m.w - 24, 2); c.fill(); c.stroke();
                     }
                 }
-            } else {
-                let currentTier = t !== undefined ? t : getStageTier();
+            }
+        } else {
+            let currentTier = t !== undefined ? t : getStageTier();
                 if (currentTier === 0) {
                     c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#a97026";
                     for (let i = 0; i < 4; i++) {
