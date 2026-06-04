@@ -2397,46 +2397,276 @@ window.onload = function() {
     const deathMaxFrames = 90; // 1.5 seconds of dramatic visual slowdown on death
     let lastUpdateTime = Date.now(); // High-resolution timestamp for gap detection
 
-    <<<<
-function buildProceduralName(item) {
-    let stars = item.statsRolled;
-    if (stars === "UNIQUE") return item.name;
-    let prefix = getTierName(stars);
-    
-    let highestKey = "maxHp";
-    let maxVal = -9999;
-    const checkKeys = ["bonusAtk", "bonusMaxHp", "bonusDef", "bonusMoveSpeed", "bonusCritChance", "bonusCritDamage", "bonusBlock", "bonusParry"];
-    checkKeys.forEach(k => {
-        if (item[k] && item[k] > maxVal) {
-            maxVal = item[k];
-            highestKey = k;
+    let beams = [];
+    let snowflakes = [];
+
+    /* ==========================================================================
+       6. PROCEDURAL NAME GENERATOR
+       ========================================================================== */
+    function buildProceduralName(item) {
+        let stars = item.statsRolled;
+        if (stars === "UNIQUE") return item.name;
+        let prefix = getTierName(stars);
+        
+        let highestKey = "maxHp";
+        let maxVal = -9999;
+        const checkKeys = ["bonusAtk", "bonusMaxHp", "bonusDef", "bonusMoveSpeed", "bonusCritChance", "bonusCritDamage", "bonusBlock", "bonusParry"];
+        checkKeys.forEach(k => {
+            if (item[k] && item[k] > maxVal) {
+                maxVal = item[k];
+                highestKey = k;
+            }
+        });
+
+        const nomenclature = {
+            bonusAtk: { name: "Vanguard", suffix: "of Shattering" },
+            bonusMaxHp: { name: "Colossus", suffix: "of Vitality" },
+            bonusDef: { name: "Bastion", suffix: "of Fortification" },
+            bonusMoveSpeed: { name: "Windrunner", suffix: "of Swiftness" },
+            bonusCritChance: { name: "Wraith", suffix: "of Lethality" },
+            bonusCritDamage: { name: "Reaver", suffix: "of Havoc" },
+            bonusBlock: { name: "Dreadnought", suffix: "of the Wall" },
+            bonusParry: { name: "Duellist", suffix: "of Reflection" }
+        };
+
+        const theme = nomenclature[highestKey] || { name: "Standard", suffix: "of Adaptation" };
+        let typeLabel = item.type.toUpperCase();
+        if (item.type === "subweapon" && item.subType) {
+            typeLabel = item.subType.toUpperCase();
         }
-    });
 
-    const nomenclature = {
-        bonusAtk: { name: "Vanguard", suffix: "of Shattering" },
-        bonusMaxHp: { name: "Colossus", suffix: "of Vitality" },
-        bonusDef: { name: "Bastion", suffix: "of Fortification" },
-        bonusMoveSpeed: { name: "Windrunner", suffix: "of Swiftness" },
-        bonusCritChance: { name: "Wraith", suffix: "of Lethality" },
-        bonusCritDamage: { name: "Reaver", suffix: "of Havoc" },
-        bonusBlock: { name: "Dreadnought", suffix: "of the Wall" },
-        bonusParry: { name: "Duellist", suffix: "of Reflection" }
-    };
-
-    const theme = nomenclature[highestKey] || { name: "Standard", suffix: "of Adaptation" };
-    let typeLabel = item.type.toUpperCase();
-    if (item.type === "subweapon" && item.subType) {
-        typeLabel = item.subType.toUpperCase();
+        return `${prefix} ${theme.name} ${typeLabel} ${theme.suffix} (Lv. ${item.stageLevel})`;
     }
 
-    return `${prefix} ${theme.name} ${typeLabel} ${theme.suffix} (Lv. ${item.stageLevel})`;
-}
+    /* ==========================================================================
+       STAT RANGE CALCULATION HELPERS
+       ========================================================================== */
+    function getStatBaseRange(item, statKey) {
+        let stageLevel = item.stageLevel || 1;
+        let isArt = item.type === "artifact";
+        let rarityMult = isArt ? 1.45 : (1 + ((item.statsRolled || 0) * 0.15));
+        
+        let min = 0;
+        let max = 0;
+        
+        if (statKey === "atk") {
+            if (item.type === "weapon") {
+                min += 2 * stageLevel;
+                max += 4 * stageLevel;
+            } else if (item.type === "subweapon" && item.subType === "dagger") {
+                min += 1 * stageLevel;
+                max += 2 * stageLevel;
+            }
+            if (item.bonusAtk > 0) {
+                min += Math.ceil(1 * stageLevel * rarityMult);
+                max += Math.ceil(2 * stageLevel * rarityMult);
+            }
+        }
+        else if (statKey === "maxHp") {
+            if (item.type === "overall") {
+                min += 30 * stageLevel;
+                max += 50 * stageLevel;
+            } else if (["chest", "leggings", "helmet"].includes(item.type) && item.baseMaxHp > 0) {
+                min += 10 * stageLevel;
+                max += 20 * stageLevel;
+            }
+            if (item.bonusMaxHp > 0) {
+                min += Math.ceil(3 * stageLevel * rarityMult);
+                max += Math.ceil(8 * stageLevel * rarityMult);
+            }
+        }
+        else if (statKey === "def") {
+            if (item.type === "subweapon" && item.subType === "shield") {
+                min += 15 * stageLevel;
+                max += 30 * stageLevel;
+            } else if (["chest", "leggings", "helmet"].includes(item.type) && item.baseDef > 0) {
+                min += 1 * stageLevel;
+                max += 3 * stageLevel;
+            }
+            if (item.bonusDef > 0) {
+                min += Math.ceil(1 * stageLevel * rarityMult);
+                max += Math.ceil(2 * stageLevel * rarityMult);
+            }
+        }
+        else if (statKey === "moveSpeed") {
+            if (item.type === "boots") {
+                min += 1 * stageLevel;
+                max += 3 * stageLevel;
+            }
+            if (item.bonusMoveSpeed > 0) {
+                min += Math.ceil(1 * stageLevel * rarityMult);
+                max += Math.ceil(2 * stageLevel * rarityMult);
+            }
+        }
+        else if (statKey === "str") {
+            if (item.bonusStr > 0) {
+                min += Math.ceil(1 * stageLevel * rarityMult);
+                max += Math.ceil(3 * stageLevel * rarityMult);
+            }
+        }
+        else if (statKey === "dex") {
+            if (item.bonusDex > 0) {
+                min += Math.ceil(1 * stageLevel * rarityMult);
+                max += Math.ceil(3 * stageLevel * rarityMult);
+            }
+        }
+        else if (statKey === "int") {
+            if (item.type === "subweapon" && item.subType === "tome") {
+                min += 1 * stageLevel;
+                max += 2 * stageLevel;
+            }
+            if (item.bonusInt > 0) {
+                min += Math.ceil(1 * stageLevel * rarityMult);
+                max += Math.ceil(3 * stageLevel * rarityMult);
+            }
+        }
+        else if (statKey === "critChance") {
+            if (item.bonusCritChance > 0) {
+                min += 0.01 * stageLevel * rarityMult;
+                max += 0.025 * stageLevel * rarityMult;
+            }
+        }
+        else if (statKey === "critDamage") {
+            if (item.bonusCritDamage > 0) {
+                min += 0.03 * stageLevel * rarityMult;
+                max += 0.06 * stageLevel * rarityMult;
+            }
+        }
+        else if (statKey === "block") {
+            if (item.type === "subweapon" && item.subType === "shield") {
+                min += 0.03 * stageLevel;
+                max += 0.03 * stageLevel;
+            }
+            if (item.bonusBlock > 0) {
+                min += 0.005 * stageLevel * rarityMult;
+                max += 0.015 * stageLevel * rarityMult;
+            }
+        }
+        else if (statKey === "parry") {
+            if (item.type === "subweapon" && item.subType === "dagger") {
+                min += 0.02 * stageLevel;
+                max += 0.02 * stageLevel;
+            }
+            if (item.bonusParry > 0) {
+                min += 0.005 * stageLevel * rarityMult;
+                max += 0.015 * stageLevel * rarityMult;
+            }
+        }
+        else if (statKey === "activeAttackSpeed") {
+            if (item.bonusActiveSpeed < 0) {
+                min += -2;
+                max += -1;
+            }
+        }
+        else if (statKey === "idleAttackSpeed") {
+            if (item.bonusIdleSpeed < 0) {
+                min += -4;
+                max += -2;
+            }
+        }
+        else if (statKey === "rareSpawn") {
+            if (item.rareSpawn > 0) {
+                min += 0.002 * rarityMult;
+                max += 0.006 * rarityMult;
+            }
+        }
+        else if (statKey === "dropRate") {
+            if (item.dropRate > 0) {
+                min += 0.02 * rarityMult;
+                max += 0.05 * rarityMult;
+            }
+        }
+        else if (statKey === "quality") {
+            if (item.quality > 0) {
+                min += 0.01 * rarityMult;
+                max += 0.03 * rarityMult;
+            }
+        }
+        else if (statKey === "goldMulti") {
+            if (item.goldMulti > 0) {
+                min += 0.02 * rarityMult;
+                max += 0.05 * rarityMult;
+            }
+        }
+        else if (statKey === "fairySpawn") {
+            if (item.fairySpawn > 0) {
+                min += 0.02 * rarityMult;
+                max += 0.06 * rarityMult;
+            }
+        }
+        
+        let tempers = item.temperLevel || 0;
+        if (tempers > 0) {
+            if (statKey === "atk") { min += tempers * (isArt ? 5 : 2); max += tempers * (isArt ? 5 : 2); }
+            else if (statKey === "maxHp") { min += tempers * (isArt ? 25 : 10); max += tempers * (isArt ? 25 : 10); }
+            else if (statKey === "def") { min += tempers * (isArt ? 2 : 1); max += tempers * (isArt ? 2 : 1); }
+            else if (statKey === "moveSpeed") { min += tempers; max += tempers; }
+            else if (statKey === "str" || statKey === "dex" || statKey === "int") { min += tempers; max += tempers; }
+            else if (statKey === "critChance") { min += tempers * 0.005; max += tempers * 0.005; }
+            else if (statKey === "critDamage") { min += tempers * 0.015; max += tempers * 0.015; }
+            else if (statKey === "block") { min += tempers * 0.005; max += tempers * 0.005; }
+            else if (statKey === "parry") { min += tempers * 0.005; max += tempers * 0.005; }
+            else if (statKey === "activeAttackSpeed") { min += tempers * -1; max += tempers * -1; }
+            else if (statKey === "idleAttackSpeed") { min += tempers * -2; max += tempers * -2; }
+            else if (statKey === "rareSpawn") { min += tempers * 0.001; max += tempers * 0.001; }
+            else if (statKey === "dropRate") { min += tempers * 0.01; max += tempers * 0.01; }
+            else if (statKey === "quality") { min += tempers * 0.005; max += tempers * 0.005; }
+            else if (statKey === "goldMulti") { min += tempers * 0.01; max += tempers * 0.01; }
+            else if (statKey === "fairySpawn") { min += tempers * 0.01; max += tempers * 0.01; }
+        }
+        
+        if (item.enchantments && item.enchantments[statKey]) {
+            let count = item.enchantments[statKey];
+            let multiplier = Math.pow(1.25, count);
+            
+            const integerStats = ["atk", "maxHp", "def", "str", "dex", "int"];
+            if (integerStats.includes(statKey)) {
+                min = Math.ceil(min * multiplier);
+                max = Math.ceil(max * multiplier);
+            } else if (statKey === "activeAttackSpeed" || statKey === "idleAttackSpeed") {
+                min = Math.floor(min * multiplier);
+                max = Math.floor(max * multiplier);
+            } else {
+                min = min * multiplier;
+                max = max * multiplier;
+            }
+        }
+        
+        return { min, max };
+    }
 
-/* ==========================================================================
-   7. STATS RESOLUTION & MATRIX IMPLEMENTATION
-   ========================================================================== */
-====
+    function formatStatRangeStr(item, statKey, isPct = false) {
+        let range = getStatBaseRange(item, statKey);
+        if (range.min === 0 && range.max === 0) return "";
+        
+        let minStr, maxStr;
+        if (statKey === "rareSpawn") {
+            minStr = (range.min * 100).toFixed(2) + "%";
+            maxStr = (range.max * 100).toFixed(2) + "%";
+        } else if (isPct) {
+            minStr = Math.floor(range.min * 100) + "%";
+            maxStr = Math.floor(range.max * 100) + "%";
+        } else if (statKey === "activeAttackSpeed" || statKey === "idleAttackSpeed") {
+            minStr = range.min + "f";
+            maxStr = range.max + "f";
+        } else if (["dropRate", "quality", "goldMulti", "fairySpawn"].includes(statKey)) {
+            minStr = Math.floor(range.min * 100) + "%";
+            maxStr = Math.floor(range.max * 100) + "%";
+        } else {
+            minStr = Math.round(range.min);
+            maxStr = Math.round(range.max);
+        }
+        
+        if (minStr === maxStr) {
+            return ` <span style="color:#7f8c8d; font-size:9px;">(${minStr})</span>`;
+        }
+        
+        return ` <span style="color:#7f8c8d; font-size:9px;">(${minStr} ~ ${maxStr})</span>`;
+    }
+
+    /* ==========================================================================
+       7. STATS RESOLUTION & MATRIX IMPLEMENTATION
+       ========================================================================== */
 function buildProceduralName(item) {
     let stars = item.statsRolled;
     if (stars === "UNIQUE") return item.name;
