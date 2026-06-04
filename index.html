@@ -3238,6 +3238,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         playerStats.isPrestigeBossMode = false;
         playerStats.prestigeApproachTimer = 0;
         mob = null;
+        hero.x = 40; // Reset hero position from Hooktail's right edge
         
         let p = resolvePlayerStats();
         playerStats.currentHp = p.maxHp;
@@ -3846,6 +3847,10 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 if (playerStats.lifetimePeakStage === undefined) playerStats.lifetimePeakStage = playerStats.maxStage || 1;
                 if (playerStats.isPrestigeBossMode === undefined) playerStats.isPrestigeBossMode = false;
                 if (playerStats.prestigeApproachTimer === undefined) playerStats.prestigeApproachTimer = 0;
+                
+                // Reset active prestige boss combat state on fresh load to prevent phantom state desync
+                playerStats.isPrestigeBossMode = false;
+                playerStats.prestigeApproachTimer = 0;
                 
                 if (inventory.ETC["Iron Scrap"]) { addEtcDrop("Monster Soul", inventory.ETC["Iron Scrap"]); delete inventory.ETC["Iron Scrap"]; }
                 if (inventory.ETC["Sticky Gel"]) { addEtcDrop("Monster Soul", inventory.ETC["Sticky Gel"]); delete inventory.ETC["Sticky Gel"]; }
@@ -4490,6 +4495,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         playerStats.currentDungeon = null;
         mob = null;
         playerStats.usedSecondWind = false;
+        hero.x = 40; // Reset hero position from Hooktail's right edge
         
         playerStats.runKills = 0;
         playerStats.runGold = 0;
@@ -6831,6 +6837,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     playerStats.isCrucibleMode = false;
     mob = null;
     playerStats.usedSecondWind = false;
+    hero.x = 40; // Reset hero position from Hooktail's right edge
     
     SoundManager.play('defeat');
     
@@ -6943,6 +6950,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         
         // Clear active mob to guarantee a clean respawn state in the retreated stage
         mob = null;
+        hero.x = 40; // Reset hero position from Hooktail's right edge
         
         // Reset Run Statistics for the next adventure
         playerStats.runKills = 0;
@@ -7566,6 +7574,10 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 let chargeScrollSpeed = (2 + (p.moveSpeed * 0.05)) * 3; // Sprinting at 3x speed!
                 scrollScenery(chargeScrollSpeed);
                 
+                // Smoothly slide player towards the right side of the screen to meet the locked boss
+                let targetHeroX = canvas.width - 180;
+                hero.x += (targetHeroX - hero.x) / (playerStats.prestigeApproachTimer + 1);
+
                 // Spawn wind and dust speed lines particles
                 if (Math.random() < 0.5) {
                     particles.push({
@@ -7588,7 +7600,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                     let def = 40 + (60 * scaleVal);
                     
                     mob = {
-                        x: 750, y: 55, w: 70, h: 80,
+                        x: canvas.width - 120, y: 55, w: 70, h: 80,
                         type: "prestige_boss",
                         isRare: false,
                         hp: hp, maxHp: hp,
@@ -7749,13 +7761,20 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 particles.push({ x: mob.x + Math.random()*mob.w, y: mob.y + Math.random()*mob.h, vx: (Math.random()-0.5)*2, vy: -Math.random()*3, radius: Math.random()*2+1, color: "#f1c40f", alpha: 1, life: 20 });
             }
             
-            if (mob.x > (hero.x + hero.w + 30)) { 
+            let isHooktail = (mob.type === "prestige_boss");
+            if (isHooktail) {
+                mob.x = canvas.width - 120;
+                mob.isStopped = true;
+            }
+
+            if (!isHooktail && mob.x > (hero.x + hero.w + 30)) { 
                 mob.x -= (4 + scrollSpeed); mob.isStopped = false; 
                 scrollScenery(scrollSpeed);
             } else {
                 mob.isStopped = true; 
-            if (logicClock % p.idleAttackSpeed === 0) { if (state.autoAttack) window.triggerPlayerSlash(); }
-            if (logicClock % 120 === 0 && mob && mob.hp > 0) {
+                if (logicClock % p.idleAttackSpeed === 0) { if (state.autoAttack) window.triggerPlayerSlash(); }
+                if (logicClock % 120 === 0 && mob && mob.hp > 0) {
+                    // Standard damage resolution
                 if (Math.random() < p.parry) { 
                     effects.push({ x: hero.x, y: hero.y - 15, text: "⚡ PARRY COUNTER!", color: "#9b59b6", life: 50 }); 
                     SoundManager.play('parry');
