@@ -4401,7 +4401,24 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 if (item.parry > 0) s.push(`⚡${Math.floor(item.parry*100)}%`);
                 if (item.str > 0) s.push(`💪S:${item.str}`); if (item.dex > 0) s.push(`🎯D:${item.dex}`); if (item.int > 0) s.push(`🧠I:${item.int}`);
                 
-                el.innerHTML = `<strong style="font-size:10px;">${item.name}${temperTag}${lockTag}</strong><div style="font-size:8px; color:${getTierColor(item.statsRolled)}; font-weight:bold; margin:2px 0;">${tierLabel}</div><div style="font-size:9px;color:#bbb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${s.join(" ")}">${s.join(" ")}</div><button class="btn-action un" style="margin-top:2px;padding:1px 3px;" onclick="unequipItem('${slotKey}')">Remove</button>`;
+                // Scan for active equipped sets to apply a badge to the card
+                let setLabelHtml = "";
+                let setName = getItemSetName(item);
+                if (setName) {
+                    let matchingCount = 0;
+                    const setSlots = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+                    setSlots.forEach(sKey => {
+                        let eqItem = equippedSlots[sKey];
+                        if (eqItem && getItemSetName(eqItem) === setName) {
+                            matchingCount++;
+                        }
+                    });
+                    if (matchingCount >= 2) {
+                        setLabelHtml = `<div style="font-size:8px; color:#2ecc71; font-weight:bold; margin-top:2px; text-transform:uppercase; letter-spacing:0.5px;">✨ ${setName} Set (${matchingCount}/4)</div>`;
+                    }
+                }
+
+                el.innerHTML = `<strong style="font-size:10px;">${item.name}${temperTag}${lockTag}</strong><div style="font-size:8px; color:${getTierColor(item.statsRolled)}; font-weight:bold; margin:2px 0;">${tierLabel}</div>${setLabelHtml}<div style="font-size:9px;color:#bbb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${s.join(" ")}">${s.join(" ")}</div><button class="btn-action un" style="margin-top:2px;padding:1px 3px;" onclick="unequipItem('${slotKey}')">Remove</button>`;
             }
         }
     }
