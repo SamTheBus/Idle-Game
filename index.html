@@ -2556,7 +2556,7 @@ window.onload = function() {
             let effMultiplier = 1 + (p.critChance * (p.critDamage - 1));
             let playerDps = Math.max(1, p.atk * effMultiplier * (60 / p.idleAttackSpeed));
 
-            // Initialize remaining monsters required first to prevent temporal dead zone errors
+            // Resolve monster requirement count first to prevent temporal dead zone errors
             let killsNeededForStage = 5 - playerStats.killCount;
 
             let scale = Math.pow(1.08, currentStage);
@@ -2572,7 +2572,7 @@ window.onload = function() {
             let cycleTime = ttk + 2.0; // Dynamic combat time + travel buffer
             cycleTime = Math.max(0.5, Math.min(300, cycleTime)); // Performance limits
 
-            // Progressive Survival Audit (Raw stage attrition)
+            // Progressive Survival Audit (Raw Stage Attrition without recovery)
             let mobDmg = (1 + scale) * 4.5;
             let mitigation = p.def / (p.def + 100 + (currentStage * 12));
             let netMobDmg = Math.max(1, Math.ceil(mobDmg * (1 - mitigation)));
