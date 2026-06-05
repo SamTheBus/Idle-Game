@@ -8354,25 +8354,26 @@ function formatStatRangeStr(item, statKey, isPct = false) {
 
         let useBox = document.getElementById('bag-use'); let useKeys = Object.keys(inventory.USE || {});
         if (useKeys.length === 0) { useBox.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No usable items. Purchase potions/scrolls at the Market!</div>"; }
-        else {
-            useBox.innerHTML = useKeys.map(key => {
-                let count = inventory.USE[key];
-                return `
-                    <div class="bag-item" style="display:flex; align-items:center; justify-content:space-between; padding:6px 12px;">
-                        <div style="display:flex; align-items:center;">
-                            ${getUseIconHtml(key)}
-                            <div>
-                                <strong>${key}</strong><br>
-                                <span style="font-size:10px; color:#aaa;">Qty: ${count}</span>
+            else {
+                useBox.innerHTML = useKeys.map(key => {
+                    let count = inventory.USE[key];
+                    return `
+                        <div class="bag-item" style="display:flex; align-items:center; justify-content:space-between; padding:6px 12px;">
+                            <div style="display:flex; align-items:center;">
+                                ${getUseIconHtml(key)}
+                                <div>
+                                    <strong>${key}</strong><br>
+                                    <span style="font-size:10px; color:#aaa;">Qty: ${count}</span>
+                                </div>
                             </div>
+                            <button class="btn-action" style="background:#2ecc71;" onclick="useItem('${key}')">Consume</button>
                         </div>
-                        <button class="btn-action" style="background:#2ecc71;" onclick="useItem('${key}')">Consume</button>
-                    </div>
-                `;
-            }).join("");
-        }
+                    `;
+                }).join("");
+            }
+        } // Closed the renderInventory function here
 
-     window.switchSubTab = function(type) {
+         window.switchSubTab = function(type) {
         window.hideTooltip(); state.currentSubTab = type;
         document.getElementById('sub-tab-eq').className = type === 'EQUIP' ? "sub-tab-btn active" : "sub-tab-btn";
         document.getElementById('sub-tab-art').className = type === 'ART' ? "sub-tab-btn active" : "sub-tab-btn";
