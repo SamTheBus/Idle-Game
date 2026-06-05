@@ -1701,11 +1701,20 @@ window.onload = function() {
                     c.ellipse(cx - wScale * 0.4, cy - hScale * 0.4, wScale * 0.22, hScale * 0.18, Math.PI / 4, 0, Math.PI * 2);
                     c.fill();
                     
-                    // Simple, clean black bead eyes
+                    // Eyes and glints scaling in sync with squish deformation
                     c.fillStyle = "#1e272e";
+                    let eyeOffsetX = wScale * 0.35;
+                    let eyeOffsetY = hScale * 0.1;
+                    let eyeRadius = Math.max(1, hScale * 0.15);
                     c.beginPath();
-                    c.arc(cx - 5, cy - 1, 2.5, 0, Math.PI * 2);
-                    c.arc(cx + 5, cy - 1, 2.5, 0, Math.PI * 2);
+                    c.arc(cx - eyeOffsetX, cy - eyeOffsetY, eyeRadius, 0, Math.PI * 2);
+                    c.arc(cx + eyeOffsetX, cy - eyeOffsetY, eyeRadius, 0, Math.PI * 2);
+                    c.fill();
+                    
+                    c.fillStyle = "#ffffff";
+                    c.beginPath();
+                    c.arc(cx - eyeOffsetX - eyeRadius * 0.2, cy - eyeOffsetY - eyeRadius * 0.2, eyeRadius * 0.3, 0, Math.PI * 2);
+                    c.arc(cx + eyeOffsetX - eyeRadius * 0.2, cy - eyeOffsetY - eyeRadius * 0.2, eyeRadius * 0.3, 0, Math.PI * 2);
                     c.fill();
                 }
             } 
@@ -1736,14 +1745,27 @@ window.onload = function() {
                 c.restore();
             } 
             else if (vType === "thorn_wyrm") {
-                // Segmented green caterpillar slithering (Hooktail-inspired)
+                // Upgraded green caterpillar-dragon facing LEFT with limbs and leaf-armor plates
                 let cx = m.x + m.w / 2;
                 let cy = m.y + m.h / 2 + 10;
                 let time = Date.now() / 130;
 
+                // Segmented legs crawling underneath
+                c.strokeStyle = "#000000";
+                c.lineWidth = 2;
+                for (let i = 0; i < 5; i++) {
+                    let segX = cx + (i * 9);
+                    let segY = cy + Math.sin(time - i * 0.8) * 5;
+                    c.beginPath();
+                    c.moveTo(segX, segY + 4);
+                    c.lineTo(segX - 3, segY + 12 + Math.sin(time * 2 + i) * 3);
+                    c.stroke();
+                }
+
+                // Drawing segments trailing to the right
                 for (let i = 4; i >= 0; i--) {
-                    let segX = cx - (i * 9);
-                    let segY = cy + Math.sin(time + i * 0.8) * 5;
+                    let segX = cx + (i * 9);
+                    let segY = cy + Math.sin(time - i * 0.8) * 5;
                     let radius = 10 - (i * 1.1);
 
                     c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#e67e22" : "#27ae60");
@@ -1752,22 +1774,22 @@ window.onload = function() {
                     c.fill();
                     c.stroke();
 
-                    // Spine spike details on back
+                    // Spiked leaf-armor plates on back
                     if (m.flashTimer === 0) {
-                        c.fillStyle = m.isRare ? "#f1c40f" : "#e67e22";
+                        c.fillStyle = m.isRare ? "#f1c40f" : "#1e8449";
                         c.beginPath();
-                        c.moveTo(segX - 2, segY - radius);
-                        c.lineTo(segX, segY - radius - 4);
-                        c.lineTo(segX + 2, segY - radius);
+                        c.moveTo(segX + 2, segY - radius);
+                        c.quadraticCurveTo(segX + 5, segY - radius - 6, segX, segY - radius - 8);
+                        c.quadraticCurveTo(segX - 3, segY - radius - 4, segX - 2, segY - radius);
                         c.closePath();
                         c.fill();
                         c.stroke();
                     }
                 }
                 
-                // Head Segment
+                // Head Segment facing LEFT
                 c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#f39c12" : "#2ecc71");
-                let hX = cx + 8;
+                let hX = cx - 8;
                 let hY = cy + Math.sin(time) * 5;
                 c.beginPath();
                 c.arc(hX, hY, 11, 0, Math.PI * 2);
@@ -1775,12 +1797,29 @@ window.onload = function() {
                 c.stroke();
 
                 if (m.flashTimer === 0) {
+                    // Leaf antennae pointing left
+                    c.fillStyle = m.isRare ? "#ffea75" : "#2ecc71";
+                    c.beginPath();
+                    c.moveTo(hX - 4, hY - 8);
+                    c.quadraticCurveTo(hX - 12, hY - 16, hX - 15, hY - 14);
+                    c.quadraticCurveTo(hX - 8, hY - 6, hX - 2, hY - 6);
+                    c.closePath();
+                    c.fill();
+                    c.stroke();
+
+                    // Beady eye facing left
                     c.fillStyle = "#ffffff";
                     c.beginPath();
-                    c.arc(hX + 3, hY - 3, 1.8, 0, Math.PI * 2);
+                    c.arc(hX - 4, hY - 2, 2.5, 0, Math.PI * 2);
+                    c.fill();
+                    c.stroke();
+
+                    c.fillStyle = "#1e272e";
+                    c.beginPath();
+                    c.arc(hX - 5, hY - 2, 1.2, 0, Math.PI * 2);
                     c.fill();
                 }
-            } 
+            }
             else if (vType === "golem") {
                 // Classic mechanical stone structure
                 let hover = Math.sin(Date.now() / 120) * 2;
@@ -1951,44 +1990,84 @@ window.onload = function() {
                 }
             } 
             else if (vType === "lava_serpent") {
-                // Segmented slithering lava serpent (Hooktail scale mechanics)
+                // Upgraded Obsidian Lava Serpent slithering LEFT with jagged vents and head horns
                 let cx = m.x + m.w / 2;
                 let cy = m.y + m.h / 2 + 5;
                 let time = Date.now() / 140;
 
+                // Lava heat vents particles
+                if (Math.random() < 0.15 && !isGamePaused) {
+                    particles.push({
+                        x: cx + randFloat(0, 30),
+                        y: cy - 10,
+                        vx: -randFloat(0.5, 1.5),
+                        vy: -randFloat(1, 2.5),
+                        radius: randFloat(1, 3),
+                        color: "rgba(230, 126, 34, 0.4)",
+                        alpha: 0.8,
+                        life: randInt(15, 30)
+                    });
+                }
+
+                // Obsidian spiked segments trailing to the right
                 for (let i = 5; i >= 0; i--) {
-                    let segX = cx - (i * 10);
-                    let segY = cy + Math.sin(time + i * 0.8) * 6;
+                    let segX = cx + (i * 10);
+                    let segY = cy + Math.sin(time - i * 0.8) * 6;
                     let radius = 10.5 - (i * 1.1);
 
-                    c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#ff8c00" : "#1a0805");
+                    c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#ff8c00" : "#1c0905");
                     c.beginPath();
                     c.arc(segX, segY, radius, 0, Math.PI * 2);
                     c.fill();
                     c.stroke();
 
-                    // Glowing core lava joint seams
+                    // Glowing cores and jagged fins
                     if (m.flashTimer === 0) {
                         c.fillStyle = m.isRare ? "#ffffff" : "#ff3300";
                         c.beginPath();
                         c.arc(segX, segY, radius * 0.45, 0, Math.PI * 2);
                         c.fill();
+                        
+                        c.fillStyle = "#2c110c";
+                        c.beginPath();
+                        c.moveTo(segX + 1, segY - radius);
+                        c.lineTo(segX - 3, segY - radius - 5);
+                        c.lineTo(segX - 4, segY - radius);
+                        c.closePath();
+                        c.fill();
+                        c.stroke();
                     }
                 }
 
-                // Obsidian wyrm head
+                // Dragon-like head facing LEFT
                 c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#ff4500" : "#110200");
-                let hX = cx + 8;
+                let hX = cx - 8;
                 let hY = cy + Math.sin(time) * 6;
+                
                 c.beginPath();
-                c.arc(hX, hY, 11, 0, Math.PI * 2);
+                c.moveTo(hX + 10, hY - 10);
+                c.lineTo(hX - 12, hY - 8); 
+                c.lineTo(hX - 14, hY + 2); 
+                c.lineTo(hX + 10, hY + 11);
+                c.closePath();
                 c.fill();
                 c.stroke();
 
                 if (m.flashTimer === 0) {
-                    c.fillStyle = "#ffffff";
+                    // Volcanic horns
+                    c.fillStyle = "#e67e22";
                     c.beginPath();
-                    c.arc(hX + 3, hY - 3, 1.8, 0, Math.PI * 2);
+                    c.moveTo(hX + 4, hY - 9);
+                    c.quadraticCurveTo(hX + 12, hY - 18, hX + 16, hY - 16);
+                    c.lineTo(hX + 6, hY - 4);
+                    c.closePath();
+                    c.fill();
+                    c.stroke();
+
+                    // Fiery eye
+                    c.fillStyle = "#f1c40f";
+                    c.beginPath();
+                    c.arc(hX - 3, hY - 2, 2, 0, Math.PI * 2);
                     c.fill();
                 }
             } 
@@ -2053,14 +2132,15 @@ window.onload = function() {
                 }
             } 
             else if (vType === "swamp_basilisk") {
-                // Segmented moss-green serpent with spikes (Hooktail joint scales)
+                // Upgraded Swamp Basilisk slithering LEFT with venomous fangs and dorsal fins
                 let cx = m.x + m.w / 2;
                 let cy = m.y + m.h / 2 + 5;
                 let time = Date.now() / 150;
 
+                // Spiked segments trailing to the right
                 for (let i = 5; i >= 0; i--) {
-                    let segX = cx - (i * 10);
-                    let segY = cy + Math.sin(time + i * 0.8) * 6;
+                    let segX = cx + (i * 10);
+                    let segY = cy + Math.sin(time - i * 0.8) * 6;
                     let radius = 10.5 - (i * 1.1);
 
                     c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#00b894" : "#1a3a22");
@@ -2069,35 +2149,50 @@ window.onload = function() {
                     c.fill();
                     c.stroke();
 
-                    // Toxic poison spine detail on back
+                    // Venomous dorsal scales
                     if (m.flashTimer === 0) {
                         c.fillStyle = m.isRare ? "#ff007f" : "#9b59b6";
                         c.beginPath();
-                        c.moveTo(segX - 2.5, segY - radius);
-                        c.lineTo(segX, segY - radius - 5);
-                        c.lineTo(segX + 2.5, segY - radius);
+                        c.moveTo(segX + 2, segY - radius);
+                        c.lineTo(segX - 2, segY - radius - 6);
+                        c.lineTo(segX - 4, segY - radius);
                         c.closePath();
                         c.fill();
                         c.stroke();
                     }
                 }
 
-                // Serpent head
+                // Basilisk snout facing LEFT
                 c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#00b894" : "#122c19");
-                let hX = cx + 8;
+                let hX = cx - 8;
                 let hY = cy + Math.sin(time) * 6;
+                
                 c.beginPath();
-                c.arc(hX, hY, 11, 0, Math.PI * 2);
+                c.moveTo(hX + 11, hY - 11);
+                c.lineTo(hX - 13, hY - 5);
+                c.lineTo(hX - 11, hY + 6);
+                c.lineTo(hX + 11, hY + 11);
+                c.closePath();
                 c.fill();
                 c.stroke();
 
                 if (m.flashTimer === 0) {
+                    // Poison fangs
                     c.fillStyle = "#ffffff";
                     c.beginPath();
-                    c.arc(hX + 3, hY - 3, 1.8, 0, Math.PI * 2);
+                    c.moveTo(hX - 10, hY - 1);
+                    c.lineTo(hX - 13, hY + 4);
+                    c.lineTo(hX - 7, hY + 2);
+                    c.closePath();
+                    c.fill();
+
+                    // Slit yellow eye
+                    c.fillStyle = "#f1c40f";
+                    c.beginPath();
+                    c.arc(hX - 3, hY - 3, 2, 0, Math.PI * 2);
                     c.fill();
                 }
-            } 
+            }
             else if (vType === "toxic_fly") {
                 // Clean simple fly: flapping translucent wings and glowing abdomen
                 let cx = m.x + m.w / 2;
@@ -2152,14 +2247,27 @@ window.onload = function() {
                 }
             } 
             else if (vType === "void_crawler") {
-                // Segmented chitinous alien slithering (Hooktail-inspired)
+                // Upgraded Void Crawler slithering LEFT with chitinous shell plates and neon runes
                 let cx = m.x + m.w / 2;
                 let cy = m.y + m.h / 2 + 5;
                 let time = Date.now() / 150;
 
+                // Twitching dark scythe-legs
+                c.strokeStyle = "#000000";
+                c.lineWidth = 1.8;
+                for (let i = 0; i < 6; i++) {
+                    let segX = cx + (i * 9);
+                    let segY = cy + Math.sin(time - i * 0.7) * 5.5;
+                    c.beginPath();
+                    c.moveTo(segX, segY + 2);
+                    c.lineTo(segX - 5, segY + 14 + Math.sin(time * 3.5 + i) * 4);
+                    c.stroke();
+                }
+
+                // Overlapping shell segments trailing right
                 for (let i = 6; i >= 0; i--) {
-                    let segX = cx - (i * 9);
-                    let segY = cy + Math.sin(time + i * 0.7) * 5.5;
+                    let segX = cx + (i * 9);
+                    let segY = cy + Math.sin(time - i * 0.7) * 5.5;
                     let radius = 10 - (i * 1.1);
 
                     c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#ff007f" : "#1a022b");
@@ -2168,22 +2276,20 @@ window.onload = function() {
                     c.fill();
                     c.stroke();
 
-                    // Segment underside legs
+                    // Neon runes etched on the carapace
                     if (m.flashTimer === 0) {
-                        c.strokeStyle = "#000000";
+                        c.strokeStyle = "#8e44ad";
                         c.lineWidth = 1.5;
                         c.beginPath();
-                        c.moveTo(segX, segY + radius);
-                        c.lineTo(segX - 3, segY + radius + 4);
-                        c.moveTo(segX, segY + radius);
-                        c.lineTo(segX + 3, segY + radius + 4);
+                        c.moveTo(segX - 2, segY - radius + 3);
+                        c.lineTo(segX + 2, segY - radius + 3);
                         c.stroke();
                     }
                 }
 
-                // Crawler Void head
+                // Void head facing LEFT
                 c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#ff007f" : "#11001c");
-                let hX = cx + 8;
+                let hX = cx - 8;
                 let hY = cy + Math.sin(time) * 5.5;
                 c.beginPath();
                 c.arc(hX, hY, 10.5, 0, Math.PI * 2);
@@ -2191,12 +2297,23 @@ window.onload = function() {
                 c.stroke();
 
                 if (m.flashTimer === 0) {
-                    c.fillStyle = "#ffffff";
+                    // Twitching sensory feelers
+                    c.strokeStyle = "#8e44ad";
+                    c.lineWidth = 1.8;
                     c.beginPath();
-                    c.arc(hX + 3, hY - 3, 1.8, 0, Math.PI * 2);
+                    c.moveTo(hX - 4, hY - 6);
+                    c.quadraticCurveTo(hX - 15, hY - 14 + Math.sin(time * 3) * 4, hX - 22, hY - 10 + Math.sin(time * 3) * 4);
+                    c.stroke();
+
+                    // Multi-eyed alien construct
+                    c.fillStyle = "#ff007f";
+                    c.beginPath();
+                    c.arc(hX - 5, hY - 3, 1.5, 0, Math.PI * 2);
+                    c.arc(hX - 2, hY - 1, 1.2, 0, Math.PI * 2);
+                    c.arc(hX - 5, hY + 1, 1.2, 0, Math.PI * 2);
                     c.fill();
                 }
-            } 
+            }
             else if (vType === "void_spectre") {
                 // Minimal hooded void specter with empty space and glowing pink slits
                 let cx = m.x + m.w / 2;
@@ -2296,31 +2413,62 @@ window.onload = function() {
             let segs = 4;
             let spacing = m.w / segs;
             let legCycle = Math.sin(Date.now() / 50) * 4;
+            let cx = m.x + m.w / 2;
+            let cy = m.y + 12;
 
-            for (let i = 0; i < segs; i++) {
-                let segX = m.x + (i * spacing);
+            // Armored segments trailing to the right (facing LEFT)
+            for (let i = segs - 1; i >= 0; i--) {
+                let segX = cx + (i * spacing) - 10;
                 c.beginPath();
-                c.ellipse(segX + spacing/2, m.y + 12, spacing * 0.7, 10, 0, 0, Math.PI*2);
+                c.ellipse(segX, cy, spacing * 0.7, 10, 0, 0, Math.PI*2);
                 c.fill();
                 c.stroke();
                 
+                // Dark spine plates
                 c.fillStyle = "#2c3e50";
                 c.beginPath();
-                c.moveTo(segX + spacing/2 - 2, m.y + 4);
-                c.lineTo(segX + spacing/2, m.y - 2);
-                c.lineTo(segX + spacing/2 + 2, m.y + 4);
+                c.moveTo(segX + 2, cy - 8);
+                c.lineTo(segX, cy - 14);
+                c.lineTo(segX - 2, cy - 8);
                 c.fill();
                 c.stroke();
                 c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#d35400";
 
+                // Armored crawling centipede legs
                 c.strokeStyle = "#a04000";
                 c.lineWidth = 2;
                 c.beginPath();
-                c.moveTo(segX + spacing/2, m.y + 18);
-                c.lineTo(segX + spacing/2 - 4, m.y + 24 + (i%2 === 0 ? legCycle : -legCycle));
-                c.moveTo(segX + spacing/2, m.y + 18);
-                c.lineTo(segX + spacing/2 + 4, m.y + 24 + (i%2 === 0 ? -legCycle : legCycle));
+                c.moveTo(segX, cy + 6);
+                c.lineTo(segX - 5, cy + 14 + (i%2 === 0 ? legCycle : -legCycle));
+                c.moveTo(segX, cy + 6);
+                c.lineTo(segX + 5, cy + 14 + (i%2 === 0 ? -legCycle : legCycle));
                 c.stroke();
+            }
+
+            // Plated head facing LEFT
+            let hX = cx - 18;
+            c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#e67e22";
+            c.beginPath();
+            c.arc(hX, cy, 9, 0, Math.PI * 2);
+            c.fill();
+            c.stroke();
+
+            if (m.flashTimer === 0) {
+                // Pincers pointing left
+                c.strokeStyle = "#2c3e50";
+                c.lineWidth = 2.2;
+                c.beginPath();
+                c.moveTo(hX - 3, cy - 5);
+                c.quadraticCurveTo(hX - 12, cy - 10, hX - 14, cy - 4);
+                c.moveTo(hX - 3, cy + 5);
+                c.quadraticCurveTo(hX - 12, cy + 10, hX - 14, cy + 4);
+                c.stroke();
+
+                // Beady eyes
+                c.fillStyle = "#f1c40f";
+                c.beginPath();
+                c.arc(hX - 4, cy - 2, 1.5, 0, Math.PI * 2);
+                c.fill();
             }
         }
         else if (m.type === "rift_guardian") {
