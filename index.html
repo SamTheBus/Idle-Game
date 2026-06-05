@@ -3023,14 +3023,21 @@ function getStatBaseRange(item, statKey) {
             max += 0.05 * rarityMult;
         }
     }
-    else if (statKey === "fairySpawn") {
-        if (item.fairySpawn > 0) {
-            min += 0.02 * rarityMult;
-            max += 0.06 * rarityMult;
+    lse if (statKey === "fairySpawn") {
+            if (item.fairySpawn > 0) {
+                min += 0.02 * rarityMult;
+                max += 0.06 * rarityMult;
+            }
         }
-    }
-    
-    let tempers = item.temperLevel || 0;
+
+        const unscaledStats = ["activeAttackSpeed", "idleAttackSpeed"];
+        if (!unscaledStats.includes(statKey)) {
+            let prestigeMult = 1 + ((playerStats.prestigeCount || 0) * 0.02);
+            min = min * prestigeMult;
+            max = max * prestigeMult;
+        }
+        
+        let tempers = item.temperLevel || 0;
     if (tempers > 0) {
         if (statKey === "atk") { min += tempers * (isArt ? 5 : 2); max += tempers * (isArt ? 5 : 2); }
         else if (statKey === "maxHp") { min += tempers * (isArt ? 25 : 10); max += tempers * (isArt ? 25 : 10); }
@@ -4088,20 +4095,21 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let selectedStat = pool[Math.floor(Math.random() * pool.length)];
         let stageScale = item.stageLevel || 1;
         let rarityMult = 1 + (item.statsRolled * 0.15);
+        let prestigeMult = 1 + ((playerStats.prestigeCount || 0) * 0.02);
 
-        if (selectedStat === "atk") item.bonusAtk += Math.ceil(randInt(1, 2) * stageScale * rarityMult); 
-        else if (selectedStat === "maxHp") item.bonusMaxHp += Math.ceil(randInt(3, 8) * stageScale * rarityMult); 
-        else if (selectedStat === "def") item.bonusDef += Math.ceil(randInt(1, 2) * stageScale * rarityMult);
-        else if (selectedStat === "moveSpeed") item.bonusMoveSpeed += Math.ceil(randInt(1, 2) * stageScale * rarityMult);
-        else if (selectedStat === "critChance") item.bonusCritChance += parseFloat((randFloat(0.01, 0.025) * stageScale * rarityMult).toFixed(2)); 
-        else if (selectedStat === "critDamage") item.bonusCritDamage += parseFloat((randFloat(0.03, 0.06) * stageScale * rarityMult).toFixed(2));
-        else if (selectedStat === "block") item.bonusBlock += parseFloat((randFloat(0.005, 0.015) * stageScale * rarityMult).toFixed(2)); 
-        else if (selectedStat === "parry") item.bonusParry += parseFloat((randFloat(0.005, 0.015) * stageScale * rarityMult).toFixed(2));
+        if (selectedStat === "atk") item.bonusAtk += Math.ceil(randInt(1, 2) * stageScale * rarityMult * prestigeMult); 
+        else if (selectedStat === "maxHp") item.bonusMaxHp += Math.ceil(randInt(3, 8) * stageScale * rarityMult * prestigeMult); 
+        else if (selectedStat === "def") item.bonusDef += Math.ceil(randInt(1, 2) * stageScale * rarityMult * prestigeMult);
+        else if (selectedStat === "moveSpeed") item.bonusMoveSpeed += Math.ceil(randInt(1, 2) * stageScale * rarityMult * prestigeMult);
+        else if (selectedStat === "critChance") item.bonusCritChance += parseFloat((randFloat(0.01, 0.025) * stageScale * rarityMult * prestigeMult).toFixed(4)); 
+        else if (selectedStat === "critDamage") item.bonusCritDamage += parseFloat((randFloat(0.03, 0.06) * stageScale * rarityMult * prestigeMult).toFixed(4));
+        else if (selectedStat === "block") item.bonusBlock += parseFloat((randFloat(0.005, 0.015) * stageScale * rarityMult * prestigeMult).toFixed(4)); 
+        else if (selectedStat === "parry") item.bonusParry += parseFloat((randFloat(0.005, 0.015) * stageScale * rarityMult * prestigeMult).toFixed(4));
         else if (selectedStat === "activeSpd") item.bonusActiveSpeed -= randInt(1, 2); 
         else if (selectedStat === "idleSpd") item.bonusIdleSpeed -= randInt(2, 4); 
-        else if (selectedStat === "str") item.bonusStr += Math.ceil(randInt(1, 3) * stageScale * rarityMult);
-        else if (selectedStat === "dex") item.bonusDex += Math.ceil(randInt(1, 3) * stageScale * rarityMult);
-        else if (selectedStat === "int") item.bonusInt += Math.ceil(randInt(1, 3) * stageScale * rarityMult);
+        else if (selectedStat === "str") item.bonusStr += Math.ceil(randInt(1, 3) * stageScale * rarityMult * prestigeMult);
+        else if (selectedStat === "dex") item.bonusDex += Math.ceil(randInt(1, 3) * stageScale * rarityMult * prestigeMult);
+        else if (selectedStat === "int") item.bonusInt += Math.ceil(randInt(1, 3) * stageScale * rarityMult * prestigeMult);
 
         item.atk = (item.baseAtk || 0) + item.bonusAtk; 
         item.maxHp = (item.baseMaxHp || 0) + item.bonusMaxHp; 
@@ -4148,6 +4156,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             item.noun = nounList ? nounList[Math.floor(Math.random() * nounList.length)] : chosenType.toUpperCase();
         }
 
+        let prestigeMult = 1 + ((playerStats.prestigeCount || 0) * 0.02);
+
         if (isArt) {
             let chosenArt = ARTIFACT_POOL[Math.floor(Math.random() * ARTIFACT_POOL.length)];
             item.name = `⭐ UNIQUE ${chosenArt.name}`; item.trait = chosenArt.trait; item.desc = chosenArt.desc; item.breakdown = chosenArt.breakdown;
@@ -4155,17 +4165,17 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             item.statsRolled = "UNIQUE";
             statLinesCount = 3; 
         } else {
-            if (chosenType === "overall") { item.baseMaxHp = randInt(30, 50) * stageScale; }
+            if (chosenType === "overall") { item.baseMaxHp = Math.ceil(randInt(30, 50) * stageScale * prestigeMult); }
             else if (chosenType === "chest" || chosenType === "leggings" || chosenType === "helmet") { 
-                if (Math.random() > 0.5) item.baseMaxHp = randInt(10, 20) * stageScale; else item.baseDef = randInt(1, 3) * stageScale; 
+                if (Math.random() > 0.5) item.baseMaxHp = Math.ceil(randInt(10, 20) * stageScale * prestigeMult); else item.baseDef = Math.ceil(randInt(1, 3) * stageScale * prestigeMult); 
             }
-            else if (chosenType === "weapon") { item.baseAtk = randInt(2, 4) * stageScale; }
+            else if (chosenType === "weapon") { item.baseAtk = Math.ceil(randInt(2, 4) * stageScale * prestigeMult); }
             else if (chosenType === "subweapon") {
-                if (item.subType === "shield") { item.baseDef = randInt(15, 30) * stageScale; item.baseBlock = 0.03 * stageScale; }
-                else if (item.subType === "dagger") { item.baseAtk = randInt(1, 2) * stageScale; item.baseParry = 0.02 * stageScale; }
-                else if (item.subType === "tome") { item.baseInt = randInt(1, 2) * stageScale; }
+                if (item.subType === "shield") { item.baseDef = Math.ceil(randInt(15, 30) * stageScale * prestigeMult); item.baseBlock = 0.03 * stageScale * prestigeMult; }
+                else if (item.subType === "dagger") { item.baseAtk = Math.ceil(randInt(1, 2) * stageScale * prestigeMult); item.baseParry = 0.02 * stageScale * prestigeMult; }
+                else if (item.subType === "tome") { item.baseInt = Math.ceil(randInt(1, 2) * stageScale * prestigeMult); }
             }
-            else if (chosenType === "boots") { item.baseMoveSpeed = randInt(1, 3) * stageScale; }
+            else if (chosenType === "boots") { item.baseMoveSpeed = Math.ceil(randInt(1, 3) * stageScale * prestigeMult); }
         }
 
         let pool = ["critChance", "critDamage", "block", "parry", "atk", "maxHp", "def", "moveSpeed", "activeSpd", "idleSpd", "str", "dex", "int"];
@@ -4174,7 +4184,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         } else if (chosenType === "subweapon") {
             if (item.subType === "shield") pool = ["block", "atk", "maxHp", "def", "str"];
             else if (item.subType === "dagger") pool = ["parry", "atk", "critChance", "dex"];
-            else if (item.subType === "tome") pool = ["critDamage", "int", "activeSpd", "idleSpd", "fairySpawn"];
+            else if (item.subType === "tome") pool = ["critDamage", "int", "activeSpd", "idleSpd"];
         }
 
         pool.sort(() => Math.random() - 0.5);
@@ -4182,24 +4192,24 @@ function formatStatRangeStr(item, statKey, isPct = false) {
 
         for (let i = 0; i < statLinesCount; i++) {
             let selectedStat = pool[i % pool.length];
-            if (selectedStat === "atk") item.bonusAtk += Math.ceil(randInt(1, 2) * stageScale * rarityMult); 
-            else if (selectedStat === "maxHp") item.bonusMaxHp += Math.ceil(randInt(3, 8) * stageScale * rarityMult); 
-            else if (selectedStat === "def") item.bonusDef += Math.ceil(randInt(1, 2) * stageScale * rarityMult);
-            else if (selectedStat === "moveSpeed") item.bonusMoveSpeed += Math.ceil(randInt(1, 2) * stageScale * rarityMult);
-            else if (selectedStat === "critChance") item.bonusCritChance += parseFloat((randFloat(0.01, 0.025) * stageScale * rarityMult).toFixed(2)); 
-            else if (selectedStat === "critDamage") item.bonusCritDamage += parseFloat((randFloat(0.03, 0.06) * stageScale * rarityMult).toFixed(2));
-            else if (selectedStat === "block") item.bonusBlock += parseFloat((randFloat(0.005, 0.015) * stageScale * rarityMult).toFixed(2)); 
-            else if (selectedStat === "parry") item.bonusParry += parseFloat((randFloat(0.005, 0.015) * stageScale * rarityMult).toFixed(2));
+            if (selectedStat === "atk") item.bonusAtk += Math.ceil(randInt(1, 2) * stageScale * rarityMult * prestigeMult); 
+            else if (selectedStat === "maxHp") item.bonusMaxHp += Math.ceil(randInt(3, 8) * stageScale * rarityMult * prestigeMult); 
+            else if (selectedStat === "def") item.bonusDef += Math.ceil(randInt(1, 2) * stageScale * rarityMult * prestigeMult);
+            else if (selectedStat === "moveSpeed") item.bonusMoveSpeed += Math.ceil(randInt(1, 2) * stageScale * rarityMult * prestigeMult);
+            else if (selectedStat === "critChance") item.bonusCritChance += parseFloat((randFloat(0.01, 0.025) * stageScale * rarityMult * prestigeMult).toFixed(4)); 
+            else if (selectedStat === "critDamage") item.bonusCritDamage += parseFloat((randFloat(0.03, 0.06) * stageScale * rarityMult * prestigeMult).toFixed(4));
+            else if (selectedStat === "block") item.bonusBlock += parseFloat((randFloat(0.005, 0.015) * stageScale * rarityMult * prestigeMult).toFixed(4)); 
+            else if (selectedStat === "parry") item.bonusParry += parseFloat((randFloat(0.005, 0.015) * stageScale * rarityMult * prestigeMult).toFixed(4));
             else if (selectedStat === "activeSpd") item.bonusActiveSpeed -= randInt(1, 2); 
             else if (selectedStat === "idleSpd") item.bonusIdleSpeed -= randInt(2, 4); 
-            else if (selectedStat === "str") item.bonusStr += Math.ceil(randInt(1, 3) * stageScale * rarityMult);
-            else if (selectedStat === "dex") item.bonusDex += Math.ceil(randInt(1, 3) * stageScale * rarityMult);
-            else if (selectedStat === "int") item.bonusInt += Math.ceil(randInt(1, 3) * stageScale * rarityMult);
-            else if (selectedStat === "dropRate") item.dropRate += parseFloat((randFloat(0.02, 0.05) * rarityMult).toFixed(2));
-            else if (selectedStat === "quality") item.quality += parseFloat((randFloat(0.01, 0.03) * rarityMult).toFixed(2));
-            else if (selectedStat === "goldMulti") item.goldMulti += parseFloat((randFloat(0.02, 0.05) * rarityMult).toFixed(2));
-            else if (selectedStat === "rareSpawn") item.rareSpawn += parseFloat((randFloat(0.002, 0.006) * rarityMult).toFixed(3));
-            else if (selectedStat === "fairySpawn") item.fairySpawn += parseFloat((randFloat(0.02, 0.06) * rarityMult).toFixed(2));
+            else if (selectedStat === "str") item.bonusStr += Math.ceil(randInt(1, 3) * stageScale * rarityMult * prestigeMult);
+            else if (selectedStat === "dex") item.bonusDex += Math.ceil(randInt(1, 3) * stageScale * rarityMult * prestigeMult);
+            else if (selectedStat === "int") item.bonusInt += Math.ceil(randInt(1, 3) * stageScale * rarityMult * prestigeMult);
+            else if (selectedStat === "dropRate") item.dropRate += parseFloat((randFloat(0.02, 0.05) * rarityMult * prestigeMult).toFixed(4));
+            else if (selectedStat === "quality") item.quality += parseFloat((randFloat(0.01, 0.03) * rarityMult * prestigeMult).toFixed(4));
+            else if (selectedStat === "goldMulti") item.goldMulti += parseFloat((randFloat(0.02, 0.05) * rarityMult * prestigeMult).toFixed(4));
+            else if (selectedStat === "rareSpawn") item.rareSpawn += parseFloat((randFloat(0.002, 0.006) * rarityMult * prestigeMult).toFixed(4));
+            else if (selectedStat === "fairySpawn") item.fairySpawn += parseFloat((randFloat(0.02, 0.06) * rarityMult * prestigeMult).toFixed(4));
         }
 
         item.atk = (item.baseAtk || 0) + item.bonusAtk; 
@@ -4798,7 +4808,11 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         else if (roll < (15.00 * luckMultiplier)) statLinesCount = 1; 
         else statLinesCount = 0;
 
-        let stageScale = Math.floor((playerStats.stage - 1) / 10) + 1; 
+        let activeStage = playerStats.stage;
+        if (playerStats.isDungeonMode && playerStats.currentDungeon) {
+            activeStage = playerStats.currentDungeonStage[playerStats.currentDungeon] || 1;
+        }
+        let stageScale = Math.floor((activeStage - 1) / 10) + 1; 
         let newItem = createItemObject(chosenType, statLinesCount, stageScale, 0);
         
         inventory.EQUIP.push(newItem);
@@ -4910,7 +4924,11 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             else if (roll < (15.00 * luckMultiplier)) statLinesCount = 1; else statLinesCount = 0;
         }
 
-        let stageScale = Math.floor((playerStats.stage - 1) / 10) + 1; 
+        let activeStage = playerStats.stage;
+        if (playerStats.isDungeonMode && playerStats.currentDungeon) {
+            activeStage = playerStats.currentDungeonStage[playerStats.currentDungeon] || 1;
+        }
+        let stageScale = Math.floor((activeStage - 1) / 10) + 1; 
         let sourceName = isBossKill ? "Boss" : (isRareMob ? "Rare" : "Route");
         generateEquipment(chosenType, statLinesCount, stageScale, sourceName, silent, minStars);
     }
