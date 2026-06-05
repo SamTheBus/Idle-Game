@@ -3318,8 +3318,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         minStr = Math.floor(range.min * 100) + "%";
         maxStr = Math.floor(range.max * 100) + "%";
     } else {
-        minStr = Math.round(range.min);
-        maxStr = Math.round(range.max);
+        minStr = Math.round(range.min).toLocaleString();
+        maxStr = Math.round(range.max).toLocaleString();
     }
     
     if (minStr === maxStr) {
@@ -4014,8 +4014,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             scrapsListHtml = scrapKeys.map(key => {
                 let color = key.includes("Scrap") ? "#3498db" : (key.includes("Soul") ? "#ffb6c1" : "#9b59b6");
                 if (key === "Eridium Shard") color = "#8e44ad";
-                return `<div style="background:#111; border: 1px solid #222; padding: 5px 10px; border-radius: 3px; font-size: 11px; display:inline-block; margin: 3px;">
-                    <span style="color:#aaa;">${key}:</span> <strong style="color:${color};">+${scraps[key]}</strong>
+                return `<div class="bag-item" style="background:#111; border: 1px solid #222; padding: 5px 10px; border-radius: 3px; font-size: 11px; display:inline-block; margin: 3px;">
+                    <span style="color:#aaa;">${key}:</span> <strong style="color:${color};">+${scraps[key].toLocaleString()}</strong>
                 </div>`;
             }).join("");
         } else {
@@ -5355,9 +5355,10 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     function calculateActiveDps() {
         let now = Date.now();
         damageHistory = damageHistory.filter(d => now - d.time <= 3000); 
-        if (damageHistory.length === 0) return 0.0;
+        if (damageHistory.length === 0) return "0.0";
         let totalDamage = damageHistory.reduce((sum, d) => sum + d.amount, 0);
-        return (totalDamage / 3).toFixed(1); 
+        let avgDps = totalDamage / 3;
+        return avgDps.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1});
     }
 
     function resolvePlayerStats() {
@@ -6498,8 +6499,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         if (statKey === 'def' && checkArtifactTrait("defense")) artTotal += 15;
         if (statKey === 'gold' && checkArtifactTrait("gold_hoard")) artTotal += 0.50;
         
-        let formatVal = (v) => isPct ? `+${Math.floor(v*100)}%` : `+${v}`;
-        if (statKey === 'gold') formatVal = (v) => `+${v.toFixed(2)}`;
+        let formatVal = (v) => isPct ? `+${Math.floor(v*100)}%` : `+${v.toLocaleString()}`;
+        if (statKey === 'gold') formatVal = (v) => `+${v.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
         let html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;">
             <div class="tt-title" style="color:${data.color};">${data.title} Breakdown</div>
@@ -7405,8 +7406,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         if (mob && mob.isRare && checkArtifactTrait("void_pull")) {
             let healAmount = Math.ceil(p.maxHp * 0.30);
             playerStats.currentHp = Math.min(p.maxHp, playerStats.currentHp + healAmount);
-            effects.push({ x: mob.x, y: mob.y - 15, text: `❤️ +${healAmount} VOID SIPHON`, color: "#9b59b6", life: 75 });
-            pushLog(`<strong style='color:#9b59b6;'>[VOID CORE]</strong> Syphoned <span style='color:#2ecc71;'>${healAmount} HP</span> from the fallen rare.`);
+            effects.push({ x: mob.x, y: mob.y - 15, text: `❤️ +${healAmount.toLocaleString()} VOID SIPHON`, color: "#9b59b6", life: 75 });
+            pushLog(`<strong style='color:#9b59b6;'>[VOID CORE]</strong> Syphoned <span style='color:#2ecc71;'>${healAmount.toLocaleString()} HP</span> from the fallen rare.`);
         }
 
         SoundManager.play('death');
@@ -7444,7 +7445,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         
         spawnDeathParticles(mob.x + (mob.w / 2), mob.y + (mob.h / 2), mob.type);
         if (coinYield > 0) {
-            effects.push({ x: mob.x + 35, y: mob.y + 25, text: "+" + coinYield + "g", color: "#f1c40f", life: 50 });
+            effects.push({ x: mob.x + 35, y: mob.y + 25, text: "+" + coinYield.toLocaleString() + "g", color: "#f1c40f", life: 50 });
         }
         
         if (playerStats.isCrucibleMode) {
@@ -7758,12 +7759,12 @@ function formatStatRangeStr(item, statKey, isPct = false) {
 
         // 1. Spawns the immediate individual hit indicator
         let hitColor = "#ecf0f1";
-        let hitText = "-" + amount;
+        let hitText = "-" + amount.toLocaleString();
         const icons = { slash: "⚔️", dagger: "🗡️", lightning: "⚡", fire: "🔥", frost: "❄️", echo: "👻", counter: "🛡️" };
         
         if (isCrit) {
             hitColor = "#e74c3c";
-            hitText = "💥 " + amount;
+            hitText = "💥 " + amount.toLocaleString();
         } else {
             if (type === 'lightning') hitColor = "#f1c40f";
             else if (type === 'fire') hitColor = "#e67e22";
@@ -7792,7 +7793,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let existingTotal = effects.find(e => e.isCumulative && e.life > 0);
         if (existingTotal) {
             existingTotal.amount += amount;
-            existingTotal.text = `⚡ TOTAL: ${existingTotal.amount}`;
+            existingTotal.text = `⚡ TOTAL: ${existingTotal.amount.toLocaleString()}`;
             existingTotal.life = 55; // Reset the decay timer
             existingTotal.x = mob.x + mob.w / 2 - 25;
             existingTotal.y = mob.y - 25;
@@ -7800,7 +7801,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             effects.push({
                 x: mob.x + mob.w / 2 - 25,
                 y: mob.y - 25,
-                text: `⚡ TOTAL: ${amount}`,
+                text: `⚡ TOTAL: ${amount.toLocaleString()}`,
                 color: "#f1c40f", // Gold total indicator
                 life: 55,
                 isCumulative: true,
@@ -7931,10 +7932,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 let maxHealCap = Math.ceil(p.maxHp * 0.05);
                 if (heal > maxHealCap) heal = maxHealCap;
                 playerStats.currentHp = Math.min(p.maxHp, playerStats.currentHp + heal);
-                effects.push({ x: hero.x - 25, y: hero.y - 10, text: "❤️ +" + heal, color: "#2ecc71", life: 60 });
+                effects.push({ x: hero.x - 25, y: hero.y - 10, text: "❤️ +" + heal.toLocaleString(), color: "#2ecc71", life: 60 });
             }
-            updateUI(); if (mob.hp <= 0) handleMobDeath();
-        }
     }
 
     /* ==========================================================================
@@ -8022,7 +8021,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         document.getElementById('stat-fai').innerText = Math.floor(p.fairySpawn * 100) + "%";
         
         let effMultiplier = 1 + (p.critChance * (p.critDamage - 1)); let idps = (p.atk * effMultiplier) * (60 / p.idleAttackSpeed);
-        document.getElementById('stat-idps').innerText = idps.toFixed(1);
+        document.getElementById('stat-idps').innerText = idps.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1});
         document.getElementById('stat-drp').innerText = "+" + Math.floor((p.drop - 1) * 100) + "%"; document.getElementById('stat-qly').innerText = "+" + Math.floor((p.qly - 1) * 100) + "%";
         document.getElementById('stat-gld').innerText = "x" + p.gold.toFixed(2); 
 
@@ -8622,7 +8621,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                         let netDamage = Math.max(1, Math.ceil(mob.damage * (1 - mitigation)));
                         
                         playerStats.currentHp -= netDamage; 
-                        effects.push({ x: hero.x, y: hero.y, text: "-" + netDamage, color: "#e74c3c", life: 40 });
+                        effects.push({ x: hero.x, y: hero.y, text: "-" + netDamage.toLocaleString(), color: "#e74c3c", life: 40 });
                         if (playerStats.currentHp <= 0) { 
                             if (checkArtifactTrait("second_wind") && !playerStats.usedSecondWind) {
                                 playerStats.usedSecondWind = true; playerStats.currentHp = Math.floor(p.maxHp * 0.5);
