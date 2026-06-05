@@ -2685,6 +2685,8 @@ window.onload = function() {
         volumeMaster: 0.5,
         volumeSFX: 0.8,
         mute: false,
+        fairiesClicked: 0,
+        deathCount: 0,
         
         // Infinite Dungeon & Survival Crucible Additions
         dungeonPeaks: { equip: 1, gold: 1, mat: 1 },
@@ -4016,6 +4018,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 if (playerStats.vendingQLevel === undefined) playerStats.vendingQLevel = 0;
                 if (playerStats.shopQLevel === undefined) playerStats.shopQLevel = 0;
                 if (playerStats.globalQLevel === undefined) playerStats.globalQLevel = 0;
+                if (playerStats.fairiesClicked === undefined) playerStats.fairiesClicked = 0;
+                if (playerStats.deathCount === undefined) playerStats.deathCount = 0;
                 
                 if (inventory.ETC["Iron Scrap"]) { addEtcDrop("Monster Soul", inventory.ETC["Iron Scrap"]); delete inventory.ETC["Iron Scrap"]; }
                 if (inventory.ETC["Sticky Gel"]) { addEtcDrop("Monster Soul", inventory.ETC["Sticky Gel"]); delete inventory.ETC["Sticky Gel"]; }
@@ -4837,6 +4841,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         // Remove the captured fairy from our array
         activeFairies = activeFairies.filter(f => f.id !== targetFairy.id); 
         SoundManager.play('fairy');
+        playerStats.fairiesClicked = (playerStats.fairiesClicked || 0) + 1;
 
         for (let i = 0; i < 15; i++) {
             particles.push({
@@ -7022,6 +7027,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     effects = effects.filter(e => !e.isCumulative);
     isGamePaused = true; 
     deathAnimationTimer = 0;
+    playerStats.deathCount = (playerStats.deathCount || 0) + 1;
     
     let wasCrucible = playerStats.isCrucibleMode;
     let wasDungeon = playerStats.isDungeonMode;
@@ -9452,6 +9458,8 @@ function engineCycle() {
         { id: "slayer_5", name: "Void Reaper", icon: "🌌", desc: "Slay 100,000 total enemies", reqType: "kills", reqValue: 100000, stats: { atkPct: 0.10 } },
         { id: "slayer_6", name: "Absolute Annihilator", icon: "☄️", desc: "Slay 250,000 total enemies", reqType: "kills", reqValue: 250000, stats: { atkPct: 0.12, critDamage: 0.05 } },
         { id: "slayer_7", name: "Extinction Event", icon: "💥", desc: "Slay 1,000,000 total enemies", reqType: "kills", reqValue: 1000000, stats: { atkPct: 0.20, critChance: 0.05 } },
+        { id: "slayer_8", name: "Eradication Catalyst", icon: "⚛️", desc: "Slay 5,000,000 total enemies", reqType: "kills", reqValue: 5000000, stats: { atkPct: 0.25, critDamage: 0.08 } },
+        { id: "slayer_9", name: "Harbinger of the End", icon: "🪐", desc: "Slay 10,000,000 total enemies", reqType: "kills", reqValue: 10000000, stats: { atkPct: 0.35, critChance: 0.08 } },
         
         // HOARDERS (Gold)
         { id: "hoarder_1", name: "Penny Pincher", icon: "🪙", desc: "Collect 5,000 total gold", reqType: "gold", reqValue: 5000, stats: { maxHp: 10, maxHpPct: 0.01 } },
@@ -9460,7 +9468,9 @@ function engineCycle() {
         { id: "hoarder_4", name: "Vault Guardian", icon: "🏰", desc: "Collect 2,000,000 total gold", reqType: "gold", reqValue: 2000000, stats: { gold: 0.05, maxHpPct: 0.05 } },
         { id: "hoarder_5", name: "Golden Deity", icon: "👑", desc: "Collect 10,000,000 total gold", reqType: "gold", reqValue: 10000000, stats: { gold: 0.10, maxHpPct: 0.10 } },
         { id: "hoarder_6", name: "Midas' Equal", icon: "🏺", desc: "Collect 50,000,000 total gold", reqType: "gold", reqValue: 50000000, stats: { gold: 0.15, maxHpPct: 0.15 } },
-        { id: "hoarder_7", name: "Universal Treasury", icon: "🪐", desc: "Collect 250,000,000 total gold", reqType: "gold", reqValue: 250000000, stats: { gold: 0.25, maxHpPct: 0.25, qly: 0.08 } },
+        { id: "hoarder_7", name: "Universal Treasury", icon: "💸", desc: "Collect 250,000,000 total gold", reqType: "gold", reqValue: 250000000, stats: { gold: 0.25, maxHpPct: 0.25, qly: 0.08 } },
+        { id: "hoarder_8", name: "Interstellar Merchant", icon: "☄️", desc: "Collect 1,000,000,000 total gold", reqType: "gold", reqValue: 1000000000, stats: { gold: 0.35, qly: 0.10 } },
+        { id: "hoarder_9", name: "Midas' Overlord", icon: "🌟", desc: "Collect 5,000,000,000 total gold", reqType: "gold", reqValue: 5000000000, stats: { gold: 0.50, qly: 0.15, maxHpPct: 0.30 } },
         
         // STAGES (Progression)
         { id: "stage_1", name: "Greenhorn Explorer", icon: "🗺️", desc: "Reach Stage 10", reqType: "stage", reqValue: 10, stats: { def: 1, defPct: 0.01 } },
@@ -9471,6 +9481,8 @@ function engineCycle() {
         { id: "stage_6", name: "Voidwalker", icon: "🌌", desc: "Reach Stage 300", reqType: "stage", reqValue: 300, stats: { moveSpeedPct: 0.10 } },
         { id: "stage_7", name: "The Final Frontier", icon: "🛸", desc: "Reach Stage 500", reqType: "stage", reqValue: 500, stats: { maxHpPct: 0.15, defPct: 0.15 } },
         { id: "stage_8", name: "Infinity Voyager", icon: "🚀", desc: "Reach Stage 1000", reqType: "stage", reqValue: 1000, stats: { maxHpPct: 0.25, defPct: 0.25, moveSpeedPct: 0.10 } },
+        { id: "stage_9", name: "Deep Space Pioneer", icon: "🛰️", desc: "Reach Stage 2500", reqType: "stage", reqValue: 2500, stats: { maxHpPct: 0.30, defPct: 0.30, moveSpeedPct: 0.15 } },
+        { id: "stage_10", name: "Unbound Omnipresence", icon: "🌀", desc: "Reach Stage 5000", reqType: "stage", reqValue: 5000, stats: { maxHpPct: 0.50, defPct: 0.50, moveSpeedPct: 0.25, atkPct: 0.10 } },
         
         // BLACKSMITH (Tempers)
         { id: "forge_1", name: "Bronze Anvil", icon: "🔨", desc: "Temper any equipment gear item", reqType: "temper", reqValue: 1, stats: { str: 2, strPct: 0.02 } },
@@ -9479,6 +9491,8 @@ function engineCycle() {
         { id: "forge_4", name: "God of the Forge", icon: "🔱", desc: "Temper items 250 times", reqType: "temper", reqValue: 250, stats: { strPct: 0.15 } },
         { id: "forge_5", name: "Celestial Smelter", icon: "☄️", desc: "Temper items 500 times", reqType: "temper", reqValue: 500, stats: { str: 5, strPct: 0.10 } },
         { id: "forge_6", name: "Starmetal Shaper", icon: "🪐", desc: "Temper items 1,000 times", reqType: "temper", reqValue: 1000, stats: { str: 15, strPct: 0.20 } },
+        { id: "forge_7", name: "Vulcan's Successor", icon: "🌋", desc: "Temper items 5,000 times", reqType: "temper", reqValue: 5000, stats: { str: 25, strPct: 0.25 } },
+        { id: "forge_8", name: "Cosmic Artificer", icon: "🌌", desc: "Temper items 10,000 times", reqType: "temper", reqValue: 10000, stats: { str: 50, strPct: 0.40, atkPct: 0.05 } },
         
         // ENCHANTER (Enchants)
         { id: "enchant_1", name: "Magic Infusion", icon: "🔮", desc: "Enchant any fully-tempered equipment item", reqType: "enchant", reqValue: 1, stats: { int: 2, intPct: 0.02 } },
@@ -9487,6 +9501,8 @@ function engineCycle() {
         { id: "enchant_4", name: "Enchantment Archmage", icon: "🧙", desc: "Enchant items 100 times", reqType: "enchant", reqValue: 100, stats: { intPct: 0.15 } },
         { id: "enchant_5", name: "Runic Architect", icon: "🔱", desc: "Enchant items 250 times", reqType: "enchant", reqValue: 250, stats: { int: 5, intPct: 0.10 } },
         { id: "enchant_6", name: "Arcane Singularity", icon: "🌌", desc: "Enchant items 500 times", reqType: "enchant", reqValue: 500, stats: { int: 15, intPct: 0.20 } },
+        { id: "enchant_7", name: "Aetheric Architect", icon: "🪐", desc: "Enchant items 1,000 times", reqType: "enchant", reqValue: 1000, stats: { int: 25, intPct: 0.25 } },
+        { id: "enchant_8", name: "Lexicon of the Stars", icon: "🌟", desc: "Enchant items 2,500 times", reqType: "enchant", reqValue: 2500, stats: { int: 50, intPct: 0.40, defPct: 0.05 } },
         
         // RIFT (Boss Summoning)
         { id: "rift_1", name: "Reality Breaker", icon: "🌌", desc: "Summon and defeat an Enraged Rift Guardian", reqType: "rift", reqValue: 1, stats: { fairySpawn: 0.02, dexPct: 0.02 } },
@@ -9495,6 +9511,8 @@ function engineCycle() {
         { id: "rift_4", name: "Cosmic Arbiter", icon: "🛸", desc: "Summon & defeat 100 Rift Guardians", reqType: "rift", reqValue: 100, stats: { dexPct: 0.15 } },
         { id: "rift_5", name: "Aether Bane", icon: "🪐", desc: "Summon & defeat 250 Rift Guardians", reqType: "rift", reqValue: 250, stats: { dex: 5, dexPct: 0.10 } },
         { id: "rift_6", name: "Shatterer of Realities", icon: "💫", desc: "Summon & defeat 500 Rift Guardians", reqType: "rift", reqValue: 500, stats: { dex: 15, dexPct: 0.20 } },
+        { id: "rift_7", name: "Dimensional Sovereign", icon: "🌌", desc: "Summon & defeat 1,000 Rift Guardians", reqType: "rift", reqValue: 1000, stats: { dex: 25, dexPct: 0.25 } },
+        { id: "rift_8", name: "Fate Weaver", icon: "🌟", desc: "Summon & defeat 2,500 Rift Guardians", reqType: "rift", reqValue: 2500, stats: { dex: 50, dexPct: 0.40, critDamage: 0.10 } },
         
         // LEVEL (Milestones)
         { id: "level_1", name: "Novice Adventurer", icon: "🔰", desc: "Reach Character Level 10", reqType: "level", reqValue: 10, stats: { atkPct: 0.02, maxHpPct: 0.02 } },
@@ -9503,51 +9521,83 @@ function engineCycle() {
         { id: "level_4", name: "Immortal Legend", icon: "👑", desc: "Reach Character Level 150", reqType: "level", reqValue: 150, stats: { atkPct: 0.10, maxHpPct: 0.10, defPct: 0.10, strPct: 0.10, dexPct: 0.10, intPct: 0.10 } },
         { id: "level_5", name: "Mortal Ascendant", icon: "⚡", desc: "Reach Character Level 250", reqType: "level", reqValue: 250, stats: { atkPct: 0.12, maxHpPct: 0.12 } },
         { id: "level_6", name: "Cosmic Paragon", icon: "🌌", desc: "Reach Character Level 500", reqType: "level", reqValue: 500, stats: { atkPct: 0.20, maxHpPct: 0.20, critChance: 0.05 } },
+        { id: "level_7", name: "Archon of Legend", icon: "🚀", desc: "Reach Character Level 750", reqType: "level", reqValue: 750, stats: { atkPct: 0.25, maxHpPct: 0.25, expPct: 0.15 } },
+        { id: "level_8", name: "Limitless Zenith", icon: "👑", desc: "Reach Character Level 1,000", reqType: "level", reqValue: 1000, stats: { atkPct: 0.35, maxHpPct: 0.35, defPct: 0.35, strPct: 0.15, dexPct: 0.15, intPct: 0.15 } },
         
         // POTIONS (Utility)
         { id: "potion_1", name: "Alchemical Initiate", icon: "🧪", desc: "Consume 10 Elixirs", reqType: "elixirs", reqValue: 10, stats: { intPct: 0.03 } },
         { id: "potion_2", name: "Potion Addict", icon: "🍺", desc: "Consume 50 Elixirs", reqType: "elixirs", reqValue: 50, stats: { intPct: 0.07 } },
         { id: "potion_3", name: "Concoction Connoisseur", icon: "🍷", desc: "Consume 200 Elixirs", reqType: "elixirs", reqValue: 200, stats: { intPct: 0.05, drop: 0.02 } },
         { id: "potion_4", name: "Philosopher's Apothecary", icon: "⚗️", desc: "Consume 500 Elixirs", reqType: "elixirs", reqValue: 500, stats: { intPct: 0.10, drop: 0.05 } },
+        { id: "potion_5", name: "Elixir Sovereign", icon: "🍷", desc: "Consume 1,000 Elixirs", reqType: "elixirs", reqValue: 1000, stats: { intPct: 0.15, drop: 0.08 } },
+        { id: "potion_6", name: "Divine Apothecary", icon: "🧪", desc: "Consume 2,500 Elixirs", reqType: "elixirs", reqValue: 2500, stats: { intPct: 0.25, drop: 0.12, maxHpPct: 0.10 } },
         
         // SACKS (Inventory Management)
         { id: "bag_1", name: "Sack Stuffer", icon: "🎒", desc: "Have 15 items in Equipment Sack", reqType: "bag_count", reqValue: 15, stats: { qly: 0.02 } },
         { id: "bag_2", name: "Pack Rat", icon: "🧳", desc: "Have 30 items in Equipment Sack", reqType: "bag_count", reqValue: 30, stats: { qly: 0.05 } },
         { id: "bag_3", name: "Hoarder Extraordinaire", icon: "📦", desc: "Have 40 items in Equipment Sack", reqType: "bag_count", reqValue: 40, stats: { qly: 0.08 } },
+        { id: "bag_4", name: "Satchel of the Cosmos", icon: "🛸", desc: "Have 50 items in Equipment Sack", reqType: "bag_count", reqValue: 50, stats: { qly: 0.12 } },
         
         // SALVAGING (Resource Recycling)
         { id: "salvage_1", name: "Scrap Collector", icon: "♻️", desc: "Salvage 10 total items", reqType: "salvage", reqValue: 10, stats: { drop: 0.02 } },
         { id: "salvage_2", name: "Deconstruction Derby", icon: "🚜", desc: "Salvage 100 total items", reqType: "salvage", reqValue: 100, stats: { drop: 0.05 } },
         { id: "salvage_3", name: "Infinite Recycler", icon: "⚙️", desc: "Salvage 500 total items", reqType: "salvage", reqValue: 500, stats: { drop: 0.08 } },
         { id: "salvage_4", name: "Scrap Colossus", icon: "🤖", desc: "Salvage 2,000 total items", reqType: "salvage", reqValue: 2000, stats: { drop: 0.15, qly: 0.10 } },
+        { id: "salvage_5", name: "Nanotech Recycler", icon: "🧬", desc: "Salvage 5,000 total items", reqType: "salvage", reqValue: 5000, stats: { drop: 0.20 } },
+        { id: "salvage_6", name: "Quantum Disassembler", icon: "🌌", desc: "Salvage 10,000 total items", reqType: "salvage", reqValue: 10000, stats: { drop: 0.30, qly: 0.15 } },
 
-        // NEW: PRESTIGE (Ascensions)
+        // PRESTIGE (Ascensions)
         { id: "prestige_1", name: "Mortal Ascension", icon: "🐉", desc: "Ascend 1 time at the Altar", reqType: "prestige", reqValue: 1, stats: { expPct: 0.02, gold: 0.02 } },
         { id: "prestige_2", name: "Chrono Rebirth", icon: "⌛", desc: "Ascend 5 times at the Altar", reqType: "prestige", reqValue: 5, stats: { expPct: 0.05, gold: 0.05 } },
         { id: "prestige_3", name: "Eternal Paradigm", icon: "🌌", desc: "Ascend 20 times at the Altar", reqType: "prestige", reqValue: 20, stats: { expPct: 0.10, gold: 0.10, drop: 0.02 } },
+        { id: "prestige_4", name: "Dimensional Shifter", icon: "🌀", desc: "Ascend 50 times at the Altar", reqType: "prestige", reqValue: 50, stats: { expPct: 0.15, gold: 0.15 } },
+        { id: "prestige_5", name: "Infinite Reincarnation", icon: "🌟", desc: "Ascend 100 times at the Altar", reqType: "prestige", reqValue: 100, stats: { expPct: 0.25, gold: 0.25, drop: 0.05 } },
 
-         // NEW: CRUCIBLE (Astral Crucible Wave Survival)
+        // CRUCIBLE (Astral Crucible Wave Survival)
         { id: "crucible_1", name: "Spark of Survival", icon: "🔥", desc: "Reach Wave 15 in the Astral Crucible", reqType: "crucible", reqValue: 15, stats: { block: 0.01 } },
         { id: "crucible_2", name: "Crucible Crusader", icon: "💥", desc: "Reach Wave 50 in the Astral Crucible", reqType: "crucible", reqValue: 50, stats: { block: 0.02, parry: 0.01 } },
         { id: "crucible_3", name: "Astral Sentinel", icon: "🛡️", desc: "Reach Wave 100 in the Astral Crucible", reqType: "crucible", reqValue: 100, stats: { block: 0.03, parry: 0.03, defPct: 0.05 } },
         { id: "crucible_4", name: "Cosmic Immortal", icon: "🌠", desc: "Reach Wave 200 in the Astral Crucible", reqType: "crucible", reqValue: 200, stats: { block: 0.05, parry: 0.05, defPct: 0.10 } },
+        { id: "crucible_5", name: "Rift Breaker", icon: "🌀", desc: "Reach Wave 300 in the Astral Crucible", reqType: "crucible", reqValue: 300, stats: { block: 0.06, parry: 0.06, defPct: 0.15 } },
+        { id: "crucible_6", name: "Crucible Overlord", icon: "💀", desc: "Reach Wave 500 in the Astral Crucible", reqType: "crucible", reqValue: 500, stats: { block: 0.08, parry: 0.08, defPct: 0.25, atkPct: 0.10 } },
 
-        // NEW: INFINITE DUNGEONS (Peaks)
+        // INFINITE DUNGEONS (Peaks)
         { id: "dung_equip_1", name: "Steel Miner", icon: "⛏️", desc: "Reach Floor 20 in the Equipment Dungeon", reqType: "dungeon_equip", reqValue: 20, stats: { atk: 15 } },
         { id: "dung_equip_2", name: "Armory Tyrant", icon: "⚔️", desc: "Reach Floor 50 in the Equipment Dungeon", reqType: "dungeon_equip", reqValue: 50, stats: { atk: 35, critChance: 0.02 } },
         { id: "dung_equip_3", name: "Colossal Blacksmith", icon: "🌋", desc: "Reach Floor 100 in the Equipment Dungeon", reqType: "dungeon_equip", reqValue: 100, stats: { atkPct: 0.05, critChance: 0.04 } },
+        { id: "dung_equip_4", name: "Obsidian Guard", icon: "🛡️", desc: "Reach Floor 150 in the Equipment Dungeon", reqType: "dungeon_equip", reqValue: 150, stats: { atk: 75, critChance: 0.03 } },
+        { id: "dung_equip_5", name: "Armory God", icon: "👑", desc: "Reach Floor 250 in the Equipment Dungeon", reqType: "dungeon_equip", reqValue: 250, stats: { atk: 150, critChance: 0.05, atkPct: 0.10 } },
 
         { id: "dung_gold_1", name: "Sooty Pockets", icon: "🪙", desc: "Reach Floor 20 in the Gold Mine Caverns", reqType: "dungeon_gold", reqValue: 20, stats: { gold: 0.05 } },
         { id: "dung_gold_2", name: "Lode Overlord", icon: "💰", desc: "Reach Floor 50 in the Gold Mine Caverns", reqType: "dungeon_gold", reqValue: 50, stats: { gold: 0.15, qly: 0.02 } },
         { id: "dung_gold_3", name: "Midas' Disciple", icon: "👑", desc: "Reach Floor 100 in the Gold Mine Caverns", reqType: "dungeon_gold", reqValue: 100, stats: { gold: 0.25, qly: 0.05 } },
+        { id: "dung_gold_4", name: "Vast Coffers", icon: "🏦", desc: "Reach Floor 150 in the Gold Mine Caverns", reqType: "dungeon_gold", reqValue: 150, stats: { gold: 0.35 } },
+        { id: "dung_gold_5", name: "Plutus' Architect", icon: "🌟", desc: "Reach Floor 250 in the Gold Mine Caverns", reqType: "dungeon_gold", reqValue: 250, stats: { gold: 0.50, qly: 0.08 } },
 
         { id: "dung_mat_1", name: "Toxic Scavenger", icon: "🧪", desc: "Reach Floor 20 in the Toxic Material Pit", reqType: "dungeon_mat", reqValue: 20, stats: { maxHp: 100 } },
         { id: "dung_mat_2", name: "Plague Alchemist", icon: "☣️", desc: "Reach Floor 50 in the Toxic Material Pit", reqType: "dungeon_mat", reqValue: 50, stats: { maxHp: 250, maxHpPct: 0.03 } },
         { id: "dung_mat_3", name: "Contagion Master", icon: "🧫", desc: "Reach Floor 100 in the Toxic Material Pit", reqType: "dungeon_mat", reqValue: 100, stats: { maxHp: 500, maxHpPct: 0.06 } },
+        { id: "dung_mat_4", name: "Bio-Hazard Specialist", icon: "☣️", desc: "Reach Floor 150 in the Toxic Material Pit", reqType: "dungeon_mat", reqValue: 150, stats: { maxHp: 750, maxHpPct: 0.08 } },
+        { id: "dung_mat_5", name: "Vector Prime", icon: "🧫", desc: "Reach Floor 250 in the Toxic Material Pit", reqType: "dungeon_mat", reqValue: 250, stats: { maxHp: 1500, maxHpPct: 0.12, defPct: 0.05 } },
 
-        // NEW: ARTIFACT COLLECTION SACK
+        // ARTIFACT COLLECTION SACK
         { id: "art_held_1", name: "Relic Finder", icon: "🏺", desc: "Hold 5 unique artifacts in your sack", reqType: "artifacts_held", reqValue: 5, stats: { qly: 0.02 } },
-        { id: "art_held_2", name: "Museum Curator", icon: "🏛️", desc: "Hold 15 unique artifacts in your sack", reqType: "artifacts_held", reqValue: 15, stats: { qly: 0.05, rareSpawn: 0.005 } }
+        { id: "art_held_2", name: "Museum Curator", icon: "🏛️", desc: "Hold 15 unique artifacts in your sack", reqType: "artifacts_held", reqValue: 15, stats: { qly: 0.05, rareSpawn: 0.005 } },
+        { id: "art_held_3", name: "Chronicle Collector", icon: "📚", desc: "Hold 20 unique artifacts in your sack", reqType: "artifacts_held", reqValue: 20, stats: { qly: 0.08, rareSpawn: 0.010 } },
+
+        // NEW: FAIRY CAPTURES
+        { id: "fairy_1", name: "Sprite Chaser", icon: "🧚", desc: "Capture 5 wild fairies", reqType: "fairies_clicked", reqValue: 5, stats: { fairySpawn: 0.05 } },
+        { id: "fairy_2", name: "Pixie Wrangler", icon: "✨", desc: "Capture 25 wild fairies", reqType: "fairies_clicked", reqValue: 25, stats: { fairySpawn: 0.10, moveSpeed: 2 } },
+        { id: "fairy_3", name: "Forest Friend", icon: "🌳", desc: "Capture 100 wild fairies", reqType: "fairies_clicked", reqValue: 100, stats: { fairySpawn: 0.15, qly: 0.02 } },
+        { id: "fairy_4", name: "Nymph Nabber", icon: "🎐", desc: "Capture 500 wild fairies", reqType: "fairies_clicked", reqValue: 500, stats: { fairySpawn: 0.25, gold: 0.05 } },
+        { id: "fairy_5", name: "Sylph Sovereign", icon: "🌟", desc: "Capture 2,000 wild fairies", reqType: "fairies_clicked", reqValue: 2000, stats: { fairySpawn: 0.50, qly: 0.05, drop: 0.05 } },
+
+        // NEW: DEFEATS & DEATHS
+        { id: "death_1", name: "Flesh & Blood", icon: "🩸", desc: "Suffer defeat 1 time", reqType: "death_count", reqValue: 1, stats: { maxHp: 25, def: 2 } },
+        { id: "death_2", name: "Struggler's Path", icon: "🥀", desc: "Suffer defeat 10 times", reqType: "death_count", reqValue: 10, stats: { maxHp: 100, def: 5 } },
+        { id: "death_3", name: "Death's Familiar", icon: "💀", desc: "Suffer defeat 50 times", reqType: "death_count", reqValue: 50, stats: { maxHpPct: 0.05, defPct: 0.03 } },
+        { id: "death_4", name: "Reborn Resolve", icon: "🌅", desc: "Suffer defeat 200 times", reqType: "death_count", reqValue: 200, stats: { maxHpPct: 0.10, defPct: 0.05 } },
+        { id: "death_5", name: "The Eternal Phoenix", icon: "🔥", desc: "Suffer defeat 1,000 times", reqType: "death_count", reqValue: 1000, stats: { maxHpPct: 0.20, defPct: 0.10, def: 20 } }
     ];
 
     window.getAchievementProgress = function(ach) {
@@ -9567,6 +9617,8 @@ function engineCycle() {
         if (ach.reqType === "dungeon_gold") return playerStats.dungeonPeaks?.gold || 1;
         if (ach.reqType === "dungeon_mat") return playerStats.dungeonPeaks?.mat || 1;
         if (ach.reqType === "artifacts_held") return inventory.ARTIFACT?.length || 0;
+        if (ach.reqType === "fairies_clicked") return playerStats.fairiesClicked || 0;
+        if (ach.reqType === "death_count") return playerStats.deathCount || 0;
         return 0;
     };
 
