@@ -3053,13 +3053,14 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
     };
 
-    // Altar of Ascension Render Loop
+     // Altar of Ascension Render Loop
     window.renderPrestigeTab = function() {
         let el = document.getElementById('tab-prestige');
         if (!el) return;
         
         let p = playerStats;
-        if (p.level < 25) {
+        // Keep the tab unlocked permanently if the player has ascended at least once
+        if (p.level < 25 && (p.prestigeCount || 0) === 0) {
             el.innerHTML = `
                 <div style="text-align:center; padding: 40px 15px; background: #151515; border: 2px dashed #8e44ad; border-radius: 6px; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);">
                     <div style="font-size: 40px; margin-bottom: 15px;">🔒</div>
@@ -3086,6 +3087,14 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let expDisabled = p.prestigePoints < 1 ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
         let dropDisabled = p.prestigePoints < 1 ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
 
+        // Render a disabled and explanatory state if the player has prestiged but is currently under level 25
+        let challengeBtnHtml = "";
+        if (p.level < 25) {
+            challengeBtnHtml = `<button class="btn-action" style="background:#333; color:#777; border: 1px solid #444; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:not-allowed;" disabled>🔒 Requires Level 25 to Re-Challenge</button>`;
+        } else {
+            challengeBtnHtml = `<button class="btn-action" style="background:#e74c3c; color:white; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:pointer;" onclick="challengeHooktail()">Challenge Prestige Boss</button>`;
+        }
+
         el.innerHTML = `
             <div style="display:flex; flex-direction:column; gap:12px;">
                 <!-- Boss Challenge Trigger Portal -->
@@ -3094,7 +3103,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                     <p style="font-size: 11px; color: #aaa; margin: 0 auto 12px auto; max-width: 440px; line-height: 1.45;">
                         Sacrifice your campaign peaks. Enter the dragon's lair! Defeating **Hooktail** soft-wipes your level and campaign progress, but rewards you with <span style="color:#f1c40f; font-weight:bold;">3 Prestige Points</span> to purchase massive permanent upgrades.
                     </p>
-                    <button class="btn-action" style="background:#e74c3c; color:white; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:pointer;" onclick="challengeHooktail()">Challenge Prestige Boss</button>
+                    ${challengeBtnHtml}
                 </div>
 
                 <!-- Permanent PP Upgrades Table -->
