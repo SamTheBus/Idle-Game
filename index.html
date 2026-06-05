@@ -3825,6 +3825,25 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             let stageScale = Math.floor((stageNum - 1) / 10) + 1;
             let newItem = createItemObject(chosenType, statLinesCount, stageScale, 0);
 
+            // Apply auto-salvage threshold setting to offline drops
+            if (newItem.type !== "artifact" && playerStats.autoSalvageThreshold !== undefined && playerStats.autoSalvageThreshold >= 0) {
+                if (newItem.statsRolled <= playerStats.autoSalvageThreshold) {
+                    let rolledTier = newItem.statsRolled;
+                    let scrapName = getScrapYieldName(rolledTier);
+                    let yieldAmount = Math.floor(Math.random() * 3) + 1;
+                    recordScrapGained(scrapName, yieldAmount);
+
+                    for (let t = rolledTier - 1; t >= 0; t--) {
+                        if (Math.random() < 0.60) {
+                            let lowerYield = Math.floor(Math.random() * 2) + 1;
+                            let lowerName = getScrapYieldName(t);
+                            recordScrapGained(lowerName, lowerYield);
+                        }
+                    }
+                    return; // Successfully salvaged, do not add to inventory sacks
+                }
+            }
+
             if (newItem.type === "artifact") {
                 if (inventory.ARTIFACT.length < maxBag) {
                     inventory.ARTIFACT.push(newItem);
