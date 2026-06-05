@@ -5535,19 +5535,25 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             }
         }
 
-        // Phoenix Ignition Staff unique transformation
+        // Unique Weapons transformation checks (15% Staff, 15% Bleed DoT Sword)
         if (chosenType === "weapon" && statLinesCount === 5 && !isArt) {
-            // 15% chance to roll the Unique Phoenix Staff instead of a standard Mythic sword
-            if (Math.random() < 0.15) {
+            let randUnique = Math.random();
+            if (randUnique < 0.15) {
                 item.isUniqueStaff = true;
                 item.noun = "Phoenix Staff";
                 item.setName = null; // No set bonus
                 item.name = `🔥 Phoenix Ignition Staff (Lv. ${stageScale})`;
                 item.desc = "Launches penetrating fireballs that deal 25% Attack damage (3s Cooldown).";
+            } else if (randUnique < 0.30) {
+                item.isUniqueSword = true;
+                item.noun = "Sanguine Reaver";
+                item.setName = null; // No set bonus
+                item.name = `🩸 Crimson Sanguine Reaver (Lv. ${stageScale})`;
+                item.desc = "Sword attacks apply a 5-second Bleed effect dealing 10% of slash damage per second.";
             }
         }
 
-        if (!item.isUniqueStaff) {
+        if (!item.isUniqueStaff && !item.isUniqueSword) {
             item.name = buildProceduralName(item);
         }
 
@@ -8822,7 +8828,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         // 1. Spawns the immediate individual hit indicator
         let hitColor = "#ecf0f1";
         let hitText = amount.toLocaleString();
-        const icons = { slash: "⚔️", dagger: "🗡️", lightning: "⚡", fire: "🔥", frost: "❄️", echo: "👻", counter: "🛡️" };
+        const icons = { slash: "⚔️", dagger: "🗡️", lightning: "⚡", fire: "🔥", frost: "❄️", echo: "👻", counter: "🛡️", bleed: "🩸" };
         
         if (isCrit) {
             hitColor = "#e74c3c";
@@ -8833,6 +8839,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             else if (type === 'frost') hitColor = "#3498db";
             else if (type === 'echo') hitColor = "#9b59b6";
             else if (type === 'counter') hitColor = "#f1c40f";
+            else if (type === 'bleed') hitColor = "#960018";
         }
         
         if (type !== 'slash') {
@@ -8882,6 +8889,28 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             mob.hp -= finalDamage; mob.flashTimer = 5;
             spawnDamageEffect(finalDamage, 'slash', isCrit);
             damageHistory.push({ time: Date.now(), amount: finalDamage });
+
+            // Apply Bleed DoT status if the Crimson Sanguine Reaver is equipped
+            if (equippedSlots.weapon && equippedSlots.weapon.isUniqueSword) {
+                let bleedDmg = Math.max(1, Math.ceil(finalDamage * 0.10));
+                mob.bleedTimer = 5; 
+                mob.bleedDmgPerSecond = bleedDmg;
+                mob.bleedTickCounter = 0; 
+                
+                // Spawn a bloody slash impact spray
+                for (let i = 0; i < 5; i++) {
+                    particles.push({
+                        x: mob.x + mob.w / 2,
+                        y: mob.y + mob.h / 2,
+                        vx: randFloat(-3, 3),
+                        vy: randFloat(-4, -1),
+                        radius: randFloat(1.5, 3.5),
+                        color: "#c0392b",
+                        alpha: 1,
+                        life: randInt(10, 20)
+                    });
+                }
+            }
 
             // Offhand Dagger Multi-Strike (Deals 50% of your total Attack as an extra hit)
             const hasDagger = equippedSlots.subweapon && equippedSlots.subweapon.subType === "dagger";
@@ -9663,7 +9692,43 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let scrollSpeed = 2 + (p.moveSpeed * 0.05);
 
         if (hero.attackTimer > 0) hero.attackTimer--; hero.slashFrame = (hero.attackTimer > 0 && hero.attackTimer < (p.activeAttackSpeed/2));
+        
         if (mob && mob.flashTimer > 0) mob.flashTimer--; 
+        
+        // Tick Bleed status every 60 frames (1 second) in real-time
+        if (mob && mob.hp > 0 && !isGamePaused) {
+            if (mob.bleedTimer && mob.bleedTimer > 0) {
+                mob.bleedTickCounter = (mob.bleedTickCounter || 0) + 1;
+                if (mob.bleedTickCounter >= 60) {
+                    mob.bleedTickCounter = 0;
+                    mob.bleedTimer--;
+                    
+                    let bleedDmg = mob.bleedDmgPerSecond || 1;
+                    mob.hp -= bleedDmg;
+                    mob.flashTimer = 5;
+                    
+                    // Spawn cascading blood red droplets
+                    for (let i = 0; i < 4; i++) {
+                        particles.push({
+                            x: mob.x + mob.w / 2 + randFloat(-10, 10),
+                            y: mob.y + mob.h / 2 + randFloat(-10, 10),
+                            vx: randFloat(-1.2, 1.2),
+                            vy: randFloat(-3, -1),
+                            radius: randFloat(1.5, 3),
+                            color: "#960018", 
+                            alpha: 1,
+                            life: randInt(15, 25)
+                        });
+                    }
+                    
+                    spawnDamageEffect(bleedDmg, 'bleed', false);
+                    damageHistory.push({ time: Date.now(), amount: bleedDmg });
+                    
+                    if (mob.hp <= 0) handleMobDeath();
+                }
+            }
+        }
+
         if (playerStats.frenzyTimer > 0) playerStats.frenzyTimer--;
         if (playerStats.adrenalineTimer > 0) playerStats.adrenalineTimer--;
         
@@ -10683,90 +10748,69 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 ctx.stroke();
                 ctx.restore();
             } else if (subType === "dagger") {
+                // Redesigned Stealthy Rogue Parrying Dagger (Obsidian guard & leather shadow hilt)
                 ctx.save();
                 ctx.translate(8, 8 + bounce);
                 ctx.rotate(Math.PI / 4);
-                
-                // 1. Pommel (Glowing Ruby Core in Gold Ring)
-                ctx.fillStyle = "#f1c40f"; // Gold pommel ring
+
+                // 1. Pommel (Dark Charcoal Ring)
+                ctx.fillStyle = "#1c1c1f"; 
                 ctx.beginPath();
-                ctx.arc(0, 10, 3, 0, Math.PI * 2);
+                ctx.arc(0, 10, 2.5, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.strokeStyle = "#000000";
-                ctx.lineWidth = 1.3;
+                ctx.lineWidth = 1.2;
                 ctx.stroke();
 
-                ctx.fillStyle = "#e74c3c"; // Crimson ruby inset
-                ctx.beginPath();
-                ctx.arc(0, 10, 1.5, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 2. Leather Wrapped Grip (Contrasting Red/Black bands)
-                ctx.fillStyle = "#1e1e1e"; // Under-wrap base
-                ctx.beginPath(); ctx.rect(-2, 3, 4, 7); ctx.fill(); 
-                ctx.strokeStyle = "#000000"; ctx.lineWidth = 1.5; ctx.stroke();
-
-                ctx.fillStyle = "#962d22"; // Leather wraps
-                ctx.fillRect(-2, 4.5, 4, 1.5);
-                ctx.fillRect(-2, 7.5, 4, 1.5);
-
-                // 3. Ornate Down-Swept Guard with Sapphire Core
-                ctx.fillStyle = "#f1c40f"; // Gold guard
-                ctx.beginPath();
-                ctx.moveTo(-6, 3);
-                ctx.quadraticCurveTo(0, 1, 6, 3);
-                ctx.quadraticCurveTo(0, 4.5, -6, 3);
-                ctx.closePath();
-                ctx.fill();
-                ctx.strokeStyle = "#000000";
-                ctx.lineWidth = 1.5;
+                // 2. Leather Grip (Deep Purple Wrap)
+                ctx.fillStyle = "#342240"; 
+                ctx.beginPath(); ctx.rect(-1.5, 3, 3, 7); ctx.fill(); 
                 ctx.stroke();
 
-                ctx.fillStyle = "#3498db"; // Glistening Sapphire inset
+                // 3. Curved Rogue Parrying Guard (sweeps up to shield hands)
+                ctx.fillStyle = "#2c3e50"; 
                 ctx.beginPath();
-                ctx.arc(0, 2.5, 1.3, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 4. Sleek Dual-Tone Serrated Razor Blade
-                // Left half: Shadowed Dark Steel with serrated parrying notches
-                ctx.fillStyle = "#5d6d7e";
-                ctx.beginPath();
-                ctx.moveTo(0, 1.5);
-                ctx.lineTo(-3, -1);
-                ctx.lineTo(-1, -4);
-                ctx.lineTo(-4, -5);
-                ctx.lineTo(-1.5, -8);
-                ctx.lineTo(-3.5, -9);
-                ctx.lineTo(0, -15); // Blade tip
-                ctx.lineTo(0, 1.5);
+                ctx.moveTo(-8, 3);
+                ctx.quadraticCurveTo(0, -2, 8, 3);
+                ctx.quadraticCurveTo(0, 2, -8, 3);
                 ctx.closePath();
                 ctx.fill();
-                ctx.strokeStyle = "#000000"; ctx.lineWidth = penHero; ctx.stroke();
+                ctx.stroke();
 
-                // Right half: Mirror-polished Razor Edge (Smooth Curve)
+                // 4. Sleek, razor-sharp Damascus steel blade
+                ctx.fillStyle = "#7f8c8d";
+                ctx.beginPath();
+                ctx.moveTo(-2.5, 2.5);
+                ctx.lineTo(0, -12); // sharp tip
+                ctx.lineTo(2.5, 2.5);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Left edge steel highlight
                 ctx.fillStyle = "#ffffff";
                 ctx.beginPath();
-                ctx.moveTo(0, 1.5);
-                ctx.quadraticCurveTo(4, -5, 0, -15); // Tip
-                ctx.lineTo(0, 1.5);
+                ctx.moveTo(0, 2.5);
+                ctx.lineTo(0, -12);
+                ctx.lineTo(2.5, 2.5);
                 ctx.closePath();
                 ctx.fill();
-                ctx.strokeStyle = "#000000"; ctx.lineWidth = penHero; ctx.stroke();
 
-                // 5. Glowing Poison Runic fuller down the middle
-                ctx.fillStyle = "#2ecc71"; // Bright poison green
-                ctx.shadowBlur = 6;
-                ctx.shadowColor = "#2ecc71";
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(-0.8, -4);
-                ctx.lineTo(0, -11);
-                ctx.lineTo(0.8, -4);
-                ctx.closePath();
-                ctx.fill();
-                ctx.shadowBlur = 0; // Always restore shadow blur
+                // 5. Shadowy parrying aura particles (Soft violet mists)
+                if (Math.random() < 0.20 && !isGamePaused) {
+                    particles.push({
+                        x: hx + 20,
+                        y: hy + 18 + bounce,
+                        vx: -randFloat(0.3, 0.8),
+                        vy: -randFloat(0.5, 1.2),
+                        radius: randFloat(1, 2.2),
+                        color: "rgba(142, 68, 173, 0.25)", 
+                        alpha: 0.8,
+                        life: randInt(15, 30)
+                    });
+                }
 
-                // 6. Localized Poison Vapor Particle (Puffs rising from tip)
+                ctx.restore();
                 let mistCycle = (Date.now() / 150) % 6;
                 ctx.fillStyle = "rgba(46, 204, 113, " + (0.55 - (mistCycle / 12)) + ")";
                 ctx.beginPath();
@@ -10838,6 +10882,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         // Main Weapon (Slash/Staff mechanics)
         ctx.translate(2, 6 + bounce);
         let isStaff = equippedSlots.weapon && equippedSlots.weapon.isUniqueStaff;
+        let isUniqueSword = equippedSlots.weapon && equippedSlots.weapon.isUniqueSword;
 
         if (isStaff) {
             // Custom Phoenix Staff Render Design
@@ -10887,6 +10932,66 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                     alpha: 1,
                     life: randInt(12, 22)
                 });
+            }
+        } else if (isUniqueSword) {
+            // Crimson Sanguine Reaver: Translucent blood blade with glowing gold runes
+            ctx.rotate(-Math.PI / 8);
+            if (hero.slashFrame) {
+                ctx.translate(15, -10); 
+                ctx.rotate(-Math.PI / 2.3); 
+            }
+
+            // 1. Ornate Golden guard & hilt with dark leather wrap
+            ctx.fillStyle = "#1e1e24"; // hilt
+            ctx.beginPath(); ctx.rect(-2, -2, 4, 10); ctx.fill(); ctx.stroke();
+
+            ctx.fillStyle = "#d4af37"; // gold pommel & guard
+            ctx.beginPath(); ctx.arc(0, -3, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            ctx.beginPath(); ctx.rect(-7, 8, 14, 4); ctx.fill(); ctx.stroke();
+
+            // 2. Translucent blood blade pulsing in real-time
+            let bleedPulse = Math.sin(Date.now() / 100) * 0.15 + 0.85;
+            let bladeColor = `rgba(192, 57, 43, ${bleedPulse})`;
+            ctx.fillStyle = m.flashTimer > 0 ? "#ffffff" : bladeColor;
+            ctx.strokeStyle = "#960018";
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(-3.5, 12);
+            ctx.lineTo(-2, 37); 
+            ctx.lineTo(2, 37);
+            ctx.lineTo(3.5, 12);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Glowing core fuller
+            ctx.fillStyle = "#ff7f7f";
+            ctx.beginPath();
+            ctx.rect(-0.8, 14, 1.6, 18);
+            ctx.fill();
+
+            // Sanguine drop particles trailing from blade
+            if (Math.random() < 0.25 && !isGamePaused) {
+                particles.push({
+                    x: hx + 12 + Math.cos(-Math.PI / 8) * 12,
+                    y: hy + 15 + bounce - 22,
+                    vx: randFloat(-0.5, 0.5),
+                    vy: -randFloat(0.3, 1.0),
+                    radius: randFloat(1, 2.2),
+                    color: "#960018",
+                    alpha: 1,
+                    life: randInt(10, 20)
+                });
+            }
+
+            if (hero.slashFrame) {
+                // Sanguine red swipe trace arc
+                ctx.fillStyle = "rgba(192, 57, 43, 0.35)"; 
+                ctx.beginPath(); ctx.arc(0, 20, 35, 0, Math.PI/2); ctx.lineTo(0,0); ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = "rgba(150, 0, 24, 0.6)";
+                ctx.lineWidth = 2;
+                ctx.stroke();
             }
         } else {
             // Standard Sword Rendering
