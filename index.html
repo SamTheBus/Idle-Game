@@ -1958,6 +1958,237 @@ window.onload = function() {
             
             c.restore();
         }
+        else if (m.type === "dungeon_miniboss") {
+            let hoverY = Math.sin(Date.now() / 120) * 6;
+            c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#2c3e50";
+            
+            c.beginPath();
+            c.moveTo(m.x + m.w/2, m.y + hoverY);
+            c.lineTo(m.x + m.w, m.y + m.h / 2 + hoverY);
+            c.lineTo(m.x + m.w / 2, m.y + m.h + hoverY);
+            c.lineTo(m.x, m.y + m.h / 2 + hoverY);
+            c.closePath();
+            c.fill();
+            c.stroke();
+            
+            if (m.flashTimer === 0) {
+                c.fillStyle = "#1abc9c";
+                c.beginPath();
+                c.arc(m.x + m.w / 2, m.y + m.h / 2 + hoverY, 4, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+            }
+        }
+        else if (m.type === "prestige_boss") {
+            let hoverY = Math.sin(Date.now() / 150) * 6;
+            let jawOpen = Math.abs(Math.sin(Date.now() / 400)) * 12; 
+            
+            c.save();
+            c.translate(m.x, m.y + hoverY);
+            
+            let baseW = 70;
+            let baseH = 80;
+            let scaleX = m.w / baseW;
+            let scaleY = m.h / baseH;
+            c.scale(scaleX, scaleY);
+
+            // 1. Magma / Dark Void Under-Glow Aura
+            let auraGlow = c.createRadialGradient(baseW/2, baseH/2, 10, baseW/2, baseH/2, 100);
+            auraGlow.addColorStop(0, "rgba(231, 76, 60, 0.45)");
+            auraGlow.addColorStop(0.5, "rgba(142, 68, 173, 0.15)");
+            auraGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+            c.fillStyle = auraGlow;
+            c.beginPath();
+            c.arc(baseW/2 + 30, baseH/2, 80, 0, Math.PI * 2);
+            c.fill();
+            
+            // Neck segment loop drawing (Charred Obsidian & Glowing Lava segments)
+            for (let i = 6; i >= 1; i--) {
+                let segX = baseW / 2 + (i * 18);
+                let segY = baseH / 2 + Math.sin(Date.now() / 180 + i * 0.7) * 8;
+                
+                // Outer Back Dragon Scales (Charred obsidian black / molten deep crimson)
+                c.save();
+                c.fillStyle = i % 2 === 0 ? "#111116" : "#5a0e0e";
+                c.strokeStyle = "#000000";
+                c.lineWidth = 2.4 / Math.max(scaleX, scaleY);
+                c.beginPath();
+                c.arc(segX, segY, 26 - (i * 2.2), 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+                c.restore();
+
+                // Inner Molten Magma core details inside scales
+                c.save();
+                c.fillStyle = "#ff5500";
+                c.beginPath();
+                c.arc(segX, segY, (26 - (i * 2.2)) * 0.4, 0, Math.PI * 2);
+                c.fill();
+                c.restore();
+
+                // Inner Underbelly Ridges (Glowing Volcanic Orange)
+                c.save();
+                c.fillStyle = "#e67e22";
+                c.strokeStyle = "#000000";
+                c.lineWidth = 2.4 / Math.max(scaleX, scaleY);
+                c.beginPath();
+                c.arc(segX - 8, segY + 6, (26 - (i * 2.2)) * 0.8, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+                c.restore();
+            }
+
+            // Draw Volcanic Jagged Gold Horns with blackened tips
+            c.save();
+            c.fillStyle = "#d35400"; // Sharp Magma Gold
+            c.strokeStyle = "#000000";
+            c.lineWidth = 2.4 / Math.max(scaleX, scaleY);
+            c.lineJoin = "round";
+            c.beginPath();
+            c.moveTo(baseW - 25, -20);
+            c.quadraticCurveTo(baseW + 5, -50, baseW + 22, -45); // Extended and sharpened
+            c.quadraticCurveTo(baseW - 3, -25, baseW - 30, -5);
+            c.closePath();
+            c.fill();
+            c.stroke();
+
+            // Blackened tips highlights
+            c.fillStyle = "#111115";
+            c.beginPath();
+            ctx.moveTo(baseW + 5, -44);
+            ctx.lineTo(baseW + 22, -45);
+            ctx.lineTo(baseW + 15, -35);
+            c.closePath();
+            c.fill();
+            c.restore();
+
+            // Draw Giant Spiked Devilish Wings flapping behind neck
+            c.save();
+            c.fillStyle = "#110202"; // Obsidian back wing body
+            c.strokeStyle = "#e74c3c"; // Crimson trim veins
+            c.lineWidth = 3 / Math.max(scaleX, scaleY);
+            c.lineJoin = "round";
+            let wingFlap = Math.sin(Date.now() / 100) * 12;
+            c.translate(baseW / 2 + 50, baseH / 2 + 10);
+            c.rotate(wingFlap * Math.PI / 180);
+            c.beginPath();
+            c.moveTo(0, 0);
+            c.lineTo(50, -30); // Expanded spiked profile
+            c.lineTo(60, 5);
+            c.lineTo(40, 15);
+            c.lineTo(55, 35);
+            c.lineTo(5, 22);
+            c.closePath();
+            c.fill();
+            c.stroke();
+
+            // Internal visual wing bones
+            c.strokeStyle = "#851c1c";
+            c.lineWidth = 1.8;
+            c.beginPath();
+            c.moveTo(0, 0); c.lineTo(50, -30);
+            c.moveTo(0, 0); c.lineTo(60, 5);
+            c.moveTo(0, 0); c.lineTo(40, 15);
+            c.stroke();
+            c.restore();
+            
+            // Upper Head/Skull (Charred magma skull overlay)
+            c.save();
+            c.strokeStyle = "#000000";
+            c.lineWidth = 2.4 / Math.max(scaleX, scaleY);
+            c.lineJoin = "round";
+            
+            c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#111115"; // Charred Obsidian Skull plate
+            c.beginPath();
+            c.moveTo(baseW - 5, -15); // spike back 1
+            c.lineTo(baseW - 20, 10);
+            c.lineTo(baseW - 15, -25); // spike back 2
+            c.lineTo(baseW - 35, 12);
+            c.lineTo(5, 5); // Forehead
+            c.lineTo(-10, 18); // Snout
+            c.lineTo(-15, 30); // Tip
+            c.lineTo(5, 38); // Jawline joint
+            c.lineTo(baseW - 10, 38);
+            c.lineTo(baseW, 15);
+            c.closePath();
+            c.fill();
+            c.stroke();
+
+            // Glowing Magma cracks on the face plates
+            if (m.flashTimer === 0) {
+                c.strokeStyle = "#ff3300";
+                c.lineWidth = 2;
+                c.beginPath();
+                c.moveTo(8, 12); c.lineTo(25, 23);
+                c.moveTo(28, 26); c.lineTo(38, 30);
+                c.stroke();
+            }
+
+            // Glowing Sinister Evil Eye (Pulsing Hellfire Crimson)
+            c.save();
+            c.shadowBlur = 15;
+            c.shadowColor = "#ff0000";
+            c.fillStyle = "#ff0000";
+            c.beginPath();
+            if (c.ellipse) {
+                c.ellipse(22, 18, 8, 6, Math.PI / 12, 0, Math.PI * 2);
+            } else {
+                c.arc(22, 18, 7, 0, Math.PI * 2);
+            }
+            c.fill();
+            c.restore();
+            
+            // Reptilian slit pupil
+            c.fillStyle = "#f1c40f";
+            c.beginPath();
+            if (c.ellipse) {
+                c.ellipse(22, 18, 2, 5, Math.PI / 12, 0, Math.PI * 2);
+            } else {
+                c.rect(21, 15, 2, 6);
+            }
+            c.fill();
+
+            // Terrifying razor-sharp spiked snout horn (Replaces the rounded cute nose)
+            c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#1c2833";
+            c.beginPath();
+            c.moveTo(-10, 18);
+            c.lineTo(-26, 23); // Extremely sharp spiked profile
+            c.lineTo(-10, 28);
+            c.closePath();
+            c.fill();
+            c.stroke();
+
+            // Dark volcanic nostril slot
+            c.fillStyle = "#000000";
+            c.beginPath();
+            c.arc(-10, 21, 3, 0, Math.PI * 2);
+            c.fill();
+
+            // Lower Jaw with Drop rotation during chomps
+            c.save();
+            c.translate(15, 38);
+            c.rotate(jawOpen * Math.PI / 180);
+            c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#631c15"; // Charred jaw undertone
+            c.beginPath();
+            c.moveTo(0, 0);
+            c.lineTo(-25, 4); // Chin tip
+            c.lineTo(5, 15);
+            c.lineTo(baseW - 15, 10);
+            c.closePath();
+            c.fill();
+            c.stroke();
+
+            // Razor sharp glowing fangs
+            c.fillStyle = "#ffeaa7"; // Bone ivory fangs
+            c.beginPath();
+            c.moveTo(-15, 2); c.lineTo(-12, 9); c.lineTo(-9, 2);
+            c.moveTo(-5, 1); c.lineTo(-2, 8); c.lineTo(1, 1);
+            c.fill();
+
+            c.restore(); // end jaw draw
+            c.restore(); // end skull save
+            c.restore(); // end master translate & scale
+        }
         else if (m.type === "boss" || m.type === "dungeon_boss") {
             c.lineWidth = 2.4;
 
@@ -2034,213 +2265,213 @@ window.onload = function() {
                 } else {
                     let dType = playerStats.currentDungeon || 'gold';
                     if (dType === 'gold') {
-                    let hover = Math.sin(Date.now() / 150) * 3;
-                    let baseColor = m.flashTimer > 0 ? "#ffffff" : "#27ae60";
-                    let goldColor1 = "#f1c40f";
-                    let goldColor2 = "#f39c12";
+                        let hover = Math.sin(Date.now() / 150) * 3;
+                        let baseColor = m.flashTimer > 0 ? "#ffffff" : "#27ae60";
+                        let goldColor1 = "#f1c40f";
+                        let goldColor2 = "#f39c12";
 
-                    c.fillStyle = goldColor2;
-                    c.beginPath();
-                    c.ellipse(m.x + m.w / 2, m.y + m.h - 10, m.w * 0.9, 15, 0, 0, Math.PI * 2);
-                    c.fill();
-                    c.stroke();
-
-                    c.fillStyle = goldColor1;
-                    c.beginPath();
-                    c.ellipse(m.x + m.w / 2 - 5, m.y + m.h - 13, m.w * 0.7, 10, 0, 0, Math.PI * 2);
-                    c.fill();
-                    c.stroke();
-
-                    c.fillStyle = "#fff";
-                    for (let i = 0; i < 5; i++) {
-                        c.fillRect(m.x + 8 + i * 8, m.y + m.h - 16 + Math.sin(i) * 3, 2, 2);
-                    }
-
-                    c.fillStyle = baseColor;
-                    c.beginPath();
-                    c.ellipse(m.x + m.w / 2, m.y + m.h - 32 + hover, m.w * 0.55, 20, 0, 0, Math.PI * 2);
-                    c.fill();
-                    c.stroke();
-
-                    c.beginPath();
-                    c.arc(m.x + m.w / 2, m.y + m.h - 52 + hover, 14, 0, Math.PI * 2);
-                    c.fill();
-                    c.stroke();
-
-                    c.beginPath();
-                    c.moveTo(m.x + m.w / 2 - 11, m.y + m.h - 54 + hover);
-                    c.lineTo(m.x + m.w / 2 - 26, m.y + m.h - 60 + hover);
-                    c.lineTo(m.x + m.w / 2 - 11, m.y + m.h - 46 + hover);
-                    c.closePath();
-                    c.fill();
-                    c.stroke();
-
-                    c.beginPath();
-                    c.moveTo(m.x + m.w / 2 + 11, m.y + m.h - 54 + hover);
-                    c.lineTo(m.x + m.w / 2 + 26, m.y + m.h - 60 + hover);
-                    c.lineTo(m.x + m.w / 2 + 11, m.y + m.h - 46 + hover);
-                    c.closePath();
-                    c.fill();
-                    c.stroke();
-
-                    c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#f1c40f";
-                    c.beginPath();
-                    c.moveTo(m.x + m.w / 2 - 10, m.y + m.h - 64 + hover);
-                    c.lineTo(m.x + m.w / 2 - 10, m.y + m.h - 73 + hover);
-                    c.lineTo(m.x + m.w / 2 - 4, m.y + m.h - 67 + hover);
-                    c.lineTo(m.x + m.w / 2, m.y + m.h - 75 + hover);
-                    c.lineTo(m.x + m.w / 2 + 4, m.y + m.h - 67 + hover);
-                    c.lineTo(m.x + m.w / 2 + 10, m.y + m.h - 73 + hover);
-                    c.lineTo(m.x + m.w / 2 + 10, m.y + m.h - 64 + hover);
-                    c.closePath();
-                    c.fill();
-                    c.stroke();
-
-                    if (m.flashTimer === 0) {
-                        c.fillStyle = "#e74c3c";
+                        c.fillStyle = goldColor2;
                         c.beginPath();
-                        c.arc(m.x + m.w / 2, m.y + m.h - 67 + hover, 2, 0, Math.PI * 2);
+                        c.ellipse(m.x + m.w / 2, m.y + m.h - 10, m.w * 0.9, 15, 0, 0, Math.PI * 2);
                         c.fill();
                         c.stroke();
-                    }
 
-                    if (m.flashTimer === 0) {
-                        c.fillStyle = "#f1c40f";
+                        c.fillStyle = goldColor1;
                         c.beginPath();
-                        c.arc(m.x + m.w / 2 - 5, m.y + m.h - 54 + hover, 1.5, 0, Math.PI * 2);
-                        c.arc(m.x + m.w / 2 + 5, m.y + m.h - 54 + hover, 1.5, 0, Math.PI * 2);
+                        c.ellipse(m.x + m.w / 2 - 5, m.y + m.h - 13, m.w * 0.7, 10, 0, 0, Math.PI * 2);
                         c.fill();
                         c.stroke();
-                    }
 
-                    c.strokeStyle = "#111";
-                    c.lineWidth = 1.5;
-                    c.beginPath();
-                    c.arc(m.x + m.w / 2, m.y + m.h - 48 + hover, 5, 0, Math.PI);
-                    c.stroke();
+                        c.fillStyle = "#fff";
+                        for (let i = 0; i < 5; i++) {
+                            c.fillRect(m.x + 8 + i * 8, m.y + m.h - 16 + Math.sin(i) * 3, 2, 2);
+                        }
 
-                    c.fillStyle = "#d35400";
-                    c.beginPath();
-                    c.arc(m.x + m.w / 2 - 15, m.y + m.h - 30 + hover, 10, 0, Math.PI * 2);
-                    c.fill();
-                    c.stroke();
-                } else if (dType === 'mat') {
-                    let pulse = Math.sin(Date.now() / 100) * 4;
-                    let baseColor = m.flashTimer > 0 ? "#ffffff" : "rgba(46, 204, 113, 0.85)";
-
-                    c.fillStyle = "rgba(39, 174, 96, 0.6)";
-                    c.beginPath();
-                    c.ellipse(m.x + m.w / 2, m.y + m.h - 10, m.w * 0.7, 10, 0, 0, Math.PI * 2);
-                    c.fill();
-                    c.stroke();
-
-                    c.fillStyle = baseColor;
-                    c.beginPath();
-                    c.moveTo(m.x + 5 - pulse / 2, m.y + m.h);
-                    c.bezierCurveTo(
-                        m.x - 10 - pulse, m.y + m.h - 45, 
-                        m.x + 5, m.y + 10 + pulse, 
-                        m.x + m.w / 2, m.y + 10 + pulse
-                    );
-                    c.bezierCurveTo(
-                        m.x + m.w - 5, m.y + 10 + pulse, 
-                        m.x + m.w + 10 + pulse, m.y + m.h - 45, 
-                        m.x + m.w - 5 + pulse / 2, m.y + m.h
-                    );
-                    c.closePath();
-                    c.fill();
-                    c.stroke();
-
-                    if (m.flashTimer === 0) {
-                        c.fillStyle = "#9b59b6";
-                        c.shadowBlur = 8;
-                        c.shadowColor = "#9b59b6";
+                        c.fillStyle = baseColor;
                         c.beginPath();
-                        c.arc(m.x + m.w / 2 - 8, m.y + m.h / 2 + pulse / 2, 3, 0, Math.PI * 2);
-                        c.arc(m.x + m.w / 2 + 8, m.y + m.h / 2 + pulse / 2, 3, 0, Math.PI * 2);
+                        c.ellipse(m.x + m.w / 2, m.y + m.h - 32 + hover, m.w * 0.55, 20, 0, 0, Math.PI * 2);
                         c.fill();
                         c.stroke();
-                        c.shadowBlur = 0;
-                    }
 
-                    c.fillStyle = "rgba(46, 204, 113, 0.9)";
-                    let bubY = (Date.now() / 15) % 45;
-                    c.beginPath();
-                    c.arc(m.x + m.w / 2 - 10, m.y + m.h - bubY, 2.5, 0, Math.PI * 2);
-                    c.fill(); c.stroke();
-                    c.beginPath();
-                    c.arc(m.x + m.w / 2 + 7, m.y + m.h - 8 - ((bubY + 12) % 45), 3, 0, Math.PI * 2);
-                    c.fill(); c.stroke();
-                } else if (dType === 'equip') {
-                    let bounce = Math.sin(Date.now() / 200) * 3;
-                    let armorColor = m.flashTimer > 0 ? "#ffffff" : "#34495e";
-                    let jointColor = "#1a252f";
-                    let fireGlow = "#e67e22";
-
-                    c.fillStyle = jointColor;
-                    c.beginPath(); c.rect(m.x + 8, m.y + m.h - 20, 10, 20); c.fill(); c.stroke();
-                    c.beginPath(); c.rect(m.x + m.w - 18, m.y + m.h - 20, 10, 20); c.fill(); c.stroke();
-                    c.fillStyle = armorColor;
-                    c.beginPath(); c.rect(m.x + 6, m.y + m.h - 10, 14, 10); c.fill(); c.stroke();
-                    c.beginPath(); c.rect(m.x + m.w - 20, m.y + m.h - 10, 14, 10); c.fill(); c.stroke();
-
-                    c.fillStyle = jointColor;
-                    c.beginPath(); c.rect(m.x, m.y + 22 + bounce, m.w, m.h - 40); c.fill(); c.stroke();
-                    
-                    c.fillStyle = armorColor;
-                    c.beginPath();
-                    c.roundRect(m.x - 3, m.y + 18 + bounce, m.w + 6, m.h - 45, [5]);
-                    c.fill();
-                    c.stroke();
-
-                    if (m.flashTimer === 0) {
-                        let coreRadius = 7 + Math.sin(Date.now() / 80) * 2;
-                        c.fillStyle = fireGlow;
-                        c.shadowBlur = 10;
-                        c.shadowColor = fireGlow;
                         c.beginPath();
-                        c.arc(m.x + m.w / 2, m.y + m.h / 2 - 4 + bounce, coreRadius, 0, Math.PI * 2);
+                        c.arc(m.x + m.w / 2, m.y + m.h - 52 + hover, 14, 0, Math.PI * 2);
                         c.fill();
                         c.stroke();
-                        c.shadowBlur = 0;
-                    }
 
-                    c.fillStyle = armorColor;
-                    c.beginPath();
-                    c.moveTo(m.x - 5, m.y + 20 + bounce);
-                    c.lineTo(m.x - 12, m.y + 11 + bounce);
-                    c.lineTo(m.x + 2, m.y + 18 + bounce);
-                    c.closePath();
-                    c.fill();
-                    c.stroke();
+                        c.beginPath();
+                        c.moveTo(m.x + m.w / 2 - 11, m.y + m.h - 54 + hover);
+                        c.lineTo(m.x + m.w / 2 - 26, m.y + m.h - 60 + hover);
+                        c.lineTo(m.x + m.w / 2 - 11, m.y + m.h - 46 + hover);
+                        c.closePath();
+                        c.fill();
+                        c.stroke();
 
-                    c.beginPath();
-                    c.moveTo(m.x + m.w + 5, m.y + 20 + bounce);
-                    c.lineTo(m.x + m.w + 12, m.y + 11 + bounce);
-                    c.lineTo(m.x + m.w - 2, m.y + 18 + bounce);
-                    c.closePath();
-                    c.fill();
-                    c.stroke();
+                        c.beginPath();
+                        c.moveTo(m.x + m.w / 2 + 11, m.y + m.h - 54 + hover);
+                        c.lineTo(m.x + m.w / 2 + 26, m.y + m.h - 60 + hover);
+                        c.lineTo(m.x + m.w / 2 + 11, m.y + m.h - 46 + hover);
+                        c.closePath();
+                        c.fill();
+                        c.stroke();
 
-                    c.fillStyle = armorColor;
-                    c.beginPath(); c.rect(m.x - 10, m.y + m.h / 2 - 5 + bounce, 7, 12); c.fill(); c.stroke();
-                    c.strokeStyle = "#5d6d7e";
-                    c.lineWidth = 2.5;
-                    c.beginPath();
-                    c.moveTo(m.x - 6, m.y + 8 + bounce);
-                    c.lineTo(m.x - 6, m.y + m.h - 8 + bounce);
-                    c.stroke();
+                        c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#f1c40f";
+                        c.beginPath();
+                        c.moveTo(m.x + m.w / 2 - 10, m.y + m.h - 64 + hover);
+                        c.lineTo(m.x + m.w / 2 - 10, m.y + m.h - 73 + hover);
+                        c.lineTo(m.x + m.w / 2 - 4, m.y + m.h - 67 + hover);
+                        c.lineTo(m.x + m.w / 2, m.y + m.h - 75 + hover);
+                        c.lineTo(m.x + m.w / 2 + 4, m.y + m.h - 67 + hover);
+                        c.lineTo(m.x + m.w / 2 + 10, m.y + m.h - 73 + hover);
+                        c.lineTo(m.x + m.w / 2 + 10, m.y + m.h - 64 + hover);
+                        c.closePath();
+                        c.fill();
+                        c.stroke();
 
-                    c.fillStyle = "#2c3e50";
-                    c.beginPath(); c.rect(m.x - 15, m.y + 4 + bounce, 18, 9); c.fill(); c.stroke();
+                        if (m.flashTimer === 0) {
+                            c.fillStyle = "#e74c3c";
+                            c.beginPath();
+                            c.arc(m.x + m.w / 2, m.y + m.h - 67 + hover, 2, 0, Math.PI * 2);
+                            c.fill();
+                            c.stroke();
+                        }
 
-                    c.fillStyle = armorColor;
-                    c.beginPath();
-                    c.roundRect(m.x + 9, m.y + bounce, m.w - 18, 20, [3]);
-                    c.fill();
-                    c.stroke();
+                        if (m.flashTimer === 0) {
+                            c.fillStyle = "#f1c40f";
+                            c.beginPath();
+                            c.arc(m.x + m.w / 2 - 5, m.y + m.h - 54 + hover, 1.5, 0, Math.PI * 2);
+                            c.arc(m.x + m.w / 2 + 5, m.y + m.h - 54 + hover, 1.5, 0, Math.PI * 2);
+                            c.fill();
+                            c.stroke();
+                        }
 
-                    // Golem horns
+                        c.strokeStyle = "#111";
+                        c.lineWidth = 1.5;
+                        c.beginPath();
+                        c.arc(m.x + m.w / 2, m.y + m.h - 48 + hover, 5, 0, Math.PI);
+                        c.stroke();
+
+                        c.fillStyle = "#d35400";
+                        c.beginPath();
+                        c.arc(m.x + m.w / 2 - 15, m.y + m.h - 30 + hover, 10, 0, Math.PI * 2);
+                        c.fill();
+                        c.stroke();
+                    } else if (dType === 'mat') {
+                        let pulse = Math.sin(Date.now() / 100) * 4;
+                        let baseColor = m.flashTimer > 0 ? "#ffffff" : "rgba(46, 204, 113, 0.85)";
+
+                        c.fillStyle = "rgba(39, 174, 96, 0.6)";
+                        c.beginPath();
+                        c.ellipse(m.x + m.w / 2, m.y + m.h - 10, m.w * 0.7, 10, 0, 0, Math.PI * 2);
+                        c.fill();
+                        c.stroke();
+
+                        c.fillStyle = baseColor;
+                        c.beginPath();
+                        c.moveTo(m.x + 5 - pulse / 2, m.y + m.h);
+                        c.bezierCurveTo(
+                            m.x - 10 - pulse, m.y + m.h - 45, 
+                            m.x + 5, m.y + 10 + pulse, 
+                            m.x + m.w / 2, m.y + 10 + pulse
+                        );
+                        c.bezierCurveTo(
+                            m.x + m.w - 5, m.y + 10 + pulse, 
+                            m.x + m.w + 10 + pulse, m.y + m.h - 45, 
+                            m.x + m.w - 5 + pulse / 2, m.y + m.h
+                        );
+                        c.closePath();
+                        c.fill();
+                        c.stroke();
+
+                        if (m.flashTimer === 0) {
+                            c.fillStyle = "#9b59b6";
+                            c.shadowBlur = 8;
+                            c.shadowColor = "#9b59b6";
+                            c.beginPath();
+                            c.arc(m.x + m.w / 2 - 8, m.y + m.h / 2 + pulse / 2, 3, 0, Math.PI * 2);
+                            c.arc(m.x + m.w / 2 + 8, m.y + m.h / 2 + pulse / 2, 3, 0, Math.PI * 2);
+                            c.fill();
+                            c.stroke();
+                            c.shadowBlur = 0;
+                        }
+
+                        c.fillStyle = "rgba(46, 204, 113, 0.9)";
+                        let bubY = (Date.now() / 15) % 45;
+                        c.beginPath();
+                        c.arc(m.x + m.w / 2 - 10, m.y + m.h - bubY, 2.5, 0, Math.PI * 2);
+                        c.fill(); c.stroke();
+                        c.beginPath();
+                        c.arc(m.x + m.w / 2 + 7, m.y + m.h - 8 - ((bubY + 12) % 45), 3, 0, Math.PI * 2);
+                        c.fill(); c.stroke();
+                    } else if (dType === 'equip') {
+                        let bounce = Math.sin(Date.now() / 200) * 3;
+                        let armorColor = m.flashTimer > 0 ? "#ffffff" : "#34495e";
+                        let jointColor = "#1a252f";
+                        let fireGlow = "#e67e22";
+
+                        c.fillStyle = jointColor;
+                        c.beginPath(); c.rect(m.x + 8, m.y + m.h - 20, 10, 20); c.fill(); c.stroke();
+                        c.beginPath(); c.rect(m.x + m.w - 18, m.y + m.h - 20, 10, 20); c.fill(); c.stroke();
+                        c.fillStyle = armorColor;
+                        c.beginPath(); c.rect(m.x + 6, m.y + m.h - 10, 14, 10); c.fill(); c.stroke();
+                        c.beginPath(); c.rect(m.x + m.w - 20, m.y + m.h - 10, 14, 10); c.fill(); c.stroke();
+
+                        c.fillStyle = jointColor;
+                        c.beginPath(); c.rect(m.x, m.y + 22 + bounce, m.w, m.h - 40); c.fill(); c.stroke();
+                        
+                        c.fillStyle = armorColor;
+                        c.beginPath();
+                        c.roundRect(m.x - 3, m.y + 18 + bounce, m.w + 6, m.h - 45, [5]);
+                        c.fill();
+                        c.stroke();
+
+                        if (m.flashTimer === 0) {
+                            let coreRadius = 7 + Math.sin(Date.now() / 80) * 2;
+                            c.fillStyle = fireGlow;
+                            c.shadowBlur = 10;
+                            c.shadowColor = fireGlow;
+                            c.beginPath();
+                            c.arc(m.x + m.w / 2, m.y + m.h / 2 - 4 + bounce, coreRadius, 0, Math.PI * 2);
+                            c.fill();
+                            c.stroke();
+                            c.shadowBlur = 0;
+                        }
+
+                        c.fillStyle = armorColor;
+                        c.beginPath();
+                        c.moveTo(m.x - 5, m.y + 20 + bounce);
+                        c.lineTo(m.x - 12, m.y + 11 + bounce);
+                        c.lineTo(m.x + 2, m.y + 18 + bounce);
+                        c.closePath();
+                        c.fill();
+                        c.stroke();
+
+                        c.beginPath();
+                        c.moveTo(m.x + m.w + 5, m.y + 20 + bounce);
+                        c.lineTo(m.x + m.w + 12, m.y + 11 + bounce);
+                        c.lineTo(m.x + m.w - 2, m.y + 18 + bounce);
+                        c.closePath();
+                        c.fill();
+                        c.stroke();
+
+                        c.fillStyle = armorColor;
+                        c.beginPath(); c.rect(m.x - 10, m.y + m.h / 2 - 5 + bounce, 7, 12); c.fill(); c.stroke();
+                        c.strokeStyle = "#5d6d7e";
+                        c.lineWidth = 2.5;
+                        c.beginPath();
+                        c.moveTo(m.x - 6, m.y + 8 + bounce);
+                        c.lineTo(m.x - 6, m.y + m.h - 8 + bounce);
+                        c.stroke();
+
+                        c.fillStyle = "#2c3e50";
+                        c.beginPath(); c.rect(m.x - 15, m.y + 4 + bounce, 18, 9); c.fill(); c.stroke();
+
+                        c.fillStyle = armorColor;
+                        c.beginPath();
+                        c.roundRect(m.x + 9, m.y + bounce, m.w - 18, 20, [3]);
+                        c.fill();
+                        c.stroke();
+
+                        // Golem horns
                         c.fillStyle = jointColor;
                         c.beginPath();
                         c.moveTo(m.x + 11, m.y + 4 + bounce);
@@ -2258,14 +2489,16 @@ window.onload = function() {
                         c.fill();
                         c.stroke();
 
-                    if (m.flashTimer === 0) {
-                        c.fillStyle = fireGlow;
-                        c.beginPath(); c.rect(m.x + 12, m.y + 7 + bounce, m.w - 24, 2); c.fill(); c.stroke();
+                        if (m.flashTimer === 0) {
+                            c.fillStyle = fireGlow;
+                            c.beginPath(); c.rect(m.x + 12, m.y + 7 + bounce, m.w - 24, 2); c.fill(); c.stroke();
+                        }
                     }
                 }
-            }
-        } else {
-            let currentTier = t !== undefined ? t : getStageTier();
+            } else {
+                // Standard campaign Area Bosses (Forest, Peaks, Inferno, Swamp, Void)
+                let currentTier = t !== undefined ? t : getStageTier();
+                let bounce = 0; // Prevent ReferenceError
                 if (currentTier === 0) {
                     c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#a97026";
                     for (let i = 0; i < 4; i++) {
@@ -2517,240 +2750,15 @@ window.onload = function() {
                         c.fillStyle = grad;
                         c.beginPath(); c.arc(m.x + m.w/2, m.y + 40, 12, 0, Math.PI*2); c.fill(); c.stroke();
                     }
-                } 
-            } 
-        } 
-        else if (m.type === "dungeon_miniboss") {
-            let hoverY = Math.sin(Date.now() / 120) * 6;
-            c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#2c3e50";
-            
-            c.beginPath();
-            c.moveTo(m.x + m.w/2, m.y + hoverY);
-            c.lineTo(m.x + m.w, m.y + m.h / 2 + hoverY);
-            c.lineTo(m.x + m.w / 2, m.y + m.h + hoverY);
-            c.lineTo(m.x, m.y + m.h / 2 + hoverY);
-            c.closePath();
-            c.fill();
-            c.stroke();
-            
-            if (m.flashTimer === 0) {
-                c.fillStyle = "#1abc9c";
-                c.beginPath();
-                c.arc(m.x + m.w / 2, m.y + m.h / 2 + hoverY, 4, 0, Math.PI * 2);
-                c.fill();
-                c.stroke();
+                }
+
+                if (m.flashTimer === 0) {
+                    c.fillStyle = "#ff007f";
+                    c.beginPath(); c.rect(m.x + 12, m.y + 7 + bounce, m.w - 24, 2); c.fill(); c.stroke();
+                }
             }
         }
-        else if (m.type === "prestige_boss") {
-                    let hoverY = Math.sin(Date.now() / 150) * 6;
-                    let jawOpen = Math.abs(Math.sin(Date.now() / 400)) * 12; 
-                    
-                    c.save();
-                    c.translate(m.x, m.y + hoverY);
-                    
-                    let baseW = 70;
-                    let baseH = 80;
-                    let scaleX = m.w / baseW;
-                    let scaleY = m.h / baseH;
-                    c.scale(scaleX, scaleY);
 
-                    // 1. Magma / Dark Void Under-Glow Aura
-                    let auraGlow = c.createRadialGradient(baseW/2, baseH/2, 10, baseW/2, baseH/2, 100);
-                    auraGlow.addColorStop(0, "rgba(231, 76, 60, 0.45)");
-                    auraGlow.addColorStop(0.5, "rgba(142, 68, 173, 0.15)");
-                    auraGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
-                    c.fillStyle = auraGlow;
-                    c.beginPath();
-                    c.arc(baseW/2 + 30, baseH/2, 80, 0, Math.PI * 2);
-                    c.fill();
-                    
-                    // Neck segment loop drawing (Charred Obsidian & Glowing Lava segments)
-                    for (let i = 6; i >= 1; i--) {
-                        let segX = baseW / 2 + (i * 18);
-                        let segY = baseH / 2 + Math.sin(Date.now() / 180 + i * 0.7) * 8;
-                        
-                        // Outer Back Dragon Scales (Charred obsidian black / molten deep crimson)
-                        c.save();
-                        c.fillStyle = i % 2 === 0 ? "#111116" : "#5a0e0e";
-                        c.strokeStyle = "#000000";
-                        c.lineWidth = 2.4 / Math.max(scaleX, scaleY);
-                        c.beginPath();
-                        c.arc(segX, segY, 26 - (i * 2.2), 0, Math.PI * 2);
-                        c.fill();
-                        c.stroke();
-                        c.restore();
-
-                        // Inner Molten Magma core details inside scales
-                        c.save();
-                        c.fillStyle = "#ff5500";
-                        c.beginPath();
-                        c.arc(segX, segY, (26 - (i * 2.2)) * 0.4, 0, Math.PI * 2);
-                        c.fill();
-                        c.restore();
-
-                        // Inner Underbelly Ridges (Glowing Volcanic Orange)
-                        c.save();
-                        c.fillStyle = "#e67e22";
-                        c.strokeStyle = "#000000";
-                        c.lineWidth = 2.4 / Math.max(scaleX, scaleY);
-                        c.beginPath();
-                        c.arc(segX - 8, segY + 6, (26 - (i * 2.2)) * 0.8, 0, Math.PI * 2);
-                        c.fill();
-                        c.stroke();
-                        c.restore();
-                    }
-
-                    // Draw Volcanic Jagged Gold Horns with blackened tips
-                    c.save();
-                    c.fillStyle = "#d35400"; // Sharp Magma Gold
-                    c.strokeStyle = "#000000";
-                    c.lineWidth = 2.4 / Math.max(scaleX, scaleY);
-                    c.lineJoin = "round";
-                    c.beginPath();
-                    c.moveTo(baseW - 25, -20);
-                    c.quadraticCurveTo(baseW + 5, -50, baseW + 22, -45); // Extended and sharpened
-                    c.quadraticCurveTo(baseW - 3, -25, baseW - 30, -5);
-                    c.closePath();
-                    c.fill();
-                    c.stroke();
-
-                    // Blackened tips highlights
-                    c.fillStyle = "#111115";
-                    c.beginPath();
-                    c.moveTo(baseW + 5, -44);
-                    c.lineTo(baseW + 22, -45);
-                    c.lineTo(baseW + 15, -35);
-                    c.closePath();
-                    c.fill();
-                    c.restore();
-
-                    // Draw Giant Spiked Devilish Wings flapping behind neck
-                    c.save();
-                    c.fillStyle = "#110202"; // Obsidian back wing body
-                    c.strokeStyle = "#e74c3c"; // Crimson trim veins
-                    c.lineWidth = 3 / Math.max(scaleX, scaleY);
-                    c.lineJoin = "round";
-                    let wingFlap = Math.sin(Date.now() / 100) * 12;
-                    c.translate(baseW / 2 + 50, baseH / 2 + 10);
-                    c.rotate(wingFlap * Math.PI / 180);
-                    c.beginPath();
-                    c.moveTo(0, 0);
-                    c.lineTo(50, -30); // Expanded spiked profile
-                    c.lineTo(60, 5);
-                    c.lineTo(40, 15);
-                    c.lineTo(55, 35);
-                    c.lineTo(5, 22);
-                    c.closePath();
-                    c.fill();
-                    c.stroke();
-
-                    // Internal visual wing bones
-                    c.strokeStyle = "#851c1c";
-                    c.lineWidth = 1.8;
-                    c.beginPath();
-                    c.moveTo(0, 0); c.lineTo(50, -30);
-                    c.moveTo(0, 0); c.lineTo(60, 5);
-                    c.moveTo(0, 0); c.lineTo(40, 15);
-                    c.stroke();
-                    c.restore();
-                    
-                    // Upper Head/Skull (Charred magma skull overlay)
-                    c.save();
-                    c.strokeStyle = "#000000";
-                    c.lineWidth = 2.4 / Math.max(scaleX, scaleY);
-                    c.lineJoin = "round";
-                    
-                    c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#111115"; // Charred Obsidian Skull plate
-                    c.beginPath();
-                    c.moveTo(baseW - 5, -15); // spike back 1
-                    c.lineTo(baseW - 20, 10);
-                    c.lineTo(baseW - 15, -25); // spike back 2
-                    c.lineTo(baseW - 35, 12);
-                    c.lineTo(5, 5); // Forehead
-                    c.lineTo(-10, 18); // Snout
-                    c.lineTo(-15, 30); // Tip
-                    c.lineTo(5, 38); // Jawline joint
-                    c.lineTo(baseW - 10, 38);
-                    c.lineTo(baseW, 15);
-                    c.closePath();
-                    c.fill();
-                    c.stroke();
-
-                    // Glowing Magma cracks on the face plates
-                    if (m.flashTimer === 0) {
-                        c.strokeStyle = "#ff3300";
-                        c.lineWidth = 2;
-                        c.beginPath();
-                        c.moveTo(8, 12); c.lineTo(25, 23);
-                        c.moveTo(28, 26); c.lineTo(38, 30);
-                        c.stroke();
-                    }
-
-                    // Glowing Sinister Evil Eye (Pulsing Hellfire Crimson)
-                    c.save();
-                    c.shadowBlur = 15;
-                    c.shadowColor = "#ff0000";
-                    c.fillStyle = "#ff0000";
-                    c.beginPath();
-                    if (c.ellipse) {
-                        c.ellipse(22, 18, 8, 6, Math.PI / 12, 0, Math.PI * 2);
-                    } else {
-                        c.arc(22, 18, 7, 0, Math.PI * 2);
-                    }
-                    c.fill();
-                    c.restore();
-                    
-                    // Reptilian slit pupil
-                    c.fillStyle = "#f1c40f";
-                    c.beginPath();
-                    if (c.ellipse) {
-                        c.ellipse(22, 18, 2, 5, Math.PI / 12, 0, Math.PI * 2);
-                    } else {
-                        c.rect(21, 15, 2, 6);
-                    }
-                    c.fill();
-
-                    // Terrifying razor-sharp spiked snout horn (Replaces the rounded cute nose)
-                    c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#1c2833";
-                    c.beginPath();
-                    c.moveTo(-10, 18);
-                    c.lineTo(-26, 23); // Extremely sharp spiked profile
-                    c.lineTo(-10, 28);
-                    c.closePath();
-                    c.fill();
-                    c.stroke();
-
-                    // Dark volcanic nostril slot
-                    c.fillStyle = "#000000";
-                    c.beginPath();
-                    c.arc(-10, 21, 3, 0, Math.PI * 2);
-                    c.fill();
-
-                    // Lower Jaw with Drop rotation during chomps
-                    c.save();
-                    c.translate(15, 38);
-                    c.rotate(jawOpen * Math.PI / 180);
-                    c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#631c15"; // Charred jaw undertone
-                    c.beginPath();
-                    c.moveTo(0, 0);
-                    c.lineTo(-25, 4); // Chin tip
-                    c.lineTo(5, 15);
-                    c.lineTo(baseW - 15, 10);
-                    c.closePath();
-                    c.fill();
-                    c.stroke();
-
-                    // Razor sharp glowing fangs
-                    c.fillStyle = "#ffeaa7"; // Bone ivory fangs
-                    c.beginPath();
-                    c.moveTo(-15, 2); c.lineTo(-12, 9); c.lineTo(-9, 2);
-                    c.moveTo(-5, 1); c.lineTo(-2, 8); c.lineTo(1, 1);
-                    c.fill();
-
-                    c.restore(); // end jaw draw
-                    c.restore(); // end skull save
-                    c.restore(); // end master translate & scale
-                }
         c.restore();
     };
 
