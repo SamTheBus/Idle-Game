@@ -4366,6 +4366,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let selectedStat = pool[Math.floor(Math.random() * pool.length)];
         let stageScale = item.stageLevel || 1;
         let rarityMult = 1 + (item.statsRolled * 0.15);
+        if (item.type === "overall") { rarityMult *= 1.8; }
         let prestigeMult = 1 + ((playerStats.prestigeCount || 0) * 0.02);
 
         if (selectedStat === "atk") item.bonusAtk += Math.ceil(randInt(1, 2) * stageScale * rarityMult * prestigeMult); 
@@ -4462,7 +4463,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             statLinesCount = 3; 
         } 
         else {
-            if (chosenType === "overall") { item.baseMaxHp = Math.ceil(randInt(30, 50) * stageScale * prestigeMult); }
+            if (chosenType === "overall") { item.baseMaxHp = Math.ceil(randInt(30, 50) * stageScale * prestigeMult * 1.8); }
             else if (chosenType === "chest" || chosenType === "leggings" || chosenType === "helmet") { 
                 if (Math.random() > 0.5) item.baseMaxHp = Math.ceil(randInt(10, 20) * stageScale * prestigeMult); else item.baseDef = Math.ceil(randInt(1, 3) * stageScale * prestigeMult); 
             }
@@ -4486,6 +4487,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
 
         pool.sort(() => Math.random() - 0.5);
         let rarityMult = isArt ? 1.45 : (1 + (statLinesCount * 0.15));
+        if (chosenType === "overall") { rarityMult *= 1.8; }
 
         for (let i = 0; i < statLinesCount; i++) {
             let selectedStat = pool[i % pool.length];
@@ -5488,12 +5490,24 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         // Resolve active set synergy counters and contextual parameters
         let setCounts = {};
         const eligibleSetSlots = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+        
+        let overallAdoptedSet = null;
+        if (equippedSlots.overall) {
+            overallAdoptedSet = (equippedSlots.helmet && getItemSetName(equippedSlots.helmet)) || 
+                                (equippedSlots.boots && getItemSetName(equippedSlots.boots)) || 
+                                (equippedSlots.weapon && getItemSetName(equippedSlots.weapon)) ||
+                                null;
+        }
+
         eligibleSetSlots.forEach(slot => {
             let item = equippedSlots[slot];
             if (item) {
                 let setName = getItemSetName(item);
+                if (slot === "overall" && overallAdoptedSet) {
+                    setName = overallAdoptedSet;
+                }
                 if (setName) {
-                    setCounts[setName] = (setCounts[setName] || 0) + 1;
+                    setCounts[setName] = (setCounts[setName] || 0) + (slot === "overall" ? 2 : 1);
                 }
             }
         });
@@ -5673,10 +5687,25 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 if (setName) {
                     let matchingCount = 0;
                     const setSlots = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+                    
+                    let overallAdoptedSet = null;
+                    if (equippedSlots.overall) {
+                        overallAdoptedSet = (equippedSlots.helmet && getItemSetName(equippedSlots.helmet)) || 
+                                            (equippedSlots.boots && getItemSetName(equippedSlots.boots)) || 
+                                            (equippedSlots.weapon && getItemSetName(equippedSlots.weapon)) ||
+                                            null;
+                    }
+
                     setSlots.forEach(sKey => {
                         let eqItem = equippedSlots[sKey];
-                        if (eqItem && getItemSetName(eqItem) === setName) {
-                            matchingCount++;
+                        if (eqItem) {
+                            let eqSetName = getItemSetName(eqItem);
+                            if (sKey === "overall" && overallAdoptedSet) {
+                                eqSetName = overallAdoptedSet;
+                            }
+                            if (eqSetName === setName) {
+                                matchingCount += (sKey === "overall" ? 2 : 1);
+                            }
                         }
                     });
                     if (matchingCount >= 2) {
@@ -6206,10 +6235,25 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 let setDef = SET_DEFINITIONS[setName];
                 let currentEquippedCount = 0;
                 const eligibleSetSlots = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+                
+                let overallAdoptedSet = null;
+                if (equippedSlots.overall) {
+                    overallAdoptedSet = (equippedSlots.helmet && getItemSetName(equippedSlots.helmet)) || 
+                                        (equippedSlots.boots && getItemSetName(equippedSlots.boots)) || 
+                                        (equippedSlots.weapon && getItemSetName(equippedSlots.weapon)) ||
+                                        null;
+                }
+
                 eligibleSetSlots.forEach(slot => {
                     let eqItem = equippedSlots[slot];
-                    if (eqItem && getItemSetName(eqItem) === setName) {
-                        currentEquippedCount++;
+                    if (eqItem) {
+                        let eqSetName = getItemSetName(eqItem);
+                        if (slot === "overall" && overallAdoptedSet) {
+                            eqSetName = overallAdoptedSet;
+                        }
+                        if (eqSetName === setName) {
+                            currentEquippedCount += (slot === "overall" ? 2 : 1);
+                        }
                     }
                 });
 
@@ -6264,9 +6308,64 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         return `<div class="tooltip-flex-container">${html}</div>`;
     }
 
+    function getMaxTemper(stars, type = "") {
+        let base = 3;
+        if (stars === "UNIQUE") base = 5;
+        else if (stars === 5) base = 15;
+        else if (stars === 4) base = 12;
+        else if (stars === 3) base = 9;
+        else if (stars === 2) base = 7;
+        else if (stars === 1) base = 5;
+        
+        if (type === "overall") {
+            if (stars === 5) return base + 5; // Max 20
+            if (stars === 4) return base + 4; // Max 16
+            if (stars === 3) return base + 3; // Max 12
+            if (stars === 2) return base + 2; // Max 9
+            if (stars === 1) return base + 2; // Max 7
+            return base + 1; // Max 4
+        }
+        return base;
+    }
+
+    function getCombinedEquippedTorso() {
+        let chest = equippedSlots.chest;
+        let leggings = equippedSlots.leggings;
+        if (!chest && !leggings) return null;
+        
+        let merged = {
+            id: "virtual_combined",
+            name: "Equipped Chest + Leggings",
+            type: "overall",
+            statsRolled: "UNIQUE",
+            temperLevel: 0,
+            stageLevel: 1,
+            atk: (chest?.atk || 0) + (leggings?.atk || 0),
+            maxHp: (chest?.maxHp || 0) + (leggings?.maxHp || 0),
+            def: (chest?.def || 0) + (leggings?.def || 0),
+            moveSpeed: (chest?.moveSpeed || 0) + (leggings?.moveSpeed || 0),
+            critChance: (chest?.critChance || 0) + (leggings?.critChance || 0),
+            critDamage: (chest?.critDamage || 0) + (leggings?.critDamage || 0),
+            block: (chest?.block || 0) + (leggings?.block || 0),
+            parry: (chest?.parry || 0) + (leggings?.parry || 0),
+            activeAttackSpeed: (chest?.activeAttackSpeed || 0) + (leggings?.activeAttackSpeed || 0),
+            idleAttackSpeed: (chest?.idleAttackSpeed || 0) + (leggings?.idleAttackSpeed || 0),
+            str: (chest?.str || 0) + (leggings?.str || 0),
+            dex: (chest?.dex || 0) + (leggings?.dex || 0),
+            int: (chest?.int || 0) + (leggings?.int || 0)
+        };
+        return merged;
+    }
+
     function getEquippedItemForComparison(type) {
-        if (type === "overall") return equippedSlots.overall || equippedSlots.chest || equippedSlots.leggings;
-        if (type === "chest" || type === "leggings") return equippedSlots[type] || equippedSlots.overall;
+        if (type === "overall") {
+            if (equippedSlots.overall) return equippedSlots.overall;
+            return getCombinedEquippedTorso();
+        }
+        if (type === "chest" || type === "leggings") {
+            if (equippedSlots.overall) return equippedSlots.overall;
+            return equippedSlots[type];
+        }
         return equippedSlots[type]; 
     }
 
@@ -6735,7 +6834,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let item = forgeSelectedItem;
         
         // Enforce maximum Temper level before allowing enchantments
-        let maxT = getMaxTemper(item.statsRolled);
+        let maxT = getMaxTemper(item.statsRolled, item.type);
         if (item.temperLevel < maxT) {
             pushHeaderToast(`Item must be fully Tempered first! (+${maxT})`, "#e74c3c");
             return;
@@ -6901,9 +7000,9 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         if (!forgeSelectedItem) return;
         let isArt = forgeSelectedItem.type === "artifact";
         
-        if (forgeMode === 'temper') {
-            let maxT = getMaxTemper(forgeSelectedItem.statsRolled); if (forgeSelectedItem.temperLevel >= maxT) return;
-            let costGold = getTemperGoldCost(forgeSelectedItem); 
+        // Enforce maximum Temper level before allowing enchantments
+        let maxT = getMaxTemper(item.statsRolled, item.type);
+        if (item.temperLevel < maxT) { 
             let scrapReqAmount = isArt ? 1 : 1 + Math.floor(forgeSelectedItem.temperLevel / 3);
             let scrapReq = getRequiredScrapForTemper(forgeSelectedItem.temperLevel + 1, isArt);
             
@@ -7147,7 +7246,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let previewItem = JSON.parse(JSON.stringify(item));
         
         if (forgeMode === 'temper') {
-            let maxT = getMaxTemper(item.statsRolled);
+            let maxT = getMaxTemper(item.statsRolled, item.type);
             if (item.temperLevel >= maxT) { html += `<div style="color:#e74c3c; font-weight:bold; text-align:center; padding: 20px 0;">MAXIMUM TEMPER LIMIT REACHED</div>`; } 
             else {
                 let costGold = getTemperGoldCost(item); let scrapReqAmount = item.type === "artifact" ? 1 : 1 + Math.floor(item.temperLevel / 3);
@@ -7240,7 +7339,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         } else if (forgeMode === 'enchant') {
             let maxEnchants = getMaxEnchants(item);
             let currentEnchants = item.totalEnchants || 0;
-            let maxT = getMaxTemper(item.statsRolled);
+            let maxT = getMaxTemper(item.statsRolled, item.type);
             let isFullyTempered = item.temperLevel >= maxT;
             
             if (maxEnchants === 0) {
@@ -7930,12 +8029,24 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let activeSetsHtml = [];
         let activeSetCounts = {};
         const checkSetSlots = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+        
+        let overallAdoptedSet = null;
+        if (equippedSlots.overall) {
+            overallAdoptedSet = (equippedSlots.helmet && getItemSetName(equippedSlots.helmet)) || 
+                                (equippedSlots.boots && getItemSetName(equippedSlots.boots)) || 
+                                (equippedSlots.weapon && getItemSetName(equippedSlots.weapon)) ||
+                                null;
+        }
+
         checkSetSlots.forEach(slot => {
             let item = equippedSlots[slot];
             if (item) {
                 let sName = getItemSetName(item);
+                if (slot === "overall" && overallAdoptedSet) {
+                    sName = overallAdoptedSet;
+                }
                 if (sName) {
-                    activeSetCounts[sName] = (activeSetCounts[sName] || 0) + 1;
+                    activeSetCounts[sName] = (activeSetCounts[sName] || 0) + (slot === "overall" ? 2 : 1);
                 }
             }
         });
