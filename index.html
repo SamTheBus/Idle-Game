@@ -9797,19 +9797,19 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 }
 
                  if (playerStats.prestigeApproachTimer === 0) {
-                    // Spawn Hooktail based on ascension counts (Reduced base health to 10k for better tactical pacing)
+                    // Spawn Hooktail based on Option 2 quadratic HP scaling (testing raw HP pool first)
                     let scaleVal = playerStats.prestigeCount || 0;
-                    let hp = 10000 * Math.pow(3, scaleVal);
-                    let dmg = 300 * Math.pow(1.6, scaleVal);
-                    let def = 40 + (60 * scaleVal);
+                    let hp = 25000 * Math.pow(1 + 1.5 * scaleVal, 2);
+                    let dmg = 250 * Math.pow(1.28, scaleVal);
+                    let def = 30 + (35 * scaleVal);
                     
                     mob = {
                         x: canvas.width - 230, y: 15, w: 180, h: 160,
                         type: "prestige_boss",
                         isRare: false,
-                        hp: hp, maxHp: hp,
-                        damage: dmg,
-                        def: def,
+                        hp: Math.floor(hp), maxHp: Math.floor(hp),
+                        damage: Math.floor(dmg),
+                        def: Math.floor(def),
                         flashTimer: 0,
                         isStopped: false
                     };
