@@ -535,19 +535,19 @@
                         <div style="color: #f1c40f; font-weight: bold; margin-bottom: 8px; font-size: 14px; text-align:center; border-bottom:1px solid #333; padding-bottom:5px;">🏰 Infinite Dungeons</div>
                         
                         <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; align-items:center;">
-                            <span style="color:#3498db; font-weight:bold;">⚔️ Equip: <span id="dk-equip">3</span>/3</span>
+                            <span style="color:#3498db; font-weight:bold;">⚔️ Equip: <span id="dk-equip">8</span>/8</span>
                             <span id="dt-equip" style="color:#aaa;">(Full)</span>
                         </div>
                         <button onclick="enterDungeon('equip')" style="width: 100%; background: #3498db; color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; margin-bottom:12px;">Enter Equipment Dungeon</button>
                         
                         <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; align-items:center;">
-                            <span style="color:#f1c40f; font-weight:bold;">💰 Gold: <span id="dk-gold">3</span>/3</span>
+                            <span style="color:#f1c40f; font-weight:bold;">💰 Gold: <span id="dk-gold">8</span>/8</span>
                             <span id="dt-gold" style="color:#aaa;">(Full)</span>
                         </div>
                         <button onclick="enterDungeon('gold')" style="width: 100%; background: #f1c40f; color: #111; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; margin-bottom:12px;">Enter Gold Mine Caverns</button>
                         
                         <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; align-items:center;">
-                            <span style="color:#2ecc71; font-weight:bold;">📦 Mats: <span id="dk-mat">3</span>/3</span>
+                            <span style="color:#2ecc71; font-weight:bold;">📦 Mats: <span id="dk-mat">8</span>/8</span>
                             <span id="dt-mat" style="color:#aaa;">(Full)</span>
                         </div>
                         <button onclick="enterDungeon('mat')" style="width: 100%; background: #2ecc71; color: #111; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; margin-bottom:12px;">Enter Toxic Material Pit</button>
@@ -1696,7 +1696,7 @@ window.onload = function() {
                 c.stroke();
                 
                 if (m.flashTimer === 0) {
-                    // Glossy specular highlight
+                    // Specular shine
                     c.fillStyle = "rgba(255, 255, 255, 0.6)";
                     c.beginPath();
                     c.ellipse(cx - wScale * 0.4, cy - hScale * 0.4, wScale * 0.25, hScale * 0.2, Math.PI / 4, 0, Math.PI * 2);
@@ -1752,6 +1752,172 @@ window.onload = function() {
                     c.fill();
                 }
             } 
+            else if (vType === "gold_slime") {
+                // Gold Slime: An incredibly shiny, metallic gold slime variant
+                let squish = Math.sin(Date.now() / 100) * 3.5;
+                let wScale = m.w / 2 + squish;
+                let hScale = m.h / 2 - squish;
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h - 10 + squish / 2;
+                
+                let slimeGrad = c.createRadialGradient(cx - 3, cy - 5, 2, cx, cy, m.w * 0.75);
+                if (m.flashTimer > 0) {
+                    slimeGrad.addColorStop(0, "#ffffff");
+                    slimeGrad.addColorStop(1, "#ffffff");
+                } else {
+                    slimeGrad.addColorStop(0, "#fff5b5"); // Bright gold highlight
+                    slimeGrad.addColorStop(1, "#d4af37"); // Rich metallic gold
+                }
+                
+                c.fillStyle = slimeGrad;
+                c.beginPath();
+                c.ellipse(cx, cy, wScale * 1.15, hScale * 0.95, 0, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+                
+                if (m.flashTimer === 0) {
+                    // Shiny metallic specular gleam
+                    c.fillStyle = "rgba(255, 255, 255, 0.75)";
+                    c.beginPath();
+                    c.ellipse(cx - wScale * 0.4, cy - hScale * 0.4, wScale * 0.25, hScale * 0.2, Math.PI / 4, 0, Math.PI * 2);
+                    c.fill();
+                    
+                    // Gilded star sparkle on its head
+                    c.fillStyle = "#ffffff";
+                    c.beginPath();
+                    c.moveTo(cx, cy - hScale * 0.95);
+                    c.lineTo(cx + 3, cy - hScale * 1.15);
+                    c.lineTo(cx, cy - hScale * 1.35);
+                    c.lineTo(cx - 3, cy - hScale * 1.15);
+                    c.closePath();
+                    c.fill();
+
+                    // Cute simple dot eyes
+                    c.fillStyle = "#1e272e";
+                    let eyeOffsetX = wScale * 0.3;
+                    let eyeOffsetY = hScale * 0.1;
+                    let eyeRadius = Math.max(1, hScale * 0.12);
+                    c.beginPath();
+                    c.arc(cx - eyeOffsetX, cy - eyeOffsetY, eyeRadius, 0, Math.PI * 2);
+                    c.arc(cx + eyeOffsetX, cy - eyeOffsetY, eyeRadius, 0, Math.PI * 2);
+                    c.fill();
+
+                    // Happy curve mouth
+                    c.strokeStyle = "#1e272e";
+                    c.lineWidth = 2;
+                    c.beginPath();
+                    c.arc(cx, cy + hScale * 0.05, wScale * 0.12, 0, Math.PI);
+                    c.stroke();
+                }
+            }
+            else if (vType === "gold_golem") {
+                // Gold Golem: Solid gold mechanical construction with shimmering rubies
+                let hover = Math.sin(Date.now() / 120) * 2;
+                let blockColor = m.flashTimer > 0 ? "#ffffff" : "#f1c40f"; 
+                let shadowColor = m.flashTimer > 0 ? "#ffffff" : "#b7950b"; 
+                let rubyColor = "#e74c3c"; 
+
+                c.fillStyle = shadowColor;
+                c.beginPath();
+                c.roundRect(m.x + 2, m.y + 10 + hover, m.w - 4, m.h - 10, [6]);
+                c.fill();
+                c.stroke();
+
+                c.fillStyle = blockColor;
+                c.beginPath();
+                c.roundRect(m.x + 4, m.y + 12 + hover, m.w - 8, m.h - 14, [4]);
+                c.fill();
+                c.stroke();
+
+                c.fillStyle = shadowColor;
+                c.beginPath(); c.rect(m.x + 6, m.y + hover, m.w - 12, 10); c.fill(); c.stroke();
+                
+                c.fillStyle = blockColor;
+                c.beginPath(); c.rect(m.x + 8, m.y + 2 + hover, m.w - 16, 8); c.fill(); c.stroke();
+
+                if (m.flashTimer === 0) {
+                    c.fillStyle = rubyColor;
+                    c.shadowBlur = 8;
+                    c.shadowColor = rubyColor;
+                    
+                    c.beginPath();
+                    c.moveTo(m.x + 8, m.y + 4 + hover);
+                    c.lineTo(m.x + 13, m.y + 7 + hover);
+                    c.lineTo(m.x + 8, m.y + 8 + hover);
+                    c.closePath();
+                    c.fill();
+                    c.stroke();
+
+                    c.beginPath();
+                    c.moveTo(m.x + m.w - 8, m.y + 4 + hover);
+                    c.lineTo(m.x + m.w - 13, m.y + 7 + hover);
+                    c.lineTo(m.x + m.w - 8, m.y + 8 + hover);
+                    c.closePath();
+                    c.fill();
+                    c.stroke();
+                    
+                    c.shadowBlur = 0; 
+                }
+
+                c.fillStyle = shadowColor;
+                c.beginPath(); c.rect(m.x - 4, m.y + 12 + hover, 5, 8); c.fill(); c.stroke();
+                c.beginPath(); c.rect(m.x + m.w - 1, m.y + 12 + hover, 5, 8); c.fill(); c.stroke();
+                
+                c.fillStyle = blockColor;
+                c.beginPath(); c.rect(m.x - 3, m.y + 13 + hover, 3, 6); c.fill(); c.stroke();
+                c.beginPath(); c.rect(m.x + m.w - 2, m.y + 13 + hover, 3, 6); c.fill(); c.stroke();
+
+                if (m.flashTimer === 0) {
+                    c.fillStyle = rubyColor;
+                    c.beginPath();
+                    c.arc(m.x + m.w / 2, m.y + m.h / 2 + 4 + hover, 4.5, 0, Math.PI * 2);
+                    c.fill();
+                    c.stroke();
+                }
+            }
+            else if (vType === "gilded_wyrmling") {
+                // Gilded Wyrmling: Stone serpent covered in high-gloss gold leafing (facing LEFT)
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h / 2 + Math.sin(Date.now() / 100) * 3;
+                
+                // Segments trailing to the right
+                for (let i = 3; i >= 0; i--) {
+                    let segX = cx + (i * 8);
+                    let segY = cy + Math.sin(Date.now() / 150 - i) * 5;
+                    c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#b7950b"; 
+                    c.beginPath();
+                    c.arc(segX, segY, 8.5 - i * 1.3, 0, Math.PI * 2);
+                    c.fill();
+                    c.stroke();
+
+                    if (m.flashTimer === 0) {
+                        c.fillStyle = "#fff2a3";
+                        c.beginPath();
+                        c.arc(segX - 1, segY - 1, (8.5 - i * 1.3) * 0.45, 0, Math.PI * 2);
+                        c.fill();
+                    }
+                }
+                
+                // Head Segment facing LEFT
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#f1c40f";
+                c.beginPath();
+                c.arc(cx - 4, cy, 8.5, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+                
+                if (m.flashTimer === 0) {
+                    c.fillStyle = "#ffffff";
+                    c.beginPath();
+                    c.arc(cx - 6, cy - 2, 2.2, 0, Math.PI * 2);
+                    c.fill();
+                    c.stroke();
+                    
+                    c.fillStyle = "#000000";
+                    c.beginPath();
+                    c.arc(cx - 6.5, cy - 2, 1, 0, Math.PI * 2);
+                    c.fill();
+                }
+            }
             else if (vType === "sprout") {
                 // Orange Mushroom: Stout cream stem with a glossy oversized orange dome cap
                 let squish = Math.sin(Date.now() / 110) * 2.5;
@@ -3522,7 +3688,7 @@ window.onload = function() {
         currentHp: 100, coins: 0, stage: 1, maxStage: 1, killCount: 0, totalLifetimeKills: 0, targetsRequired: 5,
         isBossMode: false, isFarmingLoop: false, isUberBoss: false, frenzyTimer: 0, frenzyKillCount: 0, adrenalineTimer: 0, usedSecondWind: false,
         isDungeonMode: false, currentDungeon: null, dungeonWave: 1, 
-        equipKeys: 3, goldKeys: 3, matKeys: 3, nextEquipKeyTime: 0, nextGoldKeyTime: 0, nextMatKeyTime: 0,
+        equipKeys: 8, goldKeys: 8, matKeys: 8, nextEquipKeyTime: 0, nextGoldKeyTime: 0, nextMatKeyTime: 0,
         shopRefreshTime: 0, shopItems: [],
         
         atkPotionTimer: 0, hpPotionTimer: 0, defPotionTimer: 0, hastePotionTimer: 0,
@@ -4909,12 +5075,12 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                     keyTypes.forEach(k => {
                         let count = k + 'Keys';
                         let time = 'next' + k.charAt(0).toUpperCase() + k.slice(1) + 'KeyTime';
-                        if (playerStats[count] < 3) {
+                        if (playerStats[count] < 8) {
                             let keyTime = playerStats[time] || now;
                             let msSinceNextKey = now - keyTime;
                             if (msSinceNextKey >= 0) {
                                 let keysEarned = 1 + Math.floor(msSinceNextKey / 3600000);
-                                playerStats[count] = Math.min(3, playerStats[count] + keysEarned);
+                                playerStats[count] = Math.min(8, playerStats[count] + keysEarned);
                                 playerStats[time] = now + (3600000 - (msSinceNextKey % 3600000));
                             }
                         }
@@ -5717,7 +5883,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         saveCurrentActivityPeak();
 
         playerStats[countField]--;
-        if (playerStats[countField] === 2) playerStats[timeField] = Date.now() + 3600000;
+        if (playerStats[countField] === 7) playerStats[timeField] = Date.now() + 3600000;
         
         playerStats.isDungeonMode = true; 
         playerStats.isCrucibleMode = false;
@@ -6492,8 +6658,13 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 let hp = Math.floor(100 * scale);
                 mob = { x: 750, y: 90, w: 45, h: 75, type: "dungeon_boss", isCrucible: true, isRare: false, hp: hp, maxHp: hp, damage: Math.floor((3 + (3 * scale)) * 5.0), flashTimer: 0, isStopped: false };
             } else {
+                // Crucible Multidimensional Mashup: Randomly selects from all visual mobs in-game
+                let cruciblePool = ["slime", "sprout", "thorn_wyrm", "golem", "wyrmling", "gargoyle", "magma_elemental", "lava_serpent", "hell_bat", "marsh_ghost", "swamp_basilisk", "toxic_fly", "void_orb", "void_crawler", "void_spectre"];
+                let chosenVisual = cruciblePool[Math.floor(Math.random() * cruciblePool.length)];
+                let isFlying = ["gargoyle", "toxic_fly", "marsh_ghost", "hell_bat", "void_spectre"].includes(chosenVisual);
+                
                 let hp = Math.floor(18 * scale);
-                mob = { x: 750, y: 150, w: 25, h: 30, type: "mob", isCrucible: true, isRare: false, visualTier: 4, hp: hp, maxHp: hp, damage: Math.floor((2 + scale) * 4.0), flashTimer: 0, isStopped: false };
+                mob = { x: 750, y: isFlying ? 100 : 145, w: 25, h: 30, type: "mob", visualType: chosenVisual, isCrucible: true, isRare: false, hp: hp, maxHp: hp, damage: Math.floor((2 + scale) * 4.0), flashTimer: 0, isStopped: false };
             }
             return;
         }
@@ -6514,8 +6685,34 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 let hp = 70 * scale * hpScale;
                 mob = { x: 750, y: 90, w: 50, h: 90, type: "dungeon_boss", isRare: false, hp: Math.floor(hp), maxHp: Math.floor(hp), damage: Math.floor((2.5 + (3 * scale)) * 5.0), flashTimer: 0, isStopped: false };
             } else {
-                let isBat = Math.random() > 0.5;
-                mob = { x: 750, y: isBat ? 100 : 160, w: 25, h: 25, type: isBat ? "bat" : "crawler", isRare: false, hp: Math.floor(16 * scale * hpScale), maxHp: Math.floor(16 * scale * hpScale), damage: Math.floor((1.5 + (1 * scale)) * 4.0), flashTimer: 0, isStopped: false };
+                // Specialized Dungeons spawn theme-appropriate cel-shaded visual types
+                let dType = playerStats.currentDungeon || 'gold';
+                let dPool = [];
+                if (dType === 'equip') {
+                    dPool = ["golem", "gargoyle", "wyrmling"];
+                } else if (dType === 'gold') {
+                    dPool = ["gold_slime", "gold_golem", "gilded_wyrmling"];
+                } else { // Toxic Pit
+                    dPool = ["swamp_basilisk", "toxic_fly", "marsh_ghost"];
+                }
+                
+                let chosenVisual = dPool[Math.floor(Math.random() * dPool.length)];
+                let isFlying = ["gargoyle", "toxic_fly", "marsh_ghost", "gilded_wyrmling", "wyrmling"].includes(chosenVisual);
+                
+                mob = { 
+                    x: 750, 
+                    y: isFlying ? 100 : 145, 
+                    w: 25, 
+                    h: 40, 
+                    type: "mob", 
+                    visualType: chosenVisual, 
+                    isRare: false, 
+                    hp: Math.floor(16 * scale * hpScale), 
+                    maxHp: Math.floor(16 * scale * hpScale), 
+                    damage: Math.floor((1.5 + (1 * scale)) * 4.0), 
+                    flashTimer: 0, 
+                    isStopped: false 
+                };
             }
         } else {
             let tier = getStageTier();
@@ -9281,14 +9478,14 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         keyTypes.forEach(k => {
             let count = k + 'Keys'; 
             let time = 'next' + k.charAt(0).toUpperCase() + k.slice(1) + 'KeyTime';
-            if (playerStats[count] < 3) {
+            if (playerStats[count] < 8) {
                 if (!playerStats[time]) { 
                     playerStats[time] = now + 3600000; 
                 } else if (now >= playerStats[time]) {
                     let msOver = now - playerStats[time];
                     let keysEarned = 1 + Math.floor(msOver / 3600000);
-                    playerStats[count] = Math.min(3, playerStats[count] + keysEarned);
-                    if (playerStats[count] < 3) {
+                    playerStats[count] = Math.min(8, playerStats[count] + keysEarned);
+                    if (playerStats[count] < 8) {
                         playerStats[time] = now + (3600000 - (msOver % 3600000));
                     } else {
                         playerStats[time] = 0; // Timer reset at limit
@@ -9303,7 +9500,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 let time = 'next' + k.charAt(0).toUpperCase() + k.slice(1) + 'KeyTime';
                 let timerEl = document.getElementById('dt-' + k); 
                 let keysEl = document.getElementById('dk-' + k);
-                if (playerStats[count] < 3) {
+                if (playerStats[count] < 8) {
                     // Prevent visual negative desync on timer calculations
                     let msLeft = Math.max(0, playerStats[time] - now); 
                     let mins = Math.floor(msLeft / 60000); 
