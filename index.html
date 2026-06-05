@@ -1535,22 +1535,23 @@ window.onload = function() {
     };
 
     const MYSTICAL_STOCK = [
-        { name: "SP Reset Scroll", cost: 2500, currency: "Gold", color: "#9b59b6", desc: "Refunds all spent Skill Points from the Attribute Matrix." },
-        { name: "Attack Elixir", cost: 100, currency: "Gold", color: "#2ecc71", desc: "Increases your Attack power by 10% temporarily." },
-        { name: "Greater Attack Elixir", cost: 1000, currency: "Gold", color: "#27ae60", desc: "Increases your Attack power by 20% temporarily." },
-        { name: "Supernal Attack Elixir", cost: 10000, currency: "Gold", color: "#1e824c", desc: "Increases your Attack power by 35% temporarily." },
-        { name: "Vitality Elixir", cost: 100, currency: "Gold", color: "#e74c3c", desc: "Increases your Max HP by 10% temporarily." },
-        { name: "Greater Vitality Elixir", cost: 1000, currency: "Gold", color: "#c0392b", desc: "Increases your Max HP by 20% temporarily." },
-        { name: "Supernal Vitality Elixir", cost: 10000, currency: "Gold", color: "#962d22", desc: "Increases your Max HP by 35% temporarily." },
-        { name: "Armored Elixir", cost: 100, currency: "Gold", color: "#3498db", desc: "Increases your Defense by 10% temporarily." },
-        { name: "Greater Armored Elixir", cost: 1000, currency: "Gold", color: "#2980b9", desc: "Increases your Defense by 20% temporarily." },
-        { name: "Supernal Armored Elixir", cost: 10000, currency: "Gold", color: "#1f3a52", desc: "Increases your Defense by 35% temporarily." },
-        { name: "Haste Elixir", cost: 100, currency: "Gold", color: "#f1c40f", desc: "Increases your Attack and Move Speed temporarily." },
-        { name: "Greater Haste Elixir", cost: 1000, currency: "Gold", color: "#f39c12", desc: "Significantly increases your Attack and Move Speed temporarily." },
-        { name: "Supernal Haste Elixir", cost: 10000, currency: "Gold", color: "#d35400", desc: "Cosmically increases your Attack and Move Speed temporarily." },
-        { name: "Gacha Key", cost: 5, currency: "Luminous Soul", color: "#f1c40f", desc: "Exchange 5 rare Luminous Souls for 1 Gacha Key." },
-        { name: "Astral Essence", cost: 10, currency: "Luminous Soul", color: "#9b59b6", desc: "Exchange 10 rare Luminous Souls for 1 Astral Essence." },
-        { name: "Catalyst Core", cost: 15, currency: "Astral Shards", color: "#2ecc71", desc: "Exchange 15 Astral Shards earned in the Crucible for 1 Catalyst Core." }
+        { name: "SP Reset Scroll", cost: 2500, currency: "Gold", color: "#9b59b6", desc: "Refunds spent Skill Points from the Attribute Matrix." },
+        { name: "PP Reset Scroll", cost: 5000, currency: "Gold", color: "#e67e22", desc: "Refunds spent Prestige Points from the Ascension Altar." },
+        { name: "Attack Elixir", cost: 100, currency: "Gold", color: "#2ecc71", desc: "+10% Attack. Base duration: 5 minutes (scales with INT)." },
+        { name: "Greater Attack Elixir", cost: 1000, currency: "Gold", color: "#27ae60", desc: "+20% Attack. Base duration: 5 minutes (scales with INT)." },
+        { name: "Supernal Attack Elixir", cost: 10000, currency: "Gold", color: "#1e824c", desc: "+35% Attack. Base duration: 5 minutes (scales with INT)." },
+        { name: "Vitality Elixir", cost: 100, currency: "Gold", color: "#e74c3c", desc: "+10% Max HP. Base duration: 5 minutes (scales with INT)." },
+        { name: "Greater Vitality Elixir", cost: 1000, currency: "Gold", color: "#c0392b", desc: "+20% Max HP. Base duration: 5 minutes (scales with INT)." },
+        { name: "Supernal Vitality Elixir", cost: 10000, currency: "Gold", color: "#962d22", desc: "+35% Max HP. Base duration: 5 minutes (scales with INT)." },
+        { name: "Armored Elixir", cost: 100, currency: "Gold", color: "#3498db", desc: "+10% Defense. Base duration: 5 minutes (scales with INT)." },
+        { name: "Greater Armored Elixir", cost: 1000, currency: "Gold", color: "#2980b9", desc: "+20% Defense. Base duration: 5 minutes (scales with INT)." },
+        { name: "Supernal Armored Elixir", cost: 10000, currency: "Gold", color: "#1f3a52", desc: "+35% Defense. Base duration: 5 minutes (scales with INT)." },
+        { name: "Haste Elixir", cost: 100, currency: "Gold", color: "#f1c40f", desc: "Boosts Move Speed & Atk CD. Base duration: 5 minutes (scales with INT)." },
+        { name: "Greater Haste Elixir", cost: 1000, currency: "Gold", color: "#f39c12", desc: "Sizable Move & Atk Speed boost. Base duration: 5 minutes (scales with INT)." },
+        { name: "Supernal Haste Elixir", cost: 10000, currency: "Gold", color: "#d35400", desc: "Massive Move & Atk Speed boost. Base duration: 5 minutes (scales with INT)." },
+        { name: "Gacha Key", cost: 5, currency: "Luminous Soul", color: "#f1c40f", desc: "Trade 5 rare Luminous Souls for 1 Vending Gacha Key." },
+        { name: "Astral Essence", cost: 10, currency: "Luminous Soul", color: "#9b59b6", desc: "Trade 10 rare Luminous Souls for 1 Astral Essence." },
+        { name: "Catalyst Core", cost: 15, currency: "Astral Shards", color: "#2ecc71", desc: "Trade 15 Astral Crucible Shards for 1 Catalyst Core." }
     ];
 
     /* ==========================================================================
@@ -4897,27 +4898,38 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 
                 // Normal monster farming rewards
                 for (let k = 0; k < killsNeededForStage; k++) {
-                        let isRare = Math.random() < p.rareSpawn;
-                        let baseGold = isRare ? Math.floor((2 + Math.pow(1.08, currentStage) * 0.65) * 4) : Math.floor(2 + Math.pow(1.08, currentStage) * 0.65);
-                        totalGold += Math.ceil(baseGold * p.gold);
-                        // Standard campaign monster scaling adjustments: 5 base + 5/stage (15 base + 15/stage if Rare)
-                        totalXp += isRare ? (15 + (currentStage * 15)) : (5 + (currentStage * 5));
-                        
-                        let dropR = isRare ? 0.15 : 0.045;
-            if (Math.random() < (dropR * p.drop * state.efficiency)) {
-                rollOfflineItem(false, currentStage, isRare);
-            }
-                    }
+                    let isRare = Math.random() < p.rareSpawn;
+                    let baseGold = isRare ? Math.floor((2 + Math.pow(1.08, currentStage) * 0.65) * 4) : Math.floor(2 + Math.pow(1.08, currentStage) * 0.65);
+                    totalGold += Math.ceil(baseGold * p.gold);
+                    // Standard campaign monster scaling adjustments: 5 base + 5/stage (15 base + 15/stage if Rare)
+                    totalXp += isRare ? (15 + (currentStage * 15)) : (5 + (currentStage * 5));
                     
-                    // Boss clearance rewards
-                    let baseBossGold = Math.floor(15 * Math.pow(1.08, currentStage));
-                    totalGold += Math.ceil(baseBossGold * p.gold);
-                    // Standard campaign boss scaling adjustments: 25 base + 25/stage
-                    totalXp += 25 + (currentStage * 25);
+                    let dropR = isRare ? 0.15 : 0.045;
+                    if (Math.random() < (dropR * p.drop * state.efficiency)) {
+                        rollOfflineItem(false, currentStage, isRare);
+                    }
+                    // Roll silent offline potion drops (accumulated in summary card)
+                    let rolledPot = rollPotionDrop(false, isRare, true);
+                    if (rolledPot) {
+                        recordScrapGained(rolledPot, 1);
+                    }
+                }
+                    
+                // Boss clearance rewards
+                let baseBossGold = Math.floor(15 * Math.pow(1.08, currentStage));
+                totalGold += Math.ceil(baseBossGold * p.gold);
+                // Standard campaign boss scaling adjustments: 25 base + 25/stage
+                totalXp += 25 + (currentStage * 25);
                 
                 if (Math.random() < (0.25 * p.drop * state.efficiency)) {
                     rollOfflineItem(true, currentStage, false);
                 }
+                // Roll silent offline boss potion drops
+                let rolledBossPot = rollPotionDrop(true, false, true);
+                if (rolledBossPot) {
+                    recordScrapGained(rolledBossPot, 1);
+                }
+                
                 if (Math.random() < 0.40) recordScrapGained("Ancient Core", 1);
                 if (Math.random() < 0.10) recordScrapGained("Eridium Shard", 1);
                 if (Math.random() < 0.05) recordScrapGained("Gacha Key", 1); // Only drop from bosses offline
@@ -4925,31 +4937,6 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 currentStage++;
                 stagesGained++;
                 stagesAdvancedCount++;
-                playerStats.killCount = 0;
-            } else {
-                // Simulating partial kills on the final stalled stage
-                let partialKills = Math.floor(remainingSeconds / cycleTime);
-                if (partialKills > 0) {
-                    totalKills += partialKills;
-                    let elapsedForKills = partialKills * cycleTime;
-                    elapsedSeconds += elapsedForKills;
-                    remainingSeconds -= elapsedForKills;
-                    
-                    for (let k = 0; k < partialKills; k++) {
-                        let isRare = Math.random() < p.rareSpawn;
-                        let baseGold = isRare ? Math.floor((2 + Math.pow(1.08, currentStage) * 0.65) * 4) : Math.floor(2 + Math.pow(1.08, currentStage) * 0.65);
-                        totalGold += Math.ceil(baseGold * p.gold);
-                        // Standard campaign monster scaling adjustments: 5 base + 5/stage (15 base + 15/stage if Rare)
-                        totalXp += isRare ? (15 + (currentStage * 15)) : (5 + (currentStage * 5));
-                        
-                        let dropR = isRare ? 0.15 : 0.045;
-                        if (Math.random() < (dropR * p.drop * state.efficiency)) {
-                            rollOfflineItem(false, currentStage, isRare);
-                        }
-                    }
-                }
-                remainingSeconds = 0;
-            }
         }
         
         // Write back post-decay buff values
@@ -5150,6 +5137,13 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             scrapsListHtml = scrapKeys.map(key => {
                 let color = key.includes("Scrap") ? "#3498db" : (key.includes("Soul") ? "#ffb6c1" : "#9b59b6");
                 if (key === "Eridium Shard") color = "#8e44ad";
+                // Distinct styling for potion rewards in the offline card
+                if (key.includes("Attack Elixir")) color = "#2ecc71";
+                else if (key.includes("Vitality Elixir")) color = "#e74c3c";
+                else if (key.includes("Armored Elixir")) color = "#3498db";
+                else if (key.includes("Haste Elixir")) color = "#f1c40f";
+                else if (key === "PP Reset Scroll") color = "#e67e22";
+                
                 return `<div class="bag-item" style="background:#111; border: 1px solid #222; padding: 5px 10px; border-radius: 3px; font-size: 11px; display:inline-block; margin: 3px;">
                     <span style="color:#aaa;">${key}:</span> <strong style="color:${color};">+${scraps[key].toLocaleString()}</strong>
                 </div>`;
@@ -5904,6 +5898,25 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             pushLog("<span style='color:#3498db; font-weight:bold;'>[USE] Used SP Reset Scroll. All Attribute Matrix SP refunded!</span>");
             pushHeaderToast("🔮 Attribute SP Reset Successfully!", "#3498db");
         } 
+        else if (itemName === "PP Reset Scroll") {
+            let upgrades = playerStats.prestigeUpgrades || { bag: 0, gold: 0, exp: 0, drop: 0 };
+            let totalRefund = 0;
+            for (let key in upgrades) {
+                totalRefund += upgrades[key];
+                upgrades[key] = 0;
+            }
+            if (totalRefund === 0) {
+                pushHeaderToast("No PP allocated to reset!", "#e74c3c");
+                return;
+            }
+            playerStats.prestigePoints += totalRefund;
+            inventory.USE[itemName]--;
+            if (inventory.USE[itemName] === 0) delete inventory.USE[itemName];
+            
+            pushLog("<span style='color:#e67e22; font-weight:bold;'>[USE] Used PP Reset Scroll. All Ascension upgrades refunded!</span>");
+            pushHeaderToast("🔮 Prestige Points Reset Successfully!", "#e67e22");
+            renderPrestigeTab();
+        }
         else if (itemName === "Attack Elixir") {
             playerStats.atkPotionTimer = finalDuration; 
             playerStats.atkPotionStrength = 0.10;
@@ -7467,7 +7480,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         if (item.type === "subweapon" && item.subType) {
             labelDisplay = `SUBWEAPON (${item.subType.toUpperCase()})`;
         }
-        let reqLvl = Math.max(1, ((item.stageLevel || 1) - 1) * 5);
+        let reqLvl = Math.max(1, ((item.stageLevel || 1) - 1) * 5 - (playerStats.prestigeCount || 0) * 2);
         let subtitle = item.type === "artifact" ? "Unique Boss Trophy Slot" : `${labelDisplay} | <span style="color:${tierColor}; font-weight:bold;">${tierDisplay}</span>`;
         if (reqLvl > 1) {
             let reqColor = playerStats.level >= reqLvl ? "#2ecc71" : "#e74c3c";
@@ -7958,8 +7971,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         if (index === -1) return;
         let item = isArtifactSack ? inventory.ARTIFACT[index] : inventory.EQUIP[index];
 
-        // Gated Equipment Level Locks
-        let reqLvl = Math.max(1, ((item.stageLevel || 1) - 1) * 5);
+        // Gated Equipment Level Locks (Attuned by Prestige Heritage)
+        let reqLvl = Math.max(1, ((item.stageLevel || 1) - 1) * 5 - (playerStats.prestigeCount || 0) * 2);
         if (playerStats.level < reqLvl) {
             pushHeaderToast(`🔒 Requires Level ${reqLvl} to equip!`, "#e74c3c");
             return;
@@ -8693,10 +8706,41 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     /* ==========================================================================
        10. COMBAT RESOLUTION & WAVES AUDIT
        ========================================================================== */
+    window.rollPotionDrop = function(isBoss, isRare, silent = false) {
+        // Highly calibrated drop rates to prevent inventory flooding (0.02% common, 0.15% rare, 1.5% boss)
+        let dropChance = 0.0002;
+        if (isRare) dropChance = 0.0015;
+        if (isBoss) dropChance = 0.015;
+        
+        if (Math.random() >= dropChance) return null;
+        
+        // Roll for quality tier (Supernal is exceptionally legendary)
+        let tierRoll = Math.random() * 100;
+        let tierPrefix = "";
+        if (tierRoll < 2) tierPrefix = "Supernal ";      // 2% of drops
+        else if (tierRoll < 15) tierPrefix = "Greater "; // 13% of drops
+        
+        const types = ["Attack Elixir", "Vitality Elixir", "Armored Elixir", "Haste Elixir"];
+        let chosenType = tierPrefix + types[Math.floor(Math.random() * types.length)];
+        
+        if (!inventory.USE[chosenType]) inventory.USE[chosenType] = 0;
+        inventory.USE[chosenType]++;
+        
+        if (!silent) {
+            pushLog(`<span style='color:#2ecc71; font-weight:bold;'>[DROP]</span> Defeated target and found a rare <span style='color:#2ecc71;'>${chosenType}</span>! Added to Use sack.`);
+            pushToast(chosenType, null, "#2ecc71", true, 1, `🧪 Found: <span style="color:#2ecc71;">${chosenType}</span>`);
+            renderInventory();
+        }
+        return chosenType;
+    };
+
     function handleMobDeath() {
         effects = effects.filter(e => !e.isCumulative);
         let p = resolvePlayerStats(); 
         let isBoss = (mob.type === "boss" || mob.type === "dungeon_boss" || mob.type === "dungeon_miniboss" || mob.type === "rift_guardian");
+        
+        // Trigger potion drop rolls
+        window.rollPotionDrop(isBoss, mob && mob.isRare);
         
         // Void Core Siphon-Heal Check on Rare Defeat
         if (mob && mob.isRare && checkArtifactTrait("void_pull")) {
@@ -9516,7 +9560,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                     typeText = `${item.type.toUpperCase()} (${item.subType.toUpperCase()})`;
                 }
                 let comparisonBadge = getComparisonDeltaBadge(item);
-                let reqLvl = Math.max(1, ((item.stageLevel || 1) - 1) * 5);
+                let reqLvl = Math.max(1, ((item.stageLevel || 1) - 1) * 5 - (playerStats.prestigeCount || 0) * 2);
                 let lockWarning = "";
                 let disabledAttr = "";
                 if (playerStats.level < reqLvl) {
@@ -9547,7 +9591,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                     let lockBg = item.locked ? "#e74c3c" : "#7f8c8d";
                     let lockIcon = item.locked ? "🔒" : "🔓";
                     
-                    let reqLvl = Math.max(1, ((item.stageLevel || 1) - 1) * 5);
+                    let reqLvl = Math.max(1, ((item.stageLevel || 1) - 1) * 5 - (playerStats.prestigeCount || 0) * 2);
                     let lockWarning = "";
                     let disabledAttr = "";
                     if (playerStats.level < reqLvl) {
@@ -9597,6 +9641,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             let icon = "🍶";
 
             if (key === "SP Reset Scroll") { bg = "rgba(155, 89, 182, 0.25)"; border = "#9b59b6"; icon = "📜"; }
+            else if (key === "PP Reset Scroll") { bg = "rgba(230, 126, 34, 0.25)"; border = "#e67e22"; icon = "📜"; }
             else if (key.includes("Attack")) { bg = "rgba(46, 204, 113, 0.25)"; border = "#2ecc71"; icon = "🧪"; }
             else if (key.includes("Vitality")) { bg = "rgba(231, 76, 60, 0.25)"; border = "#e74c3c"; icon = "🧪"; }
             else if (key.includes("Armored")) { bg = "rgba(52, 152, 219, 0.25)"; border = "#3498db"; icon = "🧪"; }
