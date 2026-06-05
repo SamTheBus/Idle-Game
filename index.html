@@ -8359,9 +8359,9 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 let goldColor = playerStats.coins >= costGold ? "#f1c40f" : "#e74c3c"; let scrapColor = playerScrap >= scrapReqAmount ? "#bdc3c7" : "#e74c3c";
                 
                 previewItem.temperLevel++;
-                applyTemperUpgrades(previewItem, false);
-                
-                html += `<div style="font-size:11px; margin-bottom:10px; color:#aaa;">Temper Cap: <span style="color:#fff;">${item.temperLevel} / ${maxT}</span></div>`;
+                    applyTemperUpgrades(previewItem, item.type === "artifact");
+                    
+                    html += `<div style="font-size:11px; margin-bottom:10px; color:#aaa;">Temper Cap: <span style="color:#fff;">${item.temperLevel} / ${maxT}</span></div>`;
                 let pct = (item.temperLevel / maxT) * 100;
                 html += `<div class="forge-progress-bg"><div class="forge-progress-fill" style="width:${pct}%"></div></div>`;
                 html += `<div style="font-size:11px; color:${goldColor}; margin-bottom:3px;">• ${costGold.toLocaleString()} Gold Required</div>`;
@@ -8479,19 +8479,19 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         }
         
         if (forgeMode === 'tier' && item.statsRolled < 5) {
-            previewHtml = `<div style="margin-top:15px; padding:10px; background:#111; border:1px dashed #f1c40f; border-radius:4px; font-size:11px; color:#ccc; text-align:center;">
-                * Star Tier UP preserves current modifiers, increases base multipliers, and unlocks <b>1 completely new random attribute parameter</b>!
-            </div>`;
-        } else if (forgeMode === 'enchant' && item.temperLevel >= getMaxTemper(item.statsRolled) && item.totalEnchants < getMaxEnchants(item) && getMaxEnchants(item) > 0) {
-            previewHtml = `<div style="margin-top:15px; padding:10px; background:#111; border:1px dashed #9b59b6; border-radius:4px; font-size:11px; color:#ccc; text-align:center;">
-                * Enchanting will permanently snapshot pre-enchant stats, then select 1 parameter at random to scale by <b>+25%</b>.
-            </div>`;
-        } else if (forgeMode === 'temper' && item.temperLevel < getMaxTemper(item.statsRolled)) {
-            previewHtml = `<div style="margin-top:15px; padding:10px; background:#111; border:1px solid #333; border-radius:4px;">
-                <div style="color:#3498db; font-weight:bold; font-size:12px; margin-bottom:8px; border-bottom:1px solid #222; padding-bottom:4px;">Awakening Preview</div>
-                ${generateItemCardHtml(previewItem, item, false)}
-            </div>`;
-        }
+                previewHtml = `<div style="margin-top:15px; padding:10px; background:#111; border:1px dashed #f1c40f; border-radius:4px; font-size:11px; color:#ccc; text-align:center;">
+                    * Star Tier UP preserves current modifiers, increases base multipliers, and unlocks <b>1 completely new random attribute parameter</b>!
+                </div>`;
+            } else if (forgeMode === 'enchant' && item.temperLevel >= getMaxTemper(item.statsRolled, item.type) && item.totalEnchants < getMaxEnchants(item) && getMaxEnchants(item) > 0) {
+                previewHtml = `<div style="margin-top:15px; padding:10px; background:#111; border:1px dashed #9b59b6; border-radius:4px; font-size:11px; color:#ccc; text-align:center;">
+                    * Enchanting will permanently snapshot pre-enchant stats, then select 1 parameter at random to scale by <b>+25%</b>.
+                </div>`;
+            } else if (forgeMode === 'temper' && item.temperLevel < getMaxTemper(item.statsRolled, item.type)) {
+                previewHtml = `<div style="margin-top:15px; padding:10px; background:#111; border:1px solid #333; border-radius:4px;">
+                    <div style="color:#3498db; font-weight:bold; font-size:12px; margin-bottom:8px; border-bottom:1px solid #222; padding-bottom:4px;">Awakening Preview</div>
+                    ${generateItemCardHtml(previewItem, item, false)}
+                </div>`;
+            }
         
         detailEl.innerHTML = html + previewHtml;
     }
