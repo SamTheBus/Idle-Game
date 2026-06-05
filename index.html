@@ -2885,6 +2885,7 @@ window.onload = function() {
     let fgScenery = [];
     let activeFairies = [];
     let damageHistory = [];
+    let projectiles = []; // Track active unique weapon projectiles
     
     let groundScroll = 0;
     let logicClock = 0;
@@ -4539,7 +4540,24 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             }
         }
 
-        item.name = buildProceduralName(item);
+        // Phoenix Ignition Staff unique transformation
+        if (chosenType === "weapon" && statLinesCount === 5 && !isArt) {
+            // 15% chance to roll the Unique Phoenix Staff instead of a standard Mythic sword
+            if (Math.random() < 0.15) {
+                item.isUniqueStaff = true;
+                item.noun = "Phoenix Staff";
+                item.setName = null; // No set bonus
+                item.name = `🔥 Phoenix Ignition Staff (Lv. ${stageScale})`;
+                item.desc = "Launches penetrating fireballs that deal 25% Attack damage (3s Cooldown).";
+            }
+        }
+
+        if (!item.isUniqueStaff) {
+            item.name = buildProceduralName(item);
+        }
+
+        return item;
+    }
 
         return item;
     }
@@ -7738,8 +7756,9 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let p = resolvePlayerStats(); 
         playerStats.currentHp = p.maxHp; 
         
-        // Clear active mob to guarantee a clean respawn state in the retreated stage
+        // Clear active mob and projectiles to guarantee a clean respawn state in the retreated stage
         mob = null;
+        projectiles = [];
         hero.x = 40; // Reset hero position from Hooktail's right edge
         
         // Reset Run Statistics for the next adventure
@@ -8536,6 +8555,98 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         if (playerStats.hastePotionTimer > 0) playerStats.hastePotionTimer--;
         
         logicClock++;
+
+        // Initialize unique staff variables safely if missing
+        if (playerStats.fireballCooldown === undefined) playerStats.fireballCooldown = 0;
+
+        // Decrement staff skill cooldown
+        if (playerStats.fireballCooldown > 0) playerStats.fireballCooldown--;
+
+        // Trigger fireball casting check
+        if (equippedSlots.weapon && equippedSlots.weapon.isUniqueStaff && playerStats.fireballCooldown <= 0 && mob && mob.hp > 0) {
+            projectiles.push({
+                x: hero.x + 35,
+                y: hero.y + 10,
+                r: 10,
+                hitMobs: [],
+                pulseOffset: Math.random() * 10
+            });
+            playerStats.fireballCooldown = 180; // 3 seconds at 60fps
+            SoundManager.play('spell'); // Play mystical cast sound
+            
+            // Fire particles at casting source
+            for (let i = 0; i < 8; i++) {
+                particles.push({
+                    x: hero.x + 35,
+                    y: hero.y + 10,
+                    vx: randFloat(1, 3),
+                    vy: randFloat(-2, 2),
+                    radius: randFloat(1.5, 3),
+                    color: "#e67e22",
+                    alpha: 1,
+                    life: randInt(15, 25)
+                });
+            }
+        }
+
+        // Update active projectiles
+        for (let i = projectiles.length - 1; i >= 0; i--) {
+            let proj = projectiles[i];
+            
+            // Speed scales to always travel slightly faster than current background movement speed
+            let projSpeed = scrollSpeed + 4.5;
+            proj.x += projSpeed;
+
+            // Spawn elegant fire particle trail
+            if (Math.random() < 0.4) {
+                particles.push({
+                    x: proj.x - 5,
+                    y: proj.y + Math.sin(logicClock * 0.2) * 5,
+                    vx: -randFloat(0.5, 1.5),
+                    vy: randFloat(-1, 1),
+                    radius: randFloat(2, 4),
+                    color: Math.random() > 0.4 ? "#e74c3c" : "#f1c40f",
+                    alpha: 1,
+                    life: randInt(10, 20)
+                });
+            }
+
+            // Penetrating collision check with current mob
+            if (mob && mob.hp > 0 && !proj.hitMobs.includes(mob.id)) {
+                let hitBuffer = mob.w / 2;
+                if (proj.x + proj.r > mob.x && proj.x - proj.r < mob.x + mob.w) {
+                    let flameDmg = Math.max(1, Math.ceil(p.atk * 0.25));
+                    
+                    mob.hp -= flameDmg;
+                    mob.flashTimer = 5;
+                    proj.hitMobs.push(mob.id); // Secure once-per-spawn hit restriction
+
+                    spawnDamageEffect(flameDmg, 'fire', false);
+                    damageHistory.push({ time: Date.now(), amount: flameDmg });
+                    
+                    // Direct impact hit sparks
+                    for (let pIdx = 0; pIdx < 6; pIdx++) {
+                        particles.push({
+                            x: proj.x,
+                            y: proj.y,
+                            vx: randFloat(-2, 3),
+                            vy: randFloat(-2, 2),
+                            radius: randFloat(1.5, 3),
+                            color: "#f1c40f",
+                            alpha: 1,
+                            life: randInt(10, 18)
+                        });
+                    }
+
+                    if (mob.hp <= 0) handleMobDeath();
+                }
+            }
+
+            // Cleanup offscreen projectiles
+            if (proj.x > canvas.width + 50) {
+                projectiles.splice(i, 1);
+            }
+        }
         
         // Calculate multi-fairy surge checks based on spawn coefficient limits
         if (activeFairies.length === 0 && Math.random() < 0.00005) {
@@ -9606,46 +9717,100 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         ctx.beginPath(); ctx.rect(-5, -20 + bounce, 4, 6); ctx.fill(); ctx.stroke();
         ctx.beginPath(); ctx.rect(-9, -16 + bounce, 8, 4); ctx.fill(); ctx.stroke();
 
-        // Main Weapon (Slash mechanics)
+        // Main Weapon (Slash/Staff mechanics)
         ctx.translate(2, 6 + bounce);
-        if (hero.slashFrame) {
-            ctx.translate(15, -10); 
-            ctx.rotate(-Math.PI / 2.3); 
-            
-            // Handle
-            ctx.fillStyle = "#7f8c8d"; 
-            ctx.beginPath(); ctx.rect(-2, -2, 4, 10); ctx.fill(); ctx.stroke();
-            
-            // Guard
-            ctx.fillStyle = "#8e44ad"; 
-            ctx.beginPath(); ctx.rect(-5, 8, 10, 4); ctx.fill(); ctx.stroke();
-            
-            // Blade
-            ctx.fillStyle = "#ecf0f1"; 
-            ctx.beginPath(); ctx.rect(-2, 12, 4, 25); ctx.fill(); ctx.stroke();
-            
-            // Stylized Comic Slash Trail
-            ctx.fillStyle = "rgba(236, 240, 241, 0.4)"; 
-            ctx.beginPath(); ctx.arc(0, 20, 35, 0, Math.PI/2); ctx.lineTo(0,0); ctx.closePath();
+        let isStaff = equippedSlots.weapon && equippedSlots.weapon.isUniqueStaff;
+
+        if (isStaff) {
+            // Custom Phoenix Staff Render Design
+            ctx.rotate(-Math.PI / 8);
+
+            // 1. Ebony Shaft (Dark elegant wood)
+            ctx.fillStyle = "#1e1e24";
+            ctx.beginPath();
+            ctx.rect(-1.5, -4, 3, 34);
             ctx.fill();
-            
-            ctx.strokeStyle = "rgba(0, 0, 0, 0.55)";
-            ctx.lineWidth = 2;
             ctx.stroke();
+
+            // 2. Golden Winged Crescent Headpiece
+            ctx.fillStyle = "#f1c40f";
+            ctx.beginPath();
+            ctx.moveTo(-7, 30);
+            ctx.quadraticCurveTo(0, 26, 7, 30);
+            ctx.lineTo(9, 36);
+            ctx.quadraticCurveTo(0, 32, -9, 36);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // 3. Pulsing Phoenix Ruby Core (Glowing magical heart)
+            let gemPulse = 3.5 + Math.sin(Date.now() / 150) * 1.2;
+            ctx.fillStyle = "#e74c3c";
+            ctx.beginPath();
+            ctx.arc(0, 34, gemPulse, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Core inner hot-spot
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.arc(-1, 33, 1, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 4. Little magical fire particle emission from headpiece
+            if (Math.random() < 0.15) {
+                particles.push({
+                    x: hx + 12 + Math.cos(-Math.PI / 8) * 10,
+                    y: hy + 15 + bounce - 25,
+                    vx: randFloat(-0.5, 0.5),
+                    vy: -randFloat(0.5, 1.2),
+                    radius: randFloat(1, 2),
+                    color: "#e67e22",
+                    alpha: 1,
+                    life: randInt(12, 22)
+                });
+            }
         } else {
-            ctx.rotate(-Math.PI / 8); 
-            
-            // Handle
-            ctx.fillStyle = "#7f8c8d"; 
-            ctx.beginPath(); ctx.rect(-2, -2, 4, 10); ctx.fill(); ctx.stroke();
-            
-            // Guard
-            ctx.fillStyle = "#8e44ad"; 
-            ctx.beginPath(); ctx.rect(-5, 8, 10, 4); ctx.fill(); ctx.stroke();
-            
-            // Blade
-            ctx.fillStyle = "#ecf0f1"; 
-            ctx.beginPath(); ctx.rect(-2, 12, 4, 25); ctx.fill(); ctx.stroke();
+            // Standard Sword Rendering
+            if (hero.slashFrame) {
+                ctx.translate(15, -10); 
+                ctx.rotate(-Math.PI / 2.3); 
+                
+                // Handle
+                ctx.fillStyle = "#7f8c8d"; 
+                ctx.beginPath(); ctx.rect(-2, -2, 4, 10); ctx.fill(); ctx.stroke();
+                
+                // Guard
+                ctx.fillStyle = "#8e44ad"; 
+                ctx.beginPath(); ctx.rect(-5, 8, 10, 4); ctx.fill(); ctx.stroke();
+                
+                // Blade
+                ctx.fillStyle = "#ecf0f1"; 
+                ctx.beginPath(); ctx.rect(-2, 12, 4, 25); ctx.fill(); ctx.stroke();
+                
+                // Stylized Comic Slash Trail
+                ctx.fillStyle = "rgba(236, 240, 241, 0.4)"; 
+                ctx.beginPath(); ctx.arc(0, 20, 35, 0, Math.PI/2); ctx.lineTo(0,0); ctx.closePath();
+                ctx.fill();
+                
+                ctx.strokeStyle = "rgba(0, 0, 0, 0.55)";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            } else {
+                ctx.rotate(-Math.PI / 8); 
+                
+                // Handle
+                ctx.fillStyle = "#7f8c8d"; 
+                ctx.beginPath(); ctx.rect(-2, -2, 4, 10); ctx.fill(); ctx.stroke();
+                
+                // Guard
+                ctx.fillStyle = "#8e44ad"; 
+                ctx.beginPath(); ctx.rect(-5, 8, 10, 4); ctx.fill(); ctx.stroke();
+                
+                // Blade
+                ctx.fillStyle = "#ecf0f1"; 
+                ctx.beginPath(); ctx.rect(-2, 12, 4, 25); ctx.fill(); ctx.stroke();
+            }
         }
         ctx.restore();
 
@@ -9925,6 +10090,44 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.restore();
         }
+
+        // Draw active Fireballs (Phoenix Staff Skill)
+        projectiles.forEach(proj => {
+            ctx.save();
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 2.0;
+
+            let wavePulse = Math.sin(Date.now() / 80 + proj.pulseOffset) * 2;
+            let currentRad = proj.r + wavePulse;
+
+            // 1. Outer deep crimson flame layer
+            ctx.fillStyle = "#c0392b";
+            ctx.beginPath();
+            ctx.arc(proj.x, proj.y, currentRad + 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // 2. Mid orange flame layer
+            ctx.fillStyle = "#e67e22";
+            ctx.beginPath();
+            ctx.arc(proj.x, proj.y, currentRad, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // 3. Inner hot yellow/white core
+            ctx.fillStyle = "#f1c40f";
+            ctx.beginPath();
+            ctx.arc(proj.x, proj.y, currentRad * 0.55, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.arc(proj.x - 2, proj.y - 2, currentRad * 0.25, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        });
 
         // Draw Snowflakes (Tier 1 Outdoors)
         if (getStageTier() === 1 && !playerStats.isDungeonMode) {
