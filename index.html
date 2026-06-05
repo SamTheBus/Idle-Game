@@ -2373,64 +2373,138 @@ window.onload = function() {
         }
         else if (m.type === "prestige_boss") {
             let hoverY = Math.sin(Date.now() / 150) * 6;
-            let jawOpen = Math.abs(Math.sin(Date.now() / 400)) * 12; // dropping lower jaw animation
-
-            // Draw overlapping neck scales/segments swaying back from the main head to give massive static depth
-            for (let i = 5; i >= 1; i--) {
-                let segX = m.x + m.w / 2 + (i * 20);
-                let segY = m.y + m.h / 2 + hoverY + Math.sin(Date.now() / 180 + i * 0.7) * 12;
-                
-                c.save();
-                c.fillStyle = "#8a1c14"; // dark crimson dragon scale
-                c.strokeStyle = "#000000";
-                c.lineWidth = 2.4;
-                c.beginPath();
-                c.arc(segX, segY, 24 - (i * 2), 0, Math.PI * 2);
-                c.fill();
-                c.stroke();
-                
-                // Scale highlight detail
-                c.fillStyle = "#a8281e";
-                c.beginPath();
-                c.arc(segX - 3, segY - 3, (24 - (i * 2)) * 0.6, 0, Math.PI * 2);
-                c.fill();
-                c.restore();
-            }
-
-            // Draw Massive Dragon Head (Paper Mario: Thousand Year Door stylized style)
+            let jawOpen = Math.abs(Math.sin(Date.now() / 400)) * 12; 
+            
             c.save();
             c.translate(m.x, m.y + hoverY);
             
-            c.strokeStyle = "#000000";
-            c.lineWidth = 2.4;
-            c.lineJoin = "round";
+            let baseW = 70;
+            let baseH = 80;
+            let scaleX = m.w / baseW;
+            let scaleY = m.h / baseH;
+            c.scale(scaleX, scaleY);
+            
+            // Neck segment loop drawing (Alternating Sage Green underbelly & Crimson scales)
+            for (let i = 6; i >= 1; i--) {
+                let segX = baseW / 2 + (i * 18);
+                let segY = baseH / 2 + Math.sin(Date.now() / 180 + i * 0.7) * 8;
+                
+                // Outer Back Dragon Scales (Crimson Red)
+                c.save();
+                c.fillStyle = "#c0392b";
+                c.strokeStyle = "#000000";
+                c.lineWidth = 2.4 / Math.max(scaleX, scaleY);
+                c.beginPath();
+                c.arc(segX, segY, 26 - (i * 2.2), 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+                c.restore();
 
+                // Inner Underbelly Ridges (Sage Green segments)
+                c.save();
+                c.fillStyle = "#7ca982";
+                c.strokeStyle = "#000000";
+                c.lineWidth = 2.4 / Math.max(scaleX, scaleY);
+                c.beginPath();
+                c.arc(segX - 8, segY + 6, (26 - (i * 2.2)) * 0.8, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+                c.restore();
+            }
+
+            // Draw Ears/Horns on Head BEFORE drawing Skull overlay
+            c.save();
+            c.fillStyle = "#f39c12"; // Gold horns
+            c.strokeStyle = "#000000";
+            c.lineWidth = 2.4 / Math.max(scaleX, scaleY);
+            c.lineJoin = "round";
+            c.beginPath();
+            c.moveTo(baseW - 25, -20);
+            c.quadraticCurveTo(baseW, -45, baseW + 15, -40);
+            c.quadraticCurveTo(baseW - 5, -25, baseW - 30, -5);
+            c.closePath();
+            c.fill();
+            c.stroke();
+            c.restore();
+
+            // Draw Floppy Skin Wings flapping behind neck
+            c.save();
+            c.fillStyle = "#a93226"; // Darker dragon wing red
+            c.strokeStyle = "#000000";
+            c.lineWidth = 2.4 / Math.max(scaleX, scaleY);
+            c.lineJoin = "round";
+            let wingFlap = Math.sin(Date.now() / 100) * 12;
+            c.translate(baseW / 2 + 50, baseH / 2 + 10);
+            c.rotate(wingFlap * Math.PI / 180);
+            c.beginPath();
+            c.moveTo(0, 0);
+            c.lineTo(35, -20);
+            c.lineTo(45, 0);
+            c.lineTo(25, 10);
+            c.lineTo(40, 20);
+            c.lineTo(5, 15);
+            c.closePath();
+            c.fill();
+            c.stroke();
+            c.restore();
+            
             // Upper Head/Skull
+            c.save();
+            c.strokeStyle = "#000000";
+            c.lineWidth = 2.4 / Math.max(scaleX, scaleY);
+            c.lineJoin = "round";
+            
             c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#c0392b";
             c.beginPath();
-            c.moveTo(m.w - 5, -15); // spike back 1
-            c.lineTo(m.w - 20, 10);
-            c.lineTo(m.w - 15, -25); // spike back 2
-            c.lineTo(m.w - 35, 12);
+            c.moveTo(baseW - 5, -15); // spike back 1
+            c.lineTo(baseW - 20, 10);
+            c.lineTo(baseW - 15, -25); // spike back 2
+            c.lineTo(baseW - 35, 12);
             c.lineTo(5, 5); // Forehead
             c.lineTo(-10, 18); // Snout
             c.lineTo(-15, 30); // Tip
             c.lineTo(5, 38); // Jawline joint
-            c.lineTo(m.w - 10, 38);
-            c.lineTo(m.w, 15);
+            c.lineTo(baseW - 10, 38);
+            c.lineTo(baseW, 15);
             c.closePath();
             c.fill();
             c.stroke();
 
-            // Glowing yellow pupil and dark eye slot
-            c.fillStyle = "#f1c40f";
+            // Glowing evil eye
+            c.fillStyle = "#000000";
             c.beginPath();
-            c.ellipse(22, 18, 5, 3, Math.PI / 12, 0, Math.PI * 2);
+            if (c.ellipse) {
+                c.ellipse(22, 18, 7, 5, Math.PI / 12, 0, Math.PI * 2);
+            } else {
+                c.arc(22, 18, 6, 0, Math.PI * 2);
+            }
             c.fill();
-            c.stroke();
+            
+            c.fillStyle = "#f1c40f"; // Gold pupil
+            c.beginPath();
+            if (c.ellipse) {
+                c.ellipse(22, 18, 5, 3, Math.PI / 12, 0, Math.PI * 2);
+            } else {
+                c.arc(22, 18, 4, 0, Math.PI * 2);
+            }
+            c.fill();
+            
             c.fillStyle = "#ffffff";
             c.beginPath();
             c.arc(21, 17, 1.5, 0, Math.PI * 2);
+            c.fill();
+
+            // Giant round red nose (The Thousand-Year Door signature style)
+            c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#b03a2e";
+            c.beginPath();
+            c.arc(-11, 23, 10, 0, Math.PI * 2);
+            c.fill();
+            c.stroke();
+
+            // Dark nostril slot
+            c.fillStyle = "#111111";
+            c.beginPath();
+            c.arc(-14, 21, 3, 0, Math.PI * 2);
             c.fill();
 
             // Lower Jaw with Drop rotation during chomps
@@ -2442,7 +2516,7 @@ window.onload = function() {
             c.moveTo(0, 0);
             c.lineTo(-25, 4); // Chin tip
             c.lineTo(5, 15);
-            c.lineTo(m.w - 15, 10);
+            c.lineTo(baseW - 15, 10);
             c.closePath();
             c.fill();
             c.stroke();
@@ -2450,12 +2524,13 @@ window.onload = function() {
             // Razor sharp fangs
             c.fillStyle = "#ffffff";
             c.beginPath();
-            c.moveTo(-15, 2); c.lineTo(-12, 6); c.lineTo(-9, 2);
-            c.moveTo(-5, 1); c.lineTo(-2, 5); c.lineTo(1, 1);
+            c.moveTo(-15, 2); c.lineTo(-12, 8); c.lineTo(-9, 2);
+            c.moveTo(-5, 1); c.lineTo(-2, 7); c.lineTo(1, 1);
             c.fill();
 
             c.restore(); // end jaw draw
-            c.restore(); // end translation context
+            c.restore(); // end skull save
+            c.restore(); // end master translate & scale
         }
         c.restore();
     };
@@ -7618,7 +7693,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                     });
                 }
 
-                if (playerStats.prestigeApproachTimer === 0) {
+                 if (playerStats.prestigeApproachTimer === 0) {
                     // Spawn Hooktail based on ascension counts
                     let scaleVal = playerStats.prestigeCount || 0;
                     let hp = 15000 * Math.pow(3, scaleVal);
@@ -7626,7 +7701,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                     let def = 40 + (60 * scaleVal);
                     
                     mob = {
-                        x: canvas.width - 120, y: 55, w: 70, h: 80,
+                        x: canvas.width - 230, y: 15, w: 180, h: 160,
                         type: "prestige_boss",
                         isRare: false,
                         hp: hp, maxHp: hp,
@@ -7789,7 +7864,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             
             let isHooktail = (mob.type === "prestige_boss");
             if (isHooktail) {
-                mob.x = canvas.width - 120;
+                mob.x = canvas.width - 230;
                 mob.isStopped = true;
             }
 
@@ -7875,7 +7950,67 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         const penBoss = 2.4;        // Dungeon bosses and Rift Guardians
 
         // 1. SKY & BACKGROUND FILL
-        if (playerStats.isCrucibleMode) {
+        if (playerStats.isPrestigeBossMode) {
+            // Gothic Lava Castle Arena Background
+            let skyGrad = ctx.createLinearGradient(0, 0, 0, 180);
+            skyGrad.addColorStop(0, "#0a0302"); // Vaulted castle ceiling shadow
+            skyGrad.addColorStop(0.5, "#2d0802"); // Volcanic masonry haze
+            skyGrad.addColorStop(1, "#9e2a02"); // Horizon molten under-glow
+            ctx.fillStyle = skyGrad; 
+            ctx.fillRect(0, 0, canvas.width, 180);
+
+            // Draw Massive Gothic Stone Arches and Columns
+            ctx.fillStyle = "#0c0302"; 
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 1.5;
+
+            for (let i = 40; i < canvas.width; i += 180) {
+                // Stone Support Pillar
+                ctx.beginPath();
+                ctx.rect(i, 0, 35, 180);
+                ctx.fill();
+                ctx.stroke();
+
+                // Diagonal rib vaulted arch connecting lines
+                ctx.beginPath();
+                ctx.moveTo(i, 30);
+                ctx.quadraticCurveTo(i - 40, 60, i - 90, 60);
+                ctx.lineTo(i - 90, 75);
+                ctx.quadraticCurveTo(i - 40, 75, i, 45);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            }
+
+            // Swaying Iron Dungeon Chains hanging from ceiling
+            ctx.strokeStyle = "#1b1412";
+            ctx.lineWidth = 2.5;
+            for (let x = 110; x < canvas.width; x += 180) {
+                let chainLength = 60 + Math.sin(Date.now() / 400 + x) * 15; 
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, chainLength);
+                ctx.stroke();
+
+                // Interlinked chain links loops details
+                ctx.fillStyle = "#110a08";
+                for (let y = 10; y < chainLength; y += 12) {
+                    ctx.beginPath();
+                    ctx.ellipse(x, y, 4, 6, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+            }
+
+            // Boiling lava river running behind the stone floor line
+            let lavaHorizonGrad = ctx.createLinearGradient(0, 160, 0, 180);
+            lavaHorizonGrad.addColorStop(0, "rgba(230, 126, 34, 0)");
+            lavaHorizonGrad.addColorStop(0.5, "#e67e22");
+            lavaHorizonGrad.addColorStop(1, "#f1c40f");
+            ctx.fillStyle = lavaHorizonGrad;
+            ctx.fillRect(0, 160, canvas.width, 20);
+
+        } else if (playerStats.isCrucibleMode) {
             // Pulsing Astral Cosmic Void
             let skyGrad = ctx.createLinearGradient(0, 0, 0, 180);
             skyGrad.addColorStop(0, "#05010c");
@@ -8070,9 +8205,9 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             ctx.lineWidth = penBgScenery * ts;
             ctx.lineJoin = "round";
 
-            if (playerStats.isCrucibleMode) {
+            if (playerStats.isCrucibleMode || playerStats.isPrestigeBossMode) {
                 ctx.restore();
-                return; // Block background scenery in space
+                return; // Block background scenery in space / lava castle
             }
             if (playerStats.isDungeonMode) {
                 let isCeiling = s.seed < 0.45; 
@@ -8247,7 +8382,63 @@ function formatStatRangeStr(item, statKey, isPct = false) {
 
         // 3. GROUND FLOOR RENDERING WITH DETAILED TEXTURES
         ctx.save();
-        if (playerStats.isCrucibleMode) {
+        if (playerStats.isPrestigeBossMode) {
+            // Dark Obsidian Flagstone Castle Floor with Molten Veins
+            let groundGrad = ctx.createLinearGradient(0, 180, 0, 250);
+            groundGrad.addColorStop(0, "#1c1110"); // Charcoal obsidian surface
+            groundGrad.addColorStop(1, "#080302"); // Abyssal shadow depths
+            ctx.fillStyle = groundGrad; 
+            ctx.fillRect(0, 180, canvas.width, 70);
+
+            // Draw irregular stone masonry grid seams
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 2;
+            
+            // Horizontal tile seams
+            ctx.beginPath();
+            ctx.moveTo(0, 180); ctx.lineTo(canvas.width, 180);
+            ctx.moveTo(0, 200); ctx.lineTo(canvas.width, 200);
+            ctx.moveTo(0, 224); ctx.lineTo(canvas.width, 224);
+            ctx.moveTo(0, 248); ctx.lineTo(canvas.width, 248);
+            ctx.stroke();
+
+            // Vertical staggered stone joints
+            for (let i = -60; i < canvas.width + 60; i += 80) {
+                let offset = (i - (groundScroll % 80));
+                ctx.beginPath();
+                ctx.moveTo(offset, 180); ctx.lineTo(offset + 5, 200);
+                ctx.moveTo(offset + 40, 200); ctx.lineTo(offset + 45, 224);
+                ctx.moveTo(offset - 10, 224); ctx.lineTo(offset - 5, 250);
+                ctx.stroke();
+            }
+
+            // Glowing hot orange fissures pulsing through stone cracks
+            let fissurePulse = Math.sin(Date.now() / 150) * 0.2 + 0.8;
+            ctx.strokeStyle = `rgba(230, 126, 34, ${fissurePulse})`;
+            ctx.lineWidth = 2;
+            for (let i = 100; i < canvas.width; i += 180) {
+                let ox = i - (groundScroll % 180);
+                ctx.beginPath();
+                ctx.moveTo(ox, 180);
+                ctx.lineTo(ox + 8, 200);
+                ctx.lineTo(ox - 12, 224);
+                ctx.stroke();
+            }
+
+            // Rising fire embers from lava fissures
+            if (Math.random() < 0.15) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: 195 + Math.random() * 45,
+                    vx: randFloat(-0.8, 0.8),
+                    vy: -randFloat(1.5, 3.5),
+                    radius: randFloat(1, 2.5),
+                    color: Math.random() > 0.4 ? "#e67e22" : "#f1c40f",
+                    alpha: 1,
+                    life: randInt(25, 45)
+                });
+            }
+        } else if (playerStats.isCrucibleMode) {
             // Dark levitating cosmic platform floor
             let groundGrad = ctx.createLinearGradient(0, 180, 0, 250);
             groundGrad.addColorStop(0, "#0a0316"); 
@@ -8738,9 +8929,9 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             ctx.lineWidth = penFgScenery * ss;
             ctx.lineJoin = "round";
 
-            if (playerStats.isCrucibleMode) {
+            if (playerStats.isCrucibleMode || playerStats.isPrestigeBossMode) {
                 ctx.restore();
-                return; // Block foreground scenery in space
+                return; // Block foreground scenery in space / lava castle
             }
             if (playerStats.isDungeonMode) {
                 if (playerStats.currentDungeon === 'gold') {
