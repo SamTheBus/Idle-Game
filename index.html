@@ -5615,11 +5615,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 item.baseMaxHp = Math.ceil(randInt(35, 55) * stageScale * prestigeMult * 1.8); 
             }
             else if (chosenType === "chest" || chosenType === "leggings" || chosenType === "helmet") { 
-                if (Math.random() > 0.5) {
-                    item.baseMaxHp = Math.ceil(randInt(12, 24) * stageScale * prestigeMult); 
-                } else {
-                    item.baseDef = Math.ceil(randInt(2, 4) * stageScale * prestigeMult); 
-                }
+                item.baseMaxHp = Math.ceil(randInt(12, 24) * stageScale * prestigeMult); 
+                item.baseDef = Math.ceil(randInt(4, 8) * stageScale * prestigeMult); 
             }
             else if (chosenType === "weapon") { 
                 item.baseAtk = Math.ceil(randInt(2, 4) * stageScale * prestigeMult); 
@@ -6784,12 +6781,25 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             p.block = 0.0;
         }
 
-        const hasShield = equippedSlots.subweapon && equippedSlots.subweapon.subType === "shield";
-        if (hasShield) {
-            let shield = equippedSlots.subweapon;
-            let shieldStars = shield.statsRolled === "UNIQUE" ? 5 : (shield.statsRolled || 0);
-            flatDef += 15 + (shield.stageLevel * 3);
-            defMultiplier += 0.25 + (shieldStars * 0.02) + (shield.temperLevel * 0.01);
+        let maxBlockCap = checkArtifactTrait("titan_grip") ? 0.35 : 0.25;
+        let maxParryCap = checkArtifactTrait("titan_grip") ? 0.30 : 0.25;
+
+        const subType = equippedSlots.subweapon ? equippedSlots.subweapon.subType : null;
+        if (hasSubweapon) {
+            if (subType === "shield") {
+                let shield = equippedSlots.subweapon;
+                let shieldStars = shield.statsRolled === "UNIQUE" ? 5 : (shield.statsRolled || 0);
+                flatDef += 15 + (shield.stageLevel * 3);
+                defMultiplier += 0.25 + (shieldStars * 0.02) + (shield.temperLevel * 0.01);
+                maxBlockCap = checkArtifactTrait("titan_grip") ? 0.40 : 0.30; // Shield block cap buff
+            } else if (subType === "tome") {
+                // Tome: Arcane Barrier scales with INT up to a 35% absorption cap
+                let intScale = Math.max(0, p.int - 5);
+                p.arcaneBarrier = parseFloat(Math.min(0.35, 0.20 + (intScale * 0.15 / (intScale + 150))).toFixed(4));
+            } else if (subType === "dagger") {
+                // Dagger: Raises Parry Cap
+                maxParryCap = checkArtifactTrait("titan_grip") ? 0.45 : 0.35; // Dagger parry cap buff
+            }
         }
 
         // Apply final derived flat and multiplicative calculations with achievement and artifact percentages
@@ -6832,10 +6842,6 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         if (p.activeAttackSpeed < 4) p.activeAttackSpeed = 4;
         if (playerStats.frenzyTimer > 0) { p.critChance = 1.00; p.critDamage += 0.50; p.activeAttackSpeed = 4; p.idleAttackSpeed = 20; }
         
-        // Reworked Avoidance Ceilings (Capped at 25% with Titan's Shield Grip override)
-        let maxBlockCap = checkArtifactTrait("titan_grip") ? 0.35 : 0.25;
-        let maxParryCap = checkArtifactTrait("titan_grip") ? 0.30 : 0.25;
-
         if (p.block > maxBlockCap) p.block = maxBlockCap;
         if (p.parry > maxParryCap) p.parry = maxParryCap;
 
@@ -7472,6 +7478,16 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let lockTag = item.locked ? " 🔒" : "";
         html += `<div class="tt-title" style="color:${titleColor}; white-space:normal;">${item.name}${temperTag}${lockTag}</div>`;
         html += `<div class="tt-subtitle">${subtitle}</div>`;
+
+        if (item.id !== "dummy" && item.type === "subweapon") {
+            if (item.subType === "shield") {
+                html += `<div style="color:#3498db; font-size:10px; font-weight:bold; margin-bottom:8px; border: 1px dashed #3498db; padding: 4px; border-radius:3px; background: rgba(52, 152, 219, 0.05); text-align: center; white-space:normal; line-height:1.3;">🛡️ BULWARK PASSIVE:<br>Raises Block Rate Cap to 30% (+40% if Titan's Grip equipped).</div>`;
+            } else if (item.subType === "dagger") {
+                html += `<div style="color:#e74c3c; font-size:10px; font-weight:bold; margin-bottom:8px; border: 1px dashed #e74c3c; padding: 4px; border-radius:3px; background: rgba(231, 76, 60, 0.05); text-align: center; white-space:normal; line-height:1.3;">🗡️ ELUSIVE PARRIES PASSIVE:<br>Raises Parry Cap to 35% (+45% if Titan's Grip equipped). Successful parries slash the enemy's next hit by 50%.</div>`;
+            } else if (item.subType === "tome") {
+                html += `<div style="color:#9b59b6; font-size:10px; font-weight:bold; margin-bottom:8px; border: 1px dashed #9b59b6; padding: 4px; border-radius:3px; background: rgba(155, 89, 182, 0.05); text-align: center; white-space:normal; line-height:1.3;">🔮 ARCANE SHIELD PASSIVE:<br>Absorbs 20% of all incoming damage before defense calculations. Scales with INT up to a 35% absorption cap.</div>`;
+            }
+        }
 
         if (item.id !== "dummy" && item.type === "artifact") {
             html += `<div class="tt-stat-line" style="color:#d2b4de; margin-bottom: 6px; white-space:normal;">• Effect: ${item.desc}</div>`;
@@ -10126,6 +10142,11 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 if (Math.random() < p.parry) { 
                     effects.push({ x: hero.x, y: hero.y - 15, text: "⚡ PARRY COUNTER!", color: "#9b59b6", life: 50 }); 
                     SoundManager.play('parry');
+                    
+                    if (equippedSlots.subweapon && equippedSlots.subweapon.subType === "dagger") {
+                        playerStats.daggerParryStagger = true; // Stagger next incoming attack
+                    }
+
                     if (checkArtifactTrait("dodge_buff")) playerStats.adrenalineTimer = checkArtifactTrait("extend_buffs") ? 900 : 600;
                     if (checkArtifactTrait("parry_strike")) {
                         let counterDmg = p.atk * (playerStats.adrenalineTimer > 0 ? 2 : 1); mob.hp -= counterDmg;
@@ -10140,13 +10161,24 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                     if (checkArtifactTrait("dodge_buff")) playerStats.adrenalineTimer = checkArtifactTrait("extend_buffs") ? 900 : 600;
                 }
                     else {
-                        // Smooth Diminishing Returns Mitigation Formula:
-                        // Prevents the binary "1 damage or instant death" bottleneck at higher stages
+                        // Soft-Ceiling Diminishing Returns Mitigation Formula (Capped asymptotically at 75% max)
                         let effStage = playerStats.isDungeonMode ? Math.max(1, Math.floor((playerStats.maxStage || 1) * 0.85)) : playerStats.stage;
-                        let mitigation = p.def / (p.def + 100 + (effStage * 12));
+                        let mitigation = 0.75 * (p.def / (p.def + 300 + (effStage * 32)));
                         let netDamage = Math.max(1, Math.ceil(mob.damage * (1 - mitigation)));
                         
-                        playerStats.currentHp -= netDamage; 
+                        const subType = equippedSlots.subweapon ? equippedSlots.subweapon.subType : null;
+                        if (playerStats.daggerParryStagger && subType === "dagger") {
+                            netDamage = Math.max(1, Math.ceil(netDamage * 0.5));
+                            playerStats.daggerParryStagger = false; // Consume parry stagger
+                            effects.push({ x: hero.x, y: hero.y - 18, text: "🛡️ PARRIED (-50%)", color: "#e74c3c", life: 55 });
+                        }
+                        if (p.arcaneBarrier && subType === "tome") {
+                            let absorbed = Math.ceil(netDamage * p.arcaneBarrier);
+                            netDamage = Math.max(1, netDamage - absorbed);
+                            effects.push({ x: hero.x, y: hero.y - 18, text: `🔮 ABSORBED (-${Math.round(p.arcaneBarrier * 100)}%)`, color: "#9b59b6", life: 45 });
+                        }
+
+                        playerStats.currentHp -= netDamage;
                         effects.push({ x: hero.x, y: hero.y, text: "-" + netDamage.toLocaleString(), color: "#e74c3c", life: 40 });
                         if (playerStats.currentHp <= 0) { 
                             if (checkArtifactTrait("second_wind") && !playerStats.usedSecondWind) {
