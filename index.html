@@ -4559,9 +4559,6 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         return item;
     }
 
-        return item;
-    }
-
     function refreshMarketShopIfNeeded() {
         if (Date.now() >= playerStats.shopRefreshTime || playerStats.shopItems.length === 0) {
             playerStats.shopRefreshTime = Date.now() + (30 * 60 * 1000); 
