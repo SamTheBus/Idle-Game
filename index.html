@@ -263,7 +263,8 @@
                 margin-bottom: 6px;
             }
             #forge-list {
-                height: 250px !important;
+                height: auto !important;
+                min-height: 250px !important;
             }
         }
 
@@ -5094,6 +5095,14 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 alpha: 1,
                 life: randInt(25, 45)
             });
+        }
+
+        // Fairy Queen's Crown trait implementation
+        if (checkArtifactTrait("fairy_wealth") && Math.random() < 0.10) {
+            addEtcDrop("Gacha Key", 1);
+            effects.push({ x: spawnX, y: spawnY - 10, text: `🔑 +1 Gacha Key!`, color: "#f1c40f", life: 80 });
+            pushLog(`<strong style='color:#ffeaa7;'>[FAIRY QUEEN'S CROWN]</strong> Pulled 1 Gacha Key from the fairy stream!`);
+            return;
         }
 
         if (Math.random() < 0.20) {
