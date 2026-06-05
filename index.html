@@ -4626,7 +4626,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         
         // Asymptotic potion duration formula: 5 mins standard, scaling with INT up to 20 mins max (4x)
         let baseBonusDuration = 18000; 
-        let intBonusMultiplier = 1 + (pBefore.int * 3.0 / (pBefore.int + 300));
+        let effectiveInt = Math.max(0, pBefore.int - 5);
+        let intBonusMultiplier = 1 + (effectiveInt * 3.0 / (effectiveInt + 300));
         
         // Apply achievement-based duration rewards
         let achDurationBonus = 1.0;
@@ -5478,21 +5479,31 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         p.dex = Math.floor(p.dex * achDexPct);
         p.int = Math.floor(p.int * achIntPct);
 
+        // Define effective attributes above the neutral baseline of 5
+        let effectiveStr = Math.max(0, p.str - 5);
+        let effectiveDex = Math.max(0, p.dex - 5);
+        let effectiveInt = Math.max(0, p.int - 5);
+
+        // Define effective attributes above the neutral baseline of 5
+        let effectiveStr = Math.max(0, p.str - 5);
+        let effectiveDex = Math.max(0, p.dex - 5);
+        let effectiveInt = Math.max(0, p.int - 5);
+
         // Primary attributes hybrid cross-scaling (Keep STR linear for healthy high-stage scaling)
-        p.atk += p.str * 1.5;              
-        p.maxHp += p.str * 10;             
+        p.atk += effectiveStr * 1.5;              
+        p.maxHp += effectiveStr * 10;             
 
         // Asymptotic DEX-to-Crit Chance (Ceiling: +30% maximum)
-        p.critChance += parseFloat(((p.dex * 0.30) / (p.dex + 250)).toFixed(4));
-        p.critDamage += p.dex * 0.01;      // Keep crit damage linear
-        p.moveSpeed += p.dex * 0.25;       
+        p.critChance += parseFloat(((effectiveDex * 0.30) / (effectiveDex + 250)).toFixed(4));
+        p.critDamage += effectiveDex * 0.01;      // Keep crit damage linear
+        p.moveSpeed += effectiveDex * 0.25;       
 
         // Asymptotic INT-to-Avoidance scaling (Ceiling: +12% maximum each)
-        p.block += parseFloat(((p.int * 0.12) / (p.int + 150)).toFixed(4));
-        p.parry += parseFloat(((p.int * 0.12) / (p.int + 150)).toFixed(4));
+        p.block += parseFloat(((effectiveInt * 0.12) / (effectiveInt + 150)).toFixed(4));
+        p.parry += parseFloat(((effectiveInt * 0.12) / (effectiveInt + 150)).toFixed(4));
         
         // Initialize base Defense scaling with SP and Intelligence allocation
-        let flatDef = playerStats.baseDef + (alloc.spDef * 3) + (p.int * 0.75) + setCtx.flatDefBonus;
+        let flatDef = playerStats.baseDef + (alloc.spDef * 3) + (effectiveInt * 0.75) + setCtx.flatDefBonus;
         let defMultiplier = 1.0 + setCtx.defPctBonus;
 
         for (let key in equippedSlots) {
@@ -6275,6 +6286,11 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         activeStatTooltip = { type: 'breakdown', key: statKey, isPct: !!isPct, clientX: clientX, clientY: clientY, target: e.currentTarget || e.target };
 
         let alloc = playerStats.spAllocations;
+        let p = resolvePlayerStats(); // Fetch current fully resolved stats profile
+
+        let effectiveStr = Math.max(0, p.str - 5);
+        let effectiveDex = Math.max(0, p.dex - 5);
+        let effectiveInt = Math.max(0, p.int - 5);
         
         let map = {
             'str': { title: "💪 STR (Strength)", base: playerStats.baseStr, lvl: (alloc.spStr || 0) * 3, color: "#fff" },
@@ -6344,6 +6360,35 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         if (achTotal > 0) html += `<div class="tt-stat-line" style="color:#f1c40f;">• Achievements (Flat): ${formatVal(achTotal)}</div>`;
         if (achPctTotal > 0) html += `<div class="tt-stat-line" style="color:#f1c40f;">• Achievements (Mult): +${Math.round(achPctTotal * 100)}%</div>`;
         
+        // Append core attribute secondary scaling lines to the flat breakdown list
+        if (statKey === 'atk' && effectiveStr > 0) {
+            html += `<div class="tt-stat-line" style="color:#e67e22;">• Strength Scaling (STR): +${(effectiveStr * 1.5)}</div>`;
+        }
+        if (statKey === 'maxHp' && effectiveStr > 0) {
+            html += `<div class="tt-stat-line" style="color:#e67e22;">• Strength Scaling (STR): +${(effectiveStr * 10)}</div>`;
+        }
+        if (statKey === 'def' && effectiveInt > 0) {
+            html += `<div class="tt-stat-line" style="color:#9b59b6;">• Intelligence Scaling (INT): +${(effectiveInt * 0.75).toFixed(1)}</div>`;
+        }
+        if (statKey === 'moveSpeed' && effectiveDex > 0) {
+            html += `<div class="tt-stat-line" style="color:#3498db;">• Dexterity Scaling (DEX): +${(effectiveDex * 0.25).toFixed(1)}</div>`;
+        }
+        if (statKey === 'critChance' && effectiveDex > 0) {
+            let scaleVal = ((effectiveDex * 0.30) / (effectiveDex + 250));
+            html += `<div class="tt-stat-line" style="color:#3498db;">• Dexterity Scaling (DEX): +${Math.floor(scaleVal * 100)}%</div>`;
+        }
+        if (statKey === 'critDamage' && effectiveDex > 0) {
+            html += `<div class="tt-stat-line" style="color:#3498db;">• Dexterity Scaling (DEX): +${Math.floor(effectiveDex * 1)}%</div>`;
+        }
+        if (statKey === 'block' && effectiveInt > 0) {
+            let scaleVal = ((effectiveInt * 0.12) / (effectiveInt + 150));
+            html += `<div class="tt-stat-line" style="color:#9b59b6;">• Intelligence Scaling (INT): +${Math.floor(scaleVal * 100)}%</div>`;
+        }
+        if (statKey === 'parry' && effectiveInt > 0) {
+            let scaleVal = ((effectiveInt * 0.12) / (effectiveInt + 150));
+            html += `<div class="tt-stat-line" style="color:#9b59b6;">• Intelligence Scaling (INT): +${Math.floor(scaleVal * 100)}%</div>`;
+        }
+
         if (statKey === 'critChance' || statKey === 'critDamage') {
             if (playerStats.frenzyTimer > 0) html += `<div class="tt-stat-line" style="color:#e67e22; font-weight:bold; margin-top:5px;">• FRENZY BUFF ACTIVE!</div>`;
         }
