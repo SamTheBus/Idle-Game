@@ -1855,56 +1855,37 @@ window.onload = function() {
                     c.stroke();
                 }
             } 
-            else if (vType === "iron_wyrm") {
-                // Segmented Iron Serpent (Hooktail-inspired neck mechanics)
+            else if (vType === "wyrmling") {
+                // Classic stone / amethyst wyrmling model
                 let cx = m.x + m.w / 2;
-                let cy = m.y + m.h / 2;
-                let time = Date.now() / 150;
-
-                for (let i = 5; i >= 0; i--) {
-                    let segX = cx - (i * 11);
-                    let segY = cy + Math.sin(time + i * 0.8) * 6;
-                    let radius = 11 - (i * 1.2);
-
-                    c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#f39c12" : "#7f8c8d");
+                let cy = m.y + m.h / 2 + Math.sin(Date.now() / 100) * 3;
+                
+                // Segmented stony bodies
+                for (let i = 0; i < 4; i++) {
+                    let segX = cx + Math.sin(Date.now() / 150 + i) * 5;
+                    let segY = cy + (i * 7) - 8;
+                    c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#9b59b6" : "#4a5568");
                     c.beginPath();
-                    c.arc(segX, segY, radius, 0, Math.PI * 2);
+                    c.arc(segX, segY, 8.5 - i * 1.3, 0, Math.PI * 2);
                     c.fill();
                     c.stroke();
-
-                    // Glowing furnace internal core joint
-                    if (m.flashTimer === 0) {
-                        c.fillStyle = m.isRare ? "#ff7f50" : "#e74c3c";
-                        c.beginPath();
-                        c.arc(segX, segY, radius * 0.4, 0, Math.PI * 2);
-                        c.fill();
-                    }
                 }
-
-                // Ornate Iron Head
-                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#f1c40f" : "#4e545c");
-                let hX = cx + 8;
-                let hY = cy + Math.sin(time) * 6;
+                
+                // Head Segment
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#9b59b6" : "#4a5568");
                 c.beginPath();
-                c.arc(hX, hY, 12, 0, Math.PI * 2);
+                c.arc(cx, cy - 13, 8.5, 0, Math.PI * 2);
                 c.fill();
                 c.stroke();
-
-                // Spiked horns
-                c.strokeStyle = m.flashTimer > 0 ? "#ffffff" : "#111115";
-                c.lineWidth = 2.4;
-                c.beginPath();
-                c.moveTo(hX - 3, hY - 10);
-                c.quadraticCurveTo(hX - 10, hY - 18, hX - 15, hY - 15);
-                c.stroke();
-
+                
                 if (m.flashTimer === 0) {
-                    c.fillStyle = "#ff3333";
+                    c.fillStyle = m.isRare ? "#f1c40f" : "#e74c3c";
                     c.beginPath();
-                    c.arc(hX + 3, hY - 3, 2, 0, Math.PI * 2);
+                    c.arc(cx - 3, cy - 15, 1.8, 0, Math.PI * 2);
+                    c.arc(cx + 3, cy - 15, 1.8, 0, Math.PI * 2);
                     c.fill();
                 }
-            } 
+            }
             else if (vType === "gargoyle") {
                 // Stone Gargoyle: Sleek posture, flapping wings, simple glowing eyes
                 let cx = m.x + m.w / 2;
@@ -6356,7 +6337,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 // Refined, high-performance campaign enemy selection pool
                 let visualPool = {
                     0: ["slime", "sprout", "thorn_wyrm"],
-                    1: ["golem", "iron_wyrm", "gargoyle"],
+                    1: ["golem", "wyrmling", "gargoyle"],
                     2: ["magma_elemental", "lava_serpent", "hell_bat"],
                     3: ["marsh_ghost", "swamp_basilisk", "toxic_fly"],
                     4: ["void_orb", "void_crawler", "void_spectre"]
