@@ -1573,8 +1573,6 @@ window.onload = function() {
     ];
     
     window.addEtcDrop = function(itemName, amount = 1) {
-    
-    window.addEtcDrop = function(itemName, amount = 1) {
         if (!inventory.ETC[itemName]) { inventory.ETC[itemName] = 0; }
         inventory.ETC[itemName] += amount;
         renderInventory();
