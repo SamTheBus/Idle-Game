@@ -6936,6 +6936,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     playerStats.isUberBoss = false; 
     playerStats.isDungeonMode = false;
     playerStats.isCrucibleMode = false;
+    playerStats.isPrestigeBossMode = false;
+    playerStats.prestigeApproachTimer = 0;
     mob = null;
     playerStats.usedSecondWind = false;
     hero.x = 40; // Reset hero position from Hooktail's right edge
@@ -7907,7 +7909,9 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                                 effects.push({ x: hero.x, y: hero.y - 20, text: "🔥 SECOND WIND!", color: "#e67e22", life: 80 });
                             } else { 
                                 // Capture the name of the entity that dealt the killing blow
-                                if (playerStats.isDungeonMode) {
+                                if (playerStats.isPrestigeBossMode) {
+                                    playerStats.killedBy = "Hooktail (Prestige Boss)";
+                                } else if (playerStats.isDungeonMode) {
                                     playerStats.killedBy = mob.type === "dungeon_boss" ? "Dungeon Boss" : (mob.type === "dungeon_miniboss" ? "Dungeon Miniboss" : "Dungeon Minion");
                                 } else if (playerStats.isUberBoss) {
                                     playerStats.killedBy = "Rift Guardian";
