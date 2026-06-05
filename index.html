@@ -5474,19 +5474,35 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             statLinesCount = 3; 
         } 
         else {
-            if (chosenType === "overall") { item.baseMaxHp = Math.ceil(randInt(35, 55) * stageScale * prestigeMult * 1.8); }
+            if (chosenType === "overall") { 
+                item.baseMaxHp = Math.ceil(randInt(35, 55) * stageScale * prestigeMult * 1.8); 
+            }
             else if (chosenType === "chest" || chosenType === "leggings" || chosenType === "helmet") { 
-                if (Math.random() > 0.5) item.baseMaxHp = Math.ceil(randInt(12, 24) * stageScale * prestigeMult); else item.baseDef = Math.ceil(randInt(2, 4) * stageScale * prestigeMult); 
+                if (Math.random() > 0.5) {
+                    item.baseMaxHp = Math.ceil(randInt(12, 24) * stageScale * prestigeMult); 
+                } else {
+                    item.baseDef = Math.ceil(randInt(2, 4) * stageScale * prestigeMult); 
+                }
             }
-            else if (chosenType === "weapon") { item.baseAtk = Math.ceil(randInt(2, 4) * stageScale * prestigeMult); }
+            else if (chosenType === "weapon") { 
+                item.baseAtk = Math.ceil(randInt(2, 4) * stageScale * prestigeMult); 
             }
-            else if (chosenType === "weapon") { item.baseAtk = Math.ceil(randInt(2, 4) * stageScale * prestigeMult); }
             else if (chosenType === "subweapon") {
-                if (item.subType === "shield") { item.baseDef = Math.ceil(randInt(15, 30) * stageScale * prestigeMult); item.baseBlock = 0.03 * stageScale * prestigeMult; }
-                else if (item.subType === "dagger") { item.baseAtk = Math.ceil(randInt(1, 2) * stageScale * prestigeMult); item.baseParry = 0.02 * stageScale * prestigeMult; }
-                else if (item.subType === "tome") { item.baseInt = Math.ceil(randInt(1, 2) * stageScale * prestigeMult); }
+                if (item.subType === "shield") { 
+                    item.baseDef = Math.ceil(randInt(15, 30) * stageScale * prestigeMult); 
+                    item.baseBlock = 0.03 * stageScale * prestigeMult; 
+                }
+                else if (item.subType === "dagger") { 
+                    item.baseAtk = Math.ceil(randInt(1, 2) * stageScale * prestigeMult); 
+                    item.baseParry = 0.02 * stageScale * prestigeMult; 
+                }
+                else if (item.subType === "tome") { 
+                    item.baseInt = Math.ceil(randInt(1, 2) * stageScale * prestigeMult); 
+                }
             }
-            else if (chosenType === "boots") { item.baseMoveSpeed = Math.ceil(randInt(1, 3) * stageScale * prestigeMult); }
+            else if (chosenType === "boots") { 
+                item.baseMoveSpeed = Math.ceil(randInt(1, 3) * stageScale * prestigeMult); 
+            }
         }
 
         let pool = ["critChance", "critDamage", "block", "parry", "atk", "maxHp", "def", "moveSpeed", "activeSpd", "idleSpd", "str", "dex", "int"];
