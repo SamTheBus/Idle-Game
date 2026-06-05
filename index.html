@@ -746,9 +746,11 @@
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; margin-bottom: 8px;">
                         <span style="color:#aaa;">Max Stage Reached: <span id="char-maxstage" style="color:#f1c40f; font-weight:bold;">1</span></span>
+                        <span id="char-prestige-display" style="color:#9b59b6; font-weight:bold;">Total Ascensions: <span id="char-prestige-count">0</span></span>
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#aaa; margin-bottom:2px;">
                         <span>XP: <span id="char-xp-text">0 / 100</span></span>
+                        <span id="char-lifetime-stage-display">Lifetime Peak: Stage <span id="char-lifetime-peak">1</span></span>
                     </div>
                     <div class="xp-bar-container"><div id="char-xp-fill" class="xp-bar-fill"></div></div>
                 </div>
@@ -1509,10 +1511,18 @@ window.onload = function() {
 
     const MYSTICAL_STOCK = [
         { name: "SP Reset Scroll", cost: 2500, currency: "Gold", color: "#9b59b6", desc: "Refunds all spent Skill Points from the Attribute Matrix." },
-        { name: "Attack Elixir", cost: 500, currency: "Gold", color: "#2ecc71", desc: "Increases your Attack power by 10% temporarily." },
-        { name: "Vitality Elixir", cost: 500, currency: "Gold", color: "#e74c3c", desc: "Increases your Max HP by 10% temporarily." },
-        { name: "Armored Elixir", cost: 500, currency: "Gold", color: "#3498db", desc: "Increases your Defense by 10% temporarily." },
-        { name: "Haste Elixir", cost: 500, currency: "Gold", color: "#f1c40f", desc: "Increases your Attack and Move Speed temporarily." },
+        { name: "Attack Elixir", cost: 100, currency: "Gold", color: "#2ecc71", desc: "Increases your Attack power by 10% temporarily." },
+        { name: "Greater Attack Elixir", cost: 1000, currency: "Gold", color: "#27ae60", desc: "Increases your Attack power by 20% temporarily." },
+        { name: "Supernal Attack Elixir", cost: 10000, currency: "Gold", color: "#1e824c", desc: "Increases your Attack power by 35% temporarily." },
+        { name: "Vitality Elixir", cost: 100, currency: "Gold", color: "#e74c3c", desc: "Increases your Max HP by 10% temporarily." },
+        { name: "Greater Vitality Elixir", cost: 1000, currency: "Gold", color: "#c0392b", desc: "Increases your Max HP by 20% temporarily." },
+        { name: "Supernal Vitality Elixir", cost: 10000, currency: "Gold", color: "#962d22", desc: "Increases your Max HP by 35% temporarily." },
+        { name: "Armored Elixir", cost: 100, currency: "Gold", color: "#3498db", desc: "Increases your Defense by 10% temporarily." },
+        { name: "Greater Armored Elixir", cost: 1000, currency: "Gold", color: "#2980b9", desc: "Increases your Defense by 20% temporarily." },
+        { name: "Supernal Armored Elixir", cost: 10000, currency: "Gold", color: "#1f3a52", desc: "Increases your Defense by 35% temporarily." },
+        { name: "Haste Elixir", cost: 100, currency: "Gold", color: "#f1c40f", desc: "Increases your Attack and Move Speed temporarily." },
+        { name: "Greater Haste Elixir", cost: 1000, currency: "Gold", color: "#f39c12", desc: "Significantly increases your Attack and Move Speed temporarily." },
+        { name: "Supernal Haste Elixir", cost: 10000, currency: "Gold", color: "#d35400", desc: "Cosmically increases your Attack and Move Speed temporarily." },
         { name: "Gacha Key", cost: 5, currency: "Luminous Soul", color: "#f1c40f", desc: "Exchange 5 rare Luminous Souls for 1 Gacha Key." },
         { name: "Astral Essence", cost: 10, currency: "Luminous Soul", color: "#9b59b6", desc: "Exchange 10 rare Luminous Souls for 1 Astral Essence." },
         { name: "Catalyst Core", cost: 15, currency: "Astral Shards", color: "#2ecc71", desc: "Exchange 15 Astral Shards earned in the Crucible for 1 Catalyst Core." }
@@ -1541,8 +1551,8 @@ window.onload = function() {
         { name: "Blood-Soaked Chalice", trait: "vampirism", desc: "Heals 3% of damage dealt on hit (Capped at 5% Max HP). Passive +30 Max HP.", breakdown: "<strong>Vampirism Breakdown:</strong><br>• Life Steal: <span style='color:#e74c3c;'>3% of total slash damage</span> directly heals your HP pool.<br>• Max Healing Cap: <span style='color:#aaa;'>Capped at 5% of Max HP per hit</span> to keep progression healthy.<br>• Passive: <span style='color:#e74c3c;'>+30 Flat Max HP</span>", maxHp: 30, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
         { name: "Philosopher's Anchor", trait: "gold_hoard", desc: "Permanent x1.50 Gold Multiplier bonus. Passive +15 Attack.", breakdown: "<strong>Hoard Breakdown:</strong><br>• Gold: Multiplies direct gold drops from mobs and bosses by flat <span style='color:#f1c40f;'>+50%</span>.<br>• Passive: <span style='color:#f1c40f;'>+15 Flat Attack</span> to support combat pacing.", atk: 15, dropRate: 0, quality: 0, goldMulti: 0.50, rareSpawn: 0, fairySpawn: 0 },
         { name: "Gilded Scarab", trait: "magic_find", desc: "+50% Drop Rate and +30% Drop Quality. Passive +5 DEX.", breakdown: "<strong>Scarab Hunting Breakdown:</strong><br>• Drop Rate: <span style='color:#2ecc71;'>+50% Item Frequency</span><br>• Drop Quality: <span style='color:#9b59b6;'>+30% Higher Stat Line Probability</span><br>• Passive: <span style='color:#3498db;'>+5 Flat DEX</span>", dex: 5, dropRate: 0.50, quality: 0.30, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
-        { name: "Windwalker Boots", trait: "move_speed", desc: "Grants +12 Base Movement Speed and +5% Parry Rate.", breakdown: "<strong>Fleet Footed:</strong><br>• Movement: Flat increase of <span style='color:#3498db;'>+12 Move Speed</span>.<br>• Defensive: Grants <span style='color:#e74c3c;'>+5% Parry Rate</span> to evade high-stage damage.", moveSpeed: 12, parry: 0.05, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
-        { name: "Aegis Core", trait: "defense", desc: "Grants +25 Base Defense and +50 Max HP.", breakdown: "<strong>Iron Clad:</strong><br>• Mitigation: Flat reduction of <span style='color:#3498db;'>+25 Defense</span>.<br>• Pool: Flat increase of <span style='color:#e74c3c;'>+50 Max HP</span>.", def: 25, maxHp: 50, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
+        { name: "Windwalker Boots", trait: "move_speed", desc: "Grants +15% Movement Speed and +5% Parry Rate.", breakdown: "<strong>Fleet Footed:</strong><br>• Movement: Grants a massive <span style='color:#3498db;'>+15% Movement Speed</span> multiplier.<br>• Defensive: Grants <span style='color:#e74c3c;'>+5% Parry Rate</span> to evade high-stage damage.", moveSpeedPct: 0.15, parry: 0.05, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
+        { name: "Aegis Core", trait: "defense", desc: "Grants +10% Max HP and +15% Defense.", breakdown: "<strong>Iron Clad:</strong><br>• Mitigation: Grants a sturdy <span style='color:#3498db;'>+15% Defense</span> multiplier.<br>• Pool: Grants a hearty <span style='color:#e74c3c;'>+10% Max HP</span> multiplier.", maxHpPct: 0.10, defPct: 0.15, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
         { name: "Riposte Gauntlet", trait: "parry_strike", desc: "Parrying instantly counters for 100% damage. Passive +4% Parry Rate.", breakdown: "<strong>Lethal Deflection:</strong><br>• Counter Strike: Successful parries immediately hit back for full weapon power.<br>• Passive: Increases your base chance to parry by <span style='color:#e74c3c;'>+4%</span>.", parry: 0.04, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
         { name: "Phantom Blade", trait: "echo_strike", desc: "Attacks have 50% chance to hit a second time for 40% damage. Passive +5 Attack.", breakdown: "<strong>Echo Strike:</strong><br>• Phantom Hit: Every swing has a <span style='color:#9b59b6;'>50% chance</span> to trigger a secondary hit for 40% damage.<br>• Passive: <span style='color:#f1c40f;'>+5 Flat Attack</span>", atk: 5, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
         { name: "Sloth's Blessing", trait: "idle_spd", desc: "Reduces Idle Attack delay by 15 frames. Passive +5% Gold Multiplier.", breakdown: "<strong>Lazy Haste:</strong><br>• Delay Reduction: Attacks trigger <span style='color:#3498db;'>15 frames</span> faster automatically.<br>• Passive: Adds <span style='color:#f1c40f;'>+5% Gold Multiplier</span>.", idleAttackSpeed: -15, goldMulti: 0.05, dropRate: 0, quality: 0, rareSpawn: 0, fairySpawn: 0 },
@@ -1550,7 +1560,17 @@ window.onload = function() {
         { name: "Survivor's Adrenaline", trait: "dodge_buff", desc: "Blocking/Parrying grants +100% Dmg for 10s. Passive +3% Block & Parry.", breakdown: "<strong>Adrenaline Rush:</strong><br>• Buff: Double your damage output temporarily on defensive procs.<br>• Passive: Adds <span style='color:#3498db;'>+3% Block Rate</span> and <span style='color:#e74c3c;'>+3% Parry Rate</span>.", block: 0.03, parry: 0.03, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
         { name: "Chrono Hourglass", trait: "extend_buffs", desc: "Extends all temporary buffs by 5 seconds. Passive +5 INT.", breakdown: "<strong>Chronology:</strong><br>• Buff Hold: Extends active Frenzy or Adrenaline by <span style='color:#f1c40f;'>5s</span>.<br>• Passive: Adds <span style='color:#9b59b6;'>+5 INT</span> to extend potion durations and boost defense.", int: 5, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
         { name: "Dimensional Pouch", trait: "bag_space", desc: "Expands equipment sack capacity to 50. Passive +10% Drop Rate.", breakdown: "<strong>Bottomless Bag:</strong><br>• Space: Expanded bag capacity.<br>• Passive: Adds <span style='color:#2ecc71;'>+10% Drop Rate</span> to help fill your larger satchel.", dropRate: 0.10, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
-        { name: "Phoenix Ankh", trait: "second_wind", desc: "Ignore a fatal blow once per run (50% Heal). Passive +5 STR & +50 Max HP.", breakdown: "<strong>Second Wind:</strong><br>• Survive fatal blows with <span style='color:#e74c3c;'>50% HP restored</span>.<br>• Passive: Grants <span style='color:#e74c3c;'>+5 STR</span> (+50 Max HP and +7.5 Atk) and <span style='color:#2ecc71;'>+50 Flat Max HP</span>.", str: 5, maxHp: 50, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 }
+        { name: "Phoenix Ankh", trait: "second_wind", desc: "Ignore a fatal blow once per run (50% Heal). Passive +5 STR & +50 Max HP.", breakdown: "<strong>Second Wind:</strong><br>• Survive fatal blows with <span style='color:#e74c3c;'>50% HP restored</span>.<br>• Passive: Grants <span style='color:#e74c3c;'>+5 STR</span> (+50 Max HP and +7.5 Atk) and <span style='color:#2ecc71;'>+50 Flat Max HP</span>.", str: 5, maxHp: 50, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
+        
+        // NEW ADDITIONS
+        { name: "Golem's Core", trait: "golem_stance", desc: "+20% Attack while healthy (>80% HP). Passive +5 STR.", breakdown: "<strong>Golem's Stance Breakdown:</strong><br>• High-HP Benefit: Gain a massive <span style='color:#2ecc71;'>+20% Attack Power</span> bonus while sitting above 80% HP.<br>• Passive: Adds <span style='color:#e74c3c;'>+5 STR</span> (+50 Max HP and +7.5 Atk).", str: 5, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
+        { name: "Fairy Queen's Crown", trait: "fairy_wealth", desc: "+30% Fairy Spawn. Fairies have 10% chance to drop 1 Gacha Key. Passive +10% Gold.", breakdown: "<strong>Crown of Nymphs Breakdown:</strong><br>• Pixie Swarm: Multiplies wild fairy appearance rates by <span style='color:#2ecc71;'>+30%</span>.<br>• Special Harvest: Fairies have a <span style='color:#f1c40f;'>10% chance</span> to directly hold a Gacha Key when tapped.<br>• Passive: Adds <span style='color:#f1c40f;'>+10% Gold Multiplier</span>.", goldMulti: 0.10, dropRate: 0, quality: 0, rareSpawn: 0, fairySpawn: 0.30 },
+        { name: "Void Core", trait: "void_pull", desc: "+50% Rare Spawn. Defeating Rares heals 30% Max HP. Passive +5 DEX.", breakdown: "<strong>Void Pull Breakdown:</strong><br>• Hunting Grounds: Enhances rare creature spawn frequencies by <span style='color:#9b59b6;'>+50%</span>.<br>• Singularity Syphon: Slaying any Rare target immediately syphon-heals <span style='color:#e74c3c;'>30% of your Max HP</span>.<br>• Passive: Adds <span style='color:#3498db;'>+5 DEX</span>.", dex: 5, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0.50, fairySpawn: 0 },
+        { name: "Titan's Shield Grip", trait: "titan_grip", desc: "Increases Block Cap to 35% and Parry Cap to 30%. Passive +8% Block & Parry.", breakdown: "<strong>Titan's Grip Breakdown:</strong><br>• Raising Caps: Increases the hard-ceiling of your Block Rate to <span style='color:#3498db;'>35%</span> and Parry Rate to <span style='color:#e74c3c;'>30%</span>.<br>• Passive: Adds <span style='color:#3498db;'>+8% base Block Rate</span> and <span style='color:#e74c3c;'>+8% base Parry Rate</span>.", block: 0.08, parry: 0.08, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
+        { name: "Alchemist's Alembic", trait: "alchemist_alembic", desc: "All consumed elixirs are 30% more potent. Passive +5 INT.", breakdown: "<strong>Alchemist's Alembic Breakdown:</strong><br>• Potion Potency: Amplifies the base multipliers of all consumed potions by <span style='color:#2ecc71;'>+30%</span>.<br>• Passive: Adds <span style='color:#9b59b6;'>+5 INT</span>.", int: 5, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
+        { name: "Philosopher's Catalyst", trait: "philosopher_catalyst", desc: "Consuming an elixir has a 25% chance to not consume the item. Passive +8 INT.", breakdown: "<strong>Philosopher's Catalyst Breakdown:</strong><br>• Sparing Effect: Sparing consumption check with <span style='color:#2ecc71;'>25% free use probability</span>.<br>• Passive: Adds <span style='color:#9b59b6;'>+8 INT</span>.", int: 8, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
+        { name: "Cauldron of Eternity", trait: "cauldron_eternity", desc: "While any potion buff is active, reduces Idle Attack delay by 3 frames. Passive +10% Max HP.", breakdown: "<strong>Cauldron of Eternity Breakdown:</strong><br>• Haste Trigger: Attacks automatically <span style='color:#3498db;'>3 frames faster</span> while any potion effect is running.<br>• Passive: Adds a <span style='color:#e74c3c;'>+10% Max HP</span> multiplier.", maxHpPct: 0.10, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 }
+    ];
     ];
     
     window.addEtcDrop = function(itemName, amount = 1) {
@@ -3610,13 +3630,14 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                         totalXp += isRare ? (15 + (currentStage * 15)) : (5 + (currentStage * 5));
                         
                         let dropR = isRare ? 0.15 : 0.045;
-                        if (Math.random() < (dropR * p.drop * state.efficiency)) {
-                            rollOfflineItem(false, currentStage, isRare);
-                        }
-                        if (Math.random() < 0.005) {
-                            addEtcDrop("Gacha Key", 1);
-                            recordScrapGained("Gacha Key", 1);
-                        }
+            if (Math.random() < (dropR * p.drop * state.efficiency)) {
+                rollOfflineItem(false, currentStage, isRare);
+            }
+            // Calibrated Rarity: Slashed by a factor of 10 to balance active and offline gains
+            if (Math.random() < 0.0005) {
+                addEtcDrop("Gacha Key", 1);
+                recordScrapGained("Gacha Key", 1);
+            }
                     }
                     
                     // Boss clearance rewards
@@ -4402,6 +4423,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         el.innerHTML = MYSTICAL_STOCK.map((item, index) => {
             let costColor = "#e74c3c";
             let currencyLabel = "Gold";
+            let displayCost = item.cost;
             
             if (item.currency === "Luminous Soul") {
                 let owned = inventory.ETC["Luminous Soul"] || 0;
@@ -4412,13 +4434,15 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 costColor = owned >= item.cost ? "#9b59b6" : "#e74c3c";
                 currencyLabel = "Shards";
             } else {
-                costColor = playerStats.coins >= item.cost ? "#f1c40f" : "#e74c3c";
+                // Aligned Economy: Scales with stage gold drops to keep pots meaningful at all stages
+                displayCost = Math.ceil(item.cost * Math.pow(1.08, playerStats.stage));
+                costColor = playerStats.coins >= displayCost ? "#f1c40f" : "#e74c3c";
             }
             
             return `<div class="shop-row" style="border-color: ${item.color}; background: rgba(155, 89, 182, 0.05); flex-direction: column; align-items: stretch; text-align: left; gap: 4px; padding: 8px;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <strong style="color:${item.color}; font-size:12px;">${item.name}</strong>
-                    <span style="color:${costColor}; font-weight:bold; font-size:11px;">${item.cost.toLocaleString()} ${currencyLabel}</span>
+                    <span style="color:${costColor}; font-weight:bold; font-size:11px;">${displayCost.toLocaleString()} ${currencyLabel}</span>
                 </div>
                 <div style="font-size:10px; color:#aaa; margin-bottom:6px;">${item.desc}</div>
                 <button class="btn-action" style="background:#9b59b6; color:#fff;" onclick="buyMysticalItem(${index})">Purchase</button>
@@ -4428,21 +4452,22 @@ function formatStatRangeStr(item, statKey, isPct = false) {
 
     window.buyMysticalItem = function(index) {
         let item = MYSTICAL_STOCK[index];
+        let actualCost = item.cost;
         
         // Handle currency validation and deduction
         if (item.currency === "Luminous Soul") {
             let owned = inventory.ETC["Luminous Soul"] || 0;
-            if (owned < item.cost) { pushHeaderToast("Not enough Luminous Souls!", "#e74c3c"); return; }
-            inventory.ETC["Luminous Soul"] -= item.cost;
+            if (owned < actualCost) { pushHeaderToast("Not enough Luminous Souls!", "#e74c3c"); return; }
+            inventory.ETC["Luminous Soul"] -= actualCost;
             if (inventory.ETC["Luminous Soul"] === 0) delete inventory.ETC["Luminous Soul"];
         } else if (item.currency === "Astral Shards") {
             let owned = playerStats.astralShards || 0;
-            if (owned < item.cost) { pushHeaderToast("Not enough Astral Shards!", "#e74c3c"); return; }
-            playerStats.astralShards -= item.cost;
+            if (owned < actualCost) { pushHeaderToast("Not enough Astral Shards!", "#e74c3c"); return; }
+            playerStats.astralShards -= actualCost;
         } else {
-            // Gold validation and deduction
-            if (playerStats.coins < item.cost) { pushHeaderToast("Not enough Gold!", "#e74c3c"); return; }
-            playerStats.coins -= item.cost;
+            actualCost = Math.ceil(item.cost * Math.pow(1.08, playerStats.stage));
+            if (playerStats.coins < actualCost) { pushHeaderToast("Not enough Gold!", "#e74c3c"); return; }
+            playerStats.coins -= actualCost;
         }
         
         // Direct items into their proper bag categories
@@ -4469,9 +4494,23 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         if (!inventory.USE[itemName] || inventory.USE[itemName] <= 0) return;
         
         let pBefore = resolvePlayerStats();
+        
+        // Asymptotic potion duration formula: 5 mins standard, scaling with INT up to 20 mins max (4x)
         let baseBonusDuration = 18000; 
-        let intBonusMultiplier = 1 + (pBefore.int * 0.01);
-        let finalDuration = Math.floor(baseBonusDuration * intBonusMultiplier);
+        let intBonusMultiplier = 1 + (pBefore.int * 3.0 / (pBefore.int + 300));
+        
+        // Apply achievement-based duration rewards
+        let achDurationBonus = 1.0;
+        if (playerStats.unlockedAchievements && window.AchievementsData) {
+            playerStats.unlockedAchievements.forEach(id => {
+                let ach = window.AchievementsData.find(a => a.id === id);
+                if (ach && ach.stats && ach.stats.potDurationPct) {
+                    achDurationBonus += ach.stats.potDurationPct;
+                }
+            });
+        }
+        
+        let finalDuration = Math.floor(baseBonusDuration * intBonusMultiplier * achDurationBonus);
         
         if (itemName === "SP Reset Scroll") {
             let totalRefund = 0;
@@ -4489,22 +4528,70 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             
             pushLog("<span style='color:#3498db; font-weight:bold;'>[USE] Used SP Reset Scroll. All Attribute Matrix SP refunded!</span>");
             pushHeaderToast("🔮 Attribute SP Reset Successfully!", "#3498db");
-        } else if (itemName === "Attack Elixir") {
+        } 
+        else if (itemName === "Attack Elixir") {
             playerStats.atkPotionTimer = finalDuration; 
+            playerStats.atkPotionStrength = 0.10;
             consumeUseItem(itemName);
             pushLog(`<span style='color:#2ecc71; font-weight:bold;'>[USE] Consumed Attack Elixir! +10% Attack for ${Math.floor(finalDuration/60)}s.</span>`);
-        } else if (itemName === "Vitality Elixir") {
+        } else if (itemName === "Greater Attack Elixir") {
+            playerStats.atkPotionTimer = finalDuration; 
+            playerStats.atkPotionStrength = 0.20;
+            consumeUseItem(itemName);
+            pushLog(`<span style='color:#2ecc71; font-weight:bold;'>[USE] Consumed Greater Attack Elixir! +20% Attack for ${Math.floor(finalDuration/60)}s.</span>`);
+        } else if (itemName === "Supernal Attack Elixir") {
+            playerStats.atkPotionTimer = finalDuration; 
+            playerStats.atkPotionStrength = 0.35;
+            consumeUseItem(itemName);
+            pushLog(`<span style='color:#2ecc71; font-weight:bold;'>[USE] Consumed Supernal Attack Elixir! +35% Attack for ${Math.floor(finalDuration/60)}s.</span>`);
+        }
+        else if (itemName === "Vitality Elixir") {
             playerStats.hpPotionTimer = finalDuration; 
+            playerStats.hpPotionStrength = 0.10;
             consumeUseItem(itemName);
             pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[USE] Consumed Vitality Elixir! +10% Max HP for ${Math.floor(finalDuration/60)}s.</span>`);
-        } else if (itemName === "Armored Elixir") {
+        } else if (itemName === "Greater Vitality Elixir") {
+            playerStats.hpPotionTimer = finalDuration; 
+            playerStats.hpPotionStrength = 0.20;
+            consumeUseItem(itemName);
+            pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[USE] Consumed Greater Vitality Elixir! +20% Max HP for ${Math.floor(finalDuration/60)}s.</span>`);
+        } else if (itemName === "Supernal Vitality Elixir") {
+            playerStats.hpPotionTimer = finalDuration; 
+            playerStats.hpPotionStrength = 0.35;
+            consumeUseItem(itemName);
+            pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[USE] Consumed Supernal Vitality Elixir! +35% Max HP for ${Math.floor(finalDuration/60)}s.</span>`);
+        }
+        else if (itemName === "Armored Elixir") {
             playerStats.defPotionTimer = finalDuration; 
+            playerStats.defPotionStrength = 0.10;
             consumeUseItem(itemName);
             pushLog(`<span style='color:#3498db; font-weight:bold;'>[USE] Consumed Armored Elixir! +10% Defense for ${Math.floor(finalDuration/60)}s.</span>`);
-        } else if (itemName === "Haste Elixir") {
+        } else if (itemName === "Greater Armored Elixir") {
+            playerStats.defPotionTimer = finalDuration; 
+            playerStats.defPotionStrength = 0.20;
+            consumeUseItem(itemName);
+            pushLog(`<span style='color:#3498db; font-weight:bold;'>[USE] Consumed Greater Armored Elixir! +20% Defense for ${Math.floor(finalDuration/60)}s.</span>`);
+        } else if (itemName === "Supernal Armored Elixir") {
+            playerStats.defPotionTimer = finalDuration; 
+            playerStats.defPotionStrength = 0.35;
+            consumeUseItem(itemName);
+            pushLog(`<span style='color:#3498db; font-weight:bold;'>[USE] Consumed Supernal Armored Elixir! +35% Defense for ${Math.floor(finalDuration/60)}s.</span>`);
+        }
+        else if (itemName === "Haste Elixir") {
             playerStats.hastePotionTimer = finalDuration; 
+            playerStats.hastePotionStrength = 1;
             consumeUseItem(itemName);
             pushLog(`<span style='color:#f1c40f; font-weight:bold;'>[USE] Consumed Haste Elixir! Speed increased for ${Math.floor(finalDuration/60)}s.</span>`);
+        } else if (itemName === "Greater Haste Elixir") {
+            playerStats.hastePotionTimer = finalDuration; 
+            playerStats.hastePotionStrength = 2;
+            consumeUseItem(itemName);
+            pushLog(`<span style='color:#f1c40f; font-weight:bold;'>[USE] Consumed Greater Haste Elixir! Speed significantly increased for ${Math.floor(finalDuration/60)}s.</span>`);
+        } else if (itemName === "Supernal Haste Elixir") {
+            playerStats.hastePotionTimer = finalDuration; 
+            playerStats.hastePotionStrength = 3;
+            consumeUseItem(itemName);
+            pushLog(`<span style='color:#f1c40f; font-weight:bold;'>[USE] Consumed Supernal Haste Elixir! Speed cosmically increased for ${Math.floor(finalDuration/60)}s.</span>`);
         }
         
         function consumeUseItem(name) {
@@ -5168,6 +5255,11 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         p.parry += (alloc.spParry * 0.005);
         p.moveSpeed += (alloc.spSpd * 1);
         
+        let itemAtkPct = 0;
+        let itemHpPct = 0;
+        let itemDefPct = 0;
+        let itemSpdPct = 0;
+
         for (let key in equippedSlots) {
             let item = equippedSlots[key];
             if (item) {
@@ -5188,7 +5280,18 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 p.int += (item.int || 0);
                 p.rareSpawn += (item.rareSpawn || 0);
                 p.fairySpawn += (item.fairySpawn || 0);
+
+                // Accumulate percentage base artifact attributes
+                if (item.atkPct) itemAtkPct += item.atkPct;
+                if (item.maxHpPct) itemHpPct += item.maxHpPct;
+                if (item.defPct) itemDefPct += item.defPct;
+                if (item.moveSpeedPct) itemSpdPct += item.moveSpeedPct;
             }
+        }
+
+        // Active golem's stance check: +20% Attack while above 80% HP
+        if (checkArtifactTrait("golem_stance") && (playerStats.currentHp / p.maxHp) >= 0.80) {
+            itemAtkPct += 0.20;
         }
 
         // Resolve active set synergy counters and contextual parameters
@@ -5240,16 +5343,18 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         p.dex = Math.floor(p.dex * achDexPct);
         p.int = Math.floor(p.int * achIntPct);
 
-        // Primary attributes hybrid cross-scaling
-        p.atk += p.str * 1.5;              // 1 STR = +1.5 Attack
-        p.maxHp += p.str * 10;             // 1 STR = +10 Max HP
+        // Primary attributes hybrid cross-scaling (Keep STR linear for healthy high-stage scaling)
+        p.atk += p.str * 1.5;              
+        p.maxHp += p.str * 10;             
 
-        p.critChance += p.dex * 0.002;     // 1 DEX = +0.2% Crit Chance
-        p.critDamage += p.dex * 0.01;      // 1 DEX = +1% Crit Multiplier
-        p.moveSpeed += p.dex * 0.25;       // 1 DEX = +0.25 Move Speed
+        // Asymptotic DEX-to-Crit Chance (Ceiling: +30% maximum)
+        p.critChance += parseFloat(((p.dex * 0.30) / (p.dex + 250)).toFixed(4));
+        p.critDamage += p.dex * 0.01;      // Keep crit damage linear
+        p.moveSpeed += p.dex * 0.25;       
 
-        p.block += p.int * 0.002;          // 1 INT = +0.2% Block Rate
-        p.parry += p.int * 0.002;          // 1 INT = +0.2% Parry Rate
+        // Asymptotic INT-to-Avoidance scaling (Ceiling: +12% maximum each)
+        p.block += parseFloat(((p.int * 0.12) / (p.int + 150)).toFixed(4));
+        p.parry += parseFloat(((p.int * 0.12) / (p.int + 150)).toFixed(4));
         
         // Initialize base Defense scaling with SP and Intelligence allocation
         let flatDef = playerStats.baseDef + (alloc.spDef * 3) + (p.int * 0.75) + setCtx.flatDefBonus;
@@ -5266,8 +5371,6 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             }
         }
 
-        if (checkArtifactTrait("defense")) flatDef += 15;
-
         const hasSubweapon = !!equippedSlots.subweapon;
         if (!hasSubweapon) {
             p.block = 0.0;
@@ -5281,30 +5384,52 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             defMultiplier += 0.25 + (shieldStars * 0.02) + (shield.temperLevel * 0.01);
         }
 
-        // Apply final derived flat and multiplicative calculations with achievement multipliers
-        p.atk = Math.floor(p.atk * achAtkPct);
-        p.maxHp = Math.floor(p.maxHp * achMaxHpPct);
-        p.def = Math.ceil(flatDef * defMultiplier * achDefPct);
-        p.moveSpeed = p.moveSpeed * achMoveSpeedPct;
+        // Apply final derived flat and multiplicative calculations with achievement and artifact percentages
+        p.atk = Math.floor(p.atk * (achAtkPct + itemAtkPct));
+        p.maxHp = Math.floor(p.maxHp * (achMaxHpPct + itemHpPct));
+        p.def = Math.ceil(flatDef * (defMultiplier + itemDefPct) * achDefPct);
+        p.moveSpeed = p.moveSpeed * (achMoveSpeedPct + itemSpdPct);
 
-        if (playerStats.atkPotionTimer > 0) p.atk = Math.ceil(p.atk * 1.10);
-        if (playerStats.hpPotionTimer > 0) p.maxHp = Math.ceil(p.maxHp * 1.10);
-        if (playerStats.defPotionTimer > 0) p.def = Math.ceil(p.def * 1.10);
+        // Gather achievements and artifact modifiers for elixir potency
+        let potStrengthMultiplier = 1.0;
+        if (playerStats.unlockedAchievements && window.AchievementsData) {
+            playerStats.unlockedAchievements.forEach(id => {
+                let ach = window.AchievementsData.find(a => a.id === id);
+                if (ach && ach.stats && ach.stats.potStrengthPct) {
+                    potStrengthMultiplier += ach.stats.potStrengthPct;
+                }
+            });
+        }
+        if (checkArtifactTrait("alchemist_alembic")) {
+            potStrengthMultiplier += 0.30; // +30% potency
+        }
+
+        if (playerStats.atkPotionTimer > 0) p.atk = Math.ceil(p.atk * (1 + (playerStats.atkPotionStrength || 0.10) * potStrengthMultiplier));
+        if (playerStats.hpPotionTimer > 0) p.maxHp = Math.ceil(p.maxHp * (1 + (playerStats.hpPotionStrength || 0.10) * potStrengthMultiplier));
+        if (playerStats.defPotionTimer > 0) p.def = Math.ceil(p.def * (1 + (playerStats.defPotionStrength || 0.10) * potStrengthMultiplier));
         if (playerStats.hastePotionTimer > 0) {
-            p.moveSpeed += 3; 
-            p.activeAttackSpeed -= 2;
-            if (p.activeAttackSpeed < 4) p.activeAttackSpeed = 4;
+            let tier = playerStats.hastePotionStrength || 1;
+            p.moveSpeed += Math.ceil(3 * tier * potStrengthMultiplier); 
+            p.activeAttackSpeed -= Math.ceil(2 * tier * potStrengthMultiplier);
+            p.idleAttackSpeed -= Math.ceil(4 * tier * potStrengthMultiplier);
         }
 
         if (checkArtifactTrait("move_speed")) p.moveSpeed += 10;
-        if (checkArtifactTrait("idle_spd")) p.idleAttackSpeed -= 20; 
-        if (checkArtifactTrait("active_spd")) p.activeAttackSpeed -= 3;
+        if (checkArtifactTrait("gold_hoard")) p.gold += 0.50;
+        if (checkArtifactTrait("cauldron_eternity") && (playerStats.atkPotionTimer > 0 || playerStats.hpPotionTimer > 0 || playerStats.defPotionTimer > 0 || playerStats.hastePotionTimer > 0)) {
+            p.idleAttackSpeed -= 3; // Attack 3 frames faster while buffed
+        }
+
         if (p.idleAttackSpeed < 10) p.idleAttackSpeed = 10; 
         if (p.activeAttackSpeed < 4) p.activeAttackSpeed = 4;
         if (playerStats.frenzyTimer > 0) { p.critChance = 1.00; p.critDamage += 0.50; p.activeAttackSpeed = 4; p.idleAttackSpeed = 20; }
         
-        if (p.block > 0.75) p.block = 0.75;
-        if (p.parry > 0.35) p.parry = 0.35;
+        // Reworked Avoidance Ceilings (Capped at 25% with Titan's Shield Grip override)
+        let maxBlockCap = checkArtifactTrait("titan_grip") ? 0.35 : 0.25;
+        let maxParryCap = checkArtifactTrait("titan_grip") ? 0.30 : 0.25;
+
+        if (p.block > maxBlockCap) p.block = maxBlockCap;
+        if (p.parry > maxParryCap) p.parry = maxParryCap;
 
         p.atk = Math.floor(p.atk);
         p.maxHp = Math.floor(p.maxHp);
@@ -6631,22 +6756,24 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     window.reforgeItemStat = function() {
         if (!forgeSelectedItem) return;
         let item = forgeSelectedItem;
-        let targetProp = item.reforgedProperty;
-        if (!targetProp) { pushHeaderToast("Select a stat line to lock in first!", "#e74c3c"); return; }
         
+        // Write the permanent reforge lock to the item only upon initiating the transaction
+        if (!item.reforgedProperty) {
+            if (!item.tempReforgeProp) {
+                pushHeaderToast("Select a stat line to re-roll first!", "#e74c3c");
+                return;
+            }
+            item.reforgedProperty = item.tempReforgeProp;
+        }
+
+        let targetProp = item.reforgedProperty;
         let costGold = Math.floor(150 * item.stageLevel * Math.pow(2, item.statsRolled));
-        let scrapReq = getTierUpScrapName(item.statsRolled);
-        let scrapReqAmount = Math.max(1, item.statsRolled * 2);
-        let ownedScrap = inventory.ETC[scrapReq] || 0;
         let ownedCores = inventory.ETC["Catalyst Core"] || 0;
 
         if (playerStats.coins < costGold) { pushHeaderToast("Not enough Gold!", "#e74c3c"); return; }
-        if (ownedScrap < scrapReqAmount) { pushHeaderToast("Not enough " + scrapReq + "!", "#e74c3c"); return; }
         if (ownedCores < 1) { pushHeaderToast("Requires 1 Catalyst Core!", "#e74c3c"); return; }
 
         playerStats.coins -= costGold;
-        inventory.ETC[scrapReq] -= scrapReqAmount;
-        if (inventory.ETC[scrapReq] === 0) delete inventory.ETC[scrapReq];
         inventory.ETC["Catalyst Core"]--;
         if (inventory.ETC["Catalyst Core"] === 0) delete inventory.ETC["Catalyst Core"];
 
@@ -6793,35 +6920,47 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 html += `<div style="color:#7f8c8d; font-size:11px; text-align:center; padding:15px 0;">This item has no stat modifiers to reforge!</div>`;
             } else {
                 let costGold = Math.floor(150 * item.stageLevel * Math.pow(2, item.statsRolled));
-                let scrapReq = getTierUpScrapName(item.statsRolled);
-                let scrapReqAmount = Math.max(1, item.statsRolled * 2);
-                let ownedScrap = inventory.ETC[scrapReq] || 0;
                 let ownedCores = inventory.ETC["Catalyst Core"] || 0;
 
                 let goldColor = playerStats.coins >= costGold ? "#f1c40f" : "#e74c3c";
-                let scrapColor = ownedScrap >= scrapReqAmount ? "#bdc3c7" : "#e74c3c";
                 let coresColor = ownedCores >= 1 ? "#9b59b6" : "#e74c3c";
 
                 if (!item.reforgedProperty) {
-                    html += `<div style="font-size:11px; color:#aaa; margin-bottom:8px;">Select a modifier line below to <b>LOCK IN</b> as your only reforgible slot:</div>`;
+                    html += `<div style="font-size:11px; color:#aaa; margin-bottom:8px;">Select a modifier line below to prepare for reforging:</div>`;
                     activeBonuses.forEach(bKey => {
                         let valText = item[bKey] > 0 ? `+${item[bKey]}` : `${item[bKey]}`;
-                        html += `<button class="forge-anvil-button" style="width:100%; margin-bottom:5px; text-transform:none; background:#111; border-color:#555; padding:6px;" onclick="lockForgeStat('${bKey}')">🔒 Lock ${getStatLabel(bKey)} (${valText})</button>`;
+                        let isSelected = item.tempReforgeProp === bKey;
+                        let borderStyle = isSelected ? "border-color:#2ecc71; background:#1b2a1e;" : "border-color:#555; background:#111;";
+                        let icon = isSelected ? "🟢" : "⚫";
+                        html += `<button class="forge-anvil-button" style="width:100%; margin-bottom:5px; text-transform:none; padding:6px; ${borderStyle}" onclick="selectReforgeStat('${bKey}')">${icon} ${getStatLabel(bKey)} (${valText})</button>`;
                     });
+                    
+                    if (item.tempReforgeProp) {
+                        let rProp = item.tempReforgeProp;
+                        let valText = item[rProp] > 0 ? `+${item[rProp]}` : `${item[rProp]}`;
+                        html += `<div style="margin-top:10px; background:#111; padding:8px; border-radius:4px; border:1px dashed #2ecc71; font-size:11px; margin-bottom:12px; text-align:center;">
+                            <span style="color:#2ecc71; font-weight:bold;">SELECTED TO RE-ROLL:</span><br>
+                            <strong>${getStatLabel(rProp)} (${valText})</strong><br>
+                            <span style="font-size:9px; color:#aaa;">(Clicking Execute Reforge will lock this as the only reforgible line!)</span>
+                        </div>`;
+                        
+                        html += `<div style="font-size:11px; color:${goldColor}; margin-bottom:3px;">• ${costGold.toLocaleString()} Gold Required</div>`;
+                        html += `<div style="font-size:11px; color:${coresColor}; margin-bottom:12px;">• 1x Catalyst Core (Owned: ${ownedCores.toLocaleString()})</div>`;
+                        html += `<button class="forge-anvil-button" style="width:100%; border-color:#2ecc71; background: linear-gradient(135deg, #1b2a1e, #111);" ${(playerStats.coins >= costGold) && (ownedCores >= 1) ? '' : 'disabled'} onclick="reforgeItemStat()">Execute Reforge</button>`;
+                    }
                 } else {
                     let rProp = item.reforgedProperty;
                     let valText = item[rProp] > 0 ? `+${item[rProp]}` : `${item[rProp]}`;
                     
                     html += `<div style="background:#111; padding:8px; border-radius:4px; border:1px solid #9b59b6; font-size:11px; margin-bottom:12px; text-align:center;">
-                        <span style="color:#9b59b6; font-weight:bold;">REFORGIBLE SLOT:</span><br>
+                        <span style="color:#9b59b6; font-weight:bold;">REFORGIBLE SLOT (LOCKED):</span><br>
                         <strong style="color:#2ecc71; font-size:12px;">${getStatLabel(rProp)} (${valText})</strong><br>
                         <span style="font-size:9px; color:#aaa;">(All other stat lines on this item are permanently locked!)</span>
                     </div>`;
 
                     html += `<div style="font-size:11px; color:${goldColor}; margin-bottom:3px;">• ${costGold.toLocaleString()} Gold Required</div>`;
-                    html += `<div style="font-size:11px; color:${scrapColor}; margin-bottom:3px;">• ${scrapReqAmount.toLocaleString()}x ${scrapReq} (Owned: ${ownedScrap.toLocaleString()})</div>`;
                     html += `<div style="font-size:11px; color:${coresColor}; margin-bottom:12px;">• 1x Catalyst Core (Owned: ${ownedCores.toLocaleString()})</div>`;
-                    html += `<button class="forge-anvil-button" style="width:100%; border-color:#9b59b6; background: linear-gradient(135deg, #4a154b, #111);" ${(playerStats.coins >= costGold) && (ownedScrap >= scrapReqAmount) && (ownedCores >= 1) ? '' : 'disabled'} onclick="reforgeItemStat()">Reforge Locked Modifier</button>`;
+                    html += `<button class="forge-anvil-button" style="width:100%; border-color:#9b59b6; background: linear-gradient(135deg, #4a154b, #111);" ${(playerStats.coins >= costGold) && (ownedCores >= 1) ? '' : 'disabled'} onclick="reforgeItemStat()">Re-Roll Locked Modifier</button>`;
                 }
             }
         } else if (forgeMode === 'tier') {
@@ -7446,8 +7585,14 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         
         let maxStageEl = document.getElementById('char-maxstage');
         if (maxStageEl) {
-            maxStageEl.innerText = (playerStats.maxStage || 1).toLocaleString();
+            maxStageEl.innerText = (playerStats.stage || 1).toLocaleString();
         }
+
+        // Persistent Ascension Data Binding
+        let countEl = document.getElementById('char-prestige-count');
+        if (countEl) countEl.innerText = playerStats.prestigeCount || 0;
+        let peakEl = document.getElementById('char-lifetime-peak');
+        if (peakEl) peakEl.innerText = playerStats.lifetimePeakStage || playerStats.maxStage || 1;
         
         document.getElementById('char-xp-text').innerText = `${playerStats.xp.toLocaleString()} / ${playerStats.xpReq.toLocaleString()}`;
         document.getElementById('char-xp-fill').style.width = `${Math.min(100, (playerStats.xp / playerStats.xpReq) * 100)}%`;
@@ -7781,6 +7926,11 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     let now = Date.now();
     let gapMs = now - lastUpdateTime;
     
+    // Decoupled physics rendering: visual eye candy updates smoothly while action is paused
+    for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0.4; eff.life--; if (eff.life <= 0) effects.splice(i, 1); }
+    for (let i = particles.length - 1; i >= 0; i--) { let pt = particles[i]; pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.25; pt.life--; if (pt.life <= 0) particles.splice(i, 1); }
+    for (let i = beams.length - 1; i >= 0; i--) { let bm = beams[i]; bm.life--; if (bm.life <= 0) beams.splice(i, 1); }
+    
     // Prevent progression exploits while on the DEFEATED screen
     if (isGamePaused) {
         lastUpdateTime = now;
@@ -7875,9 +8025,9 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 }
 
                  if (playerStats.prestigeApproachTimer === 0) {
-                    // Spawn Hooktail based on ascension counts
+                    // Spawn Hooktail based on ascension counts (Reduced base health to 10k for better tactical pacing)
                     let scaleVal = playerStats.prestigeCount || 0;
-                    let hp = 15000 * Math.pow(3, scaleVal);
+                    let hp = 10000 * Math.pow(3, scaleVal);
                     let dmg = 300 * Math.pow(1.6, scaleVal);
                     let def = 40 + (60 * scaleVal);
                     
@@ -9626,9 +9776,14 @@ function engineCycle() {
         { id: "death_2", name: "Struggler's Path", icon: "🥀", desc: "Suffer defeat 10 times", reqType: "death_count", reqValue: 10, stats: { maxHp: 100, def: 5 } },
         { id: "death_3", name: "Death's Familiar", icon: "💀", desc: "Suffer defeat 50 times", reqType: "death_count", reqValue: 50, stats: { maxHpPct: 0.05, defPct: 0.03 } },
         { id: "death_4", name: "Reborn Resolve", icon: "🌅", desc: "Suffer defeat 200 times", reqType: "death_count", reqValue: 200, stats: { maxHpPct: 0.10, defPct: 0.05 } },
-        { id: "death_5", name: "The Eternal Phoenix", icon: "🔥", desc: "Suffer defeat 1,000 times", reqType: "death_count", reqValue: 1000, stats: { maxHpPct: 0.20, defPct: 0.10, def: 20 } }
-    ];
+        { id: "death_5", name: "The Eternal Phoenix", icon: "🔥", desc: "Suffer defeat 1,000 times", reqType: "death_count", reqValue: 1000, stats: { maxHpPct: 0.20, defPct: 0.10, def: 20 } },
 
+        // NEW: POTION BUFF TRACKS
+        { id: "potion_ach_1", name: "Apprentice Brewer", icon: "🧪", desc: "Consume 10 Elixirs", reqType: "elixirs", reqValue: 10, stats: { potDurationPct: 0.03 } },
+        { id: "potion_ach_2", name: "Potion Addict", icon: "🍺", desc: "Consume 50 Elixirs", reqType: "elixirs", reqValue: 50, stats: { potStrengthPct: 0.05, potDurationPct: 0.03 } },
+        { id: "potion_ach_3", name: "Master of Panaceas", icon: "🍷", desc: "Consume 200 Elixirs", reqType: "elixirs", reqValue: 200, stats: { potStrengthPct: 0.08, potDurationPct: 0.05 } },
+        { id: "potion_ach_4", name: "The Grand Alchemist", icon: "⚗️", desc: "Consume 1,000 Elixirs", reqType: "elixirs", reqValue: 1000, stats: { potStrengthPct: 0.15, potDurationPct: 0.10 } }
+    ];
     window.getAchievementProgress = function(ach) {
         if (ach.reqType === "kills") return playerStats.totalLifetimeKills || 0;
         if (ach.reqType === "gold") return playerStats.totalGoldEarned || 0;
