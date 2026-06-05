@@ -5372,10 +5372,22 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         else if (selectedStat === "maxHp") item.bonusMaxHp += Math.ceil(randInt(3, 8) * stageScale * rarityMult * prestigeMult); 
         else if (selectedStat === "def") item.bonusDef += Math.ceil(randInt(1, 2) * stageScale * rarityMult * prestigeMult);
         else if (selectedStat === "moveSpeed") item.bonusMoveSpeed += Math.ceil(randInt(1, 2) * stageScale * rarityMult * prestigeMult);
-        else if (selectedStat === "critChance") item.bonusCritChance += parseFloat((randFloat(0.01, 0.025) * stageScale * rarityMult * prestigeMult).toFixed(4)); 
-        else if (selectedStat === "critDamage") item.bonusCritDamage += parseFloat((randFloat(0.03, 0.06) * stageScale * rarityMult * prestigeMult).toFixed(4));
-        else if (selectedStat === "block") item.bonusBlock += parseFloat((randFloat(0.005, 0.015) * stageScale * rarityMult * prestigeMult).toFixed(4)); 
-        else if (selectedStat === "parry") item.bonusParry += parseFloat((randFloat(0.005, 0.015) * stageScale * rarityMult * prestigeMult).toFixed(4));
+        else if (selectedStat === "critChance") {
+            let rolled = randFloat(0.01, 0.025) * Math.sqrt(stageScale) * rarityMult * prestigeMult;
+            item.bonusCritChance += parseFloat(Math.min(0.20, rolled).toFixed(4));
+        }
+        else if (selectedStat === "critDamage") {
+            let rolled = randFloat(0.03, 0.06) * Math.sqrt(stageScale) * rarityMult * prestigeMult;
+            item.bonusCritDamage += parseFloat(rolled.toFixed(4));
+        }
+        else if (selectedStat === "block") {
+            let rolled = randFloat(0.005, 0.015) * Math.sqrt(stageScale) * rarityMult * prestigeMult;
+            item.bonusBlock += parseFloat(Math.min(0.15, rolled).toFixed(4));
+        }
+        else if (selectedStat === "parry") {
+            let rolled = randFloat(0.005, 0.015) * Math.sqrt(stageScale) * rarityMult * prestigeMult;
+            item.bonusParry += parseFloat(Math.min(0.15, rolled).toFixed(4));
+        }
         else if (selectedStat === "activeSpd") item.bonusActiveSpeed -= randInt(1, 2); 
         else if (selectedStat === "idleSpd") item.bonusIdleSpeed -= randInt(2, 4); 
         else if (selectedStat === "str") item.bonusStr += Math.ceil(randInt(1, 3) * stageScale * rarityMult * prestigeMult);
@@ -5494,10 +5506,22 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             else if (selectedStat === "maxHp") item.bonusMaxHp += Math.ceil(randInt(3, 8) * stageScale * rarityMult * prestigeMult); 
             else if (selectedStat === "def") item.bonusDef += Math.ceil(randInt(1, 2) * stageScale * rarityMult * prestigeMult);
             else if (selectedStat === "moveSpeed") item.bonusMoveSpeed += Math.ceil(randInt(1, 2) * stageScale * rarityMult * prestigeMult);
-            else if (selectedStat === "critChance") item.bonusCritChance += parseFloat((randFloat(0.01, 0.025) * stageScale * rarityMult * prestigeMult).toFixed(4)); 
-            else if (selectedStat === "critDamage") item.bonusCritDamage += parseFloat((randFloat(0.03, 0.06) * stageScale * rarityMult * prestigeMult).toFixed(4));
-            else if (selectedStat === "block") item.bonusBlock += parseFloat((randFloat(0.005, 0.015) * stageScale * rarityMult * prestigeMult).toFixed(4)); 
-            else if (selectedStat === "parry") item.bonusParry += parseFloat((randFloat(0.005, 0.015) * stageScale * rarityMult * prestigeMult).toFixed(4));
+            else if (selectedStat === "critChance") {
+                let rolled = randFloat(0.01, 0.025) * Math.sqrt(stageScale) * rarityMult * prestigeMult;
+                item.bonusCritChance += parseFloat(Math.min(0.20, rolled).toFixed(4));
+            }
+            else if (selectedStat === "critDamage") {
+                let rolled = randFloat(0.03, 0.06) * Math.sqrt(stageScale) * rarityMult * prestigeMult;
+                item.bonusCritDamage += parseFloat(rolled.toFixed(4));
+            }
+            else if (selectedStat === "block") {
+                let rolled = randFloat(0.005, 0.015) * Math.sqrt(stageScale) * rarityMult * prestigeMult;
+                item.bonusBlock += parseFloat(Math.min(0.15, rolled).toFixed(4));
+            }
+            else if (selectedStat === "parry") {
+                let rolled = randFloat(0.005, 0.015) * Math.sqrt(stageScale) * rarityMult * prestigeMult;
+                item.bonusParry += parseFloat(Math.min(0.15, rolled).toFixed(4));
+            }
             else if (selectedStat === "activeSpd") item.bonusActiveSpeed -= randInt(1, 2); 
             else if (selectedStat === "idleSpd") item.bonusIdleSpeed -= randInt(2, 4); 
             else if (selectedStat === "str") item.bonusStr += Math.ceil(randInt(1, 3) * stageScale * rarityMult * prestigeMult);
@@ -8248,9 +8272,9 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             else if (item.subType === "tome") possiblePool = ["bonusCritDamage", "bonusInt", "bonusActiveSpeed", "bonusIdleSpeed"];
         }
         
-        let activeBonuses = possiblePool.filter(k => k !== targetProp && item[k] !== 0);
-        let eligiblePool = possiblePool.filter(k => !activeBonuses.includes(k));
-        if (eligiblePool.length === 0) eligiblePool = possiblePool;
+        let activeBonuses = possiblePool.filter(k => k !== targetProp && item[k] !== 0 && item[k] !== undefined && item[k] !== null);
+                    let eligiblePool = possiblePool.filter(k => !activeBonuses.includes(k));
+                    if (eligiblePool.length === 0) eligiblePool = possiblePool;
         
         let newProp = eligiblePool[Math.floor(Math.random() * eligiblePool.length)];
         let stageScale = item.stageLevel || 1;
@@ -8261,10 +8285,10 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         else if (newProp === "bonusMaxHp") rolledValue = Math.ceil(randInt(3, 8) * stageScale * rarityMult);
         else if (newProp === "bonusDef") rolledValue = Math.ceil(randInt(1, 2) * stageScale * rarityMult);
         else if (newProp === "bonusMoveSpeed") rolledValue = Math.ceil(randInt(1, 2) * stageScale * rarityMult);
-        else if (newProp === "bonusCritChance") rolledValue = parseFloat((randFloat(0.01, 0.025) * stageScale * rarityMult).toFixed(2));
-        else if (newProp === "bonusCritDamage") rolledValue = parseFloat((randFloat(0.03, 0.06) * stageScale * rarityMult).toFixed(2));
-        else if (newProp === "bonusBlock") rolledValue = parseFloat((randFloat(0.005, 0.015) * stageScale * rarityMult).toFixed(2));
-        else if (newProp === "bonusParry") rolledValue = parseFloat((randFloat(0.005, 0.015) * stageScale * rarityMult).toFixed(2));
+        else if (newProp === "bonusCritChance") rolledValue = parseFloat(Math.min(0.20, randFloat(0.01, 0.025) * Math.sqrt(stageScale) * rarityMult).toFixed(4));
+        else if (newProp === "bonusCritDamage") rolledValue = parseFloat((randFloat(0.03, 0.06) * Math.sqrt(stageScale) * rarityMult).toFixed(4));
+        else if (newProp === "bonusBlock") rolledValue = parseFloat(Math.min(0.15, randFloat(0.005, 0.015) * Math.sqrt(stageScale) * rarityMult).toFixed(4));
+        else if (newProp === "bonusParry") rolledValue = parseFloat(Math.min(0.15, randFloat(0.005, 0.015) * Math.sqrt(stageScale) * rarityMult).toFixed(4));
         else if (newProp === "bonusActiveSpeed") rolledValue = -randInt(1, 2);
         else if (newProp === "bonusIdleSpeed") rolledValue = -randInt(2, 4);
         else if (newProp === "bonusStr") rolledValue = Math.ceil(randInt(1, 3) * stageScale * rarityMult);
