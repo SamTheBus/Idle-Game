@@ -4595,12 +4595,18 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         }
         
         function consumeUseItem(name) {
-        inventory.USE[name]--;
-        if (inventory.USE[name] === 0) delete inventory.USE[name];
-        playerStats.elixirsConsumed = (playerStats.elixirsConsumed || 0) + 1;
-        window.checkAchievements();
-        pushHeaderToast(`Consumed ${name}!`, "#2ecc71");
-    }
+            // Philosopher's Catalyst check: 25% chance to spare the elixir
+            if (checkArtifactTrait("philosopher_catalyst") && Math.random() < 0.25) {
+                pushHeaderToast("✨ Elixir Sparing Effect Triggered!", "#2ecc71");
+                pushLog(`<strong style='color:#9b59b6;'>[PHILOSOPHER'S CATALYST]</strong> Sparing check passed! Your ${name} was not consumed.`);
+            } else {
+                inventory.USE[name]--;
+                if (inventory.USE[name] === 0) delete inventory.USE[name];
+            }
+            playerStats.elixirsConsumed = (playerStats.elixirsConsumed || 0) + 1;
+            window.checkAchievements();
+            pushHeaderToast(`Consumed ${name}!`, "#2ecc71");
+        }
         
         let pAfter = resolvePlayerStats();
         playerStats.currentHp = Math.max(1, Math.min(pAfter.maxHp, Math.floor((playerStats.currentHp / pBefore.maxHp) * pAfter.maxHp)));
@@ -7046,6 +7052,16 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         effects = effects.filter(e => !e.isCumulative);
         let p = resolvePlayerStats(); 
         let isBoss = (mob.type === "boss" || mob.type === "dungeon_boss" || mob.type === "dungeon_miniboss");
+        
+        // Void Core Siphon-Heal Check on Rare Defeat
+        if (mob && mob.isRare && checkArtifactTrait("void_pull")) {
+            let healAmount = Math.ceil(p.maxHp * 0.30);
+            playerStats.currentHp = Math.min(p.maxHp, playerStats.currentHp + healAmount);
+            effects.push({ x: mob.x, y: mob.y - 15, text: `❤️ +${healAmount} VOID SIPHON`, color: "#9b59b6", life: 75 });
+            pushLog(`<strong style='color:#9b59b6;'>[VOID CORE]</strong> Syphoned <span style='color:#2ecc71;'>${healAmount} HP</span> from the fallen rare.`);
+        }
+
+        SoundManager.play('death');
         
         SoundManager.play('death');
         
