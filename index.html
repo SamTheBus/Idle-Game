@@ -3917,9 +3917,18 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     };
     
     window.gainXp = function(amount, silent = false) {
-        // Incorporate permanent Prestige EXP boost Multiplier
-        let expBonusMult = 1.0 + ((playerStats.prestigeUpgrades?.exp || 0) * 0.10);
-        amount = Math.ceil(amount * expBonusMult);
+    // Incorporate permanent Prestige EXP boost Multiplier
+    let expBonusMult = 1.0 + ((playerStats.prestigeUpgrades?.exp || 0) * 0.10);
+    // Incorporate achievement EXP multiplier
+    if (playerStats.unlockedAchievements && window.AchievementsData) {
+        playerStats.unlockedAchievements.forEach(id => {
+            let ach = window.AchievementsData.find(a => a.id === id);
+            if (ach && ach.stats && ach.stats.expPct) {
+                expBonusMult += ach.stats.expPct;
+            }
+        });
+    }
+    amount = Math.ceil(amount * expBonusMult);
 
         playerStats.xp += amount;
         if (playerStats.runXp !== undefined) {
@@ -9086,6 +9095,8 @@ function engineCycle() {
         { id: "slayer_3", name: "Deathbringer", icon: "😈", desc: "Slay 10,000 total enemies", reqType: "kills", reqValue: 10000, stats: { critChance: 0.01, atkPct: 0.03 } },
         { id: "slayer_4", name: "God of War", icon: "🤺", desc: "Slay 50,000 total enemies", reqType: "kills", reqValue: 50000, stats: { atkPct: 0.05 } },
         { id: "slayer_5", name: "Void Reaper", icon: "🌌", desc: "Slay 100,000 total enemies", reqType: "kills", reqValue: 100000, stats: { atkPct: 0.10 } },
+        { id: "slayer_6", name: "Absolute Annihilator", icon: "☄️", desc: "Slay 250,000 total enemies", reqType: "kills", reqValue: 250000, stats: { atkPct: 0.12, critDamage: 0.05 } },
+        { id: "slayer_7", name: "Extinction Event", icon: "💥", desc: "Slay 1,000,000 total enemies", reqType: "kills", reqValue: 1000000, stats: { atkPct: 0.20, critChance: 0.05 } },
         
         // HOARDERS (Gold)
         { id: "hoarder_1", name: "Penny Pincher", icon: "🪙", desc: "Collect 5,000 total gold", reqType: "gold", reqValue: 5000, stats: { maxHp: 10, maxHpPct: 0.01 } },
@@ -9093,6 +9104,8 @@ function engineCycle() {
         { id: "hoarder_3", name: "Capitalist Overlord", icon: "💎", desc: "Collect 500,000 total gold", reqType: "gold", reqValue: 500000, stats: { qly: 0.02, maxHpPct: 0.03 } },
         { id: "hoarder_4", name: "Vault Guardian", icon: "🏰", desc: "Collect 2,000,000 total gold", reqType: "gold", reqValue: 2000000, stats: { gold: 0.05, maxHpPct: 0.05 } },
         { id: "hoarder_5", name: "Golden Deity", icon: "👑", desc: "Collect 10,000,000 total gold", reqType: "gold", reqValue: 10000000, stats: { gold: 0.10, maxHpPct: 0.10 } },
+        { id: "hoarder_6", name: "Midas' Equal", icon: "🏺", desc: "Collect 50,000,000 total gold", reqType: "gold", reqValue: 50000000, stats: { gold: 0.15, maxHpPct: 0.15 } },
+        { id: "hoarder_7", name: "Universal Treasury", icon: "🪐", desc: "Collect 250,000,000 total gold", reqType: "gold", reqValue: 250000000, stats: { gold: 0.25, maxHpPct: 0.25, qly: 0.08 } },
         
         // STAGES (Progression)
         { id: "stage_1", name: "Greenhorn Explorer", icon: "🗺️", desc: "Reach Stage 10", reqType: "stage", reqValue: 10, stats: { def: 1, defPct: 0.01 } },
@@ -9101,42 +9114,85 @@ function engineCycle() {
         { id: "stage_4", name: "The Unstoppable", icon: "🛡️", desc: "Reach Stage 150", reqType: "stage", reqValue: 150, stats: { defPct: 0.08 } },
         { id: "stage_5", name: "Transcendent Traveler", icon: "🪐", desc: "Reach Stage 200", reqType: "stage", reqValue: 200, stats: { maxHpPct: 0.08 } },
         { id: "stage_6", name: "Voidwalker", icon: "🌌", desc: "Reach Stage 300", reqType: "stage", reqValue: 300, stats: { moveSpeedPct: 0.10 } },
+        { id: "stage_7", name: "The Final Frontier", icon: "🛸", desc: "Reach Stage 500", reqType: "stage", reqValue: 500, stats: { maxHpPct: 0.15, defPct: 0.15 } },
+        { id: "stage_8", name: "Infinity Voyager", icon: "🚀", desc: "Reach Stage 1000", reqType: "stage", reqValue: 1000, stats: { maxHpPct: 0.25, defPct: 0.25, moveSpeedPct: 0.10 } },
         
         // BLACKSMITH (Tempers)
         { id: "forge_1", name: "Bronze Anvil", icon: "🔨", desc: "Temper any equipment gear item", reqType: "temper", reqValue: 1, stats: { str: 2, strPct: 0.02 } },
         { id: "forge_2", name: "Iron Hammer", icon: "⚒️", desc: "Temper items 10 times", reqType: "temper", reqValue: 10, stats: { strPct: 0.04 } },
         { id: "forge_3", name: "Master Blacksmith", icon: "🔥", desc: "Temper items 50 times", reqType: "temper", reqValue: 50, stats: { strPct: 0.08 } },
         { id: "forge_4", name: "God of the Forge", icon: "🔱", desc: "Temper items 250 times", reqType: "temper", reqValue: 250, stats: { strPct: 0.15 } },
+        { id: "forge_5", name: "Celestial Smelter", icon: "☄️", desc: "Temper items 500 times", reqType: "temper", reqValue: 500, stats: { str: 5, strPct: 0.10 } },
+        { id: "forge_6", name: "Starmetal Shaper", icon: "🪐", desc: "Temper items 1,000 times", reqType: "temper", reqValue: 1000, stats: { str: 15, strPct: 0.20 } },
         
         // ENCHANTER (Enchants)
         { id: "enchant_1", name: "Magic Infusion", icon: "🔮", desc: "Enchant any fully-tempered equipment item", reqType: "enchant", reqValue: 1, stats: { int: 2, intPct: 0.02 } },
         { id: "enchant_2", name: "Mystic Scholar", icon: "📜", desc: "Enchant items 5 times", reqType: "enchant", reqValue: 5, stats: { intPct: 0.04 } },
         { id: "enchant_3", name: "Eldritch Weaver", icon: "🕸️", desc: "Enchant items 20 times", reqType: "enchant", reqValue: 20, stats: { intPct: 0.08 } },
         { id: "enchant_4", name: "Enchantment Archmage", icon: "🧙", desc: "Enchant items 100 times", reqType: "enchant", reqValue: 100, stats: { intPct: 0.15 } },
+        { id: "enchant_5", name: "Runic Architect", icon: "🔱", desc: "Enchant items 250 times", reqType: "enchant", reqValue: 250, stats: { int: 5, intPct: 0.10 } },
+        { id: "enchant_6", name: "Arcane Singularity", icon: "🌌", desc: "Enchant items 500 times", reqType: "enchant", reqValue: 500, stats: { int: 15, intPct: 0.20 } },
         
         // RIFT (Boss Summoning)
         { id: "rift_1", name: "Reality Breaker", icon: "🌌", desc: "Summon and defeat an Enraged Rift Guardian", reqType: "rift", reqValue: 1, stats: { fairySpawn: 0.02, dexPct: 0.02 } },
         { id: "rift_2", name: "Rift Conqueror", icon: "🌀", desc: "Summon & defeat 5 Rift Guardians", reqType: "rift", reqValue: 5, stats: { dexPct: 0.04 } },
         { id: "rift_3", name: "Guardian's Bane", icon: "⚔️", desc: "Summon & defeat 25 Rift Guardians", reqType: "rift", reqValue: 25, stats: { dexPct: 0.08 } },
         { id: "rift_4", name: "Cosmic Arbiter", icon: "🛸", desc: "Summon & defeat 100 Rift Guardians", reqType: "rift", reqValue: 100, stats: { dexPct: 0.15 } },
+        { id: "rift_5", name: "Aether Bane", icon: "🪐", desc: "Summon & defeat 250 Rift Guardians", reqType: "rift", reqValue: 250, stats: { dex: 5, dexPct: 0.10 } },
+        { id: "rift_6", name: "Shatterer of Realities", icon: "💫", desc: "Summon & defeat 500 Rift Guardians", reqType: "rift", reqValue: 500, stats: { dex: 15, dexPct: 0.20 } },
         
         // LEVEL (Milestones)
         { id: "level_1", name: "Novice Adventurer", icon: "🔰", desc: "Reach Character Level 10", reqType: "level", reqValue: 10, stats: { atkPct: 0.02, maxHpPct: 0.02 } },
         { id: "level_2", name: "Elite Hero", icon: "🛡️", desc: "Reach Character Level 30", reqType: "level", reqValue: 30, stats: { atkPct: 0.04, maxHpPct: 0.04 } },
         { id: "level_3", name: "Transcendent Being", icon: "🌟", desc: "Reach Character Level 75", reqType: "level", reqValue: 75, stats: { atkPct: 0.06, maxHpPct: 0.06, defPct: 0.06 } },
         { id: "level_4", name: "Immortal Legend", icon: "👑", desc: "Reach Character Level 150", reqType: "level", reqValue: 150, stats: { atkPct: 0.10, maxHpPct: 0.10, defPct: 0.10, strPct: 0.10, dexPct: 0.10, intPct: 0.10 } },
+        { id: "level_5", name: "Mortal Ascendant", icon: "⚡", desc: "Reach Character Level 250", reqType: "level", reqValue: 250, stats: { atkPct: 0.12, maxHpPct: 0.12 } },
+        { id: "level_6", name: "Cosmic Paragon", icon: "🌌", desc: "Reach Character Level 500", reqType: "level", reqValue: 500, stats: { atkPct: 0.20, maxHpPct: 0.20, critChance: 0.05 } },
         
         // POTIONS (Utility)
         { id: "potion_1", name: "Alchemical Initiate", icon: "🧪", desc: "Consume 10 Elixirs", reqType: "elixirs", reqValue: 10, stats: { intPct: 0.03 } },
         { id: "potion_2", name: "Potion Addict", icon: "🍺", desc: "Consume 50 Elixirs", reqType: "elixirs", reqValue: 50, stats: { intPct: 0.07 } },
+        { id: "potion_3", name: "Concoction Connoisseur", icon: "🍷", desc: "Consume 200 Elixirs", reqType: "elixirs", reqValue: 200, stats: { intPct: 0.05, drop: 0.02 } },
+        { id: "potion_4", name: "Philosopher's Apothecary", icon: "⚗️", desc: "Consume 500 Elixirs", reqType: "elixirs", reqValue: 500, stats: { intPct: 0.10, drop: 0.05 } },
         
         // SACKS (Inventory Management)
         { id: "bag_1", name: "Sack Stuffer", icon: "🎒", desc: "Have 15 items in Equipment Sack", reqType: "bag_count", reqValue: 15, stats: { qly: 0.02 } },
         { id: "bag_2", name: "Pack Rat", icon: "🧳", desc: "Have 30 items in Equipment Sack", reqType: "bag_count", reqValue: 30, stats: { qly: 0.05 } },
+        { id: "bag_3", name: "Hoarder Extraordinaire", icon: "📦", desc: "Have 40 items in Equipment Sack", reqType: "bag_count", reqValue: 40, stats: { qly: 0.08 } },
         
         // SALVAGING (Resource Recycling)
         { id: "salvage_1", name: "Scrap Collector", icon: "♻️", desc: "Salvage 10 total items", reqType: "salvage", reqValue: 10, stats: { drop: 0.02 } },
-        { id: "salvage_2", name: "Deconstruction Derby", icon: "🚜", desc: "Salvage 100 total items", reqType: "salvage", reqValue: 100, stats: { drop: 0.05 } }
+        { id: "salvage_2", name: "Deconstruction Derby", icon: "🚜", desc: "Salvage 100 total items", reqType: "salvage", reqValue: 100, stats: { drop: 0.05 } },
+        { id: "salvage_3", name: "Infinite Recycler", icon: "⚙️", desc: "Salvage 500 total items", reqType: "salvage", reqValue: 500, stats: { drop: 0.08 } },
+        { id: "salvage_4", name: "Scrap Colossus", icon: "🤖", desc: "Salvage 2,000 total items", reqType: "salvage", reqValue: 2000, stats: { drop: 0.15, qly: 0.10 } },
+
+        // NEW: PRESTIGE (Ascensions)
+        { id: "prestige_1", name: "Mortal Ascension", icon: "🐉", desc: "Ascend 1 time at the Altar", reqType: "prestige", reqValue: 1, stats: { expPct: 0.02, gold: 0.02 } },
+        { id: "prestige_2", name: "Chrono Rebirth", icon: "⌛", desc: "Ascend 5 times at the Altar", reqType: "prestige", reqValue: 5, stats: { expPct: 0.05, gold: 0.05 } },
+        { id: "prestige_3", name: "Eternal Paradigm", icon: "🌌", desc: "Ascend 20 times at the Altar", reqType: "prestige", reqValue: 20, stats: { expPct: 0.10, gold: 0.10, drop: 0.02 } },
+
+        // NEW: CRUCIBLE (Astral Crucible Wave Survival)
+        { id: "crucible_1", name: "Spark of Survival", icon: "🔥", desc: "Reach Floor 15 in the Astral Crucible", reqType: "crucible", reqValue: 15, stats: { block: 0.01 } },
+        { id: "crucible_2", name: "Crucible Crusader", icon: "💥", desc: "Reach Floor 50 in the Astral Crucible", reqType: "crucible", reqValue: 50, stats: { block: 0.02, parry: 0.01 } },
+        { id: "crucible_3", name: "Astral Sentinel", icon: "🛡️", desc: "Reach Floor 100 in the Astral Crucible", reqType: "crucible", reqValue: 100, stats: { block: 0.03, parry: 0.03, defPct: 0.05 } },
+        { id: "crucible_4", name: "Cosmic Immortal", icon: "🌠", desc: "Reach Floor 200 in the Astral Crucible", reqType: "crucible", reqValue: 200, stats: { block: 0.05, parry: 0.05, defPct: 0.10 } },
+
+        // NEW: INFINITE DUNGEONS (Peaks)
+        { id: "dung_equip_1", name: "Steel Miner", icon: "⛏️", desc: "Reach Floor 20 in the Equipment Dungeon", reqType: "dungeon_equip", reqValue: 20, stats: { atk: 15 } },
+        { id: "dung_equip_2", name: "Armory Tyrant", icon: "⚔️", desc: "Reach Floor 50 in the Equipment Dungeon", reqType: "dungeon_equip", reqValue: 50, stats: { atk: 35, critChance: 0.02 } },
+        { id: "dung_equip_3", name: "Colossal Blacksmith", icon: "🌋", desc: "Reach Floor 100 in the Equipment Dungeon", reqType: "dungeon_equip", reqValue: 100, stats: { atkPct: 0.05, critChance: 0.04 } },
+
+        { id: "dung_gold_1", name: "Sooty Pockets", icon: "🪙", desc: "Reach Floor 20 in the Gold Mine Caverns", reqType: "dungeon_gold", reqValue: 20, stats: { gold: 0.05 } },
+        { id: "dung_gold_2", name: "Lode Overlord", icon: "💰", desc: "Reach Floor 50 in the Gold Mine Caverns", reqType: "dungeon_gold", reqValue: 50, stats: { gold: 0.15, qly: 0.02 } },
+        { id: "dung_gold_3", name: "Midas' Disciple", icon: "👑", desc: "Reach Floor 100 in the Gold Mine Caverns", reqType: "dungeon_gold", reqValue: 100, stats: { gold: 0.25, qly: 0.05 } },
+
+        { id: "dung_mat_1", name: "Toxic Scavenger", icon: "🧪", desc: "Reach Floor 20 in the Toxic Material Pit", reqType: "dungeon_mat", reqValue: 20, stats: { maxHp: 100 } },
+        { id: "dung_mat_2", name: "Plague Alchemist", icon: "☣️", desc: "Reach Floor 50 in the Toxic Material Pit", reqType: "dungeon_mat", reqValue: 50, stats: { maxHp: 250, maxHpPct: 0.03 } },
+        { id: "dung_mat_3", name: "Contagion Master", icon: "🧫", desc: "Reach Floor 100 in the Toxic Material Pit", reqType: "dungeon_mat", reqValue: 100, stats: { maxHp: 500, maxHpPct: 0.06 } },
+
+        // NEW: ARTIFACT COLLECTION SACK
+        { id: "art_held_1", name: "Relic Finder", icon: "🏺", desc: "Hold 5 unique artifacts in your sack", reqType: "artifacts_held", reqValue: 5, stats: { qly: 0.02 } },
+        { id: "art_held_2", name: "Museum Curator", icon: "🏛️", desc: "Hold 15 unique artifacts in your sack", reqType: "artifacts_held", reqValue: 15, stats: { qly: 0.05, rareSpawn: 0.005 } }
     ];
 
     window.getAchievementProgress = function(ach) {
@@ -9150,6 +9206,12 @@ function engineCycle() {
         if (ach.reqType === "elixirs") return playerStats.elixirsConsumed || 0;
         if (ach.reqType === "bag_count") return inventory.EQUIP.length || 0;
         if (ach.reqType === "salvage") return playerStats.itemsSalvaged || 0;
+        if (ach.reqType === "prestige") return playerStats.prestigeCount || 0;
+        if (ach.reqType === "crucible") return playerStats.cruciblePeak || 1;
+        if (ach.reqType === "dungeon_equip") return playerStats.dungeonPeaks?.equip || 1;
+        if (ach.reqType === "dungeon_gold") return playerStats.dungeonPeaks?.gold || 1;
+        if (ach.reqType === "dungeon_mat") return playerStats.dungeonPeaks?.mat || 1;
+        if (ach.reqType === "artifacts_held") return inventory.ARTIFACT?.length || 0;
         return 0;
     };
 
@@ -9225,7 +9287,7 @@ function engineCycle() {
         
         let statsDesc = Object.keys(ach.stats).map(k => {
             let val = ach.stats[k];
-            let isPct = ["critChance", "critDamage", "block", "parry", "drop", "qly", "gold", "fairySpawn", "rareSpawn", "atkPct", "maxHpPct", "defPct", "moveSpeedPct", "strPct", "dexPct", "intPct"].includes(k);
+            let isPct = ["critChance", "critDamage", "block", "parry", "drop", "qly", "gold", "fairySpawn", "rareSpawn", "atkPct", "maxHpPct", "defPct", "moveSpeedPct", "strPct", "dexPct", "intPct", "expPct"].includes(k);
             let labelMap = {
                 atk: "⚔️ Attack", maxHp: "❤️ Max HP", def: "🛡️ Defense", moveSpeed: "👟 Move Speed",
                 critChance: "✨ Crit Chance", critDamage: "💥 Crit Multiplier", block: "🛡️ Block Rate", parry: "⚡ Parry Rate",
@@ -9233,7 +9295,8 @@ function engineCycle() {
                 drop: "🍀 Drop Rate Mod", qly: "💎 Drop Quality Mod", gold: "🟡 Gold Multiplier",
                 fairySpawn: "🧚 Fairy Spawn Mod", rareSpawn: "✨ Rare Spawn Rate",
                 atkPct: "⚔️ Attack Multiplier", maxHpPct: "❤️ Max HP Multiplier", defPct: "🛡️ Defense Multiplier",
-                moveSpeedPct: "👟 Move Speed Multiplier", strPct: "💪 STR Multiplier", dexPct: "🎯 DEX Multiplier", intPct: "🧠 INT Multiplier"
+                moveSpeedPct: "👟 Move Speed Multiplier", strPct: "💪 STR Multiplier", dexPct: "🎯 DEX Multiplier", intPct: "🧠 INT Multiplier",
+                expPct: "🧠 EXP Multiplier"
             };
             let cleanLabel = labelMap[k] || k.toUpperCase();
             let cleanVal = isPct ? `+${(val * 100).toFixed(0)}%` : `+${val}`;
