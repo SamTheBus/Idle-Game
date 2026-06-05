@@ -2312,33 +2312,70 @@ window.onload = function() {
                 }
             } 
             else if (vType === "magma_elemental") {
-                // Layered clean shifting flame
-                let flicker = Math.sin(Date.now() / 60) * 4.5;
+                // Molten Magma Fiend: Rocky elemental with blazing head crest, fiery arms, and glowing magma fissures
+                let flicker = Math.sin(Date.now() / 60) * 3;
                 let cx = m.x + m.w / 2;
                 let cy = m.y + m.h / 2;
-
-                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#c0392b";
+                
+                // Rocky Obsidian Shoulders/Torso
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#1a0805";
                 c.beginPath();
-                c.moveTo(cx, cy - 22 - flicker);
-                c.quadraticCurveTo(cx + 15 + flicker, cy, cx + 8, cy + 20);
-                c.lineTo(cx - 8, cy + 20);
-                c.quadraticCurveTo(cx - 15 - flicker, cy, cx, cy - 22 - flicker);
+                c.roundRect(cx - 14, cy - 6, 28, 22, [4]);
+                c.fill();
+                c.stroke();
+                
+                // Glowing magma cracks on chest
+                if (m.flashTimer === 0) {
+                    c.strokeStyle = "#ff5500";
+                    c.lineWidth = 2;
+                    c.beginPath();
+                    c.moveTo(cx - 6, cy);
+                    c.lineTo(cx, cy + 8);
+                    c.lineTo(cx + 6, cy + 2);
+                    c.stroke();
+                }
+
+                // Fire claw arms
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#d35400";
+                c.beginPath();
+                // Left arm swinging
+                c.moveTo(cx - 14, cy);
+                c.quadraticCurveTo(cx - 24 - flicker, cy + 4, cx - 20, cy + 12);
+                c.lineTo(cx - 11, cy + 6);
+                // Right arm swinging
+                c.moveTo(cx + 14, cy);
+                c.quadraticCurveTo(cx + 24 + flicker, cy + 4, cx + 20, cy + 12);
+                c.lineTo(cx + 11, cy + 6);
+                c.closePath();
+                c.fill();
+                c.stroke();
+
+                // Rocky head with fiery crest
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#2d110b";
+                c.beginPath();
+                c.arc(cx, cy - 12, 8, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+
+                // Blazing fire hair/crest
+                c.fillStyle = "#e67e22";
+                c.beginPath();
+                c.moveTo(cx - 6, cy - 18);
+                c.quadraticCurveTo(cx, cy - 28 - flicker, cx + 6, cy - 18);
+                c.quadraticCurveTo(cx + 3, cy - 12, cx - 3, cy - 12);
                 c.closePath();
                 c.fill();
                 c.stroke();
 
                 if (m.flashTimer === 0) {
-                    // Golden core
-                    c.fillStyle = m.isRare ? "#ffffff" : "#f1c40f";
+                    // Blazing yellow boss eyes
+                    c.fillStyle = "#f1c40f";
                     c.beginPath();
-                    c.moveTo(cx, cy - 10 - flicker * 0.5);
-                    c.quadraticCurveTo(cx + 8, cy, cx + 4, cy + 12);
-                    c.lineTo(cx - 4, cy + 12);
-                    c.quadraticCurveTo(cx - 8, cy, cx, cy - 10 - flicker * 0.5);
-                    c.closePath();
+                    c.arc(cx - 3, cy - 12, 1.5, 0, Math.PI * 2);
+                    c.arc(cx + 3, cy - 12, 1.5, 0, Math.PI * 2);
                     c.fill();
                 }
-            } 
+            }
             else if (vType === "lava_serpent") {
                 // Upgraded Obsidian Lava Serpent slithering LEFT with jagged vents and head horns
                 let cx = m.x + m.w / 2;
@@ -3700,41 +3737,140 @@ window.onload = function() {
 
                         c.shadowBlur = 0;
                     }
-                } else {
-                    c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#1a252f";
-                    
-                    c.beginPath();
-                    c.roundRect(m.x, m.y + 20, m.w, m.h - 20, [4, 4, 8, 8]);
-                    c.fill();
-                    c.stroke();
-                    
-                    c.fillStyle = "#34495e";
-                    c.beginPath();
-                    c.moveTo(m.x - 6, m.y + 20); c.lineTo(m.x + 6, m.y + 10); c.lineTo(m.x + 12, m.y + 20);
-                    c.moveTo(m.x + m.w + 6, m.y + 20); c.lineTo(m.x + m.w - 6, m.y + 10); c.lineTo(m.x + m.w - 12, m.y + 20);
-                    c.fill();
-                    c.stroke();
+                else {
+                    let currentTier = t !== undefined ? t : getStageTier();
+                    if (currentTier === 2) {
+                        // TIER 2: Inferno Magma Lord Boss (Brimstone skull, blazing crown, magma core)
+                        let bounce = Math.sin(Date.now() / 150) * 3.5;
+                        let cx = m.x + m.w / 2;
+                        let cy = m.y + m.h / 2 + bounce;
 
-                    c.fillStyle = "#2c3e50";
-                    c.beginPath();
-                    c.arc(m.x + m.w/2, m.y + 10, 16, Math.PI, 0);
-                    c.fill();
-                    c.stroke();
-                    
-                    c.beginPath();
-                    c.moveTo(m.x + m.w/2 - 12, m.y + 2); c.quadraticCurveTo(m.x + m.w/2 - 20, m.y - 12, m.x + m.w/2 - 16, m.y - 14); c.lineTo(m.x + m.w/2 - 8, m.y + 6);
-                    c.fill(); c.stroke();
-                    
-                    c.beginPath();
-                    c.moveTo(m.x + m.w/2 + 12, m.y + 2); c.quadraticCurveTo(m.x + m.w/2 + 20, m.y - 12, m.x + m.w/2 + 16, m.y - 14); c.lineTo(m.x + m.w/2 + 8, m.y + 6);
-                    c.fill(); c.stroke();
+                        // Giant Molten Obsidian Torso with lava lines
+                        c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#110200";
+                        c.beginPath();
+                        c.moveTo(cx - 24, cy + 40);
+                        c.lineTo(cx - 18, cy + 5);
+                        c.lineTo(cx + 18, cy + 5);
+                        c.lineTo(cx + 24, cy + 40);
+                        c.closePath();
+                        c.fill();
+                        c.stroke();
 
-                    if (m.flashTimer === 0) {
-                        let grad = c.createRadialGradient(m.x + m.w/2, m.y + 40, 2, m.x + m.w/2, m.y + 40, 12);
-                        grad.addColorStop(0, "#e74c3c");
-                        grad.addColorStop(1, "rgba(231,76,60,0)");
-                        c.fillStyle = grad;
-                        c.beginPath(); c.arc(m.x + m.w/2, m.y + 40, 12, 0, Math.PI*2); c.fill(); c.stroke();
+                        // Blazing Magma Core in chest
+                        if (m.flashTimer === 0) {
+                            let grad = c.createRadialGradient(cx, cy + 22, 2, cx, cy + 22, 16);
+                            grad.addColorStop(0, "#f1c40f");
+                            grad.addColorStop(0.4, "#e67e22");
+                            grad.addColorStop(1, "rgba(0,0,0,0)");
+                            c.fillStyle = grad;
+                            c.beginPath(); c.arc(cx, cy + 22, 16, 0, Math.PI*2); c.fill();
+                        }
+
+                        // Molten Brimstone Demon Skull Head
+                        c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#2d0b03";
+                        c.beginPath();
+                        c.roundRect(cx - 16, cy - 20, 32, 25, [6]);
+                        c.fill();
+                        c.stroke();
+
+                        // Molten Spiked Crown
+                        c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#e67e22";
+                        c.beginPath();
+                        c.moveTo(cx - 16, cy - 20);
+                        c.lineTo(cx - 22, cy - 35);
+                        c.lineTo(cx - 8, cy - 23);
+                        c.lineTo(cx, cy - 38);
+                        c.lineTo(cx + 8, cy - 23);
+                        c.lineTo(cx + 22, cy - 35);
+                        c.lineTo(cx + 16, cy - 20);
+                        c.closePath();
+                        c.fill();
+                        c.stroke();
+
+                        if (m.flashTimer === 0) {
+                            // Blazing yellow boss eyes
+                            c.fillStyle = "#f1c40f";
+                            c.beginPath();
+                            c.arc(cx - 5, cy - 10, 2.5, 0, Math.PI * 2);
+                            c.arc(cx + 5, cy - 10, 2.5, 0, Math.PI * 2);
+                            c.fill();
+                        }
+                    }
+                    else if (currentTier === 3) {
+                        // TIER 3: Swamp Bog-Colossus Boss (Root-entangled swamp elemental)
+                        let bounce = Math.sin(Date.now() / 170) * 3;
+                        let cx = m.x + m.w / 2;
+                        let cy = m.y + m.h / 2 + bounce;
+
+                        // Tangled wooden root body
+                        c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#2d1e12";
+                        c.beginPath();
+                        c.roundRect(cx - 22, cy - 10, 44, 50, [10]);
+                        c.fill();
+                        c.stroke();
+
+                        // Mossy/Leafy swamp shoulders
+                        c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#143d1f";
+                        c.beginPath();
+                        c.ellipse(cx - 20, cy - 10, 12, 12, 0, 0, Math.PI*2);
+                        c.ellipse(cx + 20, cy - 10, 12, 12, 0, 0, Math.PI*2);
+                        c.fill();
+                        c.stroke();
+
+                        // Bog face
+                        c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#1a120a";
+                        c.beginPath();
+                        c.arc(cx, cy - 22, 12, 0, Math.PI*2);
+                        c.fill();
+                        c.stroke();
+
+                        if (m.flashTimer === 0) {
+                            // Glowing toxic green swamp eyes
+                            c.fillStyle = "#2ecc71";
+                            c.beginPath();
+                            c.arc(cx - 4, cy - 22, 2.2, 0, Math.PI*2);
+                            c.arc(cx + 4, cy - 22, 2.2, 0, Math.PI*2);
+                            c.fill();
+                        }
+                    }
+                    else {
+                        // TIER 4+: Void Overseer Boss (Levitating levitational multi-eyed space singularity)
+                        let hover = Math.sin(Date.now() / 140) * 6;
+                        let cx = m.x + m.w / 2;
+                        let cy = m.y + m.h / 2 - 10 + hover;
+
+                        // Swirling cosmic aura backplate
+                        if (m.flashTimer === 0) {
+                            let coreGrad = c.createRadialGradient(cx, cy, 2, cx, cy, 28);
+                            coreGrad.addColorStop(0, "#ffffff");
+                            coreGrad.addColorStop(0.4, "#9b59b6");
+                            coreGrad.addColorStop(1, "rgba(0,0,0,0)");
+                            c.fillStyle = coreGrad;
+                            c.beginPath(); c.arc(cx, cy, 28, 0, Math.PI*2); c.fill();
+                        }
+
+                        // Central obsidian core plate
+                        c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#0d011a";
+                        c.beginPath();
+                        c.moveTo(cx, cy - 20);
+                        c.lineTo(cx + 18, cy);
+                        c.lineTo(cx, cy + 20);
+                        c.lineTo(cx - 18, cy);
+                        c.closePath();
+                        c.fill();
+                        c.stroke();
+
+                        if (m.flashTimer === 0) {
+                            // Blinking pink void watch eyes
+                            c.fillStyle = "#ff007f";
+                            c.beginPath();
+                            c.arc(cx, cy, 3.5, 0, Math.PI*2);
+                            c.arc(cx - 8, cy - 8, 1.8, 0, Math.PI*2);
+                            c.arc(cx + 8, cy - 8, 1.8, 0, Math.PI*2);
+                            c.arc(cx - 8, cy + 8, 1.8, 0, Math.PI*2);
+                            c.arc(cx + 8, cy + 8, 1.8, 0, Math.PI*2);
+                            c.fill();
+                        }
                     }
                 }
 
@@ -10307,9 +10443,36 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 
                 ctx.strokeStyle = "#e74c3c"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(250, 40); ctx.lineTo(250, 60); ctx.moveTo(500, 50); ctx.lineTo(500, 75); ctx.stroke();
                 
-                // Volcano mountains
-                ctx.fillStyle = "#110200"; ctx.beginPath(); ctx.moveTo(0, 180); ctx.lineTo(150, 120); ctx.lineTo(300, 180); ctx.lineTo(480, 110); ctx.lineTo(650, 180); ctx.fill();
-                ctx.strokeStyle = "#000000"; ctx.lineWidth = penFar; ctx.stroke();
+                // Volcano mountains (Wide-base, highly jagged sloping volcanic cones)
+            ctx.fillStyle = "#110200"; 
+            ctx.beginPath(); 
+            ctx.moveTo(0, 180); 
+            ctx.lineTo(80, 140);
+            ctx.lineTo(95, 142); // Jagged step
+            ctx.lineTo(140, 115); // Crater left rim
+            ctx.lineTo(160, 115); // Crater right rim
+            ctx.lineTo(210, 150);
+            ctx.lineTo(220, 148);
+            ctx.lineTo(300, 180); 
+
+            ctx.moveTo(300, 180);
+            ctx.lineTo(380, 125);
+            ctx.lineTo(395, 128);
+            ctx.lineTo(440, 105);
+            ctx.lineTo(460, 105);
+            ctx.lineTo(520, 145);
+            ctx.lineTo(650, 180);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Molten lava caps inside background craters
+            ctx.strokeStyle = "#e74c3c";
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(140, 115); ctx.lineTo(160, 115);
+            ctx.moveTo(440, 105); ctx.lineTo(460, 105);
+            ctx.stroke();
             } else if (tier === 3) {
                 let mistGrad = ctx.createLinearGradient(0, 120, 0, 180); mistGrad.addColorStop(0, "rgba(39, 174, 96, 0)"); mistGrad.addColorStop(1, "rgba(39, 174, 96, 0.12)");
                 ctx.fillStyle = mistGrad; ctx.fillRect(0, 120, canvas.width, 60);
@@ -10435,11 +10598,37 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                             ctx.fillStyle = "#110502"; ctx.beginPath(); ctx.moveTo(tx - 12*ts, 180); ctx.lineTo(tx, ty - 15*ts); ctx.lineTo(tx + 12*ts, 180); ctx.fill(); ctx.stroke();
                             ctx.fillStyle = "#e67e22"; ctx.beginPath(); ctx.arc(tx, ty - 15*ts, 4*ts, 0, Math.PI*2); ctx.fill(); ctx.stroke();
                         } else {
-                            // Volcanic Vents
-                            ctx.fillStyle = "#210904"; ctx.beginPath(); ctx.moveTo(tx - 16*ts, 180); ctx.lineTo(tx - 6*ts, ty + 10*ts); ctx.lineTo(tx + 6*ts, ty + 10*ts); ctx.lineTo(tx + 16*ts, 180); ctx.closePath(); ctx.fill(); ctx.stroke();
-                            let pulse = Math.sin(Date.now() / 100 + s.seed * 50) * 4 + 6;
-                            ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.ellipse(tx, ty + 10*ts, pulse*ts, 3*ts, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-                        }
+                // Volcanic Peaks (Jagged, sloping, craggy volcanic cones with lava crater)
+                ctx.fillStyle = "#210904"; 
+                ctx.beginPath();
+                ctx.moveTo(tx - 32*ts, 180); // Wide base
+                ctx.lineTo(tx - 12*ts, ty + 14*ts);
+                ctx.lineTo(tx - 6*ts, ty + 7*ts); // Craggy indentation
+                ctx.lineTo(tx - 5*ts, ty + 10*ts); // Left rim of crater
+                ctx.lineTo(tx + 5*ts, ty + 10*ts); // Right rim of crater
+                ctx.lineTo(tx + 8*ts, ty + 13*ts);
+                ctx.lineTo(tx + 32*ts, 180); // Wide base
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Glowing molten lava crater at the top
+                let pulse = Math.sin(Date.now() / 100 + s.seed * 50) * 2 + 5;
+                ctx.fillStyle = "#e74c3c";
+                ctx.beginPath();
+                ctx.ellipse(tx, ty + 10*ts, pulse*ts, 2.5*ts, 0, 0, Math.PI*2);
+                ctx.fill();
+                ctx.stroke();
+
+                // Molten lava running down the side as a craggy fissure
+                ctx.strokeStyle = "#e67e22";
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(tx, ty + 10*ts);
+                ctx.lineTo(tx - 4*ts, ty + 20*ts);
+                ctx.lineTo(tx - 2*ts, ty + 30*ts);
+                ctx.stroke();
+            }
                     } else if (tier === 3) { 
                         if (s.seed < 0.5) {
                             // Mangrove
