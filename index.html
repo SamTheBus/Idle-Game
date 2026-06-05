@@ -1824,6 +1824,115 @@ window.onload = function() {
                 c.stroke();
             }
         }
+        else if (m.type === "rift_guardian") {
+            let hover = Math.sin(Date.now() / 150) * 8;
+            c.save();
+            c.translate(m.x + m.w / 2, m.y + m.h / 2 + hover);
+            
+            let pulseScale = 1 + Math.sin(Date.now() / 100) * 0.05;
+            c.scale(pulseScale, pulseScale);
+            
+            let blockColor = m.flashTimer > 0 ? "#ffffff" : "#1a052e";
+            
+            // 1. Layered Flapping Phantom Wings
+            c.fillStyle = "rgba(155, 89, 182, 0.25)";
+            c.strokeStyle = "#000000";
+            c.lineWidth = 2;
+            for (let i = 0; i < 3; i++) {
+                let wingAngle = Math.sin(Date.now() / 200 + i * 1.5) * 15 * Math.PI / 180;
+                c.save();
+                c.rotate(wingAngle);
+                
+                // Left wing shapes
+                c.beginPath();
+                c.moveTo(-10, -10 + i * 10);
+                c.bezierCurveTo(-60, -40 - i * 10, -80, 10 - i * 10, -10, 20);
+                c.closePath();
+                c.fill();
+                c.stroke();
+                
+                // Right wing shapes
+                c.beginPath();
+                c.moveTo(10, -10 + i * 10);
+                c.bezierCurveTo(60, -40 - i * 10, 80, 10 - i * 10, 10, 20);
+                c.closePath();
+                c.fill();
+                c.stroke();
+                
+                c.restore();
+            }
+            
+            // 2. Orbiting Reality Shards
+            if (m.flashTimer === 0) {
+                c.fillStyle = "#e84393";
+                c.shadowBlur = 10;
+                c.shadowColor = "#e84393";
+                for (let i = 0; i < 4; i++) {
+                    let shardAngle = (Date.now() / 250 + i * Math.PI / 2);
+                    let sx = Math.cos(shardAngle) * 35;
+                    let sy = Math.sin(shardAngle) * 15;
+                    c.beginPath();
+                    c.moveTo(sx, sy - 4);
+                    c.lineTo(sx + 4, sy);
+                    c.lineTo(sx, sy + 4);
+                    c.lineTo(sx - 4, sy);
+                    c.closePath();
+                    c.fill();
+                }
+                c.shadowBlur = 0;
+            }
+            
+            // 3. Shadowy Void Hood Plate
+            c.fillStyle = blockColor;
+            c.beginPath();
+            c.moveTo(0, -35); 
+            c.quadraticCurveTo(-22, -30, -22, -10);
+            c.lineTo(-12, 35);
+            c.lineTo(12, 35);
+            c.lineTo(22, -10);
+            c.quadraticCurveTo(22, -30, 0, -35);
+            c.closePath();
+            c.fill();
+            c.stroke();
+            
+            // 4. Obsidian Horns
+            c.fillStyle = "#e84393";
+            c.beginPath();
+            // Left
+            c.moveTo(-12, -32);
+            c.quadraticCurveTo(-28, -50, -32, -45);
+            c.lineTo(-8, -25);
+            c.closePath();
+            // Right
+            c.moveTo(12, -32);
+            c.quadraticCurveTo(28, -50, 32, -45);
+            c.lineTo(8, -25);
+            c.closePath();
+            c.fill();
+            c.stroke();
+            
+            // 5. Pulsing Cosmic Void Core (Singularity Eye)
+            if (m.flashTimer === 0) {
+                let coreGrad = c.createRadialGradient(0, -10, 1, 0, -10, 12);
+                coreGrad.addColorStop(0, "#ffffff");
+                coreGrad.addColorStop(0.3, "#e84393");
+                coreGrad.addColorStop(0.6, "#8e44ad");
+                coreGrad.addColorStop(1, "rgba(0,0,0,0)");
+                
+                c.fillStyle = coreGrad;
+                c.beginPath();
+                c.arc(0, -10, 12, 0, Math.PI * 2);
+                c.fill();
+                
+                // Slit pupil
+                c.fillStyle = "#110221";
+                c.beginPath();
+                c.ellipse(0, -10, 2, 8, 0, 0, Math.PI * 2);
+                c.fill();
+            }
+            
+            c.restore();
+        }
         else if (m.type === "boss" || m.type === "dungeon_boss") {
             c.lineWidth = 2.4;
 
@@ -5591,9 +5700,25 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         } else {
             let tier = getStageTier();
             if (playerStats.isBossMode) {
-                let baseBossHp = 45 * scale * (playerStats.isUberBoss ? 1.5 : 1);
-                mob = { x: 750, y: 100, w: 40, h: 80, type: "boss", isRare: false, visualTier: tier, hp: Math.floor(baseBossHp), maxHp: Math.floor(baseBossHp), damage: Math.floor((2 + (3 * scale)) * 5.0), flashTimer: 0, isStopped: false };
-                let label = playerStats.isUberBoss ? "ENRAGED RIFT GUARDIAN" : "STAGE BOSS"; pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[${label}]</span> blocked your transit route!`);
+                if (playerStats.isUberBoss) {
+                    // Materialize a custom Rift Guardian (Uber Boss) on its own dimensional void plane
+                    let hp = Math.floor(150 * Math.pow(1.085, playerStats.stage));
+                    let dmg = Math.floor((4 + (3 * scale)) * 6.0);
+                    mob = { 
+                        x: 750, y: 65, w: 60, h: 100, 
+                        type: "rift_guardian", 
+                        isRare: false, 
+                        hp: hp, maxHp: hp, 
+                        damage: dmg, 
+                        flashTimer: 0, 
+                        isStopped: false 
+                    };
+                    pushLog(`<span style='color:#9b59b6; font-weight:bold;'>[VOID ENCOUNTER]</span> You have entered the Aether Rift! **The Nameless Terror** has materialized!`);
+                } else {
+                    let baseBossHp = 45 * scale;
+                    mob = { x: 750, y: 100, w: 40, h: 80, type: "boss", isRare: false, visualTier: tier, hp: Math.floor(baseBossHp), maxHp: Math.floor(baseBossHp), damage: Math.floor((2 + (3 * scale)) * 5.0), flashTimer: 0, isStopped: false };
+                    pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[STAGE BOSS]</span> blocked your transit route!`);
+                }
             } else {
                 let isMelee = Math.random() > 0.5;
                 let isRare = Math.random() < p.rareSpawn;
@@ -7051,7 +7176,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     function handleMobDeath() {
         effects = effects.filter(e => !e.isCumulative);
         let p = resolvePlayerStats(); 
-        let isBoss = (mob.type === "boss" || mob.type === "dungeon_boss" || mob.type === "dungeon_miniboss");
+        let isBoss = (mob.type === "boss" || mob.type === "dungeon_boss" || mob.type === "dungeon_miniboss" || mob.type === "rift_guardian");
         
         // Void Core Siphon-Heal Check on Rare Defeat
         if (mob && mob.isRare && checkArtifactTrait("void_pull")) {
@@ -8314,7 +8439,38 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         const penBoss = 2.4;        // Dungeon bosses and Rift Guardians
 
         // 1. SKY & BACKGROUND FILL
-        if (playerStats.isPrestigeBossMode) {
+        if (playerStats.isUberBoss) {
+            // Swirling Aether Void Arena Background
+            let skyGrad = ctx.createLinearGradient(0, 0, 0, 180);
+            skyGrad.addColorStop(0, "#0d011a");
+            skyGrad.addColorStop(0.5, "#25033c");
+            skyGrad.addColorStop(1, "#030005");
+            ctx.fillStyle = skyGrad; 
+            ctx.fillRect(0, 0, canvas.width, 180);
+
+            // Swirling black hole singularity core in center
+            let singPulse = 45 + Math.sin(Date.now() / 150) * 10;
+            let singGrad = ctx.createRadialGradient(canvas.width / 2, 80, 5, canvas.width / 2, 80, singPulse);
+            singGrad.addColorStop(0, "#000000");
+            singGrad.addColorStop(0.3, "#e84393");
+            singGrad.addColorStop(0.7, "rgba(142, 68, 173, 0.15)");
+            singGrad.addColorStop(1, "rgba(0,0,0,0)");
+            ctx.fillStyle = singGrad;
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, 80, singPulse, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Swirling gravitational distortion orbital ring
+            ctx.strokeStyle = "rgba(155, 89, 182, 0.45)";
+            ctx.lineWidth = 1.5;
+            ctx.save();
+            ctx.translate(canvas.width / 2, 80);
+            ctx.rotate(Date.now() / 500);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, singPulse * 1.6, singPulse * 0.4, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        } else if (playerStats.isPrestigeBossMode) {
             // Gothic Lava Castle Arena Background
             let skyGrad = ctx.createLinearGradient(0, 0, 0, 180);
             skyGrad.addColorStop(0, "#0a0302"); // Vaulted castle ceiling shadow
@@ -8569,9 +8725,9 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             ctx.lineWidth = penBgScenery * ts;
             ctx.lineJoin = "round";
 
-            if (playerStats.isCrucibleMode || playerStats.isPrestigeBossMode) {
+            if (playerStats.isCrucibleMode || playerStats.isPrestigeBossMode || playerStats.isUberBoss) {
                 ctx.restore();
-                return; // Block background scenery in space / lava castle
+                return; // Block background scenery in space, castle, or void arena
             }
             if (playerStats.isDungeonMode) {
                 let isCeiling = s.seed < 0.45; 
@@ -8746,7 +8902,24 @@ function formatStatRangeStr(item, statKey, isPct = false) {
 
         // 3. GROUND FLOOR RENDERING WITH DETAILED TEXTURES
         ctx.save();
-        if (playerStats.isPrestigeBossMode) {
+        if (playerStats.isUberBoss) {
+            // Shattered mirror cosmic void floor with gravity rift lines
+            let groundGrad = ctx.createLinearGradient(0, 180, 0, 250);
+            groundGrad.addColorStop(0, "#05010a");
+            groundGrad.addColorStop(1, "#120224");
+            ctx.fillStyle = groundGrad; 
+            ctx.fillRect(0, 180, canvas.width, 70);
+
+            ctx.strokeStyle = "rgba(142, 68, 173, 0.45)"; 
+            ctx.lineWidth = 1;
+            for (let i = -100; i < canvas.width + 100; i += 50) {
+                let gx = i - (groundScroll % 50);
+                ctx.beginPath(); 
+                ctx.moveTo(gx, 180); 
+                ctx.lineTo(gx - 30, 250); 
+                ctx.stroke();
+            }
+        } else if (playerStats.isPrestigeBossMode) {
             // Dark Obsidian Flagstone Castle Floor with Molten Veins
             let groundGrad = ctx.createLinearGradient(0, 180, 0, 250);
             groundGrad.addColorStop(0, "#1c1110"); // Charcoal obsidian surface
