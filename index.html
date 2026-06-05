@@ -7934,6 +7934,9 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 playerStats.currentHp = Math.min(p.maxHp, playerStats.currentHp + heal);
                 effects.push({ x: hero.x - 25, y: hero.y - 10, text: "❤️ +" + heal.toLocaleString(), color: "#2ecc71", life: 60 });
             }
+            updateUI(); 
+            if (mob.hp <= 0) handleMobDeath();
+        }
     }
 
     /* ==========================================================================
