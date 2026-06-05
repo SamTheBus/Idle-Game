@@ -1645,53 +1645,191 @@ window.onload = function() {
         }
 
         if (m.type === "mob") {
-            if (m.flashTimer > 0) {
-                c.fillStyle = "#ffffff";
-            } else {
-                if (t === 0) c.fillStyle = m.isRare ? "#f1c40f" : "#2ecc71"; 
-                else if (t === 1) c.fillStyle = m.isRare ? "#bdc3c7" : "#7f8c8d"; 
-                else if (t === 2) c.fillStyle = m.isRare ? "#e67e22" : "#c0392b"; 
-                else if (t === 3) c.fillStyle = m.isRare ? "#1abc9c" : "#27ae60"; 
-                else c.fillStyle = m.isRare ? "#9b59b6" : "#34495e"; 
+            // Draw glowing halo first if it is a rare mob to establish premium aura layering
+            if (m.isRare) {
+                c.save();
+                let auraPulse = 1 + Math.sin(Date.now() / 150) * 0.12;
+                let auraGrad = c.createRadialGradient(
+                    m.x + m.w / 2, m.y + m.h / 2, 2,
+                    m.x + m.w / 2, m.y + m.h / 2, Math.max(m.w, m.h) * 1.15 * auraPulse
+                );
+                auraGrad.addColorStop(0, "rgba(241, 196, 15, 0.45)");
+                auraGrad.addColorStop(0.6, "rgba(230, 126, 34, 0.18)");
+                auraGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+                c.fillStyle = auraGrad;
+                c.beginPath();
+                c.arc(m.x + m.w / 2, m.y + m.h / 2, Math.max(m.w, m.h) * 1.15 * auraPulse, 0, Math.PI * 2);
+                c.fill();
+                c.restore();
             }
 
-            if (t === 0) {
-                let squish = Math.sin(Date.now() / 100) * 3;
+            // Derive active visual design index
+            let vType = m.visualType;
+            if (!vType) {
+                // Backward compatibility fallbacks
+                let fallbacks = { 0: "slime", 1: "golem", 2: "magma_elemental", 3: "marsh_ghost", 4: "void_orb" };
+                vType = fallbacks[t] || "slime";
+            }
+
+            if (vType === "slime") {
+                // Overhauled jelly slime: highly fluid, core-centric & responsive squishing
+                let squish = Math.sin(Date.now() / 100) * 3.5;
+                let wScale = m.w / 2 + squish;
+                let hScale = m.h / 2 - squish;
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h - 10 + squish / 2;
+                
+                let slimeGrad = c.createRadialGradient(cx - 3, cy - 5, 2, cx, cy, m.w * 0.7);
+                if (m.flashTimer > 0) {
+                    slimeGrad.addColorStop(0, "#ffffff");
+                    slimeGrad.addColorStop(1, "#ffffff");
+                } else if (m.isRare) {
+                    slimeGrad.addColorStop(0, "#ffeaa7");
+                    slimeGrad.addColorStop(1, "#f1c40f");
+                } else {
+                    slimeGrad.addColorStop(0, "#55efc4");
+                    slimeGrad.addColorStop(1, "#00b894");
+                }
+                c.fillStyle = slimeGrad;
                 c.beginPath();
-                c.ellipse(m.x + m.w / 2, m.y + m.h - 10 + squish / 2, m.w / 2 + squish, m.h / 2 - squish, 0, 0, Math.PI * 2);
+                c.ellipse(cx, cy, wScale, hScale, 0, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+                
+                if (m.flashTimer === 0) {
+                    // Stylized high-shine liquid reflection
+                    c.fillStyle = "rgba(255, 255, 255, 0.42)";
+                    c.beginPath();
+                    c.ellipse(cx - wScale * 0.4, cy - hScale * 0.4, wScale * 0.22, hScale * 0.18, Math.PI / 4, 0, Math.PI * 2);
+                    c.fill();
+                    
+                    // Floating Nucleolus Core
+                    c.fillStyle = m.isRare ? "#d35400" : "#0984e3";
+                    c.beginPath();
+                    c.arc(cx, cy + 3, 4.5, 0, Math.PI * 2);
+                    c.fill();
+                    c.strokeStyle = "#000000";
+                    c.lineWidth = 1;
+                    c.stroke();
+                    
+                    // Eyes
+                    c.fillStyle = "#1e272e";
+                    c.beginPath();
+                    c.arc(cx - 5, cy - 2, 2.2, 0, Math.PI * 2);
+                    c.arc(cx + 5, cy - 2, 2.2, 0, Math.PI * 2);
+                    c.fill();
+                    
+                    // Cheeks
+                    c.fillStyle = "rgba(235, 77, 75, 0.55)";
+                    c.beginPath();
+                    c.arc(cx - 8, cy, 1.8, 0, Math.PI * 2);
+                    c.arc(cx + 8, cy, 1.8, 0, Math.PI * 2);
+                    c.fill();
+
+                    // Mouth
+                    c.strokeStyle = "#1e272e";
+                    c.lineWidth = 1.2;
+                    c.beginPath();
+                    c.arc(cx, cy - 1, 3, 0, Math.PI);
+                    c.stroke();
+                }
+            } 
+            else if (vType === "sprout") {
+                let sway = Math.sin(Date.now() / 140) * 0.12;
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h;
+                
+                // Stem structure
+                c.strokeStyle = m.flashTimer > 0 ? "#ffffff" : "#4d2e1a";
+                c.lineWidth = 2.8;
+                c.beginPath();
+                c.moveTo(cx, cy);
+                c.quadraticCurveTo(cx - 5, cy - 15, cx + Math.sin(Date.now() / 120) * 3, cy - 25);
+                c.stroke();
+
+                // Bulb
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#f1c40f" : "#2ecc71");
+                c.beginPath();
+                c.arc(cx + Math.sin(Date.now() / 120) * 3, cy - 25, 7.5, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+
+                // Foliage crown
+                c.save();
+                c.translate(cx + Math.sin(Date.now() / 120) * 3, cy - 31);
+                c.rotate(sway);
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#e67e22" : "#27ae60");
+                c.beginPath();
+                c.ellipse(-3.5, -2, 4.5, 1.8, -Math.PI / 6, 0, Math.PI * 2);
+                c.ellipse(3.5, -2, 4.5, 1.8, Math.PI / 6, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+                c.restore();
+            } 
+            else if (vType === "beetle") {
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h - 10;
+                let run = Math.sin(Date.now() / 80) * 3.5;
+
+                // Legs
+                c.strokeStyle = m.flashTimer > 0 ? "#ffffff" : "#1e272e";
+                c.lineWidth = 2;
+                c.beginPath();
+                c.moveTo(cx - 8, cy); c.lineTo(cx - 14, cy + run);
+                c.moveTo(cx - 8, cy + 4); c.lineTo(cx - 15, cy + 4 - run);
+                c.moveTo(cx + 8, cy); c.lineTo(cx + 14, cy - run);
+                c.moveTo(cx + 8, cy + 4); c.lineTo(cx + 15, cy + 4 + run);
+                c.stroke();
+
+                // Shell carapace
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#1abc9c" : "#7f8c8d");
+                c.beginPath();
+                c.ellipse(cx, cy, 10, 13, 0, 0, Math.PI * 2);
                 c.fill();
                 c.stroke();
 
                 if (m.flashTimer === 0) {
-                    c.fillStyle = "#111";
-                    c.beginPath(); c.arc(m.x + m.w / 2 - 4, m.y + m.h / 2, 2, 0, Math.PI * 2); c.fill(); c.stroke();
-                    c.beginPath(); c.arc(m.x + m.w / 2 + 4, m.y + m.h / 2, 2, 0, Math.PI * 2); c.fill(); c.stroke();
+                    c.strokeStyle = "#1e272e";
+                    c.lineWidth = 1.2;
+                    c.beginPath(); c.moveTo(cx, cy - 13); c.lineTo(cx, cy + 13); c.stroke();
                 }
-            } else if (t === 1) {
+
+                // Head
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#2c3e50";
+                c.beginPath();
+                c.arc(cx, cy - 14, 5.5, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+
+                // Horns
+                c.strokeStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#f1c40f" : "#111115");
+                c.lineWidth = 2.2;
+                c.beginPath();
+                c.moveTo(cx, cy - 19);
+                c.quadraticCurveTo(cx - 5, cy - 26, cx - 10, cy - 24);
+                c.stroke();
+            } 
+            else if (vType === "golem") {
                 let hover = Math.sin(Date.now() / 120) * 2;
                 let blockColor = m.flashTimer > 0 ? "#ffffff" : "#4e545c";
                 let shadowColor = m.flashTimer > 0 ? "#ffffff" : "#2f353d";
                 let runeColor = m.isRare ? "#ff007f" : "#ff3333";
 
-                // Golem back chest
                 c.fillStyle = shadowColor;
                 c.beginPath();
                 c.roundRect(m.x + 2, m.y + 10 + hover, m.w - 4, m.h - 10, [6]);
                 c.fill();
                 c.stroke();
 
-                // Golem front chest
                 c.fillStyle = blockColor;
                 c.beginPath();
                 c.roundRect(m.x + 4, m.y + 12 + hover, m.w - 8, m.h - 14, [4]);
                 c.fill();
                 c.stroke();
 
-                // Golem back head
                 c.fillStyle = shadowColor;
                 c.beginPath(); c.rect(m.x + 6, m.y + hover, m.w - 12, 10); c.fill(); c.stroke();
                 
-                // Golem front head
                 c.fillStyle = blockColor;
                 c.beginPath(); c.rect(m.x + 8, m.y + 2 + hover, m.w - 16, 8); c.fill(); c.stroke();
 
@@ -1719,7 +1857,6 @@ window.onload = function() {
                     c.shadowBlur = 0; 
                 }
 
-                // Golem shoulders
                 c.fillStyle = shadowColor;
                 c.beginPath(); c.rect(m.x - 4, m.y + 12 + hover, 5, 8); c.fill(); c.stroke();
                 c.beginPath(); c.rect(m.x + m.w - 1, m.y + 12 + hover, 5, 8); c.fill(); c.stroke();
@@ -1744,8 +1881,77 @@ window.onload = function() {
                     c.fill();
                     c.stroke();
                 }
-            } else if (t === 2) {
+            } 
+            else if (vType === "gryphon") {
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h / 2 + Math.sin(Date.now() / 120) * 3;
+                let wing = Math.sin(Date.now() / 80) * 10;
+
+                // Wings
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#f39c12" : "#7f8c8d");
+                c.beginPath();
+                c.ellipse(cx - 8, cy - 3, 7, 14 + wing, -Math.PI / 4, 0, Math.PI * 2);
+                c.ellipse(cx + 8, cy - 3, 7, 14 + wing, Math.PI / 4, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+
+                // Core body
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#f1c40f" : "#dca04c");
+                c.beginPath();
+                c.ellipse(cx, cy, 11, 14, 0, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+
+                // Feather Head
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#ffffff" : "#f5f6fa");
+                c.beginPath();
+                c.arc(cx, cy - 13, 7, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+
+                // Gold beak
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#f1c40f";
+                c.beginPath();
+                c.moveTo(cx, cy - 15);
+                c.lineTo(cx - 10, cy - 13);
+                c.lineTo(cx, cy - 10);
+                c.closePath();
+                c.fill();
+                c.stroke();
+            } 
+            else if (vType === "wyrmling") {
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h / 2 + Math.sin(Date.now() / 100) * 3;
+                
+                // Segments
+                for (let i = 0; i < 4; i++) {
+                    let segX = cx + Math.sin(Date.now() / 150 + i) * 5;
+                    let segY = cy + (i * 7) - 8;
+                    c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#9b59b6" : "#4a5568");
+                    c.beginPath();
+                    c.arc(segX, segY, 8.5 - i * 1.3, 0, Math.PI * 2);
+                    c.fill();
+                    c.stroke();
+                }
+                
+                // Head
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#9b59b6" : "#4a5568");
+                c.beginPath();
+                c.arc(cx, cy - 13, 8.5, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+                
+                if (m.flashTimer === 0) {
+                    c.fillStyle = m.isRare ? "#f1c40f" : "#e74c3c";
+                    c.beginPath();
+                    c.arc(cx - 3, cy - 15, 1.8, 0, Math.PI * 2);
+                    c.arc(cx + 3, cy - 15, 1.8, 0, Math.PI * 2);
+                    c.fill();
+                }
+            } 
+            else if (vType === "magma_elemental") {
                 let flicker = Math.sin(Date.now() / 50) * 4;
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#f1c40f" : "#e67e22");
                 c.beginPath();
                 c.moveTo(m.x + m.w / 2, m.y - flicker);
                 c.quadraticCurveTo(m.x + m.w + flicker, m.y + m.h / 2, m.x + m.w - 5, m.y + m.h);
@@ -1754,7 +1960,74 @@ window.onload = function() {
                 c.closePath();
                 c.fill();
                 c.stroke();
-            } else if (t === 3) {
+            } 
+            else if (vType === "hellhound") {
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h - 13;
+                let dogPulse = Math.sin(Date.now() / 90) * 2.5;
+
+                c.strokeStyle = m.flashTimer > 0 ? "#ffffff" : "#000000";
+                c.lineWidth = 2.2;
+                c.beginPath();
+                c.moveTo(cx - 8, cy); c.lineTo(cx - 12, cy + 13 + dogPulse);
+                c.moveTo(cx + 8, cy); c.lineTo(cx + 12, cy + 13 - dogPulse);
+                c.stroke();
+
+                let bodyGrad = c.createLinearGradient(cx, cy - 12, cx, cy + 12);
+                bodyGrad.addColorStop(0, "#ff5500");
+                bodyGrad.addColorStop(1, m.isRare ? "#f1c40f" : "#e74c3c");
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : bodyGrad;
+                c.beginPath();
+                c.ellipse(cx, cy, 12, 17, 0, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#3d0e05" : "#1a0200");
+                c.beginPath();
+                c.ellipse(cx, cy - 14, 8, 10, Math.PI / 4, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+
+                if (m.flashTimer === 0) {
+                    c.fillStyle = "#ffffff";
+                    c.beginPath();
+                    c.arc(cx - 2.5, cy - 16, 1.5, 0, Math.PI * 2);
+                    c.arc(cx + 2.5, cy - 16, 1.5, 0, Math.PI * 2);
+                    c.fill();
+                }
+            } 
+            else if (vType === "imp") {
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h / 2 + Math.sin(Date.now() / 110) * 4;
+                let wing = Math.sin(Date.now() / 70) * 8;
+
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#120202";
+                c.beginPath();
+                c.moveTo(cx - 4, cy); c.lineTo(cx - 21, cy - 10 + wing); c.lineTo(cx - 10, cy + 6);
+                c.moveTo(cx + 4, cy); c.lineTo(cx + 21, cy - 10 + wing); c.lineTo(cx + 10, cy + 6);
+                c.closePath();
+                c.fill();
+                c.stroke();
+
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#e67e22" : "#c0392b");
+                c.beginPath();
+                c.ellipse(cx, cy, 7.5, 12.5, 0, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+
+                c.beginPath();
+                c.arc(cx, cy - 12.5, 7.5, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#f1c40f" : "#1a0200");
+                c.beginPath();
+                c.moveTo(cx - 4.5, cy - 18); c.lineTo(cx - 10, cy - 23); c.lineTo(cx - 1.8, cy - 16);
+                c.moveTo(cx + 4.5, cy - 18); c.lineTo(cx + 10, cy - 23); c.lineTo(cx + 1.8, cy - 16);
+                c.fill();
+                c.stroke();
+            } 
+            else if (vType === "marsh_ghost") {
                 c.beginPath();
                 c.arc(m.x + m.w / 2, m.y + 10, m.w / 2, Math.PI, 0);
                 c.fill();
@@ -1765,7 +2038,73 @@ window.onload = function() {
                 c.rect(m.x + m.w / 2 - 4, m.y + 10, 8, m.h - 10);
                 c.fill();
                 c.stroke();
-            } else {
+            } 
+            else if (vType === "croc") {
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h - 10;
+                let wiggle = Math.sin(Date.now() / 110) * 4;
+
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#2ecc71" : "#1e3f20");
+                c.beginPath();
+                c.moveTo(cx + 11, cy + 2);
+                c.quadraticCurveTo(cx + 25 + wiggle, cy + 6, cx + 19, cy);
+                c.closePath();
+                c.fill();
+                c.stroke();
+
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#00b894" : "#122a14");
+                c.beginPath();
+                c.ellipse(cx, cy, 18, 8, 0, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+
+                if (m.flashTimer === 0) {
+                    c.fillStyle = "#000000";
+                    c.beginPath();
+                    c.moveTo(cx - 9, cy - 8); c.lineTo(cx - 7, cy - 11); c.lineTo(cx - 5, cy - 8);
+                    c.moveTo(cx, cy - 8); c.lineTo(cx + 2, cy - 11); c.lineTo(cx + 4, cy - 8);
+                    c.fill();
+                }
+
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#00b894" : "#122a14");
+                c.beginPath();
+                c.ellipse(cx - 16, cy, 10, 5, 0, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+            } 
+            else if (vType === "toxic_spore") {
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h / 2 + Math.sin(Date.now() / 130) * 5;
+
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#f1c40f" : "#2ecc71");
+                for (let i = 0; i < 4; i++) {
+                    let sy = cy + 12 + Math.sin(Date.now() / 60 + i) * 5;
+                    c.beginPath();
+                    c.arc(cx - 7 + (i * 4.5), sy, 1.8, 0, Math.PI * 2);
+                    c.fill();
+                }
+
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#e67e22" : "#9b59b6");
+                c.beginPath();
+                c.arc(cx, cy, 11, Math.PI, 0);
+                c.fill();
+                c.stroke();
+
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#ecf0f1";
+                c.beginPath();
+                c.ellipse(cx, cy, 11, 3.5, 0, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+
+                if (m.flashTimer === 0) {
+                    c.fillStyle = "#ffffff";
+                    c.beginPath();
+                    c.arc(cx - 3, cy - 5, 1.8, 0, Math.PI * 2);
+                    c.arc(cx + 4, cy - 3, 2.2, 0, Math.PI * 2);
+                    c.fill();
+                }
+            } 
+            else if (vType === "void_orb") {
                 let hover = Math.sin(Date.now() / 150) * 4;
                 c.beginPath();
                 c.ellipse(m.x + m.w / 2, m.y + m.h / 2 + hover, m.w / 2, m.h / 3, 0, 0, Math.PI * 2);
@@ -1779,8 +2118,78 @@ window.onload = function() {
                     c.fill();
                     c.stroke();
                 }
+            } 
+            else if (vType === "void_parasite") {
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h / 2 + Math.sin(Date.now() / 110) * 3;
+                
+                for (let i = 0; i < 5; i++) {
+                    let sy = cy + Math.sin(Date.now() / 120 + i) * 4.5;
+                    let sx = cx - (i * 6) + 8;
+                    c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#f1c40f" : "#2c0e3a");
+                    c.beginPath();
+                    c.arc(sx, sy, 8.5 - i * 1.2, 0, Math.PI * 2);
+                    c.fill();
+                    c.stroke();
+                }
+
+                if (m.flashTimer === 0) {
+                    c.fillStyle = "#ff007f";
+                    c.beginPath();
+                    c.arc(cx + 10, cy - 3, 2.5, 0, Math.PI * 2);
+                    c.fill();
+                    c.stroke();
+                }
+            } 
+            else if (vType === "void_spectre") {
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h / 2 + Math.sin(Date.now() / 140) * 6;
+
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : (m.isRare ? "#1abc9c" : "#111116");
+                c.beginPath();
+                c.moveTo(cx, cy - 17);
+                c.quadraticCurveTo(cx - 13, cy - 8, cx - 10, cy + 15);
+                c.lineTo(cx - 3, cy + 6);
+                c.lineTo(cx, cy + 17);
+                c.lineTo(cx + 3, cy + 6);
+                c.lineTo(cx + 10, cy + 15);
+                c.quadraticCurveTo(cx + 13, cy - 8, cx, cy - 17);
+                c.closePath();
+                c.fill();
+                c.stroke();
+
+                if (m.flashTimer === 0) {
+                    c.fillStyle = "#e84393";
+                    c.beginPath();
+                    c.arc(cx - 3.5, cy - 2.5, 1.8, 0, Math.PI * 2);
+                    c.arc(cx + 3.5, cy - 2.5, 1.8, 0, Math.PI * 2);
+                    c.fill();
+                }
             }
-        } 
+
+            // Draw a floating halo and shimmering star sparkles above the rare mob's head
+            if (m.isRare) {
+                c.save();
+                let glowTime = Date.now() / 200;
+                let hx = m.x + m.w / 2;
+                let hy = m.y - 10 + Math.sin(glowTime) * 2.5;
+                
+                c.strokeStyle = "#f1c40f";
+                c.lineWidth = 1.8;
+                c.beginPath();
+                c.ellipse(hx, hy, 11, 3.2, 0, 0, Math.PI * 2);
+                c.stroke();
+
+                c.fillStyle = "#ffffff";
+                for (let i = 0; i < 3; i++) {
+                    let sparkAngle = glowTime + i * (Math.PI * 2 / 3);
+                    let sx = hx + Math.cos(sparkAngle) * 11;
+                    let sy = hy + Math.sin(sparkAngle) * 3.2;
+                    c.fillRect(sx - 1.2, sy - 1.2, 2.4, 2.4);
+                }
+                c.restore();
+            }
+        }
         else if (m.type === "bat") {
             let wingSpan = Math.sin(Date.now() / 80) * 14;
             c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#4a154b";
@@ -5859,7 +6268,19 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 let isMelee = Math.random() > 0.5;
                 let isRare = Math.random() < p.rareSpawn;
                 let hpMult = isRare ? 2.5 : 1; let dmgMult = isRare ? 1.5 : 1;
-                mob = { x: 750, y: isMelee ? 145 : 160, w: isMelee ? 25 : 30, h: isMelee ? 40 : 25, type: "mob", isRare: isRare, isMelee: isMelee, visualTier: tier, hp: Math.floor(12 * scale * hpMult), maxHp: Math.floor(12 * scale * hpMult), damage: Math.floor((1 + (1 * scale)) * 4.5 * dmgMult), flashTimer: 0, isStopped: false };
+                
+                // Diversified enemy selection pool mapped directly to campaign visual tiers
+                let visualPool = {
+                    0: ["slime", "sprout", "beetle"],
+                    1: ["golem", "gryphon", "wyrmling"],
+                    2: ["magma_elemental", "hellhound", "imp"],
+                    3: ["marsh_ghost", "croc", "toxic_spore"],
+                    4: ["void_orb", "void_parasite", "void_spectre"]
+                };
+                let choices = visualPool[tier] || ["slime"];
+                let visualType = choices[Math.floor(Math.random() * choices.length)];
+
+                mob = { x: 750, y: isMelee ? 145 : 160, w: isMelee ? 25 : 30, h: isMelee ? 40 : 25, type: "mob", visualType: visualType, isRare: isRare, isMelee: isMelee, visualTier: tier, hp: Math.floor(12 * scale * hpMult), maxHp: Math.floor(12 * scale * hpMult), damage: Math.floor((1 + (1 * scale)) * 4.5 * dmgMult), flashTimer: 0, isStopped: false };
                 if (isRare) {
                     pushLog(`<span style='color:#ffb6c1; font-weight:bold;'>✨ A glowing Rare enemy appears!</span>`);
                     if (p.hasSingularitySet) {
