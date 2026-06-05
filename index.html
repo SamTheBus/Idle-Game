@@ -5474,9 +5474,11 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             statLinesCount = 3; 
         } 
         else {
-            if (chosenType === "overall") { item.baseMaxHp = Math.ceil(randInt(30, 50) * stageScale * prestigeMult * 1.8); }
+            if (chosenType === "overall") { item.baseMaxHp = Math.ceil(randInt(35, 55) * stageScale * prestigeMult * 1.8); }
             else if (chosenType === "chest" || chosenType === "leggings" || chosenType === "helmet") { 
-                if (Math.random() > 0.5) item.baseMaxHp = Math.ceil(randInt(10, 20) * stageScale * prestigeMult); else item.baseDef = Math.ceil(randInt(1, 3) * stageScale * prestigeMult); 
+                if (Math.random() > 0.5) item.baseMaxHp = Math.ceil(randInt(12, 24) * stageScale * prestigeMult); else item.baseDef = Math.ceil(randInt(2, 4) * stageScale * prestigeMult); 
+            }
+            else if (chosenType === "weapon") { item.baseAtk = Math.ceil(randInt(2, 4) * stageScale * prestigeMult); }
             }
             else if (chosenType === "weapon") { item.baseAtk = Math.ceil(randInt(2, 4) * stageScale * prestigeMult); }
             else if (chosenType === "subweapon") {
@@ -6483,9 +6485,9 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         p.dex += (alloc.spDex || 0) * 3;  // +3 Dexterity per spent SP
         p.int += (alloc.spInt || 0) * 3;  // +3 Intelligence per spent SP
 
-        p.maxHp += (alloc.spHp * 40);      // +40 Max HP per spent SP
+        p.maxHp += (alloc.spHp * 50);      // +50 Max HP per spent SP
         p.atk += (alloc.spAtk * 6);        // +6 Attack per spent SP
-        p.def += (alloc.spDef * 3);        // +3 Defense per spent SP
+        p.def += (alloc.spDef * 5);        // +5 Defense per spent SP
         p.critChance += (alloc.spCrit * 0.005);
         p.critDamage += (alloc.spCritDmg * 0.02);
         p.block += (alloc.spBlock * 0.005);
@@ -6597,9 +6599,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let effectiveDex = Math.max(0, p.dex - 5);
         let effectiveInt = Math.max(0, p.int - 5);
 
-        // Primary attributes hybrid cross-scaling (Keep STR linear for healthy high-stage scaling)
         p.atk += effectiveStr * 1.5;              
-        p.maxHp += effectiveStr * 10;             
+        p.maxHp += effectiveStr * 12;            
 
         // Asymptotic DEX-to-Crit Chance (Ceiling: +30% maximum)
         p.critChance += parseFloat(((effectiveDex * 0.30) / (effectiveDex + 250)).toFixed(4));
@@ -6611,7 +6612,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         p.parry += parseFloat(((effectiveInt * 0.12) / (effectiveInt + 150)).toFixed(4));
         
         // Initialize base Defense scaling with SP and Intelligence allocation
-        let flatDef = playerStats.baseDef + (alloc.spDef * 3) + (effectiveInt * 0.75) + setCtx.flatDefBonus;
+        let flatDef = playerStats.baseDef + (alloc.spDef * 4) + (effectiveInt * 1.0) + setCtx.flatDefBonus;
         let defMultiplier = 1.0 + setCtx.defPctBonus;
 
         for (let key in equippedSlots) {
@@ -7573,8 +7574,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             'dex': { title: "🎯 DEX (Dexterity)", base: playerStats.baseDex, lvl: (alloc.spDex || 0) * 3, color: "#fff" },
             'int': { title: "🧠 INT (Intelligence)", base: playerStats.baseInt, lvl: (alloc.spInt || 0) * 3, color: "#fff" },
             'atk': { title: "⚔️ Total Attack", base: playerStats.baseAtk, lvl: alloc.spAtk * 6, color: "#fff" },
-            'maxHp': { title: "❤️ Max Health", base: playerStats.baseMaxHp, lvl: alloc.spHp * 40, color: "#fff" },
-            'def': { title: "🛡️ Total Defense", base: playerStats.baseDef, lvl: alloc.spDef * 3, color: "#fff" },
+            'maxHp': { title: "❤️ Max Health", base: playerStats.baseMaxHp, lvl: alloc.spHp * 45, color: "#fff" },
+            'def': { title: "🛡️ Total Defense", base: playerStats.baseDef, lvl: alloc.spDef * 4, color: "#fff" },
             'moveSpeed': { title: "👟 Move Speed", base: playerStats.baseMoveSpeed, lvl: alloc.spSpd * 1, color: "#fff" },
             'critChance': { title: "✨ Crit Chance", base: playerStats.baseCritChance, lvl: alloc.spCrit * 0.005, color: "#e67e22" },
             'critDamage': { title: "💥 Crit Multiplier", base: playerStats.baseCritDamage, lvl: alloc.spCritDmg * 0.02, color: "#f1c40f" },
@@ -7615,8 +7616,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         }
 
         if (statKey === 'atk' && playerStats.atkPotionTimer > 0) gearTotal += Math.ceil((playerStats.baseAtk + alloc.spAtk * 6 + gearTotal + artTotal + achTotal) * 0.10);
-        if (statKey === 'maxHp' && playerStats.hpPotionTimer > 0) gearTotal += Math.ceil((playerStats.baseMaxHp + alloc.spHp * 40 + gearTotal + artTotal) * 0.10);
-        if (statKey === 'def' && playerStats.defPotionTimer > 0) gearTotal += Math.ceil((playerStats.baseDef + alloc.spDef * 3 + gearTotal + artTotal) * 0.10);
+        if (statKey === 'maxHp' && playerStats.hpPotionTimer > 0) gearTotal += Math.ceil((playerStats.baseMaxHp + alloc.spHp * 45 + gearTotal + artTotal) * 0.10);
+        if (statKey === 'def' && playerStats.defPotionTimer > 0) gearTotal += Math.ceil((playerStats.baseDef + alloc.spDef * 4 + gearTotal + artTotal) * 0.10);
         if (statKey === 'moveSpeed' && playerStats.hastePotionTimer > 0) gearTotal += 3;
         
         if (statKey === 'moveSpeed' && checkArtifactTrait("move_speed")) artTotal += 10;
@@ -7674,7 +7675,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         if (statKey === 'str') {
             html += `<div style="margin: 6px 0; border-top: 1px dashed #444; padding-top: 4px; color: #ffb6c1; font-weight: bold;">Scaling Contributions:</div>`;
             html += `<div class="tt-stat-line" style="color:#2ecc71;">• ⚔️ Attack: +${Math.floor(totalVal * 1.5)}</div>`;
-            html += `<div class="tt-stat-line" style="color:#e74c3c;">• ❤️ Max HP: +${Math.floor(totalVal * 10)}</div>`;
+            html += `<div class="tt-stat-line" style="color:#e74c3c;">• ❤️ Max HP: +${Math.floor(totalVal * 12)}</div>`;
         } else if (statKey === 'dex') {
             html += `<div style="margin: 6px 0; border-top: 1px dashed #444; padding-top: 4px; color: #ffb6c1; font-weight: bold;">Scaling Contributions:</div>`;
             html += `<div class="tt-stat-line" style="color:#e67e22;">• ✨ Crit Chance: +${(totalVal * 0.2).toFixed(1)}%</div>`;
@@ -7684,7 +7685,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             html += `<div style="margin: 6px 0; border-top: 1px dashed #444; padding-top: 4px; color: #ffb6c1; font-weight: bold;">Scaling Contributions:</div>`;
             html += `<div class="tt-stat-line" style="color:#3498db;">• 🛡️ Block Rate: +${(totalVal * 0.2).toFixed(1)}%</div>`;
             html += `<div class="tt-stat-line" style="color:#e74c3c;">• ⚡ Parry Rate: +${(totalVal * 0.2).toFixed(1)}%</div>`;
-            html += `<div class="tt-stat-line" style="color:#2ecc71;">• 🛡️ Defense: +${(totalVal * 0.75).toFixed(1)}</div>`;
+            html += `<div class="tt-stat-line" style="color:#2ecc71;">• 🛡️ Defense: +${(totalVal * 1.0).toFixed(1)}</div>`;
             html += `<div class="tt-stat-line" style="color:#9b59b6;">• 🧪 Potion Dur: +${Math.floor(totalVal)}%</div>`;
         }
         
@@ -8094,8 +8095,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     function applyTemperUpgrades(item, isArt) {
         // Base Primary Stats
         if (item.atk > 0 || item.type === "weapon" || isArt) item.atk += (isArt ? 5 : 2);
-        if (item.maxHp > 0 || isArt) item.maxHp += (isArt ? 25 : 10);
-        if (item.def > 0 || isArt) item.def += (isArt ? 2 : 1);
+        if (item.maxHp > 0 || isArt) item.maxHp += (isArt ? 30 : 12);
+        if (item.def > 0 || isArt) item.def += (isArt ? 3 : 2);
         if (item.moveSpeed > 0) item.moveSpeed += 1;
 
         // Base Core Attributes
