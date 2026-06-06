@@ -4546,11 +4546,11 @@ function getStatBaseRange(item, statKey) {
     }
     else if (statKey === "def") {
         if (item.type === "subweapon" && item.subType === "shield") {
-            min += 15 * stageLevel;
-            max += 30 * stageLevel;
+            min += 10 * stageLevel;
+            max += 18 * stageLevel;
         } else if (["chest", "leggings", "helmet"].includes(item.type) && item.baseDef > 0) {
-            min += 1 * stageLevel;
-            max += 3 * stageLevel;
+            min += 4 * stageLevel;
+            max += 8 * stageLevel;
         }
         if (item.bonusDef > 0) {
             min += Math.ceil(1 * stageLevel * rarityMult);
@@ -4591,14 +4591,14 @@ function getStatBaseRange(item, statKey) {
     }
     else if (statKey === "critChance") {
         if (item.bonusCritChance > 0) {
-            min += 0.01 * stageLevel * rarityMult;
-            max += 0.025 * stageLevel * rarityMult;
+            min += 0.01 * Math.sqrt(stageLevel) * rarityMult;
+            max += 0.025 * Math.sqrt(stageLevel) * rarityMult;
         }
     }
     else if (statKey === "critDamage") {
         if (item.bonusCritDamage > 0) {
-            min += 0.03 * stageLevel * rarityMult;
-            max += 0.06 * stageLevel * rarityMult;
+            min += 0.03 * Math.sqrt(stageLevel) * rarityMult;
+            max += 0.06 * Math.sqrt(stageLevel) * rarityMult;
         }
     }
     else if (statKey === "block") {
@@ -4607,8 +4607,8 @@ function getStatBaseRange(item, statKey) {
             max += 0.03 * stageLevel;
         }
         if (item.bonusBlock > 0) {
-            min += 0.005 * stageLevel * rarityMult;
-            max += 0.015 * stageLevel * rarityMult;
+            min += 0.005 * Math.sqrt(stageLevel) * rarityMult;
+            max += 0.015 * Math.sqrt(stageLevel) * rarityMult;
         }
     }
     else if (statKey === "parry") {
@@ -4617,8 +4617,8 @@ function getStatBaseRange(item, statKey) {
             max += 0.02 * stageLevel;
         }
         if (item.bonusParry > 0) {
-            min += 0.005 * stageLevel * rarityMult;
-            max += 0.015 * stageLevel * rarityMult;
+            min += 0.005 * Math.sqrt(stageLevel) * rarityMult;
+            max += 0.015 * Math.sqrt(stageLevel) * rarityMult;
         }
     }
     else if (statKey === "activeAttackSpeed") {
@@ -4947,10 +4947,44 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         
         // Generate a guaranteed 5★ Mythic item scaled to the campaign stage they achieved prior to resetting
         let stageScale = Math.floor((playerStats.stage - 1) / 10) + 1;
-        let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
-        let chosenType = types[Math.floor(Math.random() * types.length)];
-        let mythicItem = createItemObject(chosenType, 5, stageScale, 5);
+        let mythicItem;
+        
+        // Apply a flat 10% chance to guarantee a Unique Weapon
+        let rollUniqueWeapon = Math.random() < 0.10;
+        if (rollUniqueWeapon) {
+            mythicItem = createItemObject("weapon", 5, stageScale, 5);
+            // Ensure unique flags are cleanly set if the nested slot roller missed
+            if (!mythicItem.isUniqueStaff && !mythicItem.isUniqueSword) {
+                if (Math.random() < 0.5) {
+                    mythicItem.isUniqueStaff = true;
+                    mythicItem.noun = "Phoenix Staff";
+                    mythicItem.setName = null;
+                    mythicItem.name = `🔥 Phoenix Ignition Staff (Lv. ${stageScale})`;
+                    mythicItem.desc = "Launches penetrating fireballs that deal 25% Attack damage (3s Cooldown).";
+                } else {
+                    mythicItem.isUniqueSword = true;
+                    mythicItem.noun = "Sanguine Reaver";
+                    mythicItem.setName = null;
+                    mythicItem.name = `🩸 Crimson Sanguine Reaver (Lv. ${stageScale})`;
+                    mythicItem.desc = "Sword attacks apply a 5-second Bleed effect dealing 10% of slash damage per second.";
+                }
+            }
+        } else {
+            let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+            let chosenType = types[Math.floor(Math.random() * types.length)];
+            mythicItem = createItemObject(chosenType, 5, stageScale, 5);
+        }
+        
+        // Generate a guaranteed Unique Artifact
+        let prestigeArtifact = createItemObject("artifact", 3, stageScale, 0);
+
+        // Force a security lock on both drops so they ignore active auto-salvage settings and bulk deconstruction
+        mythicItem.locked = true;
+        prestigeArtifact.locked = true;
+
+        // Push directly to sacks, enabling overflow bypass even if bags are full
         inventory.EQUIP.push(mythicItem);
+        inventory.ARTIFACT.push(prestigeArtifact);
         
         // Award points and count
         playerStats.prestigePoints += 3;
@@ -5011,7 +5045,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 <div style="background:#0b0f12; border:1px solid #e74c3c; border-radius:6px; padding:15px; margin-bottom:20px;">
                     <div style="font-size:11px; color:#aaa; margin-bottom:4px;">REWARDS EARNED:</div>
                     <div style="font-size:20px; color:#f1c40f; font-weight:bold; margin-bottom:6px;">✨ +3 Prestige Points</div>
-                    <div style="font-size:11.5px; color:#e74c3c; font-weight:bold; margin-bottom:8px;">🎁 Souvenir: 5★ Mythic ${mythicItem.name}</div>
+                    <div style="font-size:11.5px; color:#e74c3c; font-weight:bold; margin-bottom:4px;">🎁 Souvenir: 5★ Mythic ${mythicItem.name}</div>
+                    <div style="font-size:11.5px; color:#1abc9c; font-weight:bold; margin-bottom:8px;">🔮 Artifact: ${prestigeArtifact.name}</div>
                     <div style="font-size:11px; color:#9b59b6; font-weight:bold;">Total Ascensions: ${playerStats.prestigeCount}</div>
                 </div>
 
@@ -5032,7 +5067,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             renderPrestigeTab();
             renderInventory();
             window.saveGame();
-            pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[ASCENSION] Your legacy begins anew! Discovered pristine ${mythicItem.name}! High-level gear in Sacks is now locked until requirements are met.</span>`);
+            pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[ASCENSION] Your legacy begins anew! Discovered pristine ${mythicItem.name} and ${prestigeArtifact.name}! Sacks have expanded to hold your rewards.</span>`);
         };
     };
 
