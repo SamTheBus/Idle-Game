@@ -12321,8 +12321,8 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
         if (mob) {
             window.drawSingleMob(ctx, mob);
 
-            // Only display health bars once the enemy has taken damage
-            if (mob.hp < mob.maxHp) {
+            // Only display health bars once the enemy has taken damage (skip for Bosses)
+            if (mob.hp < mob.maxHp && mob.type !== "boss" && mob.type !== "dungeon_boss" && mob.type !== "prestige_boss" && mob.type !== "rift_guardian") {
                 // Floating health bars with trailing white damage-lag effect
                 let barW = (mob.type === "boss" || mob.type === "dungeon_boss") ? 50 : mob.w;
                 let barX = (mob.type === "boss" || mob.type === "dungeon_boss") ? mob.x - 7 : mob.x;
@@ -12650,6 +12650,113 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
                 ctx.arc(sf.x, sf.y, sf.r, 0, Math.PI * 2);
                 ctx.fill();
             });
+            ctx.restore();
+        }
+
+        // --- CINEMATIC TOP-SCREEN BOSS HP BAR ---
+        if (mob && (mob.type === "boss" || mob.type === "dungeon_boss" || mob.type === "prestige_boss" || mob.type === "rift_guardian")) {
+            ctx.save();
+            
+            // Resolve name and design colors
+            let bossName = "Threat Detected";
+            let barColor = "#e74c3c";
+            let barGlow = "#c0392b";
+            
+            if (mob.type === "prestige_boss") {
+                bossName = "Hooktail, The Scarlet Calamity";
+                barColor = "#e67e22";
+                barGlow = "#f1c40f";
+            } else if (mob.type === "rift_guardian") {
+                bossName = "Enraged Rift Guardian";
+                barColor = "#9b59b6";
+                barGlow = "#e84393";
+            } else if (mob.type === "dungeon_boss") {
+                if (mob.isCrucible) {
+                    bossName = "Astral Guardian";
+                    barColor = "#8e44ad";
+                    barGlow = "#e84393";
+                } else {
+                    let dType = playerStats.currentDungeon || 'gold';
+                    if (dType === 'gold') {
+                        bossName = "Gilded Vault Keeper";
+                        barColor = "#f1c40f";
+                        barGlow = "#d4af37";
+                    } else if (dType === 'mat') {
+                        bossName = "Corrosive Abomination";
+                        barColor = "#2ecc71";
+                        barGlow = "#27ae60";
+                    } else {
+                        bossName = "Overlord of the Iron Vault";
+                        barColor = "#3498db";
+                        barGlow = "#2980b9";
+                    }
+                }
+            } else if (mob.type === "boss") {
+                bossName = "Stage Warden";
+                barColor = "#e74c3c";
+                barGlow = "#c0392b";
+            }
+
+            let barW = canvas.width * (canvas.width <= 420 ? 0.75 : 0.55);
+            let barH = 14;
+            let barX = (canvas.width - barW) / 2;
+            let barY = 24;
+
+            // 1. Draw outer black container border
+            ctx.fillStyle = "#111111";
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(barX, barY, barW, barH, 4);
+            } else {
+                ctx.rect(barX, barY, barW, barH);
+            }
+            ctx.fill();
+            ctx.stroke();
+
+            // 2. Trailing White Bar (Visual Soft Damage Segment)
+            if (mob.trailingHp === undefined) {
+                mob.trailingHp = mob.hp;
+            }
+            let trailingPct = Math.max(0, Math.min(1, mob.trailingHp / mob.maxHp));
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(barX + 2, barY + 2, Math.max(0, (barW - 4) * trailingPct), barH - 4, 2);
+            } else {
+                ctx.rect(barX + 2, barY + 2, Math.max(0, (barW - 4) * trailingPct), barH - 4);
+            }
+            ctx.fill();
+
+            // 3. Primary Health Bar (Themed Gradient)
+            let hpPct = Math.max(0, Math.min(1, mob.hp / mob.maxHp));
+            let fillGrad = ctx.createLinearGradient(barX, barY, barX, barY + barH);
+            fillGrad.addColorStop(0, barColor);
+            fillGrad.addColorStop(1, barGlow);
+            
+            ctx.fillStyle = fillGrad;
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(barX + 2, barY + 2, Math.max(0, (barW - 4) * hpPct), barH - 4, 2);
+            } else {
+                ctx.rect(barX + 2, barY + 2, Math.max(0, (barW - 4) * hpPct), barH - 4);
+            }
+            ctx.fill();
+
+            // 4. Centered Name Text above bar
+            ctx.font = "bold 11px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "bottom";
+            
+            // Text Stroke for toon effect
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 3;
+            ctx.strokeText(bossName, canvas.width / 2, barY - 4);
+            
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText(bossName, canvas.width / 2, barY - 4);
+            
             ctx.restore();
         }
 
