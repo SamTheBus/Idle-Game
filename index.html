@@ -905,6 +905,14 @@
                                 <div>Scraps Total: <span id="live-qty-scraps" style="color:#fff;">0</span></div>
                             </div>
                         </div>
+                        
+                        <!-- Cumulative Trophy Bonuses HUD -->
+                        <div style="margin-top: 12px; border-top: 2px solid #333; padding-top: 10px;">
+                            <h4 style="margin: 0 0 6px 0; color: #f1c40f; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">🏆 Cumulative Trophy Bonuses</h4>
+                            <div id="trophy-bonuses-summary" style="font-size: 10px; color: #aaa; background: #0c0f12; padding: 8px; border-radius: 4px; border: 1px solid #222; line-height: 1.45; max-height: 160px; overflow-y: auto;">
+                                <!-- Populated dynamically by updateUI() -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4990,6 +4998,13 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         playerStats.prestigePoints += 3;
         playerStats.prestigeCount++;
         
+        // Speedrun check (Ascend at the Altar within 15 mins/900k ms of your previous Ascension)
+        let nowTime = Date.now();
+        if (playerStats.lastAscensionTime && (nowTime - playerStats.lastAscensionTime <= 900000)) {
+            playerStats.hasTriggeredSpeedrun = true;
+        }
+        playerStats.lastAscensionTime = nowTime;
+        
         // Safeguard lifetime peak stats prior to wipe
         playerStats.lifetimePeakStage = Math.max(playerStats.lifetimePeakStage || 1, playerStats.maxStage || 1);
 
@@ -5106,11 +5121,14 @@ function formatStatRangeStr(item, statKey, isPct = false) {
      * Capping logic is handled at the call sites to prevent temporal feedback exploits.
      * Returns the exact amount of consumed milliseconds to preserve fractional remainder time.
      */
-    function applyOfflineGains(offlineMs) {
+     function applyOfflineGains(offlineMs) {
         if (offlineMs <= 60000) return 0; // Return 0 if away for less than 1 minute
         
         let offlineSeconds = Math.floor(offlineMs / 1000);
-        if (offlineSeconds > 28800) offlineSeconds = 28800; // 8-hour progress limit cap
+        if (offlineSeconds >= 28800) {
+            playerStats.hasTriggeredTimeCapsule = true;
+            offlineSeconds = 28800; // 8-hour progress limit cap
+        }
         
         // Freeze real-time execution while the reward presentation modal is displayed
         isGamePaused = true;
@@ -5701,11 +5719,29 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 if (playerStats.fairiesClicked === undefined) playerStats.fairiesClicked = 0;
                 if (playerStats.deathCount === undefined) playerStats.deathCount = 0;
                 
+                // Safe Achievements Overhaul migrations
+                if (playerStats.peakSingleHit === undefined) playerStats.peakSingleHit = 0;
+                if (playerStats.maxFairyClicksInWindow === undefined) playerStats.maxFairyClicksInWindow = 0;
+                if (playerStats.totalDeflections === undefined) playerStats.totalDeflections = 0;
+                if (playerStats.peakSimultaneousBuffs === undefined) playerStats.peakSimultaneousBuffs = 0;
+                if (playerStats.totalReforges === undefined) playerStats.totalReforges = 0;
+                if (playerStats.peakSingleGoldDrop === undefined) playerStats.peakSingleGoldDrop = 0;
+                if (playerStats.rareSpawnsSlain === undefined) playerStats.rareSpawnsSlain = 0;
+                if (playerStats.maxCanvasClicksInWindow === undefined) playerStats.maxCanvasClicksInWindow = 0;
+                if (playerStats.sessionPlaytime === undefined) playerStats.sessionPlaytime = 0;
+                if (playerStats.activityTimer === undefined) playerStats.activityTimer = 0;
+                
+                playerStats.fairyClicksWindow = playerStats.fairyClicksWindow || [];
+                playerStats.canvasClicksWindow = playerStats.canvasClicksWindow || [];
+                
                 if (inventory.ETC["Iron Scrap"]) { addEtcDrop("Monster Soul", inventory.ETC["Iron Scrap"]); delete inventory.ETC["Iron Scrap"]; }
                 if (inventory.ETC["Sticky Gel"]) { addEtcDrop("Monster Soul", inventory.ETC["Sticky Gel"]); delete inventory.ETC["Sticky Gel"]; }
                 
                  let box = document.getElementById('log-box');
                 box.innerHTML = logsHistory.join("<br><br>");
+                
+                // Recalculate achievement totals on load
+                window.recalculateAchievementTotals();
                 
                 // Evaluate achievements upon loading state
                 window.checkAchievements();
@@ -6300,6 +6336,9 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             actualCost = Math.ceil(item.cost * Math.pow(1.08, playerStats.stage));
             if (playerStats.coins < actualCost) { pushHeaderToast("Not enough Gold!", "#e74c3c"); return; }
             playerStats.coins -= actualCost;
+            if (playerStats.coins === 0) {
+                playerStats.hasTriggeredExactChange = true;
+            }
         }
         
         // Direct items into their proper bag categories
@@ -6387,11 +6426,17 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             consumeUseItem(itemName);
             pushLog(`<span style='color:#2ecc71; font-weight:bold;'>[USE] Consumed Attack Elixir! +10% Attack for ${Math.floor(finalDuration/60)}s.</span>`);
         } else if (itemName === "Greater Attack Elixir") {
+            if (playerStats.atkPotionTimer > 0 && playerStats.atkPotionStrength === 0.10) {
+                playerStats.hasTriggeredAlchemicalSynthesis = true;
+            }
             playerStats.atkPotionTimer = finalDuration; 
             playerStats.atkPotionStrength = 0.20;
             consumeUseItem(itemName);
             pushLog(`<span style='color:#2ecc71; font-weight:bold;'>[USE] Consumed Greater Attack Elixir! +20% Attack for ${Math.floor(finalDuration/60)}s.</span>`);
         } else if (itemName === "Supernal Attack Elixir") {
+            if (playerStats.atkPotionTimer > 0 && playerStats.atkPotionStrength < 0.35) {
+                playerStats.hasTriggeredAlchemicalSynthesis = true;
+            }
             playerStats.atkPotionTimer = finalDuration; 
             playerStats.atkPotionStrength = 0.35;
             consumeUseItem(itemName);
@@ -6478,6 +6523,9 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         }
 
         playerStats.coins -= shopItem.cost; shopItem.purchased = true;
+        if (playerStats.coins === 0) {
+            playerStats.hasTriggeredExactChange = true;
+        }
         
         let purchasedItem = JSON.parse(JSON.stringify(shopItem));
         purchasedItem.id = idCounter++;
@@ -6785,6 +6833,17 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     
     canvas.addEventListener('pointerdown', function(e) { 
         e.preventDefault(); 
+        
+        // Click track for Look Ma No Hands
+        playerStats.hasClickedThisBattle = true;
+        
+        // Canvas speed-clicking window
+        playerStats.canvasClicksWindow = playerStats.canvasClicksWindow || [];
+        let clickNow = Date.now();
+        playerStats.canvasClicksWindow.push(clickNow);
+        playerStats.canvasClicksWindow = playerStats.canvasClicksWindow.filter(t => clickNow - t <= 10000);
+        playerStats.maxCanvasClicksInWindow = Math.max(playerStats.maxCanvasClicksInWindow || 0, playerStats.canvasClicksWindow.length);
+
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
@@ -6827,6 +6886,24 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let spawnX = targetFairy.x;
         let spawnY = targetFairy.y + Math.sin(Date.now() / 200 + targetFairy.offset) * 10;
         
+        // Patient Shepherd check: Let 3 fly simultaneously, then capture all in 2 seconds
+        if (activeFairies.length >= 2) { // 3 including the current target we are clicking
+            playerStats.fairyClicksWindow = playerStats.fairyClicksWindow || [];
+            let clickNow = Date.now();
+            playerStats.fairyClicksWindow.push(clickNow);
+            playerStats.fairyClicksWindow = playerStats.fairyClicksWindow.filter(t => clickNow - t <= 2000);
+            if (playerStats.fairyClicksWindow.length >= 3) {
+                playerStats.hasTriggeredPatientShepherd = true;
+            }
+        }
+
+        // Sliding window for Fairy Blitz progressive achievement (capturing fairies within 10s)
+        playerStats.fairyClicksWindowLong = playerStats.fairyClicksWindowLong || [];
+        let longNow = Date.now();
+        playerStats.fairyClicksWindowLong.push(longNow);
+        playerStats.fairyClicksWindowLong = playerStats.fairyClicksWindowLong.filter(t => longNow - t <= 10000);
+        playerStats.maxFairyClicksInWindow = Math.max(playerStats.maxFairyClicksInWindow || 0, playerStats.fairyClicksWindowLong.length);
+
         // Remove the captured fairy from our array
         activeFairies = activeFairies.filter(f => f.id !== targetFairy.id); 
         SoundManager.play('fairy');
@@ -7003,6 +7080,12 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         }
         let stageScale = Math.floor((activeStage - 1) / 10) + 1; 
         let sourceName = isBossKill ? "Boss" : (isRareMob ? "Rare" : "Route");
+        
+        // Against All Odds Check (5★ from standard campaign route non-boss non-rare mob)
+        if (!isBossKill && !isRareMob && !playerStats.isDungeonMode && !playerStats.isCrucibleMode && statLinesCount === 5) {
+            playerStats.hasTriggeredAgainstOdds = true;
+        }
+        
         generateEquipment(chosenType, statLinesCount, stageScale, sourceName, silent, minStars);
     }
 
@@ -7051,6 +7134,31 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         return avgDps.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1});
     }
 
+    window.recalculateAchievementTotals = function() {
+        let totals = {
+            atk: 0, maxHp: 0, def: 0, moveSpeed: 0,
+            critChance: 0, critDamage: 0, block: 0, parry: 0,
+            drop: 0, qly: 0, gold: 0, str: 0, dex: 0, int: 0,
+            fairySpawn: 0, rareSpawn: 0, expPct: 0, potDurationPct: 0, potStrengthPct: 0,
+            atkPct: 0, maxHpPct: 0, defPct: 0, moveSpeedPct: 0,
+            strPct: 0, dexPct: 0, intPct: 0
+        };
+        
+        if (playerStats.unlockedAchievements && window.AchievementsData) {
+            playerStats.unlockedAchievements.forEach(id => {
+                let ach = window.AchievementsData.find(a => a.id === id);
+                if (ach && ach.stats) {
+                    for (let k in ach.stats) {
+                        if (totals[k] !== undefined) {
+                            totals[k] += ach.stats[k];
+                        }
+                    }
+                }
+            });
+        }
+        playerStats.cachedAchievementBonusTotals = totals;
+    };
+
     function resolvePlayerStats() {
         let p = { 
             atk: playerStats.baseAtk, maxHp: playerStats.baseMaxHp, def: playerStats.baseDef, moveSpeed: playerStats.baseMoveSpeed,
@@ -7061,68 +7169,36 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             str: playerStats.baseStr, dex: playerStats.baseDex, int: playerStats.baseInt, fairySpawn: playerStats.baseFairySpawn
         };
         
-        // Sum achievement bonuses dynamically
-        let achAtk = 0, achMaxHp = 0, achDef = 0, achMoveSpeed = 0;
-        let achCritChance = 0, achCritDamage = 0, achBlock = 0, achParry = 0;
-        let achDrop = 0, achQly = 0, achGold = 0, achStr = 0, achDex = 0, achInt = 0, achFairySpawn = 0;
-        
-        // Additive percentage multipliers (1.0 base)
-        let achAtkPct = 1.0;
-        let achMaxHpPct = 1.0;
-        let achDefPct = 1.0;
-        let achMoveSpeedPct = 1.0;
-        let achStrPct = 1.0;
-        let achDexPct = 1.0;
-        let achIntPct = 1.0;
-
-        if (playerStats.unlockedAchievements && window.AchievementsData) {
-            playerStats.unlockedAchievements.forEach(id => {
-                let ach = window.AchievementsData.find(a => a.id === id);
-                if (ach && ach.stats) {
-                    if (ach.stats.atk) achAtk += ach.stats.atk;
-                    if (ach.stats.maxHp) achMaxHp += ach.stats.maxHp;
-                    if (ach.stats.def) achDef += ach.stats.def;
-                    if (ach.stats.moveSpeed) achMoveSpeed += ach.stats.moveSpeed;
-                    if (ach.stats.critChance) achCritChance += ach.stats.critChance;
-                    if (ach.stats.critDamage) achCritDamage += ach.stats.critDamage;
-                    if (ach.stats.block) achBlock += ach.stats.block;
-                    if (ach.stats.parry) achParry += ach.stats.parry;
-                    if (ach.stats.drop) achDrop += ach.stats.drop;
-                    if (ach.stats.qly) achQly += ach.stats.qly;
-                    if (ach.stats.gold) achGold += ach.stats.gold;
-                    if (ach.stats.str) achStr += ach.stats.str;
-                    if (ach.stats.dex) achDex += ach.stats.dex;
-                    if (ach.stats.int) achInt += ach.stats.int;
-                    if (ach.stats.fairySpawn) achFairySpawn += ach.stats.fairySpawn;
-                    
-                    // Accumulate percentage modifications additively
-                    if (ach.stats.atkPct) achAtkPct += ach.stats.atkPct;
-                    if (ach.stats.maxHpPct) achMaxHpPct += ach.stats.maxHpPct;
-                    if (ach.stats.defPct) achDefPct += ach.stats.defPct;
-                    if (ach.stats.moveSpeedPct) achMoveSpeedPct += ach.stats.moveSpeedPct;
-                    if (ach.stats.strPct) achStrPct += ach.stats.strPct;
-                    if (ach.stats.dexPct) achDexPct += ach.stats.dexPct;
-                    if (ach.stats.intPct) achIntPct += ach.stats.intPct;
-                }
-            });
+        if (!playerStats.cachedAchievementBonusTotals) {
+            window.recalculateAchievementTotals();
         }
+        let aT = playerStats.cachedAchievementBonusTotals;
 
         // Apply achievement bonuses directly to base profile
-        p.atk += achAtk;
-        p.maxHp += achMaxHp;
-        p.def += achDef;
-        p.moveSpeed += achMoveSpeed;
-        p.critChance += achCritChance;
-        p.critDamage += achCritDamage;
-        p.block += achBlock;
-        p.parry += achParry;
-        p.drop += achDrop;
-        p.qly += achQly;
-        p.gold += achGold;
-        p.str += achStr;
-        p.dex += achDex;
-        p.int += achInt;
-        p.fairySpawn += achFairySpawn;
+        p.atk += aT.atk;
+        p.maxHp += aT.maxHp;
+        p.def += aT.def;
+        p.moveSpeed += aT.moveSpeed;
+        p.critChance += aT.critChance;
+        p.critDamage += aT.critDamage;
+        p.block += aT.block;
+        p.parry += aT.parry;
+        p.drop += aT.drop;
+        p.qly += aT.qly;
+        p.gold += aT.gold;
+        p.str += aT.str;
+        p.dex += aT.dex;
+        p.int += aT.int;
+        p.fairySpawn += aT.fairySpawn;
+        p.rareSpawn += aT.rareSpawn;
+
+        let achAtkPct = 1.0 + aT.atkPct;
+        let achMaxHpPct = 1.0 + aT.maxHpPct;
+        let achDefPct = 1.0 + aT.defPct;
+        let achMoveSpeedPct = 1.0 + aT.moveSpeedPct;
+        let achStrPct = 1.0 + aT.strPct;
+        let achDexPct = 1.0 + aT.dexPct;
+        let achIntPct = 1.0 + aT.intPct;
 
         let alloc = playerStats.spAllocations;
         
@@ -7512,6 +7588,11 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             if (playerStats.killCount >= playerStats.targetsRequired) {
                 let hp = 70 * scale * hpScale;
                 mob = { x: 750, y: 90, w: 50, h: 90, type: "dungeon_boss", isRare: false, hp: Math.floor(hp), maxHp: Math.floor(hp), damage: Math.floor((2.5 + (3 * dmgScale)) * 5.0), flashTimer: 0, isStopped: false, attackCooldown: 100, attackTimer: 100 };
+                
+                // Reset session combat achievement variables
+                playerStats.hasClickedThisBattle = false;
+                playerStats.damageTakenThisBattle = 0;
+                playerStats.ankhTriggeredThisBattle = false;
             } else {
                 // Specialized Dungeons spawn theme-appropriate cel-shaded visual types
                 let dType = playerStats.currentDungeon || 'gold';
@@ -7568,6 +7649,11 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                     mob = { x: 750, y: 100, w: 40, h: 80, type: "boss", isRare: false, visualTier: tier, hp: Math.floor(baseBossHp), maxHp: Math.floor(baseBossHp), damage: Math.floor((2 + (3 * dmgScale)) * 5.0), flashTimer: 0, isStopped: false, attackCooldown: 100, attackTimer: 100 };
                     pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[STAGE BOSS]</span> blocked your transit route!`);
                 }
+                
+                // Reset session combat achievement variables
+                playerStats.hasClickedThisBattle = false;
+                playerStats.damageTakenThisBattle = 0;
+                playerStats.ankhTriggeredThisBattle = false;
             } else {
                 let isMelee = Math.random() > 0.5;
                 let isRare = Math.random() < p.rareSpawn;
@@ -8902,8 +8988,13 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             playerStats.coins -= costGold; inventory.ETC[scrapReq] -= scrapReqAmount;
             if (inventory.ETC[scrapReq] === 0) delete inventory.ETC[scrapReq];
 
+            if (playerStats.coins === 0) {
+                playerStats.hasTriggeredExactChange = true;
+            }
+
             if (isSuccess) {
                 forgeSelectedItem.temperLevel++;
+                forgeSelectedItem.consecutiveFailures = 0; // reset
                 recalculateItemStats(forgeSelectedItem);
                 playerStats.totalTempers = (playerStats.totalTempers || 0) + 1;
                 pushLog(`<span style='color:#e67e22;'>[FORGE]</span> Successfully tempered ${forgeSelectedItem.name} to [+${forgeSelectedItem.temperLevel}]!`);
@@ -8911,6 +9002,19 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 spawnTemperParticles(true);
                 window.checkAchievements();
             } else {
+                // Murphy's Law check (success chance was 90% or higher, meaning fail chance was 10% or lower)
+                if (failChance <= 10) {
+                    playerStats.hasTriggeredMurphysLaw = true;
+                }
+                
+                // Unfortunate Soul check (3 consecutive tempering failures on same item at +9 or below)
+                if (forgeSelectedItem.temperLevel < 9) {
+                    forgeSelectedItem.consecutiveFailures = (forgeSelectedItem.consecutiveFailures || 0) + 1;
+                    if (forgeSelectedItem.consecutiveFailures >= 3) {
+                        playerStats.hasTriggeredUnfortunateSoul = true;
+                    }
+                }
+                
                 pushLog(`<span style='color:#e74c3c;'>[FORGE]</span> Temper failed on ${forgeSelectedItem.name}! Materials lost.`);
                 pushHeaderToast(`💥 Temper Failed!`, "#e74c3c");
                 spawnTemperParticles(false);
@@ -9308,10 +9412,40 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     function handleMobDeath() {
         effects = effects.filter(e => !e.isCumulative);
         let p = resolvePlayerStats(); 
-        let isBoss = (mob.type === "boss" || mob.type === "dungeon_boss" || mob.type === "dungeon_miniboss" || mob.type === "rift_guardian");
+        let isBoss = (mob.type === "boss" || mob.type === "dungeon_boss" || mob.type === "dungeon_miniboss" || mob.type === "rift_guardian" || mob.type === "prestige_boss");
         
         // Trigger potion drop rolls
         window.rollPotionDrop(isBoss, mob && mob.isRare);
+        
+        // Single-tier feats check conditions
+        if (isBoss) {
+            // Look Ma No Hands Check
+            if (!playerStats.hasClickedThisBattle) {
+                playerStats.hasTriggeredLookMaNoHands = true;
+            }
+            // Untouchable Check
+            if (playerStats.damageTakenThisBattle === 0) {
+                playerStats.hasTriggeredUntouchable = true;
+            }
+            // Back From The Brink Check
+            if (playerStats.ankhTriggeredThisBattle) {
+                playerStats.hasTriggeredBackFromBrink = true;
+                playerStats.ankhTriggeredThisBattle = false;
+            }
+            // Bare Fists Check
+            if (!equippedSlots.weapon) {
+                playerStats.hasTriggeredBareFists = true;
+            }
+            // High Noon Check (12:00 PM to 1:00 PM)
+            let hr = new Date().getHours();
+            if (hr === 12) {
+                playerStats.hasTriggeredHighNoon = true;
+            }
+            // Witching Hour Check (Rift Guardian defeated between 3:00 AM and 4:00 AM)
+            if (mob.type === "rift_guardian" && hr === 3) {
+                playerStats.hasTriggeredWitchingHour = true;
+            }
+        }
         
         // Void Core Siphon-Heal Check on Rare Defeat
         if (mob && mob.isRare && checkArtifactTrait("void_pull")) {
@@ -9349,6 +9483,9 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let coinYield = Math.ceil(baseCoin * p.gold);
         playerStats.coins += coinYield;
         playerStats.totalGoldEarned = (playerStats.totalGoldEarned || 0) + coinYield;
+        
+        // Peak single gold drop check
+        playerStats.peakSingleGoldDrop = Math.max(playerStats.peakSingleGoldDrop || 0, coinYield);
         
         if (playerStats.runGold !== undefined) {
             playerStats.runGold += coinYield;
@@ -9731,12 +9868,22 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         }
     }
 
-    function executeHitCalculations() {
+     function executeHitCalculations() {
         if (mob && mob.x < hero.x + 65) {
             let p = resolvePlayerStats(); let finalDamage = p.atk; 
             if (playerStats.adrenalineTimer > 0) finalDamage *= 2; 
             
             let isCrit = Math.random() < p.critChance; if (isCrit) finalDamage = Math.ceil(finalDamage * p.critDamage);
+            
+            // Peak single-hit check
+            playerStats.peakSingleHit = Math.max(playerStats.peakSingleHit || 0, finalDamage);
+            if (isCrit) {
+                playerStats.recentCritTime = Date.now();
+                // Overkill check (deals critical hit exceeding mob's remaining HP by 1000%+)
+                if (finalDamage > mob.hp * 11) {
+                    playerStats.hasTriggeredOverkill = true;
+                }
+            }
             
             mob.hp -= finalDamage; mob.flashTimer = 5;
             spawnDamageEffect(finalDamage, 'slash', isCrit);
@@ -9781,9 +9928,11 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             if (hasTome) {
                 let spellDmgBase = Math.max(1, Math.ceil((p.atk * (playerStats.adrenalineTimer > 0 ? 2 : 1)) * 0.5));
                 let triggeredSpell = false;
+                let lightProc = false, fireProc = false, frostProc = false;
 
                 // 1. Lightning Spell Roll
                 if (Math.random() < 0.20) {
+                    lightProc = true;
                     triggeredSpell = true;
                     let lightningDmg = spellDmgBase;
                     let isSpellCrit = Math.random() < p.critChance;
@@ -9810,6 +9959,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
 
                 // 2. Fire Spell Roll
                 if (Math.random() < 0.20) {
+                    fireProc = true;
                     triggeredSpell = true;
                     let fireDmg = spellDmgBase;
                     let isSpellCrit = Math.random() < p.critChance;
@@ -9836,6 +9986,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
 
                 // 3. Frost Spell Roll
                 if (Math.random() < 0.20) {
+                    frostProc = true;
                     triggeredSpell = true;
                     let frostDmg = spellDmgBase;
                     let isSpellCrit = Math.random() < p.critChance;
@@ -9862,6 +10013,9 @@ function formatStatRangeStr(item, statKey, isPct = false) {
 
                 if (triggeredSpell) {
                     SoundManager.play('spell');
+                    if (lightProc && fireProc && frostProc) {
+                        playerStats.hasTriggeredElementalConvergence = true;
+                    }
                 }
             }
 
@@ -10081,6 +10235,55 @@ function formatStatRangeStr(item, statKey, isPct = false) {
 
         let scrapsSum = (inventory.ETC["Mythic Scrap"] || 0) + (inventory.ETC["Legendary Scrap"] || 0) + (inventory.ETC["Epic Scrap"] || 0) + (inventory.ETC["Magic Scrap"] || 0) + (inventory.ETC["Rare Scrap"] || 0);
         document.getElementById('live-qty-scraps').innerText = scrapsSum.toLocaleString();
+
+        let sumSummaryEl = document.getElementById('trophy-bonuses-summary');
+        if (sumSummaryEl) {
+            if (!playerStats.cachedAchievementBonusTotals) {
+                window.recalculateAchievementTotals();
+            }
+            let aT = playerStats.cachedAchievementBonusTotals;
+            let unlockedCount = playerStats.unlockedAchievements ? playerStats.unlockedAchievements.length : 0;
+            let totalCount = window.AchievementsData ? window.AchievementsData.length : 174;
+            
+            let lines = [];
+            lines.push(`<div style="color:#f1c40f; font-weight:bold; margin-bottom:4px; text-align:center; border-bottom: 1px dashed #333; padding-bottom:2px;">Active Trophies: ${unlockedCount} / ${totalCount}</div>`);
+            
+            let combatStats = [];
+            if (aT.atk > 0 || aT.atkPct > 0) combatStats.push(`Atk: +${aT.atk} (${(aT.atkPct * 100).toFixed(1)}%)`);
+            if (aT.maxHp > 0 || aT.maxHpPct > 0) combatStats.push(`HP: +${aT.maxHp} (${(aT.maxHpPct * 100).toFixed(1)}%)`);
+            if (aT.def > 0 || aT.defPct > 0) combatStats.push(`Def: +${aT.def} (${(aT.defPct * 100).toFixed(1)}%)`);
+            if (aT.moveSpeed > 0 || aT.moveSpeedPct > 0) combatStats.push(`Spd: +${aT.moveSpeed.toFixed(1)} (${(aT.moveSpeedPct * 100).toFixed(1)}%)`);
+            if (combatStats.length > 0) {
+                lines.push(`<div style="color:#e74c3c; font-weight:bold; margin-top:4px;">⚔️ COMBAT MULTIPLIERS</div>` + combatStats.join("<br>"));
+            }
+            
+            let attrStats = [];
+            if (aT.str > 0 || aT.strPct > 0) attrStats.push(`STR: +${aT.str} (${(aT.strPct * 100).toFixed(1)}%)`);
+            if (aT.dex > 0 || aT.dexPct > 0) attrStats.push(`DEX: +${aT.dex} (${(aT.dexPct * 100).toFixed(1)}%)`);
+            if (aT.int > 0 || aT.intPct > 0) attrStats.push(`INT: +${aT.int} (${(aT.intPct * 100).toFixed(1)}%)`);
+            if (aT.critChance > 0) attrStats.push(`Crit %: +${(aT.critChance * 100).toFixed(1)}%`);
+            if (aT.critDamage > 0) attrStats.push(`Crit Dmg: +${(aT.critDamage * 100).toFixed(1)}%`);
+            if (aT.block > 0) attrStats.push(`Block %: +${(aT.block * 100).toFixed(1)}%`);
+            if (aT.parry > 0) attrStats.push(`Parry %: +${(aT.parry * 100).toFixed(1)}%`);
+            if (attrStats.length > 0) {
+                lines.push(`<div style="color:#3498db; font-weight:bold; margin-top:4px;">💪 CORE ATTRIBUTES & CRITS</div>` + attrStats.join("<br>"));
+            }
+            
+            let utilStats = [];
+            if (aT.gold > 0) utilStats.push(`Gold Mult: +${(aT.gold * 100).toFixed(1)}%`);
+            if (aT.drop > 0) utilStats.push(`Drop Rate: +${(aT.drop * 100).toFixed(1)}%`);
+            if (aT.qly > 0) utilStats.push(`Drop Quality: +${(aT.qly * 100).toFixed(1)}%`);
+            if (aT.fairySpawn > 0) utilStats.push(`Fairy Spawn: +${(aT.fairySpawn * 100).toFixed(1)}%`);
+            if (aT.rareSpawn > 0) utilStats.push(`Rare Spawn: +${(aT.rareSpawn * 100).toFixed(2)}%`);
+            if (aT.expPct > 0) utilStats.push(`EXP Rate: +${(aT.expPct * 100).toFixed(1)}%`);
+            if (aT.potDurationPct > 0) utilStats.push(`Pot Duration: +${(aT.potDurationPct * 100).toFixed(1)}%`);
+            if (aT.potStrengthPct > 0) utilStats.push(`Pot Strength: +${(aT.potStrengthPct * 100).toFixed(1)}%`);
+            if (utilStats.length > 0) {
+                lines.push(`<div style="color:#2ecc71; font-weight:bold; margin-top:4px;">💎 UTILITY & ECONOMY</div>` + utilStats.join("<br>"));
+            }
+            
+            sumSummaryEl.innerHTML = lines.join("<br>");
+        }
 
         let activeBuffs = [];
         if (playerStats.frenzyTimer > 0) activeBuffs.push("🔥 Frenzy");
@@ -10633,6 +10836,19 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
         if (playerStats.defPotionTimer > 0) playerStats.defPotionTimer--;
         if (playerStats.hastePotionTimer > 0) playerStats.hastePotionTimer--;
         
+        // Session and activity tracking
+        if (!isGamePaused) {
+            playerStats.sessionPlaytime = (playerStats.sessionPlaytime || 0) + (1000 / 60);
+            if (playerStats.isDungeonMode || playerStats.isCrucibleMode) {
+                playerStats.activityTimer = (playerStats.activityTimer || 0) + (1000 / 60);
+                if (playerStats.activityTimer >= 600000) { // 10 minutes (600,000 ms)
+                    playerStats.hasTriggeredAethericRecharge = true;
+                }
+            } else {
+                playerStats.activityTimer = 0; // reset
+            }
+        }
+        
         logicClock++;
 
         // Initialize unique staff variables safely if missing
@@ -10817,6 +11033,22 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
                                     effects.push({ x: hero.x, y: hero.y - 15, text: "⚡ PARRY COUNTER!", color: "#9b59b6", life: 50 }); 
                                     SoundManager.play('parry');
                                     
+                                    playerStats.totalDeflections = (playerStats.totalDeflections || 0) + 1;
+                                    playerStats.recentParryTime = Date.now();
+                                    playerStats.consecutiveParries = (playerStats.consecutiveParries || 0) + 1;
+                                    if (playerStats.consecutiveParries >= 3) {
+                                        playerStats.hasTriggeredPerfectDeflection = true;
+                                    }
+                                    
+                                    // Lucky Seven check (crit, block, parry within 1-second window)
+                                    if (playerStats.recentCritTime && playerStats.recentBlockTime && playerStats.recentParryTime) {
+                                        let times = [playerStats.recentCritTime, playerStats.recentBlockTime, playerStats.recentParryTime];
+                                        let minT = Math.min(...times), maxT = Math.max(...times);
+                                        if (maxT - minT <= 1000) {
+                                            playerStats.hasTriggeredLuckySeven = true;
+                                        }
+                                    }
+
                                     if (equippedSlots.subweapon && equippedSlots.subweapon.subType === "dagger") {
                                         playerStats.daggerParryStagger = true; // Stagger next incoming attack
                                     }
@@ -10832,9 +11064,24 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
                                 else if (Math.random() < p.block) { 
                                     effects.push({ x: hero.x, y: hero.y, text: "🛡️ BLOCKED", color: "#3498db", life: 40 }); 
                                     SoundManager.play('block');
+                                    
+                                    playerStats.totalDeflections = (playerStats.totalDeflections || 0) + 1;
+                                    playerStats.recentBlockTime = Date.now();
+                                    playerStats.consecutiveParries = 0; // Reset parry streak
+                                    
+                                    // Lucky Seven check
+                                    if (playerStats.recentCritTime && playerStats.recentBlockTime && playerStats.recentParryTime) {
+                                        let times = [playerStats.recentCritTime, playerStats.recentBlockTime, playerStats.recentParryTime];
+                                        let minT = Math.min(...times), maxT = Math.max(...times);
+                                        if (maxT - minT <= 1000) {
+                                            playerStats.hasTriggeredLuckySeven = true;
+                                        }
+                                    }
+                                    
                                     if (checkArtifactTrait("dodge_buff")) playerStats.adrenalineTimer = checkArtifactTrait("extend_buffs") ? 900 : 600;
                                 }
                                 else {
+                                    playerStats.consecutiveParries = 0; // Reset parry streak on direct hit
                                     // Soft-Ceiling Diminishing Returns Mitigation Formula (Capped asymptotically at 75% max)
                                     let effStage = playerStats.isDungeonMode ? Math.max(1, Math.floor((playerStats.maxStage || 1) * 0.85)) : playerStats.stage;
                                     let mitigation = 0.75 * (p.def / (p.def + 300 + (effStage * 32)));
@@ -10853,10 +11100,12 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
                                     }
 
                                     playerStats.currentHp -= netDamage;
+                                    playerStats.damageTakenThisBattle = (playerStats.damageTakenThisBattle || 0) + netDamage;
                                     effects.push({ x: hero.x, y: hero.y, text: "-" + netDamage.toLocaleString(), color: "#e74c3c", life: 40 });
                                     if (playerStats.currentHp <= 0) { 
                                         if (checkArtifactTrait("second_wind") && !playerStats.usedSecondWind) {
                                             playerStats.usedSecondWind = true; playerStats.currentHp = Math.floor(p.maxHp * 0.5);
+                                            playerStats.ankhTriggeredThisBattle = true;
                                             effects.push({ x: hero.x, y: hero.y - 20, text: "🔥 SECOND WIND!", color: "#e67e22", life: 80 });
                                         } else { 
                                             // Capture the name of the entity that dealt the killing blow
@@ -12477,164 +12726,236 @@ function engineCycle() {
 }
 
 /* ==========================================================================
-       ACHIEVEMENTS SYSTEM CORE DATA & UI HANDLERS
+       ACHIEVEMENTS SYSTEM CORE DATA & UI HANDLERS (RESTRUCTURED)
        ========================================================================== */
     window.AchievementsData = [
-        // SLAYERS (Kills)
-        { id: "slayer_1", name: "Novice Slayer", icon: "⚔️", desc: "Slay 100 total enemies", reqType: "kills", reqValue: 100, stats: { atk: 2, atkPct: 0.01 } },
-        { id: "slayer_2", name: "Adept Slayer", icon: "💀", desc: "Slay 1,000 total enemies", reqType: "kills", reqValue: 1000, stats: { atk: 5, atkPct: 0.02 } },
-        { id: "slayer_3", name: "Deathbringer", icon: "😈", desc: "Slay 10,000 total enemies", reqType: "kills", reqValue: 10000, stats: { critChance: 0.01, atkPct: 0.03 } },
-        { id: "slayer_4", name: "God of War", icon: "🤺", desc: "Slay 50,000 total enemies", reqType: "kills", reqValue: 50000, stats: { atkPct: 0.05 } },
-        { id: "slayer_5", name: "Void Reaper", icon: "🌌", desc: "Slay 100,000 total enemies", reqType: "kills", reqValue: 100000, stats: { atkPct: 0.10 } },
-        { id: "slayer_6", name: "Absolute Annihilator", icon: "☄️", desc: "Slay 250,000 total enemies", reqType: "kills", reqValue: 250000, stats: { atkPct: 0.12, critDamage: 0.05 } },
-        { id: "slayer_7", name: "Extinction Event", icon: "💥", desc: "Slay 1,000,000 total enemies", reqType: "kills", reqValue: 1000000, stats: { atkPct: 0.20, critChance: 0.05 } },
-        { id: "slayer_8", name: "Eradication Catalyst", icon: "⚛️", desc: "Slay 5,000,000 total enemies", reqType: "kills", reqValue: 5000000, stats: { atkPct: 0.25, critDamage: 0.08 } },
-        { id: "slayer_9", name: "Harbinger of the End", icon: "🪐", desc: "Slay 10,000,000 total enemies", reqType: "kills", reqValue: 10000000, stats: { atkPct: 0.35, critChance: 0.08 } },
-        
-        // HOARDERS (Gold)
-        { id: "hoarder_1", name: "Penny Pincher", icon: "🪙", desc: "Collect 5,000 total gold", reqType: "gold", reqValue: 5000, stats: { maxHp: 10, maxHpPct: 0.01 } },
-        { id: "hoarder_2", name: "Merchant's Trust", icon: "💰", desc: "Collect 50,000 total gold", reqType: "gold", reqValue: 50000, stats: { gold: 0.02, maxHpPct: 0.02 } },
-        { id: "hoarder_3", name: "Capitalist Overlord", icon: "💎", desc: "Collect 500,000 total gold", reqType: "gold", reqValue: 500000, stats: { qly: 0.02, maxHpPct: 0.03 } },
-        { id: "hoarder_4", name: "Vault Guardian", icon: "🏰", desc: "Collect 2,000,000 total gold", reqType: "gold", reqValue: 2000000, stats: { gold: 0.05, maxHpPct: 0.05 } },
-        { id: "hoarder_5", name: "Golden Deity", icon: "👑", desc: "Collect 10,000,000 total gold", reqType: "gold", reqValue: 10000000, stats: { gold: 0.10, maxHpPct: 0.10 } },
-        { id: "hoarder_6", name: "Midas' Equal", icon: "🏺", desc: "Collect 50,000,000 total gold", reqType: "gold", reqValue: 50000000, stats: { gold: 0.15, maxHpPct: 0.15 } },
-        { id: "hoarder_7", name: "Universal Treasury", icon: "💸", desc: "Collect 250,000,000 total gold", reqType: "gold", reqValue: 250000000, stats: { gold: 0.25, maxHpPct: 0.25, qly: 0.08 } },
-        { id: "hoarder_8", name: "Interstellar Merchant", icon: "☄️", desc: "Collect 1,000,000,000 total gold", reqType: "gold", reqValue: 1000000000, stats: { gold: 0.35, qly: 0.10 } },
-        { id: "hoarder_9", name: "Midas' Overlord", icon: "🌟", desc: "Collect 5,000,000,000 total gold", reqType: "gold", reqValue: 5000000000, stats: { gold: 0.50, qly: 0.15, maxHpPct: 0.30 } },
-        
-        // STAGES (Progression)
-        { id: "stage_1", name: "Greenhorn Explorer", icon: "🗺️", desc: "Reach Stage 10", reqType: "stage", reqValue: 10, stats: { def: 1, defPct: 0.01 } },
-        { id: "stage_2", name: "Seasoned Ranger", icon: "🧭", desc: "Reach Stage 50", reqType: "stage", reqValue: 50, stats: { def: 2, defPct: 0.03 } },
-        { id: "stage_3", name: "The Abyss Crawler", icon: "🌋", desc: "Reach Stage 100", reqType: "stage", reqValue: 100, stats: { drop: 0.02, defPct: 0.05 } },
-        { id: "stage_4", name: "The Unstoppable", icon: "🛡️", desc: "Reach Stage 150", reqType: "stage", reqValue: 150, stats: { defPct: 0.08 } },
-        { id: "stage_5", name: "Transcendent Traveler", icon: "🪐", desc: "Reach Stage 200", reqType: "stage", reqValue: 200, stats: { maxHpPct: 0.08 } },
-        { id: "stage_6", name: "Voidwalker", icon: "🌌", desc: "Reach Stage 300", reqType: "stage", reqValue: 300, stats: { moveSpeedPct: 0.10 } },
-        { id: "stage_7", name: "The Final Frontier", icon: "🛸", desc: "Reach Stage 500", reqType: "stage", reqValue: 500, stats: { maxHpPct: 0.15, defPct: 0.15 } },
-        { id: "stage_8", name: "Infinity Voyager", icon: "🚀", desc: "Reach Stage 1000", reqType: "stage", reqValue: 1000, stats: { maxHpPct: 0.25, defPct: 0.25, moveSpeedPct: 0.10 } },
-        { id: "stage_9", name: "Deep Space Pioneer", icon: "🛰️", desc: "Reach Stage 2500", reqType: "stage", reqValue: 2500, stats: { maxHpPct: 0.30, defPct: 0.30, moveSpeedPct: 0.15 } },
-        { id: "stage_10", name: "Unbound Omnipresence", icon: "🌀", desc: "Reach Stage 5000", reqType: "stage", reqValue: 5000, stats: { maxHpPct: 0.50, defPct: 0.50, moveSpeedPct: 0.25, atkPct: 0.10 } },
-        
-        // BLACKSMITH (Tempers)
-        { id: "forge_1", name: "Bronze Anvil", icon: "🔨", desc: "Temper any equipment gear item", reqType: "temper", reqValue: 1, stats: { str: 2, strPct: 0.02 } },
-        { id: "forge_2", name: "Iron Hammer", icon: "⚒️", desc: "Temper items 10 times", reqType: "temper", reqValue: 10, stats: { strPct: 0.04 } },
-        { id: "forge_3", name: "Master Blacksmith", icon: "🔥", desc: "Temper items 50 times", reqType: "temper", reqValue: 50, stats: { strPct: 0.08 } },
-        { id: "forge_4", name: "God of the Forge", icon: "🔱", desc: "Temper items 250 times", reqType: "temper", reqValue: 250, stats: { strPct: 0.15 } },
-        { id: "forge_5", name: "Celestial Smelter", icon: "☄️", desc: "Temper items 500 times", reqType: "temper", reqValue: 500, stats: { str: 5, strPct: 0.10 } },
-        { id: "forge_6", name: "Starmetal Shaper", icon: "🪐", desc: "Temper items 1,000 times", reqType: "temper", reqValue: 1000, stats: { str: 15, strPct: 0.20 } },
-        { id: "forge_7", name: "Vulcan's Successor", icon: "🌋", desc: "Temper items 5,000 times", reqType: "temper", reqValue: 5000, stats: { str: 25, strPct: 0.25 } },
-        { id: "forge_8", name: "Cosmic Artificer", icon: "🌌", desc: "Temper items 10,000 times", reqType: "temper", reqValue: 10000, stats: { str: 50, strPct: 0.40, atkPct: 0.05 } },
-        
-        // ENCHANTER (Enchants)
-        { id: "enchant_1", name: "Magic Infusion", icon: "🔮", desc: "Enchant any fully-tempered equipment item", reqType: "enchant", reqValue: 1, stats: { int: 2, intPct: 0.02 } },
-        { id: "enchant_2", name: "Mystic Scholar", icon: "📜", desc: "Enchant items 5 times", reqType: "enchant", reqValue: 5, stats: { intPct: 0.04 } },
-        { id: "enchant_3", name: "Eldritch Weaver", icon: "🕸️", desc: "Enchant items 20 times", reqType: "enchant", reqValue: 20, stats: { intPct: 0.08 } },
-        { id: "enchant_4", name: "Enchantment Archmage", icon: "🧙", desc: "Enchant items 100 times", reqType: "enchant", reqValue: 100, stats: { intPct: 0.15 } },
-        { id: "enchant_5", name: "Runic Architect", icon: "🔱", desc: "Enchant items 250 times", reqType: "enchant", reqValue: 250, stats: { int: 5, intPct: 0.10 } },
-        { id: "enchant_6", name: "Arcane Singularity", icon: "🌌", desc: "Enchant items 500 times", reqType: "enchant", reqValue: 500, stats: { int: 15, intPct: 0.20 } },
-        { id: "enchant_7", name: "Aetheric Architect", icon: "🪐", desc: "Enchant items 1,000 times", reqType: "enchant", reqValue: 1000, stats: { int: 25, intPct: 0.25 } },
-        { id: "enchant_8", name: "Lexicon of the Stars", icon: "🌟", desc: "Enchant items 2,500 times", reqType: "enchant", reqValue: 2500, stats: { int: 50, intPct: 0.40, defPct: 0.05 } },
-        
-        // RIFT (Boss Summoning)
-        { id: "rift_1", name: "Reality Breaker", icon: "🌌", desc: "Summon and defeat an Enraged Rift Guardian", reqType: "rift", reqValue: 1, stats: { fairySpawn: 0.02, dexPct: 0.02 } },
-        { id: "rift_2", name: "Rift Conqueror", icon: "🌀", desc: "Summon & defeat 5 Rift Guardians", reqType: "rift", reqValue: 5, stats: { dexPct: 0.04 } },
-        { id: "rift_3", name: "Guardian's Bane", icon: "⚔️", desc: "Summon & defeat 25 Rift Guardians", reqType: "rift", reqValue: 25, stats: { dexPct: 0.08 } },
-        { id: "rift_4", name: "Cosmic Arbiter", icon: "🛸", desc: "Summon & defeat 100 Rift Guardians", reqType: "rift", reqValue: 100, stats: { dexPct: 0.15 } },
-        { id: "rift_5", name: "Aether Bane", icon: "🪐", desc: "Summon & defeat 250 Rift Guardians", reqType: "rift", reqValue: 250, stats: { dex: 5, dexPct: 0.10 } },
-        { id: "rift_6", name: "Shatterer of Realities", icon: "💫", desc: "Summon & defeat 500 Rift Guardians", reqType: "rift", reqValue: 500, stats: { dex: 15, dexPct: 0.20 } },
-        { id: "rift_7", name: "Dimensional Sovereign", icon: "🌌", desc: "Summon & defeat 1,000 Rift Guardians", reqType: "rift", reqValue: 1000, stats: { dex: 25, dexPct: 0.25 } },
-        { id: "rift_8", name: "Fate Weaver", icon: "🌟", desc: "Summon & defeat 2,500 Rift Guardians", reqType: "rift", reqValue: 2500, stats: { dex: 50, dexPct: 0.40, critDamage: 0.10 } },
-        
-        // LEVEL (Milestones)
-        { id: "level_1", name: "Novice Adventurer", icon: "🔰", desc: "Reach Character Level 10", reqType: "level", reqValue: 10, stats: { atkPct: 0.02, maxHpPct: 0.02 } },
-        { id: "level_2", name: "Elite Hero", icon: "🛡️", desc: "Reach Character Level 30", reqType: "level", reqValue: 30, stats: { atkPct: 0.04, maxHpPct: 0.04 } },
-        { id: "level_3", name: "Transcendent Being", icon: "🌟", desc: "Reach Character Level 75", reqType: "level", reqValue: 75, stats: { atkPct: 0.06, maxHpPct: 0.06, defPct: 0.06 } },
-        { id: "level_4", name: "Immortal Legend", icon: "👑", desc: "Reach Character Level 150", reqType: "level", reqValue: 150, stats: { atkPct: 0.10, maxHpPct: 0.10, defPct: 0.10, strPct: 0.10, dexPct: 0.10, intPct: 0.10 } },
-        { id: "level_5", name: "Mortal Ascendant", icon: "⚡", desc: "Reach Character Level 250", reqType: "level", reqValue: 250, stats: { atkPct: 0.12, maxHpPct: 0.12 } },
-        { id: "level_6", name: "Cosmic Paragon", icon: "🌌", desc: "Reach Character Level 500", reqType: "level", reqValue: 500, stats: { atkPct: 0.20, maxHpPct: 0.20, critChance: 0.05 } },
-        { id: "level_7", name: "Archon of Legend", icon: "🚀", desc: "Reach Character Level 750", reqType: "level", reqValue: 750, stats: { atkPct: 0.25, maxHpPct: 0.25, expPct: 0.15 } },
-        { id: "level_8", name: "Limitless Zenith", icon: "👑", desc: "Reach Character Level 1,000", reqType: "level", reqValue: 1000, stats: { atkPct: 0.35, maxHpPct: 0.35, defPct: 0.35, strPct: 0.15, dexPct: 0.15, intPct: 0.15 } },
-        
-        // POTIONS (Utility)
-        { id: "potion_1", name: "Alchemical Initiate", icon: "🧪", desc: "Consume 10 Elixirs", reqType: "elixirs", reqValue: 10, stats: { intPct: 0.03 } },
-        { id: "potion_2", name: "Potion Addict", icon: "🍺", desc: "Consume 50 Elixirs", reqType: "elixirs", reqValue: 50, stats: { intPct: 0.07 } },
-        { id: "potion_3", name: "Concoction Connoisseur", icon: "🍷", desc: "Consume 200 Elixirs", reqType: "elixirs", reqValue: 200, stats: { intPct: 0.05, drop: 0.02 } },
-        { id: "potion_4", name: "Philosopher's Apothecary", icon: "⚗️", desc: "Consume 500 Elixirs", reqType: "elixirs", reqValue: 500, stats: { intPct: 0.10, drop: 0.05 } },
-        { id: "potion_5", name: "Elixir Sovereign", icon: "🍷", desc: "Consume 1,000 Elixirs", reqType: "elixirs", reqValue: 1000, stats: { intPct: 0.15, drop: 0.08 } },
-        { id: "potion_6", name: "Divine Apothecary", icon: "🧪", desc: "Consume 2,500 Elixirs", reqType: "elixirs", reqValue: 2500, stats: { intPct: 0.25, drop: 0.12, maxHpPct: 0.10 } },
-        
-        // SACKS (Inventory Management)
-        { id: "bag_1", name: "Sack Stuffer", icon: "🎒", desc: "Have 15 items in Equipment Sack", reqType: "bag_count", reqValue: 15, stats: { qly: 0.02 } },
-        { id: "bag_2", name: "Pack Rat", icon: "🧳", desc: "Have 30 items in Equipment Sack", reqType: "bag_count", reqValue: 30, stats: { qly: 0.05 } },
-        { id: "bag_3", name: "Hoarder Extraordinaire", icon: "📦", desc: "Have 40 items in Equipment Sack", reqType: "bag_count", reqValue: 40, stats: { qly: 0.08 } },
-        { id: "bag_4", name: "Satchel of the Cosmos", icon: "🛸", desc: "Have 50 items in Equipment Sack", reqType: "bag_count", reqValue: 50, stats: { qly: 0.12 } },
-        
-        // SALVAGING (Resource Recycling)
-        { id: "salvage_1", name: "Scrap Collector", icon: "♻️", desc: "Salvage 10 total items", reqType: "salvage", reqValue: 10, stats: { drop: 0.02 } },
-        { id: "salvage_2", name: "Deconstruction Derby", icon: "🚜", desc: "Salvage 100 total items", reqType: "salvage", reqValue: 100, stats: { drop: 0.05 } },
-        { id: "salvage_3", name: "Infinite Recycler", icon: "⚙️", desc: "Salvage 500 total items", reqType: "salvage", reqValue: 500, stats: { drop: 0.08 } },
-        { id: "salvage_4", name: "Scrap Colossus", icon: "🤖", desc: "Salvage 2,000 total items", reqType: "salvage", reqValue: 2000, stats: { drop: 0.15, qly: 0.10 } },
-        { id: "salvage_5", name: "Nanotech Recycler", icon: "🧬", desc: "Salvage 5,000 total items", reqType: "salvage", reqValue: 5000, stats: { drop: 0.20 } },
-        { id: "salvage_6", name: "Quantum Disassembler", icon: "🌌", desc: "Salvage 10,000 total items", reqType: "salvage", reqValue: 10000, stats: { drop: 0.30, qly: 0.15 } },
+        // 1. SLAYERS (Kills)
+        { id: "slayer_1", name: "Novice Slayer", icon: "⚔️", desc: "Slay 100 total enemies", reqType: "kills", reqValue: 100, stats: { atk: 10, atkPct: 0.02 } },
+        { id: "slayer_2", name: "Adept Slayer", icon: "💀", desc: "Slay 1,000 total enemies", reqType: "kills", reqValue: 1000, stats: { atk: 35, atkPct: 0.04 } },
+        { id: "slayer_3", name: "Deathbringer", icon: "😈", desc: "Slay 10,000 total enemies", reqType: "kills", reqValue: 10000, stats: { atk: 100, atkPct: 0.06 } },
+        { id: "slayer_4", name: "God of War", icon: "🥊", desc: "Slay 100,000 total enemies", reqType: "kills", reqValue: 100000, stats: { atk: 250, atkPct: 0.08 } },
+        { id: "slayer_5", name: "Void Reaper", icon: "🌌", desc: "Slay 1,000,000 total enemies", reqType: "kills", reqValue: 1000000, stats: { atk: 750, atkPct: 0.12 } },
+        { id: "slayer_6", name: "Annihilation Harbinger", icon: "☄️", desc: "Slay 10,000,000 total enemies", reqType: "kills", reqValue: 10000000, stats: { atk: 2500, atkPct: 0.20 } },
 
-        // PRESTIGE (Ascensions)
-        { id: "prestige_1", name: "Mortal Ascension", icon: "🐉", desc: "Ascend 1 time at the Altar", reqType: "prestige", reqValue: 1, stats: { expPct: 0.02, gold: 0.02 } },
-        { id: "prestige_2", name: "Chrono Rebirth", icon: "⌛", desc: "Ascend 5 times at the Altar", reqType: "prestige", reqValue: 5, stats: { expPct: 0.05, gold: 0.05 } },
-        { id: "prestige_3", name: "Eternal Paradigm", icon: "🌌", desc: "Ascend 20 times at the Altar", reqType: "prestige", reqValue: 20, stats: { expPct: 0.10, gold: 0.10, drop: 0.02 } },
-        { id: "prestige_4", name: "Dimensional Shifter", icon: "🌀", desc: "Ascend 50 times at the Altar", reqType: "prestige", reqValue: 50, stats: { expPct: 0.15, gold: 0.15 } },
-        { id: "prestige_5", name: "Infinite Reincarnation", icon: "🌟", desc: "Ascend 100 times at the Altar", reqType: "prestige", reqValue: 100, stats: { expPct: 0.25, gold: 0.25, drop: 0.05 } },
+        // 2. TREASURE HUNTERS (Gold)
+        { id: "hoarder_1", name: "Penny Pincher", icon: "🪙", desc: "Collect 5,000 total gold", reqType: "gold", reqValue: 5000, stats: { gold: 0.03, maxHp: 30 } },
+        { id: "hoarder_2", name: "Merchant's Trust", icon: "💰", desc: "Collect 50,000 total gold", reqType: "gold", reqValue: 50000, stats: { gold: 0.06, maxHp: 100 } },
+        { id: "hoarder_3", name: "Capitalist Overlord", icon: "💎", desc: "Collect 500,000 total gold", reqType: "gold", reqValue: 500000, stats: { gold: 0.10, maxHp: 300 } },
+        { id: "hoarder_4", name: "Vault Guardian", icon: "🏰", desc: "Collect 5,000,000 total gold", reqType: "gold", reqValue: 5000000, stats: { gold: 0.15, maxHp: 800 } },
+        { id: "hoarder_5", name: "Golden Deity", icon: "👑", desc: "Collect 50,000,000 total gold", reqType: "gold", reqValue: 50000000, stats: { gold: 0.25, maxHp: 2000 } },
+        { id: "hoarder_6", name: "Midas' Equal", icon: "🏺", desc: "Collect 500,000,000 total gold", reqType: "gold", reqValue: 500000000, stats: { gold: 0.40, maxHp: 5000 } },
 
-        // CRUCIBLE (Astral Crucible Wave Survival)
-        { id: "crucible_1", name: "Spark of Survival", icon: "🔥", desc: "Reach Wave 15 in the Astral Crucible", reqType: "crucible", reqValue: 15, stats: { block: 0.01 } },
-        { id: "crucible_2", name: "Crucible Crusader", icon: "💥", desc: "Reach Wave 50 in the Astral Crucible", reqType: "crucible", reqValue: 50, stats: { block: 0.02, parry: 0.01 } },
-        { id: "crucible_3", name: "Astral Sentinel", icon: "🛡️", desc: "Reach Wave 100 in the Astral Crucible", reqType: "crucible", reqValue: 100, stats: { block: 0.03, parry: 0.03, defPct: 0.05 } },
-        { id: "crucible_4", name: "Cosmic Immortal", icon: "🌠", desc: "Reach Wave 200 in the Astral Crucible", reqType: "crucible", reqValue: 200, stats: { block: 0.05, parry: 0.05, defPct: 0.10 } },
-        { id: "crucible_5", name: "Rift Breaker", icon: "🌀", desc: "Reach Wave 300 in the Astral Crucible", reqType: "crucible", reqValue: 300, stats: { block: 0.06, parry: 0.06, defPct: 0.15 } },
-        { id: "crucible_6", name: "Crucible Overlord", icon: "💀", desc: "Reach Wave 500 in the Astral Crucible", reqType: "crucible", reqValue: 500, stats: { block: 0.08, parry: 0.08, defPct: 0.25, atkPct: 0.10 } },
+        // 3. PIONEERS (Stages)
+        { id: "stage_1", name: "Greenhorn Explorer", icon: "🗺️", desc: "Reach Stage 10", reqType: "stage", reqValue: 10, stats: { def: 5, defPct: 0.02 } },
+        { id: "stage_2", name: "Seasoned Ranger", icon: "🧭", desc: "Reach Stage 50", reqType: "stage", reqValue: 50, stats: { def: 20, defPct: 0.04 } },
+        { id: "stage_3", name: "The Abyss Crawler", icon: "🌋", desc: "Reach Stage 100", reqType: "stage", reqValue: 100, stats: { def: 75, defPct: 0.06 } },
+        { id: "stage_4", name: "The Unstoppable", icon: "🛡️", desc: "Reach Stage 200", reqType: "stage", reqValue: 200, stats: { def: 200, defPct: 0.08 } },
+        { id: "stage_5", name: "Transcendent Traveler", icon: "🪐", desc: "Reach Stage 500", reqType: "stage", reqValue: 500, stats: { def: 500, defPct: 0.12 } },
+        { id: "stage_6", name: "Voidwalker", icon: "🌌", desc: "Reach Stage 1000", reqType: "stage", reqValue: 1000, stats: { def: 1500, defPct: 0.20 } },
 
-        // INFINITE DUNGEONS (Peaks)
-        { id: "dung_equip_1", name: "Steel Miner", icon: "⛏️", desc: "Reach Floor 20 in the Equipment Dungeon", reqType: "dungeon_equip", reqValue: 20, stats: { atk: 15 } },
-        { id: "dung_equip_2", name: "Armory Tyrant", icon: "⚔️", desc: "Reach Floor 50 in the Equipment Dungeon", reqType: "dungeon_equip", reqValue: 50, stats: { atk: 35, critChance: 0.02 } },
-        { id: "dung_equip_3", name: "Colossal Blacksmith", icon: "🌋", desc: "Reach Floor 100 in the Equipment Dungeon", reqType: "dungeon_equip", reqValue: 100, stats: { atkPct: 0.05, critChance: 0.04 } },
-        { id: "dung_equip_4", name: "Obsidian Guard", icon: "🛡️", desc: "Reach Floor 150 in the Equipment Dungeon", reqType: "dungeon_equip", reqValue: 150, stats: { atk: 75, critChance: 0.03 } },
-        { id: "dung_equip_5", name: "Armory God", icon: "👑", desc: "Reach Floor 250 in the Equipment Dungeon", reqType: "dungeon_equip", reqValue: 250, stats: { atk: 150, critChance: 0.05, atkPct: 0.10 } },
+        // 4. MASTERWORK (Tempers)
+        { id: "forge_1", name: "Bronze Anvil", icon: "🔨", desc: "Temper items 1 time", reqType: "temper", reqValue: 1, stats: { str: 2, strPct: 0.02 } },
+        { id: "forge_2", name: "Iron Hammer", icon: "⚒️", desc: "Temper items 10 times", reqType: "temper", reqValue: 10, stats: { str: 6, strPct: 0.04 } },
+        { id: "forge_3", name: "Master Blacksmith", icon: "🔥", desc: "Temper items 50 times", reqType: "temper", reqValue: 50, stats: { str: 15, strPct: 0.06 } },
+        { id: "forge_4", name: "God of the Forge", icon: "🔱", desc: "Temper items 250 times", reqType: "temper", reqValue: 250, stats: { str: 40, strPct: 0.08 } },
+        { id: "forge_5", name: "Celestial Smelter", icon: "☄️", desc: "Temper items 1,000 times", reqType: "temper", reqValue: 1000, stats: { str: 100, strPct: 0.12 } },
+        { id: "forge_6", name: "Starmetal Shaper", icon: "🪐", desc: "Temper items 5,000 times", reqType: "temper", reqValue: 5000, stats: { str: 300, strPct: 0.20 } },
 
-        { id: "dung_gold_1", name: "Sooty Pockets", icon: "🪙", desc: "Reach Floor 20 in the Gold Mine Caverns", reqType: "dungeon_gold", reqValue: 20, stats: { gold: 0.05 } },
-        { id: "dung_gold_2", name: "Lode Overlord", icon: "💰", desc: "Reach Floor 50 in the Gold Mine Caverns", reqType: "dungeon_gold", reqValue: 50, stats: { gold: 0.15, qly: 0.02 } },
-        { id: "dung_gold_3", name: "Midas' Disciple", icon: "👑", desc: "Reach Floor 100 in the Gold Mine Caverns", reqType: "dungeon_gold", reqValue: 100, stats: { gold: 0.25, qly: 0.05 } },
-        { id: "dung_gold_4", name: "Vast Coffers", icon: "🏦", desc: "Reach Floor 150 in the Gold Mine Caverns", reqType: "dungeon_gold", reqValue: 150, stats: { gold: 0.35 } },
-        { id: "dung_gold_5", name: "Plutus' Architect", icon: "🌟", desc: "Reach Floor 250 in the Gold Mine Caverns", reqType: "dungeon_gold", reqValue: 250, stats: { gold: 0.50, qly: 0.08 } },
+        // 5. RUNIC SCRIBES (Enchants)
+        { id: "enchant_1", name: "Magic Infusion", icon: "🔮", desc: "Enchant 1 time", reqType: "enchant", reqValue: 1, stats: { int: 2, intPct: 0.02 } },
+        { id: "enchant_2", name: "Mystic Scholar", icon: "📜", desc: "Enchant items 5 times", reqType: "enchant", reqValue: 5, stats: { int: 6, intPct: 0.04 } },
+        { id: "enchant_3", name: "Eldritch Weaver", icon: "🕸️", desc: "Enchant items 20 times", reqType: "enchant", reqValue: 20, stats: { int: 15, intPct: 0.06 } },
+        { id: "enchant_4", name: "Enchantment Archmage", icon: "🧙", desc: "Enchant items 100 times", reqType: "enchant", reqValue: 100, stats: { int: 40, intPct: 0.08 } },
+        { id: "enchant_5", name: "Runic Architect", icon: "🏗️", desc: "Enchant items 500 times", reqType: "enchant", reqValue: 500, stats: { int: 100, intPct: 0.12 } },
+        { id: "enchant_6", name: "Arcane Singularity", icon: "🌌", desc: "Enchant items 2,000 times", reqType: "enchant", reqValue: 2000, stats: { int: 300, intPct: 0.20 } },
 
-        { id: "dung_mat_1", name: "Toxic Scavenger", icon: "🧪", desc: "Reach Floor 20 in the Toxic Material Pit", reqType: "dungeon_mat", reqValue: 20, stats: { maxHp: 100 } },
-        { id: "dung_mat_2", name: "Plague Alchemist", icon: "☣️", desc: "Reach Floor 50 in the Toxic Material Pit", reqType: "dungeon_mat", reqValue: 50, stats: { maxHp: 250, maxHpPct: 0.03 } },
-        { id: "dung_mat_3", name: "Contagion Master", icon: "🧫", desc: "Reach Floor 100 in the Toxic Material Pit", reqType: "dungeon_mat", reqValue: 100, stats: { maxHp: 500, maxHpPct: 0.06 } },
-        { id: "dung_mat_4", name: "Bio-Hazard Specialist", icon: "☣️", desc: "Reach Floor 150 in the Toxic Material Pit", reqType: "dungeon_mat", reqValue: 150, stats: { maxHp: 750, maxHpPct: 0.08 } },
-        { id: "dung_mat_5", name: "Vector Prime", icon: "🧫", desc: "Reach Floor 250 in the Toxic Material Pit", reqType: "dungeon_mat", reqValue: 250, stats: { maxHp: 1500, maxHpPct: 0.12, defPct: 0.05 } },
+        // 6. VOID CLEANSERS (Rifts)
+        { id: "rift_1", name: "Reality Breaker", icon: "🌌", desc: "Slay 1 Rift Guardian", reqType: "rift", reqValue: 1, stats: { dex: 2, dexPct: 0.02 } },
+        { id: "rift_2", name: "Rift Conqueror", icon: "🌀", desc: "Slay 5 Rift Guardians", reqType: "rift", reqValue: 5, stats: { dex: 6, dexPct: 0.04 } },
+        { id: "rift_3", name: "Guardian's Bane", icon: "⚔️", desc: "Slay 25 Rift Guardians", reqType: "rift", reqValue: 25, stats: { dex: 15, dexPct: 0.06 } },
+        { id: "rift_4", name: "Cosmic Arbiter", icon: "🛸", desc: "Slay 100 Rift Guardians", reqType: "rift", reqValue: 100, stats: { dex: 40, dexPct: 0.08 } },
+        { id: "rift_5", name: "Aether Sovereign", icon: "🪐", desc: "Slay 500 Rift Guardians", reqType: "rift", reqValue: 500, stats: { dex: 100, dexPct: 0.12 } },
+        { id: "rift_6", name: "Shatterer of Realities", icon: "💫", desc: "Slay 2,500 Rift Guardians", reqType: "rift", reqValue: 2500, stats: { dex: 300, dexPct: 0.20 } },
 
-        // ARTIFACT COLLECTION SACK
-        { id: "art_held_1", name: "Relic Finder", icon: "🏺", desc: "Hold 5 unique artifacts in your sack", reqType: "artifacts_held", reqValue: 5, stats: { qly: 0.02 } },
-        { id: "art_held_2", name: "Museum Curator", icon: "🏛️", desc: "Hold 15 unique artifacts in your sack", reqType: "artifacts_held", reqValue: 15, stats: { qly: 0.05, rareSpawn: 0.005 } },
-        { id: "art_held_3", name: "Chronicle Collector", icon: "📚", desc: "Hold 20 unique artifacts in your sack", reqType: "artifacts_held", reqValue: 20, stats: { qly: 0.08, rareSpawn: 0.010 } },
+        // 7. REBORN LEGENDS (Prestige)
+        { id: "prestige_1", name: "Mortal Ascension", icon: "🐉", desc: "Ascend 1 time at the Altar", reqType: "prestige", reqValue: 1, stats: { expPct: 0.03, gold: 0.03 } },
+        { id: "prestige_2", name: "Chrono Rebirth", icon: "⌛", desc: "Ascend 5 times at the Altar", reqType: "prestige", reqValue: 5, stats: { expPct: 0.06, gold: 0.06 } },
+        { id: "prestige_3", name: "Eternal Paradigm", icon: "🌌", desc: "Ascend 10 times at the Altar", reqType: "prestige", reqValue: 10, stats: { expPct: 0.10, gold: 0.10 } },
+        { id: "prestige_4", name: "Dimensional Shifter", icon: "🌀", desc: "Ascend 25 times at the Altar", reqType: "prestige", reqValue: 25, stats: { expPct: 0.15, gold: 0.15 } },
+        { id: "prestige_5", name: "Infinite Reincarnation", icon: "🌟", desc: "Ascend 50 times at the Altar", reqType: "prestige", reqValue: 50, stats: { expPct: 0.25, gold: 0.25 } },
+        { id: "prestige_6", name: "Omnipresent Overlord", icon: "🌌", desc: "Ascend 100 times at the Altar", reqType: "prestige", reqValue: 100, stats: { expPct: 0.40, gold: 0.40 } },
 
-        // NEW: FAIRY CAPTURES
-        { id: "fairy_1", name: "Sprite Chaser", icon: "🧚", desc: "Capture 5 wild fairies", reqType: "fairies_clicked", reqValue: 5, stats: { fairySpawn: 0.05 } },
-        { id: "fairy_2", name: "Pixie Wrangler", icon: "✨", desc: "Capture 25 wild fairies", reqType: "fairies_clicked", reqValue: 25, stats: { fairySpawn: 0.10, moveSpeed: 2 } },
-        { id: "fairy_3", name: "Forest Friend", icon: "🌳", desc: "Capture 100 wild fairies", reqType: "fairies_clicked", reqValue: 100, stats: { fairySpawn: 0.15, qly: 0.02 } },
-        { id: "fairy_4", name: "Nymph Nabber", icon: "🎐", desc: "Capture 500 wild fairies", reqType: "fairies_clicked", reqValue: 500, stats: { fairySpawn: 0.25, gold: 0.05 } },
-        { id: "fairy_5", name: "Sylph Sovereign", icon: "🌟", desc: "Capture 2,000 wild fairies", reqType: "fairies_clicked", reqValue: 2000, stats: { fairySpawn: 0.50, qly: 0.05, drop: 0.05 } },
+        // 8. VENERABLE SAGES (Level)
+        { id: "level_1", name: "Novice Adventurer", icon: "🔰", desc: "Reach Level 10", reqType: "level", reqValue: 10, stats: { atkPct: 0.02, maxHpPct: 0.02 } },
+        { id: "level_2", name: "Elite Hero", icon: "🛡️", desc: "Reach Level 30", reqType: "level", reqValue: 30, stats: { atkPct: 0.04, maxHpPct: 0.04 } },
+        { id: "level_3", name: "Transcendent Being", icon: "🌟", desc: "Reach Level 75", reqType: "level", reqValue: 75, stats: { atkPct: 0.06, maxHpPct: 0.06 } },
+        { id: "level_4", name: "Immortal Legend", icon: "👑", desc: "Reach Level 150", reqType: "level", reqValue: 150, stats: { atkPct: 0.10, maxHpPct: 0.10 } },
+        { id: "level_5", name: "Mortal Ascendant", icon: "⚡", desc: "Reach Level 250", reqType: "level", reqValue: 250, stats: { atkPct: 0.15, maxHpPct: 0.15 } },
+        { id: "level_6", name: "Cosmic Paragon", icon: "🌌", desc: "Reach Level 500", reqType: "level", reqValue: 500, stats: { atkPct: 0.25, maxHpPct: 0.25 } },
 
-        // NEW: DEFEATS & DEATHS
-        { id: "death_1", name: "Flesh & Blood", icon: "🩸", desc: "Suffer defeat 1 time", reqType: "death_count", reqValue: 1, stats: { maxHp: 25, def: 2 } },
-        { id: "death_2", name: "Struggler's Path", icon: "🥀", desc: "Suffer defeat 10 times", reqType: "death_count", reqValue: 10, stats: { maxHp: 100, def: 5 } },
-        { id: "death_3", name: "Death's Familiar", icon: "💀", desc: "Suffer defeat 50 times", reqType: "death_count", reqValue: 50, stats: { maxHpPct: 0.05, defPct: 0.03 } },
-        { id: "death_4", name: "Reborn Resolve", icon: "🌅", desc: "Suffer defeat 200 times", reqType: "death_count", reqValue: 200, stats: { maxHpPct: 0.10, defPct: 0.05 } },
-        { id: "death_5", name: "The Eternal Phoenix", icon: "🔥", desc: "Suffer defeat 1,000 times", reqType: "death_count", reqValue: 1000, stats: { maxHpPct: 0.20, defPct: 0.10, def: 20 } },
+        // 9. APOTHECARY (Elixirs)
+        { id: "potion_1", name: "Alchemical Initiate", icon: "🧪", desc: "Consume 10 Elixirs", reqType: "elixirs", reqValue: 10, stats: { potDurationPct: 0.05, potStrengthPct: 0.02 } },
+        { id: "potion_2", name: "Potion Enthusiast", icon: "🍺", desc: "Consume 50 Elixirs", reqType: "elixirs", reqValue: 50, stats: { potDurationPct: 0.10, potStrengthPct: 0.04 } },
+        { id: "potion_3", name: "Concoction Connoisseur", icon: "🍷", desc: "Consume 200 Elixirs", reqType: "elixirs", reqValue: 200, stats: { potDurationPct: 0.15, potStrengthPct: 0.06 } },
+        { id: "potion_4", name: "Philosopher's Apothecary", icon: "⚗️", desc: "Consume 500 Elixirs", reqType: "elixirs", reqValue: 500, stats: { potDurationPct: 0.25, potStrengthPct: 0.08 } },
+        { id: "potion_5", name: "Elixir Sovereign", icon: "🍷", desc: "Consume 1,000 Elixirs", reqType: "elixirs", reqValue: 1000, stats: { potDurationPct: 0.40, potStrengthPct: 0.12 } },
+        { id: "potion_6", name: "Divine Apothecary", icon: "🧪", desc: "Consume 2,500 Elixirs", reqType: "elixirs", reqValue: 2500, stats: { potDurationPct: 0.60, potStrengthPct: 0.20 } },
 
-        // NEW: POTION BUFF TRACKS
-        { id: "potion_ach_1", name: "Apprentice Brewer", icon: "🧪", desc: "Consume 10 Elixirs", reqType: "elixirs", reqValue: 10, stats: { potDurationPct: 0.03 } },
-        { id: "potion_ach_2", name: "Potion Addict", icon: "🍺", desc: "Consume 50 Elixirs", reqType: "elixirs", reqValue: 50, stats: { potStrengthPct: 0.05, potDurationPct: 0.03 } },
-        { id: "potion_ach_3", name: "Master of Panaceas", icon: "🍷", desc: "Consume 200 Elixirs", reqType: "elixirs", reqValue: 200, stats: { potStrengthPct: 0.08, potDurationPct: 0.05 } },
-        { id: "potion_ach_4", name: "The Grand Alchemist", icon: "⚗️", desc: "Consume 1,000 Elixirs", reqType: "elixirs", reqValue: 1000, stats: { potStrengthPct: 0.15, potDurationPct: 0.10 } }
+        // 10. SCRAP COLLECTORS (Salvages)
+        { id: "salvage_1", name: "Scrap Collector", icon: "♻️", desc: "Salvage 10 items", reqType: "salvage", reqValue: 10, stats: { drop: 0.03, qly: 0.02 } },
+        { id: "salvage_2", name: "Deconstruction Derby", icon: "🚜", desc: "Salvage 100 items", reqType: "salvage", reqValue: 100, stats: { drop: 0.06, qly: 0.04 } },
+        { id: "salvage_3", name: "Infinite Recycler", icon: "⚙️", desc: "Salvage 500 items", reqType: "salvage", reqValue: 500, stats: { drop: 0.10, qly: 0.06 } },
+        { id: "salvage_4", name: "Scrap Colossus", icon: "🤖", desc: "Salvage 2,000 items", reqType: "salvage", reqValue: 2000, stats: { drop: 0.15, qly: 0.08 } },
+        { id: "salvage_5", name: "Nanotech Recycler", icon: "🧬", desc: "Salvage 5,000 items", reqType: "salvage", reqValue: 5000, stats: { drop: 0.25, qly: 0.12 } },
+        { id: "salvage_6", name: "Quantum Disassembler", icon: "🌌", desc: "Salvage 10,000 items", reqType: "salvage", reqValue: 10000, stats: { drop: 0.40, qly: 0.20 } },
+
+        // 11. NYMPH WHISPERERS (Fairies)
+        { id: "fairy_1", name: "Sprite Chaser", icon: "🧚", desc: "Capture 5 wild fairies", reqType: "fairies_clicked", reqValue: 5, stats: { fairySpawn: 0.05, moveSpeedPct: 0.02 } },
+        { id: "fairy_2", name: "Pixie Wrangler", icon: "✨", desc: "Capture 25 wild fairies", reqType: "fairies_clicked", reqValue: 25, stats: { fairySpawn: 0.10, moveSpeedPct: 0.04 } },
+        { id: "fairy_3", name: "Forest Friend", icon: "🌳", desc: "Capture 100 wild fairies", reqType: "fairies_clicked", reqValue: 100, stats: { fairySpawn: 0.15, moveSpeedPct: 0.06 } },
+        { id: "fairy_4", name: "Nymph Nabber", icon: "🎐", desc: "Capture 500 wild fairies", reqType: "fairies_clicked", reqValue: 500, stats: { fairySpawn: 0.25, moveSpeedPct: 0.08 } },
+        { id: "fairy_5", name: "Sylph Sovereign", icon: "🌟", desc: "Capture 2,000 wild fairies", reqType: "fairies_clicked", reqValue: 2000, stats: { fairySpawn: 0.40, moveSpeedPct: 0.12 } },
+        { id: "fairy_6", name: "Faerie Monarch", icon: "👑", desc: "Capture 10,000 wild fairies", reqType: "fairies_clicked", reqValue: 10000, stats: { fairySpawn: 0.60, moveSpeedPct: 0.20 } },
+
+        // 12. UNYIELDING WILL (Defeats)
+        { id: "death_1", name: "Flesh & Blood", icon: "🩸", desc: "Suffer defeat 1 time", reqType: "death_count", reqValue: 1, stats: { maxHp: 50, maxHpPct: 0.02 } },
+        { id: "death_2", name: "Struggler's Path", icon: "🥀", desc: "Suffer defeat 10 times", reqType: "death_count", reqValue: 10, stats: { maxHp: 200, maxHpPct: 0.04 } },
+        { id: "death_3", name: "Death's Familiar", icon: "💀", desc: "Suffer defeat 50 times", reqType: "death_count", reqValue: 50, stats: { maxHp: 600, maxHpPct: 0.06 } },
+        { id: "death_4", name: "Reborn Resolve", icon: "🌅", desc: "Suffer defeat 200 times", reqType: "death_count", reqValue: 200, stats: { maxHp: 1500, maxHpPct: 0.08 } },
+        { id: "death_5", name: "The Eternal Phoenix", icon: "🔥", desc: "Suffer defeat 500 times", reqType: "death_count", reqValue: 500, stats: { maxHp: 4000, maxHpPct: 0.12 } },
+        { id: "death_6", name: "Undying Transcendence", icon: "🌟", desc: "Suffer defeat 1,000 times", reqType: "death_count", reqValue: 1000, stats: { maxHp: 10000, maxHpPct: 0.20 } },
+
+        // 13. ARSENAL KINGS (Equip Dungeon)
+        { id: "d_eq_1", name: "Steel Miner", icon: "⛏️", desc: "Reach Floor 10 in Equip Dungeon", reqType: "dungeon_equip", reqValue: 10, stats: { atk: 15, atkPct: 0.02 } },
+        { id: "d_eq_2", name: "Armory Tyrant", icon: "⚔️", desc: "Reach Floor 30 in Equip Dungeon", reqType: "dungeon_equip", reqValue: 30, stats: { atk: 50, atkPct: 0.04 } },
+        { id: "d_eq_3", name: "Colossal Blacksmith", icon: "🌋", desc: "Reach Floor 50 in Equip Dungeon", reqType: "dungeon_equip", reqValue: 50, stats: { atk: 150, atkPct: 0.06 } },
+        { id: "d_eq_4", name: "Obsidian Guard", icon: "🛡️", desc: "Reach Floor 100 in Equip Dungeon", reqType: "dungeon_equip", reqValue: 100, stats: { atk: 400, atkPct: 0.08 } },
+        { id: "d_eq_5", name: "Armory God", icon: "👑", desc: "Reach Floor 150 in Equip Dungeon", reqType: "dungeon_equip", reqValue: 150, stats: { atk: 1000, atkPct: 0.12 } },
+        { id: "d_eq_6", name: "Arsenal Prime", icon: "🌌", desc: "Reach Floor 250 in Equip Dungeon", reqType: "dungeon_equip", reqValue: 250, stats: { atk: 3000, atkPct: 0.20 } },
+
+        // 14. MIDAS' HAND (Gold Dungeon)
+        { id: "d_go_1", name: "Sooty Pockets", icon: "🪙", desc: "Reach Floor 10 in Gold Mine", reqType: "dungeon_gold", reqValue: 10, stats: { gold: 0.05, goldMulti: 0.02 } },
+        { id: "d_go_2", name: "Lode Overlord", icon: "💰", desc: "Reach Floor 30 in Gold Mine", reqType: "dungeon_gold", reqValue: 30, stats: { gold: 0.10, goldMulti: 0.04 } },
+        { id: "d_go_3", name: "Midas' Disciple", icon: "👑", desc: "Reach Floor 50 in Gold Mine", reqType: "dungeon_gold", reqValue: 50, stats: { gold: 0.15, goldMulti: 0.06 } },
+        { id: "d_go_4", name: "Vast Coffers", icon: "🏦", desc: "Reach Floor 100 in Gold Mine", reqType: "dungeon_gold", reqValue: 100, stats: { gold: 0.25, goldMulti: 0.08 } },
+        { id: "d_go_5", name: "Plutus' Architect", icon: "🌟", desc: "Reach Floor 150 in Gold Mine", reqType: "dungeon_gold", reqValue: 150, stats: { gold: 0.40, goldMulti: 0.12 } },
+        { id: "d_go_6", name: "Sovereign Treasury", icon: "🏛️", desc: "Reach Floor 250 in Gold Mine", reqType: "dungeon_gold", reqValue: 250, stats: { gold: 0.60, goldMulti: 0.20 } },
+
+        // 15. TOXIC PURIFIERS (Material Dungeon)
+        { id: "d_ma_1", name: "Toxic Scavenger", icon: "🧪", desc: "Reach Floor 10 in Material Pit", reqType: "dungeon_mat", reqValue: 10, stats: { maxHp: 150, maxHpPct: 0.02 } },
+        { id: "d_ma_2", name: "Plague Alchemist", icon: "☣️", desc: "Reach Floor 30 in Material Pit", reqType: "dungeon_mat", reqValue: 30, stats: { maxHp: 500, maxHpPct: 0.04 } },
+        { id: "d_ma_3", name: "Contagion Master", icon: "🧫", desc: "Reach Floor 50 in Material Pit", reqType: "dungeon_mat", reqValue: 50, stats: { maxHp: 1500, maxHpPct: 0.06 } },
+        { id: "d_ma_4", name: "Bio-Hazard Specialist", icon: "☣️", desc: "Reach Floor 100 in Material Pit", reqType: "dungeon_mat", reqValue: 100, stats: { maxHp: 4000, maxHpPct: 0.08 } },
+        { id: "d_ma_5", name: "Vector Prime", icon: "🧫", desc: "Reach Floor 150 in Material Pit", reqType: "dungeon_mat", reqValue: 150, stats: { maxHp: 10000, maxHpPct: 0.12 } },
+        { id: "d_ma_6", name: "Biosphere Janitor", icon: "🪐", desc: "Reach Floor 250 in Material Pit", reqType: "dungeon_mat", reqValue: 250, stats: { maxHp: 30000, maxHpPct: 0.20 } },
+
+        // 16. CRUCIBLE GLADIATORS (Crucible Survivors)
+        { id: "d_cr_1", name: "Spark of Survival", icon: "🔥", desc: "Survive to Wave 15 in Crucible", reqType: "crucible", reqValue: 15, stats: { block: 0.02, parry: 0.01 } },
+        { id: "d_cr_2", name: "Crucible Crusader", icon: "💥", desc: "Survive to Wave 30 in Crucible", reqType: "crucible", reqValue: 30, stats: { block: 0.04, parry: 0.02 } },
+        { id: "d_cr_3", name: "Astral Sentinel", icon: "🛡️", desc: "Survive to Wave 50 in Crucible", reqType: "crucible", reqValue: 50, stats: { block: 0.06, parry: 0.03 } },
+        { id: "d_cr_4", name: "Cosmic Knight", icon: "🌠", desc: "Survive to Wave 100 in Crucible", reqType: "crucible", reqValue: 100, stats: { block: 0.08, parry: 0.04 } },
+        { id: "d_cr_5", name: "Rift Gladiator", icon: "🌀", desc: "Survive to Wave 200 in Crucible", reqType: "crucible", reqValue: 200, stats: { block: 0.12, parry: 0.06 } },
+        { id: "d_cr_6", name: "Crucible Overlord", icon: "💀", desc: "Survive to Wave 500 in Crucible", reqType: "crucible", reqValue: 500, stats: { block: 0.20, parry: 0.10 } },
+
+        // 17. COLOSSUS STRIKE (Single Hit)
+        { id: "hit_1", name: "Flesh Wound", icon: "⚔️", desc: "Deal 150 single hit damage", reqType: "single_hit", reqValue: 150, stats: { critChance: 0.01, critDamage: 0.02 } },
+        { id: "hit_2", name: "Deep Gash", icon: "💥", desc: "Deal 1,500 single hit damage", reqType: "single_hit", reqValue: 1500, stats: { critChance: 0.02, critDamage: 0.04 } },
+        { id: "hit_3", name: "Heavy Slam", icon: "🔨", desc: "Deal 15,000 single hit damage", reqType: "single_hit", reqValue: 15000, stats: { critChance: 0.03, critDamage: 0.06 } },
+        { id: "hit_4", name: "Annihilation", icon: "☄️", desc: "Deal 150,000 single hit damage", reqType: "single_hit", reqValue: 150000, stats: { critChance: 0.04, critDamage: 0.08 } },
+        { id: "hit_5", name: "Mountain Shatterer", icon: "⛰️", desc: "Deal 1,500,000 single hit damage", reqType: "single_hit", reqValue: 1500000, stats: { critChance: 0.06, critDamage: 0.12 } },
+        { id: "hit_6", name: "Supernova Strike", icon: "🪐", desc: "Deal 15,000,000 single hit damage", reqType: "single_hit", reqValue: 15000000, stats: { critChance: 0.10, critDamage: 0.20 } },
+
+        // 18. FAIRY BLITZ (Speed Fairy captures)
+        { id: "f_spd_1", name: "Nymph Chaser", icon: "🧚", desc: "Click 2 fairies in 10s", reqType: "fairy_speed", reqValue: 2, stats: { fairySpawn: 0.03, moveSpeedPct: 0.02 } },
+        { id: "f_spd_2", name: "Swift Fingers", icon: "⚡", desc: "Click 3 fairies in 10s", reqType: "fairy_speed", reqValue: 3, stats: { fairySpawn: 0.06, moveSpeedPct: 0.04 } },
+        { id: "f_spd_3", name: "Pixie Cyclone", icon: "🌀", desc: "Click 4 fairies in 10s", reqType: "fairy_speed", reqValue: 4, stats: { fairySpawn: 0.10, moveSpeedPct: 0.06 } },
+        { id: "f_spd_4", name: "Sprite Hurricane", icon: "🌪️", desc: "Click 5 fairies in 10s", reqType: "fairy_speed", reqValue: 5, stats: { fairySpawn: 0.15, moveSpeedPct: 0.08 } },
+        { id: "f_spd_5", name: "Chronos Reflexes", icon: "⌛", desc: "Click 6 fairies in 10s", reqType: "fairy_speed", reqValue: 6, stats: { fairySpawn: 0.25, moveSpeedPct: 0.12 } },
+        { id: "f_spd_6", name: "Aetherial Velocity", icon: "🌌", desc: "Click 8 fairies in 10s", reqType: "fairy_speed", reqValue: 8, stats: { fairySpawn: 0.40, moveSpeedPct: 0.20 } },
+
+        // 19. UNBREAKABLE AEGIS (Deflections)
+        { id: "defl_1", name: "Parry Practice", icon: "🤺", desc: "Deflect 100 attacks", reqType: "deflections", reqValue: 100, stats: { def: 10, defPct: 0.02 } },
+        { id: "defl_2", name: "Deflector Shield", icon: "🛡️", desc: "Deflect 500 attacks", reqType: "deflections", reqValue: 500, stats: { def: 35, defPct: 0.04 } },
+        { id: "defl_3", name: "Phalanx Wall", icon: "🧱", desc: "Deflect 2,000 attacks", reqType: "deflections", reqValue: 2000, stats: { def: 100, defPct: 0.06 } },
+        { id: "defl_4", name: "Bastion Aegis", icon: "🏰", desc: "Deflect 10,000 attacks", reqType: "deflections", reqValue: 10000, stats: { def: 300, defPct: 0.08 } },
+        { id: "defl_5", name: "Titan Fortress", icon: "🤖", desc: "Deflect 50,000 attacks", reqType: "deflections", reqValue: 50000, stats: { def: 1000, defPct: 0.12 } },
+        { id: "defl_6", name: "Impenetrable Anomaly", icon: "🌀", desc: "Deflect 100,000 attacks", reqType: "deflections", reqValue: 100000, stats: { def: 3000, defPct: 0.20 } },
+
+        // 20. POLYMORPH COCKTAIL (Simultaneous active buffs)
+        { id: "buff_1", name: "Doped", icon: "🧪", desc: "Have 1 active buff", reqType: "buff_stack", reqValue: 1, stats: { potDurationPct: 0.03, potStrengthPct: 0.02 } },
+        { id: "buff_2", name: "Double Dose", icon: "🍺", desc: "Have 2 active buffs", reqType: "buff_stack", reqValue: 2, stats: { potDurationPct: 0.06, potStrengthPct: 0.04 } },
+        { id: "buff_3", name: "Stimulated", icon: "🍷", desc: "Have 3 active buffs", reqType: "buff_stack", reqValue: 3, stats: { potDurationPct: 0.10, potStrengthPct: 0.06 } },
+        { id: "buff_4", name: "Cocktail Shaker", icon: "🍸", desc: "Have 4 active buffs", reqType: "buff_stack", reqValue: 4, stats: { potDurationPct: 0.15, potStrengthPct: 0.08 } },
+        { id: "buff_5", name: "Hyper Charged", icon: "⚡", desc: "Have 5 active buffs", reqType: "buff_stack", reqValue: 5, stats: { potDurationPct: 0.25, potStrengthPct: 0.12 } },
+        { id: "buff_6", name: "Ultimate Panacea", icon: "🌌", desc: "Have 6 active buffs", reqType: "buff_stack", reqValue: 6, stats: { potDurationPct: 0.40, potStrengthPct: 0.20 } },
+
+        // 21. ELITE REFORGING (Total Reforges via Catalyst Cores)
+        { id: "refo_1", name: "Tinker", icon: "🔧", desc: "Reforge modifiers 5 times", reqType: "reforges", reqValue: 5, stats: { dex: 3, dexPct: 0.02 } },
+        { id: "refo_2", name: "Locksmith", icon: "🔒", desc: "Reforge modifiers 15 times", reqType: "reforges", reqValue: 15, stats: { dex: 10, dexPct: 0.04 } },
+        { id: "refo_3", name: "Optimizing Genius", icon: "⚙️", desc: "Reforge modifiers 50 times", reqType: "reforges", reqValue: 50, stats: { dex: 25, dexPct: 0.06 } },
+        { id: "refo_4", name: "Modifier Master", icon: "🛠️", desc: "Reforge modifiers 150 times", reqType: "reforges", reqValue: 150, stats: { dex: 70, dexPct: 0.08 } },
+        { id: "refo_5", name: "Cosmic Calibration", icon: "💫", desc: "Reforge modifiers 500 times", reqType: "reforges", reqValue: 500, stats: { dex: 200, dexPct: 0.12 } },
+        { id: "refo_6", name: "Paradox Adjuster", icon: "🌌", desc: "Reforge modifiers 1,000 times", reqType: "reforges", reqValue: 1000, stats: { dex: 600, dexPct: 0.20 } },
+
+        // 22. GUILD INVESTMENTS (Combined levels of permanent Gold Sinks)
+        { id: "g_up_1", name: "Smart Spender", icon: "🪙", desc: "Combined Gold Upgrade level 5", reqType: "gold_upgrades", reqValue: 5, stats: { gold: 0.05, int: 3 } },
+        { id: "g_up_2", name: "Capital Allocator", icon: "💼", desc: "Combined Gold Upgrade level 15", reqType: "gold_upgrades", reqValue: 15, stats: { gold: 0.10, int: 10 } },
+        { id: "g_up_3", name: "Guild Associate", icon: "🏛️", desc: "Combined Gold Upgrade level 30", reqType: "gold_upgrades", reqValue: 30, stats: { gold: 0.15, int: 25 } },
+        { id: "g_up_4", name: "Monopoly Holder", icon: "🏦", desc: "Combined Gold Upgrade level 50", reqType: "gold_upgrades", reqValue: 50, stats: { gold: 0.25, int: 70 } },
+        { id: "g_up_5", name: "High Financier", icon: "👑", desc: "Combined Gold Upgrade level 75", reqType: "gold_upgrades", reqValue: 75, stats: { gold: 0.40, int: 200 } },
+        { id: "g_up_6", name: "Midas' Treasurer", icon: "🌌", desc: "Combined Gold Upgrade level 100", reqType: "gold_upgrades", reqValue: 100, stats: { gold: 0.60, int: 600 } },
+
+        // 23. JACKPOT (Gold Earned in a single drop)
+        { id: "drop_g_1", name: "Spare Coins", icon: "🪙", desc: "Earn 1,000 gold from a single drop", reqType: "single_gold_drop", reqValue: 1000, stats: { gold: 0.03, critDamage: 0.02 } },
+        { id: "drop_g_2", name: "Pouch of Silver", icon: "💰", desc: "Earn 10,000 gold from a single drop", reqType: "single_gold_drop", reqValue: 10000, stats: { gold: 0.06, critDamage: 0.04 } },
+        { id: "drop_g_3", name: "Heavy Satchel", icon: "💼", desc: "Earn 100,000 gold from a single drop", reqType: "single_gold_drop", reqValue: 100000, stats: { gold: 0.10, critDamage: 0.06 } },
+        { id: "drop_g_4", name: "Vault Breaker", icon: "🏦", desc: "Earn 1,000,000 gold from a single drop", reqType: "single_gold_drop", reqValue: 1000000, stats: { gold: 0.15, critDamage: 0.08 } },
+        { id: "drop_g_5", name: "Dragon's Hoard", icon: "🐉", desc: "Earn 10,000,000 gold from a single drop", reqType: "single_gold_drop", reqValue: 10000000, stats: { gold: 0.25, critDamage: 0.12 } },
+        { id: "drop_g_6", name: "Cosmic Treasury", icon: "🌌", desc: "Earn 100,000,000 gold from a single drop", reqType: "single_gold_drop", reqValue: 100000000, stats: { gold: 0.40, critDamage: 0.20 } },
+
+        // 24. RARE SIGHTINGS (Rare Spawns Slayed)
+        { id: "rare_s_1", name: "Uncommon Encounter", icon: "✨", desc: "Slay 5 Rare Spawns", reqType: "rare_spawns", reqValue: 5, stats: { rareSpawn: 0.005, qly: 0.02 } },
+        { id: "rare_s_2", name: "Rarity Hunter", icon: "🧭", desc: "Slay 25 Rare Spawns", reqType: "rare_spawns", reqValue: 25, stats: { rareSpawn: 0.010, qly: 0.04 } },
+        { id: "rare_s_3", name: "Shimmering Predator", icon: "🐅", desc: "Slay 100 Rare Spawns", reqType: "rare_spawns", reqValue: 100, stats: { rareSpawn: 0.015, qly: 0.06 } },
+        { id: "rare_s_4", name: "Elite Exterminator", icon: "⚔️", desc: "Slay 500 Rare Spawns", reqType: "rare_spawns", reqValue: 500, stats: { rareSpawn: 0.025, qly: 0.08 } },
+        { id: "rare_s_5", name: "Chronos Stalker", icon: "⏳", desc: "Slay 2,000 Rare Spawns", reqType: "rare_spawns", reqValue: 2000, stats: { rareSpawn: 0.040, qly: 0.12 } },
+        { id: "rare_s_6", name: "Mythic Stalker of Legend", icon: "🌌", desc: "Slay 10,000 Rare Spawns", reqType: "rare_spawns", reqValue: 10000, stats: { rareSpawn: 0.060, qly: 0.20 } },
+
+        // ==========================================================================
+        // SINGLE TIER ACHIEVEMENTS / VALOR FEATS (isSingleTier: true)
+        // ==========================================================================
+        { id: "sing_murphys_law", name: "Murphy's Law", icon: "🍀", desc: "Fail a tempering attempt with a success rate of 90% or higher", isSingleTier: true, stats: { qly: 0.05, maxHpPct: 0.03 } },
+        { id: "sing_against_odds", name: "Against All Odds", icon: "🌟", desc: "Obtain a 5★ Mythic item from a standard campaign non-boss monster", isSingleTier: true, stats: { critChance: 0.02, atkPct: 0.03 } },
+        { id: "sing_lucky_seven", name: "Lucky Seven", icon: "🎲", desc: "Roll a crit, block, and parry all within a 1-second window", isSingleTier: true, stats: { atkPct: 0.05, defPct: 0.05 } },
+        { id: "sing_back_brink", name: "Back from the Brink", icon: "🩸", desc: "Trigger Second Wind (Ankh) and successfully defeat that same boss", isSingleTier: true, stats: { maxHpPct: 0.05, defPct: 0.05 } },
+        { id: "sing_elemental_conv", name: "Elemental Convergence", icon: "🌀", desc: "Trigger Lightning, Fire, and Frost tome spells simultaneously", isSingleTier: true, stats: { intPct: 0.10, potStrengthPct: 0.05 } },
+        { id: "sing_no_hands", name: "Look Ma, No Hands", icon: "⚔️", desc: "Defeat a boss stage without clicking/pressing space once in that battle", isSingleTier: true, stats: { idleAttackSpeed: -2, expPct: 0.05 } },
+        { id: "sing_poly_cocktail", name: "Polymorph Cocktail", icon: "🧪", desc: "Have 6 distinct potion/relic buffs active at the same time", isSingleTier: true, stats: { potDurationPct: 0.10, potStrengthPct: 0.05 } },
+        { id: "sing_hoarder", name: "Paranoid Hoarder", icon: "🎒", desc: "Fill your equipment bag to maximum capacity with entirely LOCKED gear", isSingleTier: true, stats: { qly: 0.05, gold: 0.05 } },
+        { id: "sing_unified_set", name: "Unified Aesthetics", icon: "🎨", desc: "Equip 6 armor/weapon slots from the exact same named Dungeon Set", isSingleTier: true, stats: { atkPct: 0.08, defPct: 0.08 } },
+        { id: "sing_golden_touch", name: "Golden Touch", icon: "👑", desc: "Equip 3 Gold-boosting Unique Artifacts simultaneously", isSingleTier: true, stats: { gold: 0.15, goldMulti: 0.10 } },
+        { id: "sing_untouchable", name: "Untouchable", icon: "🛡️", desc: "Defeat a Campaign or Dungeon Boss taking exactly 0 damage", isSingleTier: true, stats: { parry: 0.02, block: 0.02, defPct: 0.05 } },
+        { id: "sing_overkill", name: "Overkill", icon: "💥", desc: "Deal a critical hit that exceeds a route monster's remaining HP by 1000%+", isSingleTier: true, stats: { critDamage: 0.15, atkPct: 0.05 } },
+        { id: "sing_speedrun", name: "Speedrunner's Delight", icon: "⏱️", desc: "Ascend at the Altar within 15 minutes of your previous Ascension", isSingleTier: true, stats: { expPct: 0.10, gold: 0.05 } },
+        { id: "sing_exact_change", name: "Exact Change", icon: "🪙", desc: "Buy an item or upgrade that brings your gold balance to exactly 0", isSingleTier: true, stats: { gold: 0.10, goldMulti: 0.05 } },
+        { id: "sing_unfortunate_soul", name: "Unfortunate Soul", icon: "💔", desc: "Suffer three consecutive tempering failures on the same item at +9 or below", isSingleTier: true, stats: { qly: 0.05, drop: 0.05 } },
+        { id: "sing_alchemical_synth", name: "Alchemical Override", icon: "🔮", desc: "Override an active potion with a higher tier of the same type", isSingleTier: true, stats: { potStrengthPct: 0.05, potDurationPct: 0.05 } },
+        { id: "sing_patient_shepherd", name: "Patient Shepherd", icon: "🧚", desc: "Let 3 fairies fly simultaneously, then capture all of them in 2 seconds", isSingleTier: true, stats: { fairySpawn: 0.10, moveSpeedPct: 0.05 } },
+        { id: "sing_battlemage", name: "Battlemage's Legacy", icon: "🧙", desc: "Equip heavy plate armor in every slot while wielding the unique Staff", isSingleTier: true, stats: { atkPct: 0.05, defPct: 0.05, intPct: 0.05 } },
+        { id: "sing_bare_fists", name: "Bare Fists", icon: "🥊", desc: "Defeat any Stage or Dungeon Boss with no weapon equipped", isSingleTier: true, stats: { atk: 50, atkPct: 0.05 } },
+        { id: "sing_perfect_deflection", name: "Perfect Deflection", icon: "⚡", desc: "Parry three consecutive attacks without taking damage or blocking", isSingleTier: true, stats: { parry: 0.01, dexPct: 0.05 } },
+        { id: "sing_night_owl", name: "Night Owl", icon: "🦉", desc: "Slay any monster between 12:00 AM and 4:00 AM local time", isSingleTier: true, stats: { critDamage: 0.05, atkPct: 0.03 } },
+        { id: "sing_early_bird", name: "Early Bird", icon: "🌅", desc: "Slay any monster between 5:00 AM and 8:00 AM local time", isSingleTier: true, stats: { expPct: 0.05, maxHpPct: 0.03 } },
+        { id: "sing_coffee_run", name: "Coffee Run", icon: "☕", desc: "Consume a Haste Elixir between 7:00 AM and 9:00 AM local time", isSingleTier: true, stats: { potDurationPct: 0.05, moveSpeedPct: 0.03 } },
+        { id: "sing_high_noon", name: "High Noon", icon: "☀️", desc: "Defeat any Boss between 12:00 PM and 1:00 PM local time", isSingleTier: true, stats: { gold: 0.05, goldMulti: 0.03 } },
+        { id: "sing_witching_hour", name: "The Witching Hour", icon: "🧙‍♀️", desc: "Defeat a Rift Guardian between 3:00 AM and 4:00 AM local time", isSingleTier: true, stats: { qly: 0.05, drop: 0.05 } },
+        { id: "sing_weekend_warrior", name: "Weekend Warrior", icon: "🗓️", desc: "Active in Dungeons or Crucible on Saturday or Sunday", isSingleTier: true, stats: { drop: 0.10, gold: 0.05 } },
+        { id: "sing_time_capsule", name: "Time Capsule", icon: "⏳", desc: "Claim maximum 8-hour offline gains", isSingleTier: true, stats: { expPct: 0.05, gold: 0.05 } },
+        { id: "sing_long_run", name: "The Long Run", icon: "♾️", desc: "Keep the game running continuously in an active tab for 1 hour", isSingleTier: true, stats: { atk: 25, def: 25, maxHpPct: 0.05 } },
+        { id: "sing_clicking_tempest", name: "Clicking Tempest", icon: "⚡", desc: "Click/Tap the canvas exactly 100 times in a 10-second window", isSingleTier: true, stats: { critChance: 0.02, moveSpeedPct: 0.03 } },
+        { id: "sing_aetheric_recharge", name: "Aetheric Recharge", icon: "🌀", desc: "Spend 10 minutes continuously inside any Dungeon or Crucible run", isSingleTier: true, stats: { drop: 0.05, qly: 0.05 } }
     ];
+
     window.getAchievementProgress = function(ach) {
         if (ach.reqType === "kills") return playerStats.totalLifetimeKills || 0;
         if (ach.reqType === "gold") return playerStats.totalGoldEarned || 0;
@@ -12654,11 +12975,94 @@ function engineCycle() {
         if (ach.reqType === "artifacts_held") return inventory.ARTIFACT?.length || 0;
         if (ach.reqType === "fairies_clicked") return playerStats.fairiesClicked || 0;
         if (ach.reqType === "death_count") return playerStats.deathCount || 0;
+
+        // Overhaul progressive type lookups
+        if (ach.reqType === "single_hit") return playerStats.peakSingleHit || 0;
+        if (ach.reqType === "fairy_speed") return playerStats.maxFairyClicksInWindow || 0;
+        if (ach.reqType === "deflections") return playerStats.totalDeflections || 0;
+        if (ach.reqType === "buff_stack") return playerStats.peakSimultaneousBuffs || 0;
+        if (ach.reqType === "reforges") return playerStats.totalReforges || 0;
+        if (ach.reqType === "gold_upgrades") return (playerStats.vendingQLevel || 0) + (playerStats.shopQLevel || 0) + (playerStats.globalQLevel || 0);
+        if (ach.reqType === "single_gold_drop") return playerStats.peakSingleGoldDrop || 0;
+        if (ach.reqType === "rare_spawns") return playerStats.rareSpawnsSlain || 0;
+        if (ach.reqType === "materials_held") {
+            let maxHeld = 0;
+            for (let k in inventory.ETC) {
+                maxHeld = Math.max(maxHeld, inventory.ETC[k] || 0);
+            }
+            return maxHeld;
+        }
+
+        // Single-tier check condition lookups
+        if (ach.isSingleTier) {
+            if (ach.id === "sing_murphys_law") return playerStats.hasTriggeredMurphysLaw ? 1 : 0;
+            if (ach.id === "sing_against_odds") return playerStats.hasTriggeredAgainstOdds ? 1 : 0;
+            if (ach.id === "sing_lucky_seven") return playerStats.hasTriggeredLuckySeven ? 1 : 0;
+            if (ach.id === "sing_back_brink") return playerStats.hasTriggeredBackFromBrink ? 1 : 0;
+            if (ach.id === "sing_elemental_conv") return playerStats.hasTriggeredElementalConvergence ? 1 : 0;
+            if (ach.id === "sing_no_hands") return playerStats.hasTriggeredLookMaNoHands ? 1 : 0;
+            if (ach.id === "sing_poly_cocktail") return playerStats.peakSimultaneousBuffs >= 6 ? 1 : 0;
+            if (ach.id === "sing_hoarder") return (inventory.EQUIP.length >= window.getMaxBagSlots() && inventory.EQUIP.every(i => i.locked)) ? 1 : 0;
+            if (ach.id === "sing_unified_set") {
+                let slots = ["weapon", "subweapon", "helmet", "chest", "leggings", "boots"];
+                let setsEquipped = slots.map(s => equippedSlots[s] ? getItemSetName(equippedSlots[s]) : null);
+                let validSets = setsEquipped.filter(s => s !== null);
+                if (validSets.length === 6 && validSets.every(s => s === validSets[0])) return 1;
+                return 0;
+            }
+            if (ach.id === "sing_golden_touch") {
+                let arts = [equippedSlots.art1, equippedSlots.art2, equippedSlots.art3];
+                let count = arts.filter(a => a && a.goldMulti > 0).length;
+                return count >= 3 ? 1 : 0;
+            }
+            if (ach.id === "sing_untouchable") return playerStats.hasTriggeredUntouchable ? 1 : 0;
+            if (ach.id === "sing_overkill") return playerStats.hasTriggeredOverkill ? 1 : 0;
+            if (ach.id === "sing_speedrun") return playerStats.hasTriggeredKeepRunningSpeedrun ? 1 : 0;
+            if (ach.id === "sing_exact_change") return playerStats.hasTriggeredExactChange ? 1 : 0;
+            if (ach.id === "sing_unfortunate_soul") return playerStats.hasTriggeredUnfortunateSoul ? 1 : 0;
+            if (ach.id === "sing_alchemical_synth") return playerStats.hasTriggeredAlchemicalSynthesis ? 1 : 0;
+            if (ach.id === "sing_patient_shepherd") return playerStats.hasTriggeredPatientShepherd ? 1 : 0;
+            if (ach.id === "sing_battlemage") {
+                let isHeavy = ["helmet", "chest", "leggings", "boots"].every(s => equippedSlots[s] && (equippedSlots[s].name.includes("Vanguard") || equippedSlots[s].name.includes("Colossus") || equippedSlots[s].name.includes("Bastion") || equippedSlots[s].name.includes("Dreadnought")));
+                let isStaff = equippedSlots.weapon && equippedSlots.weapon.isUniqueStaff;
+                return (isHeavy && isStaff) ? 1 : 0;
+            }
+            if (ach.id === "sing_bare_fists") return (!equippedSlots.weapon && playerStats.hasTriggeredBareFists) ? 1 : 0;
+            if (ach.id === "sing_perfect_deflection") return playerStats.hasTriggeredPerfectDeflection ? 1 : 0;
+
+            // Clock & Temporal Lookups
+            let hr = new Date().getHours();
+            if (ach.id === "sing_night_owl") return (hr >= 0 && hr < 4) ? 1 : 0;
+            if (ach.id === "sing_early_bird") return (hr >= 5 && hr < 8) ? 1 : 0;
+            if (ach.id === "sing_coffee_run") return (hr >= 7 && hr < 9 && (playerStats.hastePotionTimer > 0)) ? 1 : 0;
+            if (ach.id === "sing_high_noon") return (hr >= 12 && hr < 13 && playerStats.hasTriggeredHighNoon) ? 1 : 0;
+            if (ach.id === "sing_witching_hour") return (hr >= 3 && hr < 4 && playerStats.hasTriggeredWitchingHour) ? 1 : 0;
+            if (ach.id === "sing_weekend_warrior") {
+                let day = new Date().getDay();
+                return (day === 0 || day === 6) ? 1 : 0;
+            }
+            if (ach.id === "sing_time_capsule") return playerStats.hasTriggeredTimeCapsule ? 1 : 0;
+            if (ach.id === "sing_long_run") return playerStats.sessionPlaytime >= 3600000 ? 1 : 0;
+            if (ach.id === "sing_clicking_tempest") return playerStats.maxCanvasClicksInWindow >= 100 ? 1 : 0;
+            if (ach.id === "sing_aetheric_recharge") return playerStats.hasTriggeredAethericRecharge ? 1 : 0;
+        }
+
         return 0;
     };
 
     window.checkAchievements = function() {
         if (!playerStats.unlockedAchievements) playerStats.unlockedAchievements = [];
+        
+        // Gather active temporary buff/relic stacks
+        let activeBuffs = 0;
+        if (playerStats.atkPotionTimer > 0) activeBuffs++;
+        if (playerStats.hpPotionTimer > 0) activeBuffs++;
+        if (playerStats.defPotionTimer > 0) activeBuffs++;
+        if (playerStats.hastePotionTimer > 0) activeBuffs++;
+        if (playerStats.frenzyTimer > 0) activeBuffs++;
+        if (playerStats.adrenalineTimer > 0) activeBuffs++;
+        playerStats.peakSimultaneousBuffs = Math.max(playerStats.peakSimultaneousBuffs || 0, activeBuffs);
+        
         let unlockedAny = false;
 
         window.AchievementsData.forEach(ach => {
@@ -12673,6 +13077,9 @@ function engineCycle() {
         });
 
         if (unlockedAny) {
+            // Recompile cached sums dynamically
+            window.recalculateAchievementTotals();
+            
             let p = resolvePlayerStats();
             playerStats.currentHp = Math.min(playerStats.currentHp, p.maxHp);
             updateUI();
@@ -12837,6 +13244,9 @@ window.buyGoldUpgrade = function(type) {
         p.coins -= cost;
         p.globalQLevel = (p.globalQLevel || 0) + 1;
         pushHeaderToast(`🍀 Global Quality upgraded to Lv. ${p.globalQLevel}!`, "#2ecc71");
+    }
+    if (p.coins === 0) {
+        playerStats.hasTriggeredExactChange = true;
     }
     
     let colors = { vending: "#f1c40f", shop: "#3498db", global: "#2ecc71" };
