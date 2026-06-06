@@ -6727,6 +6727,15 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         if (!e.target.closest('#game-tooltip') && !e.target.closest('.bag-item') && !e.target.closest('.slots-card') && !e.target.closest('.stat-hover') && !e.target.closest('.shop-row') && !e.target.closest('#hud-buff')) {
             window.hideTooltip();
         }
+        
+        // Close achievements modal if clicking outside both the modal and its trigger button
+        let achModal = document.getElementById('achievements-modal');
+        if (achModal && achModal.style.display === 'block') {
+            if (!e.target.closest('#achievements-modal') && !e.target.closest('#btn-achievements')) {
+                achModal.style.display = 'none';
+                window.hideTooltip();
+            }
+        }
     });
 
     /* ==========================================================================
@@ -12474,12 +12483,10 @@ function engineCycle() {
         let modal = document.getElementById('achievements-modal');
         if (modal.style.display === 'none') {
             window.hideTooltip();
-            window.setPauseState(true);
             window.buildAchievementsModal();
             modal.style.display = 'block';
         } else {
             modal.style.display = 'none';
-            window.setPauseState(false);
             window.hideTooltip();
         }
     };
