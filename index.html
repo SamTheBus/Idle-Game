@@ -8013,6 +8013,19 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         tt.style.borderColor = "#bdc3c7"; tt.style.display = "block"; window.positionTooltip(e, tt);
     };
 
+    window.showUseTooltip = function(e, keyName) {
+        e.stopPropagation();
+        let tt = document.getElementById('etc-tooltip');
+        let stockItem = MYSTICAL_STOCK.find(item => item.name === keyName);
+        let desc = stockItem ? stockItem.desc : "Consumable item.";
+        let color = stockItem ? stockItem.color : "#bdc3c7";
+        
+        tt.innerHTML = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:${color};">🧪 ${keyName}</div><div style="color:#aaa; font-size:11px; white-space:normal; line-height:1.4;">${desc}</div></div>`;
+        tt.style.borderColor = color;
+        tt.style.display = "block";
+        window.positionTooltip(e, tt);
+    };
+
     window.showGachaTooltip = function(e) {
         e.stopPropagation(); let p = resolvePlayerStats(); 
         // Incorporate Gacha Calibration quality multiplier in tooltips
@@ -9789,7 +9802,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 useBox.innerHTML = useKeys.map(key => {
                     let count = inventory.USE[key];
                     return `
-                        <div class="bag-item" style="display:flex; align-items:center; justify-content:space-between; padding:6px 12px;">
+                        <div class="bag-item" style="cursor:help; display:flex; align-items:center; justify-content:space-between; padding:6px 12px;" onmouseenter="showUseTooltip(event, '${key}')" ontouchstart="showUseTooltip(event, '${key}')" onmouseleave="hideTooltip()">
                             <div style="display:flex; align-items:center;">
                                 ${getUseIconHtml(key)}
                                 <div>
@@ -9797,7 +9810,9 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                                     <span style="font-size:10px; color:#aaa;">Qty: ${count}</span>
                                 </div>
                             </div>
-                            <button class="btn-action" style="background:#2ecc71;" onclick="useItem('${key}')">Consume</button>
+                            <div style="position:relative; z-index:10;">
+                                <button class="btn-action" style="background:#2ecc71;" onclick="useItem('${key}')">Consume</button>
+                            </div>
                         </div>
                     `;
                 }).join("");
