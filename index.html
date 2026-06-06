@@ -5527,6 +5527,77 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         item.dex = (item.baseDex || 0) + item.bonusDex;
         item.int = (item.baseInt || 0) + item.bonusInt;
 
+        // 2. Re-apply tempering levels dynamically (Multiplicative Scaling: +4% per level for gear, flat for Unique Artifacts)
+        let tempers = item.temperLevel || 0;
+        if (tempers > 0) {
+            let isArt = item.type === "artifact";
+            if (isArt) {
+                // Unique Artifacts keep high flat additions to ensure they always gain stats even if they had 0 base values
+                item.atk += tempers * 5;
+                item.maxHp += tempers * 30;
+                item.def += tempers * 3;
+                item.str += tempers * 1;
+                item.dex += tempers * 1;
+                item.int += tempers * 1;
+            } else {
+                let multiplier = 1 + (tempers * 0.04);
+                if (item.atk > 0 || item.type === "weapon") item.atk = Math.round(item.atk * multiplier);
+                if (item.maxHp > 0) item.maxHp = Math.round(item.maxHp * multiplier);
+                if (item.def > 0) item.def = Math.round(item.def * multiplier);
+                if (item.str > 0) item.str = Math.round(item.str * multiplier);
+                if (item.dex > 0) item.dex = Math.round(item.dex * multiplier);
+                if (item.int > 0) item.int = Math.round(item.int * multiplier);
+            }
+            
+            if (item.moveSpeed > 0) item.moveSpeed += tempers * 1;
+            if (item.critChance > 0) item.critChance = parseFloat((item.critChance + tempers * 0.005).toFixed(4));
+            if (item.critDamage > 0) item.critDamage = parseFloat((item.critDamage + tempers * 0.015).toFixed(4));
+            if (item.block > 0) item.block = parseFloat((item.block + tempers * 0.005).toFixed(4));
+            if (item.parry > 0) item.parry = parseFloat((item.parry + tempers * 0.005).toFixed(4));
+            
+            if (item.dropRate > 0) item.dropRate = parseFloat((item.dropRate + tempers * 0.01).toFixed(4));
+            if (item.quality > 0) item.quality = parseFloat((item.quality + tempers * 0.005).toFixed(4));
+            if (item.goldMulti > 0) item.goldMulti = parseFloat((item.goldMulti + tempers * 0.01).toFixed(4));
+            if (item.rareSpawn > 0) item.rareSpawn = parseFloat((item.rareSpawn + tempers * 0.001).toFixed(4));
+            if (item.fairySpawn > 0) item.fairySpawn = parseFloat((item.fairySpawn + tempers * 0.01).toFixed(4));
+            
+            if (item.activeAttackSpeed < 0) item.activeAttackSpeed -= tempers * 1;
+            if (item.idleAttackSpeed < 0) item.idleAttackSpeed -= tempers * 2;
+        }
+
+        // 3. Re-apply mystical enchantments
+        if (item.enchantments) {
+            for (let statKey in item.enchantments) {
+                let count = item.enchantments[statKey];
+                let multiplier = Math.pow(1.25, count);
+                const integerStats = ["atk", "maxHp", "def", "str", "dex", "int"];
+                if (integerStats.includes(statKey)) {
+                    item[statKey] = Math.ceil(item[statKey] * multiplier);
+                } else if (statKey === "activeAttackSpeed" || statKey === "idleAttackSpeed") {
+                    item[statKey] = Math.floor(item[statKey] * multiplier);
+                } else {
+                    item[statKey] = parseFloat((item[statKey] * multiplier).toFixed(4));
+                }
+            }
+        }
+    }
+
+    function recalculateItemStats(item) {
+        // 1. Reset parameters to un-tempered base + bonus values
+        item.atk = (item.baseAtk || 0) + item.bonusAtk; 
+        item.maxHp = (item.baseMaxHp || 0) + item.bonusMaxHp; 
+        item.def = (item.baseDef || 0) + item.bonusDef; 
+        item.moveSpeed = (item.baseMoveSpeed || 0) + item.bonusMoveSpeed;
+        item.critChance = (item.baseCritChance || 0) + item.bonusCritChance; 
+        item.critDamage = (item.baseCritDamage || 0) + item.bonusCritDamage; 
+        item.block = (item.baseBlock || 0) + item.bonusBlock; 
+        item.parry = (item.baseParry || 0) + item.bonusParry;
+        item.activeAttackSpeed = (item.baseActiveSpeed || 0) + item.bonusActiveSpeed; 
+        item.idleAttackSpeed = (item.baseIdleSpeed || 0) + item.bonusIdleSpeed;
+        item.str = (item.baseStr || 0) + item.bonusStr;
+        item.dex = (item.baseDex || 0) + item.bonusDex;
+        item.int = (item.baseInt || 0) + item.bonusInt;
+
         // 2. Re-apply tempering levels dynamically
         let tempers = item.temperLevel || 0;
         if (tempers > 0) {
@@ -8439,8 +8510,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             if (inventory.ETC[scrapReq] === 0) delete inventory.ETC[scrapReq];
 
             if (isSuccess) {
-                applyTemperUpgrades(forgeSelectedItem, isArt);
                 forgeSelectedItem.temperLevel++;
+                recalculateItemStats(forgeSelectedItem);
                 playerStats.totalTempers = (playerStats.totalTempers || 0) + 1;
                 pushLog(`<span style='color:#e67e22;'>[FORGE]</span> Successfully tempered ${forgeSelectedItem.name} to [+${forgeSelectedItem.temperLevel}]!`);
                 pushHeaderToast("🔨 Success! [+" + forgeSelectedItem.temperLevel + "]", "#2ecc71");
