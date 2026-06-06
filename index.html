@@ -4945,6 +4945,13 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     window.triggerPrestigeAscension = function() {
         isGamePaused = true;
         
+        // Generate a guaranteed 5★ Mythic item scaled to the campaign stage they achieved prior to resetting
+        let stageScale = Math.floor((playerStats.stage - 1) / 10) + 1;
+        let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+        let chosenType = types[Math.floor(Math.random() * types.length)];
+        let mythicItem = createItemObject(chosenType, 5, stageScale, 5);
+        inventory.EQUIP.push(mythicItem);
+        
         // Award points and count
         playerStats.prestigePoints += 3;
         playerStats.prestigeCount++;
@@ -5004,6 +5011,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 <div style="background:#0b0f12; border:1px solid #e74c3c; border-radius:6px; padding:15px; margin-bottom:20px;">
                     <div style="font-size:11px; color:#aaa; margin-bottom:4px;">REWARDS EARNED:</div>
                     <div style="font-size:20px; color:#f1c40f; font-weight:bold; margin-bottom:6px;">✨ +3 Prestige Points</div>
+                    <div style="font-size:11.5px; color:#e74c3c; font-weight:bold; margin-bottom:8px;">🎁 Souvenir: 5★ Mythic ${mythicItem.name}</div>
                     <div style="font-size:11px; color:#9b59b6; font-weight:bold;">Total Ascensions: ${playerStats.prestigeCount}</div>
                 </div>
 
@@ -5024,7 +5032,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             renderPrestigeTab();
             renderInventory();
             window.saveGame();
-            pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[ASCENSION] Your legacy begins anew! High-level gear in Sacks is now locked until requirements are met.</span>`);
+            pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[ASCENSION] Your legacy begins anew! Discovered pristine ${mythicItem.name}! High-level gear in Sacks is now locked until requirements are met.</span>`);
         };
     };
 
