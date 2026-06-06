@@ -5018,8 +5018,11 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         inventory.EQUIP.push(mythicItem);
         inventory.ARTIFACT.push(prestigeArtifact);
         
-        // Award points and count
-        playerStats.prestigePoints += 3;
+        // Award points and count dynamically (+1 point per 4 prestiges, capped at 10)
+        let basePoints = 3;
+        let bonusPoints = Math.floor(playerStats.prestigeCount / 4);
+        let totalAwarded = Math.min(10, basePoints + bonusPoints);
+        playerStats.prestigePoints += totalAwarded;
         playerStats.prestigeCount++;
         
         // Speedrun check (Ascend at the Altar within 15 mins/900k ms of your previous Ascension)
@@ -5083,7 +5086,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
 
                 <div style="background:#0b0f12; border:1px solid #e74c3c; border-radius:6px; padding:15px; margin-bottom:20px;">
                     <div style="font-size:11px; color:#aaa; margin-bottom:4px;">REWARDS EARNED:</div>
-                    <div style="font-size:20px; color:#f1c40f; font-weight:bold; margin-bottom:6px;">✨ +3 Prestige Points</div>
+                    <div style="font-size:20px; color:#f1c40f; font-weight:bold; margin-bottom:6px;">✨ +${totalAwarded} Prestige Points</div>
                     <div style="font-size:11.5px; color:#e74c3c; font-weight:bold; margin-bottom:4px;">🎁 Souvenir: 5★ Mythic ${mythicItem.name}</div>
                     <div style="font-size:11.5px; color:#1abc9c; font-weight:bold; margin-bottom:8px;">🔮 Artifact: ${prestigeArtifact.name}</div>
                     <div style="font-size:11px; color:#9b59b6; font-weight:bold;">Total Ascensions: ${playerStats.prestigeCount}</div>
@@ -5245,7 +5248,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             let bossNetDmgTaken = Math.max(0, bossDmgTaken - bossVampHeal);
             
             // Total cumulative damage attrition for the entire stage (standard mobs + boss)
-            let cumulativeStageDamage = (netDmgTaken * killsNeededForStage) + bossNetDmgTaken;
+            let cumulativeStageDamage = (netMobDmg * killsNeededForStage) + bossNetDmgTaken;
             
             // Retreat trigger if cumulative stage attrition exceeds safety limits
             if (cumulativeStageDamage > p.maxHp && !checkArtifactTrait("second_wind")) {
