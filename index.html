@@ -3174,10 +3174,10 @@ window.onload = function() {
             c.arc(-10, 21, 3, 0, Math.PI * 2);
             c.fill();
 
-            // Lower Jaw with Drop rotation during chomps
+            // Lower Jaw with Drop rotation during chomps (Rotated counter-clockwise so the chin drops downward)
             c.save();
             c.translate(15, 38);
-            c.rotate(jawOpen * Math.PI / 180);
+            c.rotate(-jawOpen * Math.PI / 180);
             c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#631c15"; // Charred jaw undertone
             c.beginPath();
             c.moveTo(0, 0);
@@ -3197,6 +3197,64 @@ window.onload = function() {
 
             c.restore(); // end jaw draw
             c.restore(); // end skull save
+
+            // Draw Muscular Dragon Leg & Spiked Foot Gripping the Ground
+            c.save();
+            c.strokeStyle = "#000000";
+            c.lineWidth = 2.4 / Math.max(scaleX, scaleY);
+            c.lineJoin = "round";
+
+            // Upper leg/thigh (Charred Obsidian)
+            c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#111115";
+            c.beginPath();
+            c.moveTo(35, 45); // Chest/neck junction
+            c.quadraticCurveTo(20, 60, 24, 75); // Knee bend
+            c.lineTo(32, 75);
+            c.quadraticCurveTo(28, 60, 42, 48);
+            c.closePath();
+            c.fill();
+            c.stroke();
+
+            // Lower foot / talons gripping the ground (Molten Magma Orange scales)
+            c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#d35400";
+            c.beginPath();
+            c.moveTo(24, 75); // Ankle joint
+            c.lineTo(12, 82.5); // Front toe tip
+            c.lineTo(16, 82.5);
+            c.lineTo(26, 77);
+            c.lineTo(24, 82.5); // Middle toe tip
+            c.lineTo(28, 82.5);
+            c.lineTo(29, 77);
+            c.lineTo(34, 82.5); // Back toe tip
+            c.lineTo(37, 81.5);
+            c.lineTo(32, 75); // Heel
+            c.closePath();
+            c.fill();
+            c.stroke();
+
+            // Sharp Bone Claws at the tips of the toes
+            c.fillStyle = "#ffeaa7";
+            
+            // Front Claw
+            c.beginPath();
+            c.moveTo(12, 82.5);
+            c.lineTo(6, 83.5); // Sharp point
+            c.lineTo(14, 81);
+            c.closePath();
+            c.fill();
+            c.stroke();
+
+            // Middle Claw
+            c.beginPath();
+            c.moveTo(24, 82.5);
+            c.lineTo(21, 84.5); // Sharp point
+            c.lineTo(26, 81);
+            c.closePath();
+            c.fill();
+            c.stroke();
+            
+            c.restore(); // end leg draw
+
             c.restore(); // end master translate & scale
         }
         else if (m.type === "boss" || m.type === "dungeon_boss") {
@@ -9934,13 +9992,22 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     }
 
     function update() {
-    let now = Date.now();
-    let gapMs = now - lastUpdateTime;
-    
-    // Decoupled physics rendering: visual eye candy updates smoothly while action is paused
-    for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0.4; eff.life--; if (eff.life <= 0) effects.splice(i, 1); }
-        for (let i = particles.length - 1; i >= 0; i--) { let pt = particles[i]; pt.x += pt.vx; pt.y += pt.vy; pt.vy += (pt.gravity !== undefined ? pt.gravity : 0.25); pt.life--; if (pt.life <= 0) particles.splice(i, 1); }
-        for (let i = beams.length - 1; i >= 0; i--) { let bm = beams[i]; bm.life--; if (bm.life <= 0) beams.splice(i, 1); }
+let now = Date.now();
+let gapMs = now - lastUpdateTime;
+
+// Decoupled physics rendering: visual eye candy updates smoothly while action is paused
+for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0.4; eff.life--; if (eff.life <= 0) effects.splice(i, 1); }
+    for (let i = particles.length - 1; i >= 0; i--) { 
+        let pt = particles[i]; 
+        pt.x += pt.vx; 
+        pt.y += pt.vy; 
+        pt.vy += (pt.gravity !== undefined ? pt.gravity : 0.25); 
+        if (pt.growth !== undefined) pt.radius += pt.growth;
+        if (pt.maxLife && pt.fade) pt.alpha = pt.life / pt.maxLife;
+        pt.life--; 
+        if (pt.life <= 0) particles.splice(i, 1); 
+    }
+    for (let i = beams.length - 1; i >= 0; i--) { let bm = beams[i]; bm.life--; if (bm.life <= 0) beams.splice(i, 1); }
     
     // Prevent progression exploits while on the DEFEATED screen
     if (isGamePaused) {
@@ -10001,12 +10068,21 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             
             // Safely age effects and active particles, but freeze active combat logic
             for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0.4; eff.life--; if (eff.life <= 0) effects.splice(i, 1); }
-            for (let i = particles.length - 1; i >= 0; i--) { let pt = particles[i]; pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.25; pt.life--; if (pt.life <= 0) particles.splice(i, 1); }
+            for (let i = particles.length - 1; i >= 0; i--) { 
+                let pt = particles[i]; 
+                pt.x += pt.vx; 
+                pt.y += pt.vy; 
+                pt.vy += 0.25; 
+                if (pt.growth !== undefined) pt.radius += pt.growth;
+                if (pt.maxLife && pt.fade) pt.alpha = pt.life / pt.maxLife;
+                pt.life--; 
+                if (pt.life <= 0) particles.splice(i, 1); 
+            }
             for (let i = beams.length - 1; i >= 0; i--) { let bm = beams[i]; bm.life--; if (bm.life <= 0) beams.splice(i, 1); }
             
             if (deathAnimationTimer === 0) {
-                handlePlayerDefeat();
-            }
+                      handlePlayerDefeat();
+                  }
             return; // Halt normal combat/potions/fairy ticks during the collapse animation
         }
 
@@ -10348,22 +10424,26 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                         if (logicClock % p.idleAttackSpeed === 0) { if (state.autoAttack) window.triggerPlayerSlash(); }
                         
                         // Constant scary dark smoke puff leakage from Hooktail's snout (drifts up & out, shaped by player's movement speed)
-                        if (mob && mob.type === "prestige_boss" && Math.random() < 0.25 && !isGamePaused) {
-                            let windResistance = 2 + (p.moveSpeed * 0.05);
-                            particles.push({
-                                x: mob.x + 20,
-                                y: mob.y + 55,
-                                vx: -randFloat(1.0, 2.5) - (windResistance * 0.5), // Blown backward by virtual wind resistance
-                                vy: -randFloat(1.0, 2.0), // Billows upward
-                                gravity: -0.06, // Buoyancy (negative gravity) so the smoke rises
-                                radius: randFloat(2.5, 5),
-                                color: Math.random() > 0.5 ? "#2c3e50" : "#111", // Charred dark ash clouds
-                                alpha: 0.8,
-                                life: randInt(35, 60)
-                            });
-                        }
+                            if (mob && mob.type === "prestige_boss" && Math.random() < 0.25 && !isGamePaused) {
+                                let windResistance = 2 + (p.moveSpeed * 0.05);
+                                let hoverY = Math.sin(Date.now() / 150) * 6;
+                                particles.push({
+                                    x: mob.x - 38, // Positioned precisely at snout tip
+                                    y: mob.y + 60 + hoverY,
+                                    vx: randFloat(1.0, 2.5) + (windResistance * 0.3), // Drifts backwards trailing behind her charge
+                                    vy: -randFloat(0.8, 1.8), // Billows upward
+                                    gravity: -0.04, // Buoyancy (negative gravity) so the smoke rises
+                                    radius: randFloat(3.5, 6.0),
+                                    growth: 0.12, // Slowly expands as it billows
+                                    color: Math.random() > 0.5 ? "rgba(44, 62, 80, 0.7)" : "rgba(17, 17, 21, 0.7)", // Semitransparent toon ash smoke
+                                    alpha: 0.8,
+                                    fade: true,
+                                    maxLife: 60,
+                                    life: randInt(40, 60)
+                                });
+                            }
 
-                        if (logicClock % 120 === 0 && mob && mob.hp > 0) {
+                            if (logicClock % 120 === 0 && mob && mob.hp > 0) {
                     // Standard damage resolution
                 if (Math.random() < p.parry) { 
                     effects.push({ x: hero.x, y: hero.y - 15, text: "⚡ PARRY COUNTER!", color: "#9b59b6", life: 50 }); 
@@ -11980,7 +12060,15 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         ctx.fillText(actDps, canvas.width - 70, 25);
 
         // 7. Dynamic particles & Comic-styled floaters (With heavy dark text outlines)
-        particles.forEach(pt => { ctx.fillStyle = pt.color; ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2); ctx.fill(); });
+        particles.forEach(pt => { 
+            ctx.save();
+            if (pt.alpha !== undefined) ctx.globalAlpha = pt.alpha;
+            ctx.fillStyle = pt.color; 
+            ctx.beginPath(); 
+            ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2); 
+            ctx.fill(); 
+            ctx.restore();
+        });
         
         effects.forEach(eff => { 
             ctx.font = "bold 18px sans-serif"; 
