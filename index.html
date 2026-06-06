@@ -5192,7 +5192,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             // Resolve monster requirement count first to prevent temporal dead zone errors
             let killsNeededForStage = 5 - playerStats.killCount;
 
-            let scale = Math.pow(1.08, currentStage);
+            let scale = Math.pow(1.07, currentStage);
+            let dmgScale = Math.pow(1.045, currentStage) * 1.5;
             let mobHp = 12 * scale;
             let bossHp = 45 * scale;
             
@@ -5205,21 +5206,15 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             let cycleTime = ttk + 2.0; // Dynamic combat time + travel buffer
             cycleTime = Math.max(0.5, Math.min(300, cycleTime)); // Performance limits
 
-            // Progressive Survival Audit (Raw Stage Attrition without recovery)
-            let mobDmg = (1 + scale) * 4.5;
+            // Progressive Survival Audit (Raw Stage Attrition without recovery) using adjusted dmgScale
+            let mobDmg = (1 + dmgScale) * 4.5;
             let mitigation = p.def / (p.def + 100 + (currentStage * 12));
             let netMobDmg = Math.max(1, Math.ceil(mobDmg * (1 - mitigation)));
-            
-            let hitsTaken = Math.floor(ttk / 2);
-            let totalDmgTaken = hitsTaken * netMobDmg;
-            
-            let vampHeal = checkArtifactTrait("vampirism") ? Math.min(Math.floor((playerDps * ttk) * 0.03), Math.ceil(p.maxHp * 0.05 * (ttk * (60 / p.idleAttackSpeed)))) : 0;
-            let netDmgTaken = Math.max(0, totalDmgTaken - vampHeal);
             
             // Calculate boss fight attrition for this stage
             let bossTtk = bossHp / playerDps;
             let bossHits = Math.floor(bossTtk / 2);
-            let bossDmg = (2 + (3 * scale)) * 5.0;
+            let bossDmg = (2 + (3 * dmgScale)) * 5.0;
             let bossNetDmg = Math.max(1, Math.ceil(bossDmg * (1 - mitigation)));
             let bossDmgTaken = bossHits * bossNetDmg;
             let bossVampHeal = checkArtifactTrait("vampirism") ? Math.min(Math.floor((playerDps * bossTtk) * 0.03), Math.ceil(p.maxHp * 0.05 * (bossTtk * (60 / p.idleAttackSpeed)))) : 0;
@@ -7592,12 +7587,12 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         if (playerStats.isDungeonMode) {
             playerStats.currentDungeonStage = playerStats.currentDungeonStage || { equip: 1, gold: 1, mat: 1 };
             let dStage = playerStats.currentDungeonStage[playerStats.currentDungeon] || 1;
-            scale = Math.pow(1.075, dStage);
+            scale = Math.pow(1.07, dStage);
             dmgScale = Math.pow(1.04, dStage); // Softened curve for stable dungeon mitigation scaling
         } else {
-            scale = Math.pow(1.08, playerStats.stage);
-            // Polynomial Campaign Scaling: Aligns mob damage progression with linear player gear stats
-            dmgScale = Math.pow(playerStats.stage, 1.48) * 0.45 + 1;
+            scale = Math.pow(1.07, playerStats.stage);
+            // Dynamic exponential scaling: Keeps enemy damage tracking proportionately with health scale
+            dmgScale = Math.pow(1.045, playerStats.stage) * 1.5;
         }
 
         if (playerStats.isDungeonMode) {
