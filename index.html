@@ -7445,7 +7445,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             if (playerStats.killCount >= playerStats.targetsRequired) {
                 // Wave Elite Boss
                 let hp = Math.floor(100 * scale);
-                mob = { x: 750, y: 90, w: 45, h: 75, type: "dungeon_boss", isCrucible: true, isRare: false, hp: hp, maxHp: hp, damage: Math.floor((3 + (3 * dmgScale)) * 5.0), flashTimer: 0, isStopped: false };
+                mob = { x: 750, y: 90, w: 45, h: 75, type: "dungeon_boss", isCrucible: true, isRare: false, hp: hp, maxHp: hp, damage: Math.floor((3 + (3 * dmgScale)) * 5.0), flashTimer: 0, isStopped: false, attackCooldown: 100, attackTimer: 100 };
             } else {
                 // Bespoke Crucible Thematic pool: rift_drifter, star_weaver, or void_wraith
                 let cruciblePool = ["rift_drifter", "star_weaver", "void_wraith"];
@@ -7453,7 +7453,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 let isFlying = ["rift_drifter", "void_wraith"].includes(chosenVisual);
                 
                 let hp = Math.floor(18 * scale);
-                mob = { x: 750, y: isFlying ? 95 : 145, w: 25, h: 30, type: "mob", visualType: chosenVisual, isCrucible: true, isRare: false, hp: hp, maxHp: hp, damage: Math.floor((2 + dmgScale) * 4.0), flashTimer: 0, isStopped: false };
+                mob = { x: 750, y: isFlying ? 95 : 145, w: 25, h: 30, type: "mob", visualType: chosenVisual, isCrucible: true, isRare: false, hp: hp, maxHp: hp, damage: Math.floor((2 + dmgScale) * 4.0), flashTimer: 0, isStopped: false, attackCooldown: 90, attackTimer: 90 };
             }
             return;
         }
@@ -7476,7 +7476,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             
             if (playerStats.killCount >= playerStats.targetsRequired) {
                 let hp = 70 * scale * hpScale;
-                mob = { x: 750, y: 90, w: 50, h: 90, type: "dungeon_boss", isRare: false, hp: Math.floor(hp), maxHp: Math.floor(hp), damage: Math.floor((2.5 + (3 * dmgScale)) * 5.0), flashTimer: 0, isStopped: false };
+                mob = { x: 750, y: 90, w: 50, h: 90, type: "dungeon_boss", isRare: false, hp: Math.floor(hp), maxHp: Math.floor(hp), damage: Math.floor((2.5 + (3 * dmgScale)) * 5.0), flashTimer: 0, isStopped: false, attackCooldown: 100, attackTimer: 100 };
             } else {
                 // Specialized Dungeons spawn theme-appropriate cel-shaded visual types
                 let dType = playerStats.currentDungeon || 'gold';
@@ -7504,7 +7504,9 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                     maxHp: Math.floor(16 * scale * hpScale), 
                     damage: Math.floor((1.5 + (1 * dmgScale)) * 4.0), 
                     flashTimer: 0, 
-                    isStopped: false 
+                    isStopped: false,
+                    attackCooldown: 90,
+                    attackTimer: 90
                 };
             }
         } else {
@@ -7521,12 +7523,14 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                         hp: hp, maxHp: hp, 
                         damage: dmg, 
                         flashTimer: 0, 
-                        isStopped: false 
+                        isStopped: false,
+                        attackCooldown: 100,
+                        attackTimer: 100
                     };
                     pushLog(`<span style='color:#9b59b6; font-weight:bold;'>[VOID ENCOUNTER]</span> You have entered the Aether Rift! **The Nameless Terror** has materialized!`);
                 } else {
                     let baseBossHp = 45 * scale;
-                    mob = { x: 750, y: 100, w: 40, h: 80, type: "boss", isRare: false, visualTier: tier, hp: Math.floor(baseBossHp), maxHp: Math.floor(baseBossHp), damage: Math.floor((2 + (3 * dmgScale)) * 5.0), flashTimer: 0, isStopped: false };
+                    mob = { x: 750, y: 100, w: 40, h: 80, type: "boss", isRare: false, visualTier: tier, hp: Math.floor(baseBossHp), maxHp: Math.floor(baseBossHp), damage: Math.floor((2 + (3 * dmgScale)) * 5.0), flashTimer: 0, isStopped: false, attackCooldown: 100, attackTimer: 100 };
                     pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[STAGE BOSS]</span> blocked your transit route!`);
                 }
             } else {
@@ -7545,7 +7549,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 let choices = visualPool[tier] || ["slime"];
                 let visualType = choices[Math.floor(Math.random() * choices.length)];
 
-                mob = { x: 750, y: isMelee ? 145 : 160, w: isMelee ? 25 : 30, h: isMelee ? 40 : 25, type: "mob", visualType: visualType, isRare: isRare, isMelee: isMelee, visualTier: tier, hp: Math.floor(12 * scale * hpMult), maxHp: Math.floor(12 * scale * hpMult), damage: Math.floor((1 + (1 * dmgScale)) * 4.5 * dmgMult), flashTimer: 0, isStopped: false };
+                mob = { x: 750, y: isMelee ? 145 : 160, w: isMelee ? 25 : 30, h: isMelee ? 40 : 25, type: "mob", visualType: visualType, isRare: isRare, isMelee: isMelee, visualTier: tier, hp: Math.floor(12 * scale * hpMult), maxHp: Math.floor(12 * scale * hpMult), damage: Math.floor((1 + (1 * dmgScale)) * 4.5 * dmgMult), flashTimer: 0, isStopped: false, attackCooldown: 90, attackTimer: 90 };
                 if (isRare) {
                     pushLog(`<span style='color:#ffb6c1; font-weight:bold;'>✨ A glowing Rare enemy appears!</span>`);
                     if (p.hasSingularitySet) {
@@ -10425,7 +10429,7 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
                     // Spawn Hooktail based on Option 2 quadratic HP scaling (testing raw HP pool first)
                     let scaleVal = playerStats.prestigeCount || 0;
                     let hp = 25000 * Math.pow(1 + 1.5 * scaleVal, 2);
-                    let dmg = 250 * Math.pow(1.28, scaleVal);
+                    let dmg = 400 * Math.pow(1.28, scaleVal);
                     let def = 30 + (35 * scaleVal);
                     
                     mob = {
@@ -10436,7 +10440,9 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
                         damage: Math.floor(dmg),
                         def: Math.floor(def),
                         flashTimer: 0,
-                        isStopped: false
+                        isStopped: false,
+                        attackCooldown: 75,
+                        attackTimer: 75
                     };
                     pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[ASCENSION] HOOKTAIL APPEARS! Slay her to Ascend!</span>`);
                 }
@@ -10760,77 +10766,84 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
                 });
             }
 
-                            if (logicClock % 120 === 0 && mob && mob.hp > 0) {
-                    // Standard damage resolution
-                if (Math.random() < p.parry) { 
-                    effects.push({ x: hero.x, y: hero.y - 15, text: "⚡ PARRY COUNTER!", color: "#9b59b6", life: 50 }); 
-                    SoundManager.play('parry');
-                    
-                    if (equippedSlots.subweapon && equippedSlots.subweapon.subType === "dagger") {
-                        playerStats.daggerParryStagger = true; // Stagger next incoming attack
-                    }
-
-                    if (checkArtifactTrait("dodge_buff")) playerStats.adrenalineTimer = checkArtifactTrait("extend_buffs") ? 900 : 600;
-                    if (checkArtifactTrait("parry_strike")) {
-                        let counterDmg = p.atk * (playerStats.adrenalineTimer > 0 ? 2 : 1); mob.hp -= counterDmg;
-                        spawnDamageEffect(counterDmg, 'counter', false);
-                        damageHistory.push({ time: Date.now(), amount: counterDmg });
-                        if (mob.hp <= 0) { handleMobDeath(); return; }
-                    }
-                }
-                else if (Math.random() < p.block) { 
-                    effects.push({ x: hero.x, y: hero.y, text: "🛡️ BLOCKED", color: "#3498db", life: 40 }); 
-                    SoundManager.play('block');
-                    if (checkArtifactTrait("dodge_buff")) playerStats.adrenalineTimer = checkArtifactTrait("extend_buffs") ? 900 : 600;
-                }
-                    else {
-                        // Soft-Ceiling Diminishing Returns Mitigation Formula (Capped asymptotically at 75% max)
-                        let effStage = playerStats.isDungeonMode ? Math.max(1, Math.floor((playerStats.maxStage || 1) * 0.85)) : playerStats.stage;
-                        let mitigation = 0.75 * (p.def / (p.def + 300 + (effStage * 32)));
-                        let netDamage = Math.max(1, Math.ceil(mob.damage * (1 - mitigation)));
-                        
-                        const subType = equippedSlots.subweapon ? equippedSlots.subweapon.subType : null;
-                        if (playerStats.daggerParryStagger && subType === "dagger") {
-                            netDamage = Math.max(1, Math.ceil(netDamage * 0.5));
-                            playerStats.daggerParryStagger = false; // Consume parry stagger
-                            effects.push({ x: hero.x, y: hero.y - 18, text: "🛡️ PARRIED (-50%)", color: "#e74c3c", life: 55 });
-                        }
-                        if (p.arcaneBarrier && subType === "tome") {
-                            let absorbed = Math.ceil(netDamage * p.arcaneBarrier);
-                            netDamage = Math.max(1, netDamage - absorbed);
-                            effects.push({ x: hero.x, y: hero.y - 18, text: `🔮 ABSORBED (-${Math.round(p.arcaneBarrier * 100)}%)`, color: "#9b59b6", life: 45 });
-                        }
-
-                        playerStats.currentHp -= netDamage;
-                        effects.push({ x: hero.x, y: hero.y, text: "-" + netDamage.toLocaleString(), color: "#e74c3c", life: 40 });
-                        if (playerStats.currentHp <= 0) { 
-                            if (checkArtifactTrait("second_wind") && !playerStats.usedSecondWind) {
-                                playerStats.usedSecondWind = true; playerStats.currentHp = Math.floor(p.maxHp * 0.5);
-                                effects.push({ x: hero.x, y: hero.y - 20, text: "🔥 SECOND WIND!", color: "#e67e22", life: 80 });
-                            } else { 
-                                // Capture the name of the entity that dealt the killing blow
-                                if (playerStats.isPrestigeBossMode) {
-                                    playerStats.killedBy = "Hooktail (Prestige Boss)";
-                                } else if (playerStats.isDungeonMode) {
-                                    playerStats.killedBy = mob.type === "dungeon_boss" ? "Dungeon Boss" : (mob.type === "dungeon_miniboss" ? "Dungeon Miniboss" : "Dungeon Minion");
-                                } else if (playerStats.isUberBoss) {
-                                    playerStats.killedBy = "Rift Guardian";
-                                } else if (playerStats.isBossMode) {
-                                    playerStats.killedBy = "Stage Boss";
-                                } else {
-                                    playerStats.killedBy = mob.isRare ? "Rare Monster" : "Standard Monster";
-                                }
-                                playerStats.killedByMob = JSON.parse(JSON.stringify(mob));
-                                
-                                // Set up on-canvas slow motion death sequence
-                                playerStats.currentHp = 0;
-                                deathAnimationTimer = deathMaxFrames;
-                                return;
+                            if (mob.attackTimer === undefined) {
+                                mob.attackTimer = mob.attackCooldown || 120;
                             }
-                        }
-                    }
-                    updateUI();
-                }
+                            if (!isGamePaused) {
+                                mob.attackTimer--;
+                            }
+                            if (mob.attackTimer <= 0 && mob && mob.hp > 0) {
+                                mob.attackTimer = mob.attackCooldown || 120;
+                                // Standard damage resolution
+                                if (Math.random() < p.parry) { 
+                                    effects.push({ x: hero.x, y: hero.y - 15, text: "⚡ PARRY COUNTER!", color: "#9b59b6", life: 50 }); 
+                                    SoundManager.play('parry');
+                                    
+                                    if (equippedSlots.subweapon && equippedSlots.subweapon.subType === "dagger") {
+                                        playerStats.daggerParryStagger = true; // Stagger next incoming attack
+                                    }
+
+                                    if (checkArtifactTrait("dodge_buff")) playerStats.adrenalineTimer = checkArtifactTrait("extend_buffs") ? 900 : 600;
+                                    if (checkArtifactTrait("parry_strike")) {
+                                        let counterDmg = p.atk * (playerStats.adrenalineTimer > 0 ? 2 : 1); mob.hp -= counterDmg;
+                                        spawnDamageEffect(counterDmg, 'counter', false);
+                                        damageHistory.push({ time: Date.now(), amount: counterDmg });
+                                        if (mob.hp <= 0) { handleMobDeath(); return; }
+                                    }
+                                }
+                                else if (Math.random() < p.block) { 
+                                    effects.push({ x: hero.x, y: hero.y, text: "🛡️ BLOCKED", color: "#3498db", life: 40 }); 
+                                    SoundManager.play('block');
+                                    if (checkArtifactTrait("dodge_buff")) playerStats.adrenalineTimer = checkArtifactTrait("extend_buffs") ? 900 : 600;
+                                }
+                                else {
+                                    // Soft-Ceiling Diminishing Returns Mitigation Formula (Capped asymptotically at 75% max)
+                                    let effStage = playerStats.isDungeonMode ? Math.max(1, Math.floor((playerStats.maxStage || 1) * 0.85)) : playerStats.stage;
+                                    let mitigation = 0.75 * (p.def / (p.def + 300 + (effStage * 32)));
+                                    let netDamage = Math.max(1, Math.ceil(mob.damage * (1 - mitigation)));
+                                    
+                                    const subType = equippedSlots.subweapon ? equippedSlots.subweapon.subType : null;
+                                    if (playerStats.daggerParryStagger && subType === "dagger") {
+                                        netDamage = Math.max(1, Math.ceil(netDamage * 0.5));
+                                        playerStats.daggerParryStagger = false; // Consume parry stagger
+                                        effects.push({ x: hero.x, y: hero.y - 18, text: "🛡️ PARRIED (-50%)", color: "#e74c3c", life: 55 });
+                                    }
+                                    if (p.arcaneBarrier && subType === "tome") {
+                                        let absorbed = Math.ceil(netDamage * p.arcaneBarrier);
+                                        netDamage = Math.max(1, netDamage - absorbed);
+                                        effects.push({ x: hero.x, y: hero.y - 18, text: `🔮 ABSORBED (-${Math.round(p.arcaneBarrier * 100)}%)`, color: "#9b59b6", life: 45 });
+                                    }
+
+                                    playerStats.currentHp -= netDamage;
+                                    effects.push({ x: hero.x, y: hero.y, text: "-" + netDamage.toLocaleString(), color: "#e74c3c", life: 40 });
+                                    if (playerStats.currentHp <= 0) { 
+                                        if (checkArtifactTrait("second_wind") && !playerStats.usedSecondWind) {
+                                            playerStats.usedSecondWind = true; playerStats.currentHp = Math.floor(p.maxHp * 0.5);
+                                            effects.push({ x: hero.x, y: hero.y - 20, text: "🔥 SECOND WIND!", color: "#e67e22", life: 80 });
+                                        } else { 
+                                            // Capture the name of the entity that dealt the killing blow
+                                            if (playerStats.isPrestigeBossMode) {
+                                                playerStats.killedBy = "Hooktail (Prestige Boss)";
+                                            } else if (playerStats.isDungeonMode) {
+                                                playerStats.killedBy = mob.type === "dungeon_boss" ? "Dungeon Boss" : (mob.type === "dungeon_miniboss" ? "Dungeon Miniboss" : "Dungeon Minion");
+                                            } else if (playerStats.isUberBoss) {
+                                                playerStats.killedBy = "Rift Guardian";
+                                            } else if (playerStats.isBossMode) {
+                                                playerStats.killedBy = "Stage Boss";
+                                            } else {
+                                                playerStats.killedBy = mob.isRare ? "Rare Monster" : "Standard Monster";
+                                            }
+                                            playerStats.killedByMob = JSON.parse(JSON.stringify(mob));
+                                            
+                                            // Set up on-canvas slow motion death sequence
+                                            playerStats.currentHp = 0;
+                                            deathAnimationTimer = deathMaxFrames;
+                                            return;
+                                        }
+                                    }
+                                }
+                                updateUI();
+                            }
             }
         }
     }
