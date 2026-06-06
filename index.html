@@ -9868,8 +9868,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     
     // Decoupled physics rendering: visual eye candy updates smoothly while action is paused
     for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0.4; eff.life--; if (eff.life <= 0) effects.splice(i, 1); }
-    for (let i = particles.length - 1; i >= 0; i--) { let pt = particles[i]; pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.25; pt.life--; if (pt.life <= 0) particles.splice(i, 1); }
-    for (let i = beams.length - 1; i >= 0; i--) { let bm = beams[i]; bm.life--; if (bm.life <= 0) beams.splice(i, 1); }
+        for (let i = particles.length - 1; i >= 0; i--) { let pt = particles[i]; pt.x += pt.vx; pt.y += pt.vy; pt.vy += (pt.gravity !== undefined ? pt.gravity : 0.25); pt.life--; if (pt.life <= 0) particles.splice(i, 1); }
+        for (let i = beams.length - 1; i >= 0; i--) { let bm = beams[i]; bm.life--; if (bm.life <= 0) beams.splice(i, 1); }
     
     // Prevent progression exploits while on the DEFEATED screen
     if (isGamePaused) {
@@ -9992,23 +9992,25 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 logicClock++;
                 return; // freeze normal monster spawns during the charge segment
             } else if (mob) {
-                // Spit flames on a fixed frame frequency
-                if (logicClock % 150 === 0 && !isGamePaused) {
-                    for (let i = 0; i < 12; i++) {
-                        particles.push({
-                            x: mob.x,
-                            y: mob.y + 40,
-                            vx: -randFloat(4, 7),
-                            vy: randFloat(-2, 2),
-                            radius: randFloat(3, 6),
-                            color: Math.random() > 0.4 ? "#e67e22" : "#e74c3c",
-                            alpha: 1,
-                            life: 45
-                        });
-                    }
-                    effects.push({ x: mob.x - 30, y: mob.y + 45, text: "🔥 FIRE BREATH!", color: "#e67e22", life: 40 });
+            // Spit flames on a fixed frame frequency (influenced by move speed wind resistance)
+            if (logicClock % 150 === 0 && !isGamePaused) {
+                let windResistance = 2 + (p.moveSpeed * 0.05);
+                for (let i = 0; i < 12; i++) {
+                    particles.push({
+                        x: mob.x,
+                        y: mob.y + 40,
+                        vx: -randFloat(4, 7) - (windResistance * 0.4),
+                        vy: randFloat(-1.5, 1.5),
+                        gravity: 0.04, // Low gravity so flames billow outward gracefully rather than falling like heavy stones
+                        radius: randFloat(3, 6),
+                        color: Math.random() > 0.4 ? "#e67e22" : "#e74c3c",
+                        alpha: 1,
+                        life: 45
+                    });
                 }
+                effects.push({ x: mob.x - 30, y: mob.y + 45, text: "🔥 FIRE BREATH!", color: "#e67e22", life: 40 });
             }
+        }
         }
 
         let maxOfflineMs = 28800 * 1000; // 8 hours maximum cap
@@ -10274,17 +10276,19 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                         mob.isStopped = true; 
                         if (logicClock % p.idleAttackSpeed === 0) { if (state.autoAttack) window.triggerPlayerSlash(); }
                         
-                        // Constant scary dark smoke puff leakage from Hooktail's snout
+                        // Constant scary dark smoke puff leakage from Hooktail's snout (drifts up & out, shaped by player's movement speed)
                         if (mob && mob.type === "prestige_boss" && Math.random() < 0.25 && !isGamePaused) {
+                            let windResistance = 2 + (p.moveSpeed * 0.05);
                             particles.push({
                                 x: mob.x + 20,
                                 y: mob.y + 55,
-                                vx: -randFloat(1.5, 3.5),
-                                vy: -randFloat(0.5, 1.5),
+                                vx: -randFloat(1.0, 2.5) - (windResistance * 0.5), // Blown backward by virtual wind resistance
+                                vy: -randFloat(1.0, 2.0), // Billows upward
+                                gravity: -0.06, // Buoyancy (negative gravity) so the smoke rises
                                 radius: randFloat(2.5, 5),
                                 color: Math.random() > 0.5 ? "#2c3e50" : "#111", // Charred dark ash clouds
                                 alpha: 0.8,
-                                life: randInt(25, 50)
+                                life: randInt(35, 60)
                             });
                         }
 
