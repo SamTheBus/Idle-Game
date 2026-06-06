@@ -5807,34 +5807,6 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         });
     }
 
-    /* ==========================================================================
-       8. ANVIL & ITEM QUALITY RE-GENERATORS
-       ========================================================================== */
-    function scaleItemBonusStats(item, oldStars, newStars) {
-        if (item.type === "artifact" || oldStars === "UNIQUE" || newStars === "UNIQUE") return;
-        let oldMult = 1 + (oldStars * 0.15);
-        let newMult = 1 + (newStars * 0.15);
-        let ratio = newMult / oldMult;
-
-        const scaleKeys = [
-            "bonusAtk", "bonusMaxHp", "bonusDef", "bonusMoveSpeed", 
-            "bonusCritChance", "bonusCritDamage", "bonusBlock", "bonusParry", 
-            "bonusStr", "bonusDex", "bonusInt", "bonusActiveSpeed", "bonusIdleSpeed"
-        ];
-        
-        scaleKeys.forEach(k => {
-            if (item[k]) {
-                if (["bonusCritChance", "bonusCritDamage", "bonusBlock", "bonusParry"].includes(k)) {
-                    item[k] = parseFloat((item[k] * ratio).toFixed(4));
-                } else if (["bonusActiveSpeed", "bonusIdleSpeed"].includes(k)) {
-                    item[k] = Math.floor(item[k] * ratio);
-                } else {
-                    item[k] = Math.ceil(item[k] * ratio);
-                }
-            }
-        });
-    }
-
     function recalculateItemStats(item) {
         // 1. Reset parameters to un-tempered base + bonus values
         item.atk = (item.baseAtk || 0) + item.bonusAtk; 
@@ -6684,35 +6656,6 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             pushHeaderToast("Cannot enter: already in another activity!", "#e74c3c");
             return;
         }
-        let souls = inventory.ETC["Monster Soul"] || 0;
-        if (souls < 100) { pushHeaderToast("Requires 100 Monster Souls!", "#e74c3c"); return; }
-        
-        let checkpoint = Math.max(1, Math.floor((playerStats.cruciblePeak || 1) * 0.80));
-        if (!confirm(`Burn 100 Monster Souls to enter the Astral Crucible? Starting checkpoint: Wave ${checkpoint}`)) return;
-        
-        // Secure previous state prior to loading new parameters
-        saveCurrentActivityPeak();
-
-        inventory.ETC["Monster Soul"] -= 100;
-        if (inventory.ETC["Monster Soul"] === 0) delete inventory.ETC["Monster Soul"];
-        
-        playerStats.isCrucibleMode = true;
-        playerStats.isDungeonMode = false;
-        playerStats.crucibleWave = checkpoint;
-        playerStats.crucibleStartWave = checkpoint;
-        playerStats.killCount = 0;
-        playerStats.targetsRequired = 5;
-        playerStats.isBossMode = false;
-        playerStats.isUberBoss = false;
-        mob = null;
-        
-        let p = resolvePlayerStats(); playerStats.currentHp = p.maxHp;
-        
-        pushLog(`<span style='color:#9b59b6; font-weight:bold;'>[CRUCIBLE] Entered the Astral Crucible at Wave ${checkpoint}! Stand your ground!</span>`);
-        document.getElementById('dungeon-menu').style.display = 'none'; updateUI(); window.saveGame();
-    };
-
-    window.enterCrucible = function() {
         let souls = inventory.ETC["Monster Soul"] || 0;
         if (souls < 100) { pushHeaderToast("Requires 100 Monster Souls!", "#e74c3c"); return; }
         
@@ -7824,10 +7767,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         if (stars === 3) return "Epic Scrap"; if (stars === 2) return "Magic Scrap"; if (stars === 1) return "Rare Scrap"; return "Monster Soul";
     }
 
-    function getMaxTemper(stars) {
-        if (stars === "UNIQUE") return 5; if (stars === 5) return 15; if (stars === 4) return 12; if (stars === 3) return 9;
-        if (stars === 2) return 7; if (stars === 1) return 5; return 3;
-    }
+    function getRequiredScrapForTemper(targetLevel, isArtifact) {
 
     function getRequiredScrapForTemper(targetLevel, isArtifact) {
         if (isArtifact) return "Overlord's Sigil"; if (targetLevel <= 3) return "Monster Soul"; if (targetLevel <= 5) return "Rare Scrap";
@@ -7842,16 +7782,6 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     function getTierUpScrapName(stars) {
         if (stars === 5) return "Mythic Scrap"; if (stars === 4) return "Legendary Scrap"; if (stars === 3) return "Epic Scrap";
         if (stars === 2) return "Magic Scrap"; if (stars === 1) return "Rare Scrap"; return "Monster Soul";
-    }
-
-    function getRequiredScrapForTemper(targetLevel, isArtifact) {
-        if (isArtifact) return "Overlord's Sigil"; 
-        if (targetLevel <= 3) return "Monster Soul"; 
-        if (targetLevel <= 5) return "Rare Scrap";
-        if (targetLevel <= 7) return "Magic Scrap"; 
-        if (targetLevel <= 9) return "Epic Scrap"; 
-        if (targetLevel <= 12) return "Legendary Scrap"; 
-        return "Mythic Scrap";
     }
 
     function getRequiredScrapAmountForTemper(targetLevel, isArtifact) {
