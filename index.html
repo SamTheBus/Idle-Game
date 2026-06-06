@@ -7506,7 +7506,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         document.getElementById('log-box').innerHTML = logsHistory.join("<br><br>");
     }
 
-     function pushToast(name, stars, color, isEtc = false, quantity = 1, customText = null) {
+     function pushToast(name, stars, color, isEtc = false, quantity = 1, customText = null, clickAction = null) {
         let container = document.getElementById('toast-container'); 
         if (!container) return;
 
@@ -7522,7 +7522,18 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         toast.style.boxShadow = "0 4px 15px rgba(0,0,0,0.6)"; 
         toast.style.animation = "toastFadeIn 0.3s ease-out";
         toast.style.maxWidth = "100%"; 
-        toast.style.pointerEvents = "none";
+        
+        if (clickAction) {
+            toast.style.pointerEvents = "auto";
+            toast.style.cursor = "pointer";
+            toast.onclick = function(e) {
+                e.stopPropagation();
+                clickAction();
+                toast.remove(); // Instant dismiss on click
+            };
+        } else {
+            toast.style.pointerEvents = "none";
+        }
         
         if (customText) { 
             toast.innerHTML = customText; 
@@ -7542,10 +7553,10 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         setTimeout(() => { 
             toast.style.animation = "toastFadeOut 0.5s ease-in forwards"; 
             setTimeout(() => toast.remove(), 450); 
-        }, 2800);
+        }, 3500); // Extended slightly to give users more time to interact with clickables
     }
     
-    function pushHeaderToast(text, color) { pushToast("", null, color, false, 0, text); }
+    function pushHeaderToast(text, color, clickAction = null) { pushToast("", null, color, false, 0, text, clickAction); }
 
     function processEnemySpawn() {
         let p = resolvePlayerStats();
@@ -13071,8 +13082,12 @@ function engineCycle() {
             if (progress >= ach.reqValue) {
                 playerStats.unlockedAchievements.push(ach.id);
                 unlockedAny = true;
+                
+                let currentAchId = ach.id;
                 pushLog(`<strong style="color:#f1c40f;">🏆 CHALLENGE ACHIEVED: [${ach.name}]!</strong> - ${ach.desc}`);
-                pushHeaderToast(`🏆 Milestone Unlocked: ${ach.name}!`, "#f1c40f");
+                pushHeaderToast(`🏆 Milestone Unlocked: ${ach.name}! (Click to View)`, "#f1c40f", function() {
+                    window.navigateToAchievement(currentAchId);
+                });
             }
         });
 
@@ -13111,7 +13126,7 @@ function engineCycle() {
                 : "border-color: #333; opacity: 0.5; filter: grayscale(100%); color: #7f8c8d;";
             let iconDisplay = unlocked ? ach.icon : "🔒";
 
-            return `<div class="bag-item" style="cursor:help; display:flex; flex-direction:row; justify-content:flex-start; align-items:center; gap:10px; ${borderStyle}; padding:8px;" 
+            return `<div id="ach-card-${ach.id}" class="bag-item" style="cursor:help; display:flex; flex-direction:row; justify-content:flex-start; align-items:center; gap:10px; ${borderStyle}; padding:8px;" 
                 onmouseenter="window.showAchievementTooltip(event, '${ach.id}')" 
                 ontouchstart="window.showAchievementTooltip(event, '${ach.id}')" 
                 onmouseleave="hideTooltip()">
@@ -13122,6 +13137,47 @@ function engineCycle() {
                 </div>
             </div>`;
         }).join("");
+    };
+
+    window.navigateToAchievement = function(achId) {
+        let modal = document.getElementById('achievements-modal');
+        if (modal) {
+            window.hideTooltip();
+            modal.style.display = 'block';
+            window.buildAchievementsModal();
+            
+            // Non-blocking timeout allows the browser layout rendering queue to settle before executing positioning math
+            setTimeout(() => {
+                let target = document.getElementById('ach-card-' + achId);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Satisfying, high-feedback focus animation
+                    target.style.transition = "all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+                    target.style.transform = "scale(1.06)";
+                    target.style.boxShadow = "0 0 15px #f1c40f";
+                    target.style.borderColor = "#f1c40f";
+                    target.style.opacity = "1";
+                    target.style.filter = "none";
+                    
+                    setTimeout(() => {
+                        target.style.transform = "none";
+                        target.style.boxShadow = "none";
+                    }, 1200);
+                    
+                    // Programmatically resolve tooltip coordinates near the focused card
+                    let rect = target.getBoundingClientRect();
+                    let mockEvent = {
+                        clientX: rect.left + rect.width / 2,
+                        clientY: rect.top + rect.height / 2,
+                        target: target,
+                        currentTarget: target,
+                        stopPropagation: function() {}
+                    };
+                    window.showAchievementTooltip(mockEvent, achId);
+                }
+            }, 100);
+        }
     };
 
     window.showAchievementTooltip = function(e, achId) {
