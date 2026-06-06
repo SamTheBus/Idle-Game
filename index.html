@@ -10431,6 +10431,14 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
         
         // Tick Bleed status every 60 frames (1 second) in real-time
         if (mob && mob.hp > 0 && !isGamePaused) {
+            if (mob.trailingHp === undefined) {
+                mob.trailingHp = mob.hp;
+            }
+            if (mob.trailingHp > mob.hp) {
+                // Smoothly decay trailing health (combining linear decay and lerp for a highly tactile glide)
+                mob.trailingHp = Math.max(mob.hp, mob.trailingHp - (mob.maxHp * 0.005) - (mob.trailingHp - mob.hp) * 0.08);
+            }
+
             if (mob.bleedTimer && mob.bleedTimer > 0) {
                 mob.bleedTickCounter = (mob.bleedTickCounter || 0) + 1;
                 if (mob.bleedTickCounter >= 60) {
@@ -11847,22 +11855,28 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
         if (mob) {
             window.drawSingleMob(ctx, mob);
 
-            // Floating health bars with neat black borders
-            let barW = (mob.type === "boss" || mob.type === "dungeon_boss") ? 50 : mob.w;
-            let barX = (mob.type === "boss" || mob.type === "dungeon_boss") ? mob.x - 7 : mob.x;
-            
-            ctx.fillStyle = "#111111"; // Backing
-            ctx.beginPath(); ctx.rect(barX, mob.y - 13, barW, 7); ctx.fill();
-            
-            ctx.fillStyle = "#e74c3c"; // Damage layer
-            ctx.beginPath(); ctx.rect(barX, mob.y - 13, barW, 7); ctx.fill();
-            
-            ctx.fillStyle = "#f1c40f"; // Health layer
-            ctx.beginPath(); ctx.rect(barX, mob.y - 13, Math.max(0, (mob.hp / mob.maxHp) * barW), 7); ctx.fill();
-            
-            ctx.strokeStyle = "#000000"; 
-            ctx.lineWidth = 2; 
-            ctx.strokeRect(barX, mob.y - 13, barW, 7);
+            // Floating health bars with trailing white damage-lag effect
+                    let barW = (mob.type === "boss" || mob.type === "dungeon_boss") ? 50 : mob.w;
+                    let barX = (mob.type === "boss" || mob.type === "dungeon_boss") ? mob.x - 7 : mob.x;
+                    
+                    // 1. Dark Charcoal Backing
+                    ctx.fillStyle = "#111111";
+                    ctx.beginPath(); ctx.rect(barX, mob.y - 13, barW, 7); ctx.fill();
+                    
+                    // 2. Trailing White Bar (Visual Soft Damage Segment)
+                    let trailingPct = Math.max(0, Math.min(1, (mob.trailingHp !== undefined ? mob.trailingHp : mob.hp) / mob.maxHp));
+                    ctx.fillStyle = "#ffffff";
+                    ctx.beginPath(); ctx.rect(barX, mob.y - 13, trailingPct * barW, 7); ctx.fill();
+                    
+                    // 3. Primary Health Bar (Vibrant Red)
+                    let hpPct = Math.max(0, Math.min(1, mob.hp / mob.maxHp));
+                    ctx.fillStyle = "#e74c3c";
+                    ctx.beginPath(); ctx.rect(barX, mob.y - 13, hpPct * barW, 7); ctx.fill();
+                    
+                    // Outer Ink Outline
+                    ctx.strokeStyle = "#000000"; 
+                    ctx.lineWidth = 2; 
+                    ctx.strokeRect(barX, mob.y - 13, barW, 7);
         }
 
         // 3. Fairy rendering with clean outlines
