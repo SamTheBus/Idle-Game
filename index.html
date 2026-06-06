@@ -10200,7 +10200,7 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
                 let pt = particles[i]; 
                 pt.x += pt.vx; 
                 pt.y += pt.vy; 
-                pt.vy += 0.25; 
+                pt.vy += (pt.gravity !== undefined ? pt.gravity : 0.25); 
                 if (pt.growth !== undefined) pt.radius += pt.growth;
                 if (pt.maxLife && pt.fade) pt.alpha = pt.life / pt.maxLife;
                 pt.life--; 
@@ -10643,12 +10643,12 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
                 }
             }
         }
-        for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0.4; eff.life--; if (eff.life <= 0) effects.splice(i, 1); }
+        or (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0.4; eff.life--; if (eff.life <= 0) effects.splice(i, 1); }
         for (let i = particles.length - 1; i >= 0; i--) { 
             let pt = particles[i]; 
             pt.x += pt.vx; 
             pt.y += pt.vy; 
-            pt.vy += 0.25; 
+            pt.vy += (pt.gravity !== undefined ? pt.gravity : 0.25); 
             if (pt.growth !== undefined) pt.radius += pt.growth;
             if (pt.maxLife && pt.fade) pt.alpha = pt.life / pt.maxLife;
             pt.life--; 
