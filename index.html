@@ -7684,8 +7684,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             let tier = getStageTier();
             if (playerStats.isBossMode) {
                 if (playerStats.isUberBoss) {
-                    // Materialize a custom Rift Guardian (Uber Boss) on its own dimensional void plane
-                    let hp = Math.floor(150 * Math.pow(1.085, playerStats.stage));
+                    // Rift Guardian (Uber Boss) HP bound to Standard Boss HP (60 * scale) scaled linearly by 3.0x
+                    let hp = Math.floor(3 * (60 * scale));
                     let dmg = Math.floor((4 + (3 * dmgScale)) * 6.0);
                     mob = { 
                         x: 750, y: 65, w: 60, h: 100, 
@@ -7700,8 +7700,9 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                     };
                     pushLog(`<span style='color:#9b59b6; font-weight:bold;'>[VOID ENCOUNTER]</span> You have entered the Aether Rift! **The Nameless Terror** has materialized!`);
                 } else {
-                    let baseBossHp = 45 * scale;
-                    mob = { x: 750, y: 100, w: 40, h: 80, type: "boss", isRare: false, visualTier: tier, hp: Math.floor(baseBossHp), maxHp: Math.floor(baseBossHp), damage: Math.floor((2 + (3 * dmgScale)) * 5.0), flashTimer: 0, isStopped: false, attackCooldown: 100, attackTimer: 100 };
+                    // Standard Campaign Boss Buffed: Base HP increased to 60, Damage Multiplier to 5.8
+                    let baseBossHp = 60 * scale;
+                    mob = { x: 750, y: 100, w: 40, h: 80, type: "boss", isRare: false, visualTier: tier, hp: Math.floor(baseBossHp), maxHp: Math.floor(baseBossHp), damage: Math.floor((2 + (3 * dmgScale)) * 5.8), flashTimer: 0, isStopped: false, attackCooldown: 100, attackTimer: 100 };
                     pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[STAGE BOSS]</span> blocked your transit route!`);
                 }
                 
@@ -7725,7 +7726,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 let choices = visualPool[tier] || ["slime"];
                 let visualType = choices[Math.floor(Math.random() * choices.length)];
 
-                mob = { x: 750, y: isMelee ? 145 : 160, w: isMelee ? 25 : 30, h: isMelee ? 40 : 25, type: "mob", visualType: visualType, isRare: isRare, isMelee: isMelee, visualTier: tier, hp: Math.floor(12 * scale * hpMult), maxHp: Math.floor(12 * scale * hpMult), damage: Math.floor((1 + (1 * dmgScale)) * 4.5 * dmgMult), flashTimer: 0, isStopped: false, attackCooldown: 90, attackTimer: 90 };
+                // Standard Mob Buffed: Base HP increased to 15, Damage Multiplier to 5.2
+                mob = { x: 750, y: isMelee ? 145 : 160, w: isMelee ? 25 : 30, h: isMelee ? 40 : 25, type: "mob", visualType: visualType, isRare: isRare, isMelee: isMelee, visualTier: tier, hp: Math.floor(15 * scale * hpMult), maxHp: Math.floor(15 * scale * hpMult), damage: Math.floor((1 + (1 * dmgScale)) * 5.2 * dmgMult), flashTimer: 0, isStopped: false, attackCooldown: 90, attackTimer: 90 };
                 if (isRare) {
                     pushLog(`<span style='color:#ffb6c1; font-weight:bold;'>✨ A glowing Rare enemy appears!</span>`);
                     if (p.hasSingularitySet) {
