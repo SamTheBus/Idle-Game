@@ -6219,7 +6219,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 costColor = playerStats.coins >= displayCost ? "#f1c40f" : "#e74c3c";
             }
             
-            return `<div class="shop-row" style="border-color: ${item.color}; background: rgba(155, 89, 182, 0.05); flex-direction: column; align-items: stretch; text-align: left; gap: 4px; padding: 8px;">
+            return `<div class="shop-row" style="border-color: ${item.color}; background: rgba(155, 89, 182, 0.05); flex-direction: column; align-items: stretch; text-align: left; gap: 4px; padding: 8px; cursor: help;" onmouseenter="showMysticalShopTooltip(event, ${index})" ontouchstart="showMysticalShopTooltip(event, ${index})" onmouseleave="hideTooltip()">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <strong style="color:${item.color}; font-size:12px;">${item.name}</strong>
                     <span style="color:${costColor}; font-weight:bold; font-size:11px;">${displayCost.toLocaleString()} ${currencyLabel}</span>
@@ -8381,6 +8381,62 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let color = stockItem ? stockItem.color : "#bdc3c7";
         
         tt.innerHTML = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:${color};">🧪 ${keyName}</div><div style="color:#aaa; font-size:11px; white-space:normal; line-height:1.4;">${desc}</div></div>`;
+        tt.style.borderColor = color;
+        tt.style.display = "block";
+        window.positionTooltip(e, tt);
+    };
+
+    window.showMysticalShopTooltip = function(e, index) {
+        e.stopPropagation();
+        let tt = document.getElementById('etc-tooltip');
+        let item = MYSTICAL_STOCK[index];
+        if (!item) return;
+
+        let color = item.color || "#9b59b6";
+        let ownedAmount = 0;
+        
+        // Correctly route to check USE or ETC sub-inventory quantities
+        if (item.name === "Gacha Key" || item.name === "Astral Essence" || item.name === "Catalyst Core") {
+            ownedAmount = inventory.ETC[item.name] || 0;
+        } else {
+            ownedAmount = inventory.USE[item.name] || 0;
+        }
+
+        let actualCost = item.cost;
+        let currencyName = item.currency;
+        let playerBalance = 0;
+
+        if (item.currency === "Luminous Soul") {
+            playerBalance = inventory.ETC["Luminous Soul"] || 0;
+            currencyName = "Luminous Souls";
+        } else if (item.currency === "Astral Shards") {
+            playerBalance = playerStats.astralShards || 0;
+            currencyName = "Astral Shards";
+        } else {
+            // Gold scales with campaign progress
+            actualCost = Math.ceil(item.cost * Math.pow(1.08, playerStats.stage));
+            playerBalance = playerStats.coins || 0;
+            currencyName = "Gold";
+        }
+
+        let canAfford = playerBalance >= actualCost;
+        let costTextColor = canAfford ? "#2ecc71" : "#e74c3c";
+
+        let html = `<div style="padding: 10px; width: 230px; box-sizing: border-box;">
+            <div class="tt-title" style="color:${color}; font-weight:bold;">🔮 ${item.name}</div>
+            <div style="font-size:11px; color:#aaa; margin-bottom:8px; line-height:1.4; white-space:normal;">${item.desc}</div>
+            <div style="font-size:11px; margin-bottom:6px; border-top:1px dashed #444; padding-top:6px;">
+                • <span style="color:#bdc3c7;">Currently Owned:</span> <strong style="color:${color};">${ownedAmount.toLocaleString()}</strong>
+            </div>
+            <div style="font-size:11px; margin-bottom:4px;">
+                • <span style="color:#bdc3c7;">Exchange Rate:</span> <strong style="color:${costTextColor};">${actualCost.toLocaleString()} / ${playerBalance.toLocaleString()} ${currencyName}</strong>
+            </div>
+            <div style="font-size:10px; color:${canAfford ? '#2ecc71' : '#e74c3c'}; font-weight:bold; margin-top:4px;">
+                ${canAfford ? '✓ Ready to Transmute' : '✗ Insufficient Materials'}
+            </div>
+        </div>`;
+
+        tt.innerHTML = html;
         tt.style.borderColor = color;
         tt.style.display = "block";
         window.positionTooltip(e, tt);
