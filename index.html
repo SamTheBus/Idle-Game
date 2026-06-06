@@ -4842,12 +4842,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             pushHeaderToast("Requires Level 25!", "#e74c3c");
             return;
         }
-        if (playerStats.isDungeonMode || playerStats.isCrucibleMode) {
+        if (playerStats.isDungeonMode || playerStats.isCrucibleMode || playerStats.isPrestigeBossMode) {
             pushHeaderToast("Cannot challenge while in another activity!", "#e74c3c");
-            return;
-        }
-        if (playerStats.isPrestigeBossMode) {
-            pushHeaderToast("Ascension challenge already active!", "#e74c3c");
             return;
         }
 
@@ -6560,12 +6556,17 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         window.saveGame();
     };
     window.enterDungeon = function(type) {
+        if (playerStats.isDungeonMode || playerStats.isCrucibleMode || playerStats.isPrestigeBossMode) {
+            pushHeaderToast("Cannot enter: already in another activity!", "#e74c3c");
+            return;
+        }
         let countField = type + 'Keys'; let timeField = 'next' + type.charAt(0).toUpperCase() + type.slice(1) + 'KeyTime';
         if (playerStats[countField] < 1) { pushHeaderToast("Not enough keys!", "#e74c3c"); return; }
         
         let dNames = { 'equip': 'Equipment Dungeon', 'gold': 'Gold Mine', 'mat': 'Material Cavern' };
         
         playerStats.dungeonPeaks = playerStats.dungeonPeaks || { equip: 1, gold: 1, mat: 1 };
+        
         playerStats.currentDungeonStage = playerStats.currentDungeonStage || { equip: 1, gold: 1, mat: 1 };
         
         let checkpoint = Math.max(1, Math.floor((playerStats.dungeonPeaks[type] || 1) * 0.90));
@@ -6592,6 +6593,39 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let p = resolvePlayerStats(); playerStats.currentHp = p.maxHp;
         
         pushLog(`<span style='color:#8e44ad; font-weight:bold;'>[DUNGEON] Descended into the Infinite ${dNames[type]} at Stage ${checkpoint}!</span>`);
+        document.getElementById('dungeon-menu').style.display = 'none'; updateUI(); window.saveGame();
+    };
+
+    window.enterCrucible = function() {
+        if (playerStats.isDungeonMode || playerStats.isCrucibleMode || playerStats.isPrestigeBossMode) {
+            pushHeaderToast("Cannot enter: already in another activity!", "#e74c3c");
+            return;
+        }
+        let souls = inventory.ETC["Monster Soul"] || 0;
+        if (souls < 100) { pushHeaderToast("Requires 100 Monster Souls!", "#e74c3c"); return; }
+        
+        let checkpoint = Math.max(1, Math.floor((playerStats.cruciblePeak || 1) * 0.80));
+        if (!confirm(`Burn 100 Monster Souls to enter the Astral Crucible? Starting checkpoint: Wave ${checkpoint}`)) return;
+        
+        // Secure previous state prior to loading new parameters
+        saveCurrentActivityPeak();
+
+        inventory.ETC["Monster Soul"] -= 100;
+        if (inventory.ETC["Monster Soul"] === 0) delete inventory.ETC["Monster Soul"];
+        
+        playerStats.isCrucibleMode = true;
+        playerStats.isDungeonMode = false;
+        playerStats.crucibleWave = checkpoint;
+        playerStats.crucibleStartWave = checkpoint;
+        playerStats.killCount = 0;
+        playerStats.targetsRequired = 5;
+        playerStats.isBossMode = false;
+        playerStats.isUberBoss = false;
+        mob = null;
+        
+        let p = resolvePlayerStats(); playerStats.currentHp = p.maxHp;
+        
+        pushLog(`<span style='color:#9b59b6; font-weight:bold;'>[CRUCIBLE] Entered the Astral Crucible at Wave ${checkpoint}! Stand your ground!</span>`);
         document.getElementById('dungeon-menu').style.display = 'none'; updateUI(); window.saveGame();
     };
 
@@ -7806,7 +7840,10 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     };
 
     window.summonUberBoss = function() {
-        if (playerStats.isDungeonMode) { pushHeaderToast("Cannot summon inside a Dungeon!", "#e74c3c"); return; }
+        if (playerStats.isDungeonMode || playerStats.isCrucibleMode || playerStats.isPrestigeBossMode) {
+            pushHeaderToast("Cannot summon inside an activity!", "#e74c3c");
+            return;
+        }
         if (playerStats.isUberBoss || playerStats.isBossMode) { pushHeaderToast("Already in Boss Combat!", "#e74c3c"); return; }
         if (!inventory.ETC["Ancient Core"] || inventory.ETC["Ancient Core"] < 5) { pushHeaderToast("Requires 5 Ancient Cores!", "#e74c3c"); return; }
         
