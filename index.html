@@ -4813,10 +4813,14 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let expDisabled = p.prestigePoints < 1 ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
         let dropDisabled = p.prestigePoints < 1 ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
 
-        // Render a disabled and explanatory state if the player has prestiged but is currently under level 25
+        // Enforce progression limits: challenge requires reaching at least 85% of lifetime peak stage (minimum floor: Stage 25)
+        let requiredStage = Math.max(25, Math.floor((p.lifetimePeakStage || 1) * 0.85));
+        
         let challengeBtnHtml = "";
         if (p.level < 25) {
             challengeBtnHtml = `<button class="btn-action" style="background:#333; color:#777; border: 1px solid #444; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:not-allowed;" disabled>🔒 Requires Level 25 to Re-Challenge</button>`;
+        } else if (p.stage < requiredStage) {
+            challengeBtnHtml = `<button class="btn-action" style="background:#2c1a1a; color:#e74c3c; border: 1px solid #781c1c; font-weight:bold; font-size:11px; padding:8px 16px; border-radius:4px; cursor:not-allowed;" disabled>🔒 Push to Stage ${requiredStage} (Current: ${p.stage})</button>`;
         } else {
             challengeBtnHtml = `<button class="btn-action" style="background:#e74c3c; color:white; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:pointer;" onclick="challengeHooktail()">Challenge Prestige Boss</button>`;
         }
@@ -4908,6 +4912,13 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             pushHeaderToast("Requires Level 25!", "#e74c3c");
             return;
         }
+        
+        let requiredStage = Math.max(25, Math.floor((playerStats.lifetimePeakStage || 1) * 0.85));
+        if (playerStats.stage < requiredStage) {
+            pushHeaderToast(`Requires Campaign Stage ${requiredStage} to challenge Hooktail!`, "#e74c3c");
+            return;
+        }
+
         if (playerStats.isDungeonMode || playerStats.isCrucibleMode || playerStats.isPrestigeBossMode) {
             pushHeaderToast("Cannot challenge while in another activity!", "#e74c3c");
             return;
