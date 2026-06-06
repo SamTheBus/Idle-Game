@@ -3288,9 +3288,9 @@ window.onload = function() {
             c.lineWidth = 2.4 / Math.max(scaleX, scaleY);
             c.lineJoin = "round";
 
-            // Segment 1: Thigh / Hip Plate (Anchored at X=105 to connect off-screen)
+            // Segment 1: Thigh / Hip Plate (Anchored lower at Y=35 for extra reach)
             let hipX = 105;
-            let hipY = 32;
+            let hipY = 35;
             let thighAngle = Math.sin(Date.now() / 200) * 0.08; // Subtle breathing sway
 
             c.save();
@@ -3300,9 +3300,9 @@ window.onload = function() {
             c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#111116"; 
             c.beginPath();
             c.moveTo(0, 0);
-            c.quadraticCurveTo(-25, 3, -26, 23); // Knee Joint lands at local (-26, 23)
-            c.lineTo(-12, 30);
-            c.quadraticCurveTo(-6, 18, 4, 13);
+            c.quadraticCurveTo(-28, 4, -30, 28); // Knee Joint extended down to local (-30, 28)
+            c.lineTo(-14, 33);
+            c.quadraticCurveTo(-8, 20, 4, 13);
             c.closePath();
             c.fill();
             c.stroke();
@@ -3312,58 +3312,58 @@ window.onload = function() {
                 c.strokeStyle = "#ff3300";
                 c.lineWidth = 1.5;
                 c.beginPath();
-                c.moveTo(-16, 8);
-                c.lineTo(-20, 18);
-                c.lineTo(-14, 24);
+                c.moveTo(-18, 10);
+                c.lineTo(-22, 22);
+                c.lineTo(-15, 28);
                 c.stroke();
             }
 
             // Knee Cap Plate with forward-pointing spike (at knee joint)
             c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#d35400"; 
             c.beginPath();
-            c.moveTo(-26, 23);
-            c.lineTo(-38, 28); 
-            c.lineTo(-22, 32);
+            c.moveTo(-30, 28);
+            c.lineTo(-44, 32); 
+            c.lineTo(-24, 36);
             c.closePath();
             c.fill();
             c.stroke();
 
-            // Segment 2: Calf / Shin Section (Anchored at Knee Joint local: -26, 23)
+            // Segment 2: Calf / Shin Section (Anchored at Knee Joint local: -30, 28)
             c.save();
-            c.translate(-26, 23);
-            let shinAngle = Math.sin(Date.now() / 200 - 1.2) * 0.15; // Dynamic delayed phase swing
+            c.translate(-30, 28);
+            let shinAngle = Math.sin(Date.now() / 200 - 1.2) * 0.12; // Balanced angle swing so it touches floor
             c.rotate(shinAngle);
 
             c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#1b1b22";
             c.beginPath();
             c.moveTo(0, 0);
-            c.lineTo(-2, 14); // Ankle lands at local (-2, 14)
-            c.lineTo(12, 15);
+            c.lineTo(-3, 19); // Ankle lengthened to descend down to local (-3, 19)
+            c.lineTo(12, 20);
             c.lineTo(14, 0);
             c.closePath();
             c.fill();
             c.stroke();
 
-            // Segment 3: Foot, Claws & Talons (Relative to Ankle Joint local: -2, 14)
-            c.translate(-2, 14);
+            // Segment 3: Foot, Claws & Talons (Relative to Ankle Joint local: -3, 19)
+            c.translate(-3, 19);
 
-            // Heavy Front Claw (planted forward)
+            // Heavy Front Claw (planted forward, sloped to rest on the ground line)
             c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#d35400"; 
             c.beginPath();
             c.moveTo(0, 0); 
-            c.quadraticCurveTo(-18, -2, -26, 8); 
-            c.lineTo(-22, 9);
-            c.quadraticCurveTo(-11, 4, 4, 2);
+            c.quadraticCurveTo(-20, -1, -28, 5); 
+            c.lineTo(-24, 6);
+            c.quadraticCurveTo(-12, 3, 4, 1);
             c.closePath();
             c.fill();
             c.stroke();
 
-            // Front Talon Bone Tip
+            // Front Talon Bone Tip ( Firmly angled downwards to touch ground )
             c.fillStyle = "#ffeaa7";
             c.beginPath();
-            c.moveTo(-26, 8);
-            c.lineTo(-34, 10); 
-            c.lineTo(-22, 9);
+            c.moveTo(-28, 5);
+            c.lineTo(-38, 7); 
+            c.lineTo(-24, 6);
             c.closePath();
             c.fill();
             c.stroke();
@@ -3372,9 +3372,9 @@ window.onload = function() {
             c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#d35400";
             c.beginPath();
             c.moveTo(4, 1);
-            c.quadraticCurveTo(-6, 5, -10, 9); 
-            c.lineTo(-5, 10);
-            c.quadraticCurveTo(2, 6, 8, 2);
+            c.quadraticCurveTo(-6, 4, -12, 7); 
+            c.lineTo(-7, 8);
+            c.quadraticCurveTo(2, 5, 8, 2);
             c.closePath();
             c.fill();
             c.stroke();
@@ -3382,9 +3382,9 @@ window.onload = function() {
             // Middle Talon Bone Tip
             c.fillStyle = "#ffeaa7";
             c.beginPath();
-            c.moveTo(-10, 9);
-            c.lineTo(-16, 12); 
-            c.lineTo(-5, 10);
+            c.moveTo(-12, 7);
+            c.lineTo(-19, 10); 
+            c.lineTo(-7, 8);
             c.closePath();
             c.fill();
             c.stroke();
@@ -3393,9 +3393,9 @@ window.onload = function() {
             c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#111116";
             c.beginPath();
             c.moveTo(10, 2);
-            c.quadraticCurveTo(22, 1, 28, 6); 
-            c.lineTo(25, 7);
-            c.quadraticCurveTo(18, 5, 12, 2);
+            c.quadraticCurveTo(22, 1, 28, 5); 
+            c.lineTo(25, 6);
+            c.quadraticCurveTo(18, 4, 12, 2);
             c.closePath();
             c.fill();
             c.stroke();
@@ -3403,9 +3403,9 @@ window.onload = function() {
             // Rear Spur Bone Tip
             c.fillStyle = "#ffeaa7";
             c.beginPath();
-            c.moveTo(28, 6);
-            c.lineTo(33, 8); 
-            c.lineTo(25, 7);
+            c.moveTo(28, 5);
+            c.lineTo(33, 7); 
+            c.lineTo(25, 6);
             c.closePath();
             c.fill();
             c.stroke();
