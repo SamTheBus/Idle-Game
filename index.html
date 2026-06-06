@@ -1602,8 +1602,8 @@ window.onload = function() {
         { name: "Aegis Core", trait: "defense", desc: "Grants +10% Max HP and +15% Defense.", breakdown: "<strong>Iron Clad:</strong><br>• Mitigation: Grants a sturdy <span style='color:#3498db;'>+15% Defense</span> multiplier.<br>• Pool: Grants a hearty <span style='color:#e74c3c;'>+10% Max HP</span> multiplier.", maxHpPct: 0.10, defPct: 0.15, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
         { name: "Riposte Gauntlet", trait: "parry_strike", desc: "Parrying instantly counters for 100% damage. Passive +4% Parry Rate.", breakdown: "<strong>Lethal Deflection:</strong><br>• Counter Strike: Successful parries immediately hit back for full weapon power.<br>• Passive: Increases your base chance to parry by <span style='color:#e74c3c;'>+4%</span>.", parry: 0.04, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
         { name: "Phantom Blade", trait: "echo_strike", desc: "Attacks have 50% chance to hit a second time for 40% damage. Passive +5 Attack.", breakdown: "<strong>Echo Strike:</strong><br>• Phantom Hit: Every swing has a <span style='color:#9b59b6;'>50% chance</span> to trigger a secondary hit for 40% damage.<br>• Passive: <span style='color:#f1c40f;'>+5 Flat Attack</span>", atk: 5, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
-        { name: "Sloth's Blessing", trait: "idle_spd", desc: "Reduces Idle Attack delay by 15 frames. Passive +5% Gold Multiplier.", breakdown: "<strong>Lazy Haste:</strong><br>• Delay Reduction: Attacks trigger <span style='color:#3498db;'>15 frames</span> faster automatically.<br>• Passive: Adds <span style='color:#f1c40f;'>+5% Gold Multiplier</span>.", idleAttackSpeed: -15, goldMulti: 0.05, dropRate: 0, quality: 0, rareSpawn: 0, fairySpawn: 0 },
-        { name: "Zealot's Charm", trait: "active_spd", desc: "Reduces Active Attack cooldown limit. Passive +5% Crit Chance.", breakdown: "<strong>Feverish Swings:</strong><br>• Limit Reduction: Reduces minimum active click limit by <span style='color:#2ecc71;'>3 frames</span>.<br>• Passive: <span style='color:#e67e22;'>+5% Base Crit Chance</span>", activeAttackSpeed: -3, critChance: 0.05, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
+        { name: "Sloth's Blessing", trait: "idle_spd", desc: "Increases Idle Attack Speed by +35%. Passive +5% Gold Multiplier.", breakdown: "<strong>Lazy Haste:</strong><br>• Speed Increase: Attacks automatically trigger <span style='color:#3498db;'>35% faster</span>.<br>• Passive: Adds <span style='color:#f1c40f;'>+5% Gold Multiplier</span>.", idleAttackSpeed: 0.35, goldMulti: 0.05, dropRate: 0, quality: 0, rareSpawn: 0, fairySpawn: 0 },
+        { name: "Zealot's Charm", trait: "active_spd", desc: "Increases Active Attack Speed limit by +25%. Passive +5% Crit Chance.", breakdown: "<strong>Feverish Swings:</strong><br>• Speed Increase: Increases active clicking speed limit by <span style='color:#2ecc71;'>25%</span>.<br>• Passive: <span style='color:#e67e22;'>+5% Base Crit Chance</span>", activeAttackSpeed: 0.25, critChance: 0.05, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
         { name: "Survivor's Adrenaline", trait: "dodge_buff", desc: "Blocking/Parrying grants +100% Dmg for 10s. Passive +3% Block & Parry.", breakdown: "<strong>Adrenaline Rush:</strong><br>• Buff: Double your damage output temporarily on defensive procs.<br>• Passive: Adds <span style='color:#3498db;'>+3% Block Rate</span> and <span style='color:#e74c3c;'>+3% Parry Rate</span>.", block: 0.03, parry: 0.03, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
         { name: "Chrono Hourglass", trait: "extend_buffs", desc: "Extends all temporary buffs by 5 seconds. Passive +5 INT.", breakdown: "<strong>Chronology:</strong><br>• Buff Hold: Extends active Frenzy or Adrenaline by <span style='color:#f1c40f;'>5s</span>.<br>• Passive: Adds <span style='color:#9b59b6;'>+5 INT</span> to extend potion durations and boost defense.", int: 5, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
         { name: "Dimensional Pouch", trait: "bag_space", desc: "Expands equipment sack capacity to 50. Passive +10% Drop Rate.", breakdown: "<strong>Bottomless Bag:</strong><br>• Space: Expanded bag capacity.<br>• Passive: Adds <span style='color:#2ecc71;'>+10% Drop Rate</span> to help fill your larger satchel.", dropRate: 0.10, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
@@ -4319,6 +4319,7 @@ window.onload = function() {
        SET BONUS DEFINITIONS & HELPER SYSTEMS
        ========================================================================== */
     const SET_DEFINITIONS = {
+        const SET_DEFINITIONS = {
         Vanguard: {
             name: "Vanguard",
             bonuses: [
@@ -4344,7 +4345,7 @@ window.onload = function() {
             name: "Windrunner",
             bonuses: [
                 { count: 2, desc: "+5 Move Speed", apply: (p) => { p.moveSpeed += 5; } },
-                { count: 3, desc: "+15 Move Speed, -3 frames Idle Attack Speed", apply: (p) => { p.moveSpeed += 15; p.idleAttackSpeed -= 3; } }
+                { count: 3, desc: "+15 Move Speed, +15% Idle Attack Speed", apply: (p) => { p.moveSpeed += 15; p.idleSpeedPct = (p.idleSpeedPct || 0) + 0.15; } }
             ]
         },
         Wraith: {
@@ -4372,21 +4373,21 @@ window.onload = function() {
             name: "Duellist",
             bonuses: [
                 { count: 2, desc: "+2% Parry Rate", apply: (p) => { p.parry += 0.02; } },
-                { count: 3, desc: "+6% Parry Rate, -1 frame Active Attack Speed", apply: (p) => { p.parry += 0.06; p.activeAttackSpeed -= 1; } }
+                { count: 3, desc: "+6% Parry Rate, +10% Active Attack Speed", apply: (p) => { p.parry += 0.06; p.activeSpeedPct = (p.activeSpeedPct || 0) + 0.10; } }
             ]
         },
         Scholar: {
             name: "Scholar",
             bonuses: [
                 { count: 2, desc: "+5 INT", apply: (p) => { p.int += 5; } },
-                { count: 3, desc: "+15 INT, -1 frame Active Attack Speed", apply: (p) => { p.int += 15; p.activeAttackSpeed -= 1; } }
+                { count: 3, desc: "+15 INT, +10% Active Attack Speed", apply: (p) => { p.int += 15; p.activeSpeedPct = (p.activeSpeedPct || 0) + 0.10; } }
             ]
         },
         Berserker: {
             name: "Berserker",
             bonuses: [
                 { count: 2, desc: "+5 STR", apply: (p) => { p.str += 5; } },
-                { count: 3, desc: "+15 STR, -2 frames Idle Attack Speed", apply: (p) => { p.str += 15; p.idleAttackSpeed -= 2; } }
+                { count: 3, desc: "+15 STR, +10% Idle Attack Speed", apply: (p) => { p.str += 15; p.idleSpeedPct = (p.idleSpeedPct || 0) + 0.10; } }
             ]
         },
         Scout: {
@@ -4630,15 +4631,15 @@ function getStatBaseRange(item, statKey) {
         }
     }
     else if (statKey === "activeAttackSpeed") {
-        if (item.bonusActiveSpeed < 0) {
-            min += -2;
-            max += -1;
+        if (item.bonusActiveSpeed > 0) {
+            min += 0.04 * Math.sqrt(stageLevel) * rarityMult;
+            max += 0.10 * Math.sqrt(stageLevel) * rarityMult;
         }
     }
     else if (statKey === "idleAttackSpeed") {
-        if (item.bonusIdleSpeed < 0) {
-            min += -4;
-            max += -2;
+        if (item.bonusIdleSpeed > 0) {
+            min += 0.04 * Math.sqrt(stageLevel) * rarityMult;
+            max += 0.10 * Math.sqrt(stageLevel) * rarityMult;
         }
     }
     else if (statKey === "rareSpawn") {
@@ -4740,8 +4741,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         minStr = Math.floor(range.min * 100) + "%";
         maxStr = Math.floor(range.max * 100) + "%";
     } else if (statKey === "activeAttackSpeed" || statKey === "idleAttackSpeed") {
-        minStr = range.min + "f";
-        maxStr = range.max + "f";
+        minStr = Math.round(range.min * 100) + "%";
+        maxStr = Math.round(range.max * 100) + "%";
     } else if (["dropRate", "quality", "goldMulti", "fairySpawn"].includes(statKey)) {
         minStr = Math.floor(range.min * 100) + "%";
         maxStr = Math.floor(range.max * 100) + "%";
@@ -5975,8 +5976,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             if (item.rareSpawn > 0) item.rareSpawn = parseFloat((item.rareSpawn + tempers * 0.001).toFixed(4));
             if (item.fairySpawn > 0) item.fairySpawn = parseFloat((item.fairySpawn + tempers * 0.01).toFixed(4));
             
-            if (item.activeAttackSpeed < 0) item.activeAttackSpeed -= tempers * 1;
-            if (item.idleAttackSpeed < 0) item.idleAttackSpeed -= tempers * 2;
+            if (item.activeAttackSpeed > 0) item.activeAttackSpeed = parseFloat((item.bonusActiveSpeed * (1 + tempers * 0.04)).toFixed(4));
+            if (item.idleAttackSpeed > 0) item.idleAttackSpeed = parseFloat((item.bonusIdleSpeed * (1 + tempers * 0.04)).toFixed(4));
         }
 
         // 3. Re-apply mystical enchantments
@@ -6059,8 +6060,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             let rolled = randFloat(0.005, 0.015) * Math.sqrt(stageScale) * rarityMult * prestigeMult;
             item.bonusParry += parseFloat(Math.min(0.15, rolled).toFixed(4));
         }
-        else if (selectedStat === "activeSpd") item.bonusActiveSpeed -= randInt(1, 2); 
-        else if (selectedStat === "idleSpd") item.bonusIdleSpeed -= randInt(2, 4); 
+        else if (selectedStat === "activeSpd") item.bonusActiveSpeed += parseFloat((randFloat(0.04, 0.10) * Math.sqrt(stageScale) * rarityMult * prestigeMult).toFixed(4)); 
+        else if (selectedStat === "idleSpd") item.bonusIdleSpeed += parseFloat((randFloat(0.04, 0.10) * Math.sqrt(stageScale) * rarityMult * prestigeMult).toFixed(4)); 
         else if (selectedStat === "str") item.bonusStr += Math.ceil(randInt(1, 3) * stageScale * rarityMult * prestigeMult);
         else if (selectedStat === "dex") item.bonusDex += Math.ceil(randInt(1, 3) * stageScale * rarityMult * prestigeMult);
         else if (selectedStat === "int") item.bonusInt += Math.ceil(randInt(1, 3) * stageScale * rarityMult * prestigeMult);
@@ -6195,8 +6196,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 let rolled = randFloat(0.005, 0.015) * Math.sqrt(stageScale) * rarityMult * prestigeMult;
                 item.bonusParry += parseFloat(Math.min(0.15, rolled).toFixed(4));
             }
-            else if (selectedStat === "activeSpd") item.bonusActiveSpeed -= randInt(1, 2); 
-            else if (selectedStat === "idleSpd") item.bonusIdleSpeed -= randInt(2, 4); 
+            else if (selectedStat === "activeSpd") item.bonusActiveSpeed += parseFloat((randFloat(0.04, 0.10) * Math.sqrt(stageScale) * rarityMult * prestigeMult).toFixed(4)); 
+            else if (selectedStat === "idleSpd") item.bonusIdleSpeed += parseFloat((randFloat(0.04, 0.10) * Math.sqrt(stageScale) * rarityMult * prestigeMult).toFixed(4)); 
             else if (selectedStat === "str") item.bonusStr += Math.ceil(randInt(1, 3) * stageScale * rarityMult * prestigeMult);
             else if (selectedStat === "dex") item.bonusDex += Math.ceil(randInt(1, 3) * stageScale * rarityMult * prestigeMult);
             else if (selectedStat === "int") item.bonusInt += Math.ceil(randInt(1, 3) * stageScale * rarityMult * prestigeMult);
@@ -7247,14 +7248,17 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let itemDefPct = 0;
         let itemSpdPct = 0;
 
+        let idleSpeedPct = 0.0;
+        let activeSpeedPct = 0.0;
+
         for (let key in equippedSlots) {
             let item = equippedSlots[key];
             if (item) {
                 p.atk += (item.atk || 0); 
                 p.maxHp += (item.maxHp || 0); 
                 p.moveSpeed += (item.moveSpeed || 0);
-                p.idleAttackSpeed += (item.idleAttackSpeed || 0); 
-                p.activeAttackSpeed += (item.activeAttackSpeed || 0);
+                idleSpeedPct += (item.idleAttackSpeed || 0); 
+                activeSpeedPct += (item.activeAttackSpeed || 0);
                 p.drop += (item.dropRate || 0); 
                 p.qly += (item.quality || 0); 
                 p.gold += (item.goldMulti || 0);
@@ -7307,7 +7311,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         });
 
         let setCtx = {
-            atk: 0, maxHp: 0, moveSpeed: 0, idleAttackSpeed: 0, activeAttackSpeed: 0,
+            atk: 0, maxHp: 0, moveSpeed: 0, idleSpeedPct: 0, activeSpeedPct: 0,
             critChance: 0, critDamage: 0, block: 0, parry: 0,
             atkPctBonus: 0, maxHpPctBonus: 0, defPctBonus: 0, flatDefBonus: 0
         };
@@ -7326,8 +7330,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         p.atk += setCtx.atk;
         p.maxHp += setCtx.maxHp;
         p.moveSpeed += setCtx.moveSpeed;
-        p.idleAttackSpeed += setCtx.idleAttackSpeed;
-        p.activeAttackSpeed += setCtx.activeAttackSpeed;
+        idleSpeedPct += setCtx.idleSpeedPct;
+        activeSpeedPct += setCtx.activeSpeedPct;
         p.critChance += setCtx.critChance;
         p.critDamage += setCtx.critDamage;
         p.block += setCtx.block;
@@ -7422,22 +7426,31 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         if (playerStats.atkPotionTimer > 0) p.atk = Math.ceil(p.atk * (1 + (playerStats.atkPotionStrength || 0.10) * potStrengthMultiplier));
         if (playerStats.hpPotionTimer > 0) p.maxHp = Math.ceil(p.maxHp * (1 + (playerStats.hpPotionStrength || 0.10) * potStrengthMultiplier));
         if (playerStats.defPotionTimer > 0) p.def = Math.ceil(p.def * (1 + (playerStats.defPotionStrength || 0.10) * potStrengthMultiplier));
+        
+        // Haste Elixir: Adds positive speed percentages instead of flat frames
         if (playerStats.hastePotionTimer > 0) {
             let tier = playerStats.hastePotionStrength || 1;
             p.moveSpeed += Math.ceil(3 * tier * potStrengthMultiplier); 
-            p.activeAttackSpeed -= Math.ceil(2 * tier * potStrengthMultiplier);
-            p.idleAttackSpeed -= Math.ceil(4 * tier * potStrengthMultiplier);
+            activeSpeedPct += 0.10 * tier * potStrengthMultiplier;
+            idleSpeedPct += 0.10 * tier * potStrengthMultiplier;
         }
 
         if (checkArtifactTrait("move_speed")) p.moveSpeed += 10;
         if (checkArtifactTrait("gold_hoard")) p.gold += 0.50;
+        
+        // Unique Artifact Speed Multipliers
+        if (checkArtifactTrait("idle_spd")) idleSpeedPct += 0.35;
+        if (checkArtifactTrait("active_spd")) activeSpeedPct += 0.25;
+        
         if (checkArtifactTrait("cauldron_eternity") && (playerStats.atkPotionTimer > 0 || playerStats.hpPotionTimer > 0 || playerStats.defPotionTimer > 0 || playerStats.hastePotionTimer > 0)) {
-            p.idleAttackSpeed -= 3; // Attack 3 frames faster while buffed
+            idleSpeedPct += 0.08; // 8% faster
         }
 
-        if (p.idleAttackSpeed < 10) p.idleAttackSpeed = 10; 
-        if (p.activeAttackSpeed < 4) p.activeAttackSpeed = 4;
-        if (playerStats.frenzyTimer > 0) { p.critChance = 1.00; p.critDamage += 0.50; p.activeAttackSpeed = 4; p.idleAttackSpeed = 20; }
+        // Final Frequency Calculations (Base divided by Frequency Percentage)
+        p.idleAttackSpeed = Math.max(10, Math.round(60 / (1 + idleSpeedPct)));
+        p.activeAttackSpeed = Math.max(4, Math.round(15 / (1 + activeSpeedPct)));
+        
+        if (playerStats.frenzyTimer > 0) { p.critChance = 1.00; p.critDamage += 0.50; p.activeAttackSpeed = 4; p.idleAttackSpeed = 15; }
         
         if (p.block > maxBlockCap) p.block = maxBlockCap;
         if (p.parry > maxParryCap) p.parry = maxParryCap;
