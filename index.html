@@ -7292,8 +7292,20 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 p.atk += (item.atk || 0); 
                 p.maxHp += (item.maxHp || 0); 
                 p.moveSpeed += (item.moveSpeed || 0);
-                idleSpeedPct += (item.idleAttackSpeed || 0); 
-                activeSpeedPct += (item.activeAttackSpeed || 0);
+                
+                // Convert negative speed values (frame reductions) to positive decimal multipliers safely
+                let itemIdleSpeed = item.idleAttackSpeed || 0;
+                if (itemIdleSpeed < 0) {
+                    itemIdleSpeed = Math.abs(itemIdleSpeed) * 0.05; // -1 frame delay ≈ +5% speed increase
+                }
+                idleSpeedPct += itemIdleSpeed;
+
+                let itemActiveSpeed = item.activeAttackSpeed || 0;
+                if (itemActiveSpeed < 0) {
+                    itemActiveSpeed = Math.abs(itemActiveSpeed) * 0.05; // -1 frame delay ≈ +5% speed increase
+                }
+                activeSpeedPct += itemActiveSpeed;
+
                 p.drop += (item.dropRate || 0); 
                 p.qly += (item.quality || 0); 
                 p.gold += (item.goldMulti || 0);
@@ -7481,9 +7493,12 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             idleSpeedPct += 0.08; // 8% faster
         }
 
-        // Final Frequency Calculations (Base divided by Frequency Percentage)
-        p.idleAttackSpeed = Math.max(10, Math.round(60 / (1 + idleSpeedPct)));
-        p.activeAttackSpeed = Math.max(4, Math.round(15 / (1 + activeSpeedPct)));
+        // Final Frequency Calculations (Base divided by Frequency Percentage with division-by-zero safety shields)
+        let finalIdleDivisor = Math.max(0.1, 1 + idleSpeedPct);
+        let finalActiveDivisor = Math.max(0.1, 1 + activeSpeedPct);
+        
+        p.idleAttackSpeed = Math.max(10, Math.round(60 / finalIdleDivisor));
+        p.activeAttackSpeed = Math.max(4, Math.round(15 / finalActiveDivisor));
         
         if (playerStats.frenzyTimer > 0) { p.critChance = 1.00; p.critDamage += 0.50; p.activeAttackSpeed = 4; p.idleAttackSpeed = 15; }
         
