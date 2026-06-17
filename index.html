@@ -11986,7 +11986,7 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
 
             // Glowing hot orange fissures pulsing through stone cracks
             let fissurePulse = Math.sin(Date.now() / 150) * 0.2 + 0.8;
-            ctx.strokeStyle = `rgba(230, 126, 34, ${fissuePulse || fissurePulse})`;
+            ctx.strokeStyle = `rgba(230, 126, 34, ${fissurePulse})`;
             ctx.lineWidth = 2;
             for (let i = 100; i < canvas.width; i += 180) {
                 let ox = i - (groundScroll % 180);
