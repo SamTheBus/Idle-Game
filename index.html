@@ -10153,7 +10153,6 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                             life: randInt(10, 20)
                         });
                     }
-                    effects.push({ x: mob.x + mob.w / 2, y: mob.y - 12, text: "🩸 HEMORRHAGE (" + mob.bleedStacks + "/5)", color: "#c0392b", life: 30 });
                 }
             }
 
@@ -12560,6 +12559,29 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
                 ctx.strokeStyle = "#000000"; 
                 ctx.lineWidth = 2; 
                 ctx.strokeRect(barX, mob.y - 13, barW, 7);
+
+                // Static Stacking Debuff Emblem (Borderlands style)
+                if (mob.bleedStacks > 0) {
+                    let dotSize = 2.5;
+                    let dotSpacing = 4;
+                    let totalWidth = 5 * (dotSize * 2) + 4 * dotSpacing;
+                    let startDotX = barX + (barW - totalWidth) / 2;
+                    let dotY = mob.y - 2; // Positioned neatly under the bar
+                    
+                    for (let i = 0; i < 5; i++) {
+                        ctx.beginPath();
+                        ctx.arc(startDotX + i * (dotSize * 2 + dotSpacing) + dotSize, dotY, dotSize, 0, Math.PI * 2);
+                        if (i < mob.bleedStacks) {
+                            ctx.fillStyle = "#e74c3c"; // Crimson stack filled
+                        } else {
+                            ctx.fillStyle = "#2c3e50"; // Empty bracket
+                        }
+                        ctx.fill();
+                        ctx.strokeStyle = "#000000";
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                }
             }
         }
 
@@ -12956,6 +12978,32 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
             ctx.strokeText(bossName, canvas.width / 2, barY - 4);
             ctx.fillStyle = "#ffffff";
             ctx.fillText(bossName, canvas.width / 2, barY - 4);
+
+            // Static Boss Stacking Debuff Emblem (Borderlands style with subtle glow)
+            if (mob.bleedStacks > 0) {
+                let dotSize = 4;
+                let dotSpacing = 6;
+                let totalWidth = 5 * (dotSize * 2) + 4 * dotSpacing;
+                let startDotX = (canvas.width - totalWidth) / 2;
+                let dotY = barY + barH + 7; // Positioned neatly under the boss health bar
+                
+                for (let i = 0; i < 5; i++) {
+                    ctx.beginPath();
+                    ctx.arc(startDotX + i * (dotSize * 2 + dotSpacing) + dotSize, dotY, dotSize, 0, Math.PI * 2);
+                    if (i < mob.bleedStacks) {
+                        ctx.fillStyle = "#e74c3c"; // Crimson stack filled
+                        ctx.shadowColor = "#e74c3c";
+                        ctx.shadowBlur = 4;
+                    } else {
+                        ctx.fillStyle = "rgba(44, 62, 80, 0.7)"; // Empty bracket
+                    }
+                    ctx.fill();
+                    ctx.strokeStyle = "#000000";
+                    ctx.lineWidth = 1.2;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0; // Reset canvas shadow state immediately
+                }
+            }
             
             ctx.restore();
         }
