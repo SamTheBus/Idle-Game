@@ -3643,7 +3643,13 @@ window.onload = function() {
             c.fill();
             c.stroke();
 
-            else if (m.type === "boss" || m.type === "dungeon_boss" || m.type === "chronos_arbitrator" || m.type === "nexus_overseer" || m.type === "rift_guardian") {
+            c.restore(); // end Segment 2 (Calf & Foot)
+            c.restore(); // end Segment 1 (Thigh)
+            c.restore(); // end leg draw
+
+            c.restore(); // end master translate & scale
+        }
+        else if (m.type === "boss" || m.type === "dungeon_boss" || m.type === "chronos_arbitrator" || m.type === "nexus_overseer" || m.type === "rift_guardian") {
             c.lineWidth = 2.4;
 
             if (m.type === "dungeon_boss") {
