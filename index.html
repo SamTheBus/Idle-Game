@@ -12754,15 +12754,15 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
                         }
                     }
                 } else if (tier === 1) {
-                    if (s.type === 'grass') { 
-                        ctx.fillStyle = "#7f8c8d"; ctx.beginPath(); ctx.arc(sx, sy - 2*ss, 4*ss, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-                    } else if (s.type === 'flower') { 
-                        ctx.fillStyle = "#7f8c8d"; ctx.strokeStyle = "#5d6d7e"; ctx.lineWidth = 1;
-                        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 10*ss, sy - 12*ss); ctx.lineTo(sx + 10*ss, sy - 12*ss); ctx.closePath(); ctx.fill(); ctx.stroke();
-                    } else { 
-                        ctx.strokeStyle = "#5d6d7e"; ctx.lineWidth = 1.5;
-                        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 8*ss, sy - 15*ss); ctx.moveTo(sx, sy); ctx.lineTo(sx + 8*ss, sy - 18*ss); stroke();
-                    }
+                        if (s.type === 'grass') { 
+                            ctx.fillStyle = "#7f8c8d"; ctx.beginPath(); ctx.arc(sx, sy - 2*ss, 4*ss, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                        } else if (s.type === 'flower') { 
+                            ctx.fillStyle = "#7f8c8d"; ctx.strokeStyle = "#5d6d7e"; ctx.lineWidth = 1;
+                            ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 10*ss, sy - 12*ss); ctx.lineTo(sx + 10*ss, sy - 12*ss); ctx.closePath(); ctx.fill(); ctx.stroke();
+                        } else { 
+                            ctx.strokeStyle = "#5d6d7e"; ctx.lineWidth = 1.5;
+                            ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 8*ss, sy - 15*ss); ctx.moveTo(sx, sy); ctx.lineTo(sx + 8*ss, sy - 18*ss); ctx.stroke();
+                        }
                 } else if (tier === 2) {
                     if (s.type === 'grass') { 
                         let hover = (Date.now() / 15 + s.seed * 300) % 30; ctx.fillStyle = "rgba(231, 76, 60, " + (1 - hover/30) + ")";
