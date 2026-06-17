@@ -4586,7 +4586,7 @@ window.onload = function() {
                         // High-frequency jitter glitch offsets
                         let jitterX = Math.sin(Date.now() / 10) > 0.85 ? randFloat(-4, 4) : 0;
                         let jitterY = Math.sin(Date.now() / 8) > 0.85 ? randFloat(-3, 3) : 0;
-                        let px = cx + glitchOffset || cx + jitterX; // safe fallback inside loops
+                        let px = cx + jitterX; 
                         let py = cy + jitterY;
 
                         c.save();
