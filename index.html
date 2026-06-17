@@ -2855,7 +2855,7 @@ window.onload = function() {
                     // Tiny revolving brass gear centerpiece
                     c.save();
                     c.translate(cx, cy);
-                    c.rotate(Date.now() / 1500);
+                    c.rotate((Date.now() / 1500) % (Math.PI * 2));
                     c.fillStyle = "#f1c40f";
                     c.beginPath();
                     c.arc(0, 0, 4, 0, Math.PI * 2);
@@ -3809,11 +3809,11 @@ window.onload = function() {
                 };
 
                 // Draw secondary interlocking background gears
-                drawVectorGear(c, -35, -28, 22, 10, -(Date.now() / 400), "#7f8c8d"); // Left Iron Gear
-                drawVectorGear(c, 38, 24, 25, 12, (Date.now() / 500) + 0.5, "#d35400"); // Right Copper Gear
+                drawVectorGear(c, -35, -28, 22, 10, -((Date.now() / 400) % (Math.PI * 2)), "#7f8c8d"); // Left Iron Gear
+                drawVectorGear(c, 38, 24, 25, 12, ((Date.now() / 500) % (Math.PI * 2)) + 0.5, "#d35400"); // Right Copper Gear
 
                 // Draw central giant golden gear
-                drawVectorGear(c, 0, 0, 44, 16, Date.now() / 1500, "#f1c40f"); // Main Brass Gear
+                drawVectorGear(c, 0, 0, 44, 16, (Date.now() / 1500) % (Math.PI * 2), "#f1c40f"); // Main Brass Gear
 
                 // Ivory Altar Face Mask overlay
                 c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#fdf6e2";
@@ -3906,7 +3906,7 @@ window.onload = function() {
 
                 // 3D Orbital Projection scan ring
                 c.save();
-                let ringRot = Date.now() / 1000;
+                let ringRot = (Date.now() / 1000) % (Math.PI * 2);
                 c.rotate(Math.PI / 6);
                 c.strokeStyle = m.flashTimer > 0 ? "#ffffff" : "#00d2ff";
                 c.lineWidth = 1.5;
@@ -3916,7 +3916,7 @@ window.onload = function() {
                 c.restore();
 
                 // Double shifting cyber wireframe boxes (Tesseract)
-                c.rotate(Date.now() / 800);
+                c.rotate((Date.now() / 800) % (Math.PI * 2));
                 c.strokeStyle = m.flashTimer > 0 ? "#ffffff" : "#ff007f";
                 c.lineWidth = 2.0;
                 c.strokeRect(-16, -18, 32, 36); // Outer Box
@@ -4802,7 +4802,7 @@ window.onload = function() {
                         let cy = m.y + m.h / 2 + hover;
 
                         // Glowing brass gear halo
-                        let gearAngle = Date.now() / 4000;
+                        let gearAngle = (Date.now() / 4000) % (Math.PI * 2);
                         c.save();
                         c.translate(cx, cy);
                         c.rotate(gearAngle);
@@ -4868,13 +4868,13 @@ window.onload = function() {
                         c.lineWidth = 3.0;
                         c.lineCap = "round";
                         
-                        let hourAngle = Date.now() / 15000;
+                        let hourAngle = (Date.now() / 15000) % (Math.PI * 2);
                         c.beginPath();
                         c.moveTo(0, 0);
                         c.lineTo(Math.cos(hourAngle) * 16, Math.sin(hourAngle) * 16);
                         c.stroke();
                         
-                        let minAngle = Date.now() / 2500;
+                        let minAngle = (Date.now() / 2500) % (Math.PI * 2);
                         c.beginPath();
                         c.moveTo(0, 0);
                         c.lineTo(Math.cos(minAngle) * 24, Math.sin(minAngle) * 24);
@@ -10961,12 +10961,12 @@ function formatStatRangeStr(item, statKey, isPct = false) {
 
         // 1. Spawns the immediate individual hit indicator
         let hitColor = "#ecf0f1";
-        let hitText = amount.toLocaleString();
+        let hitText = window.formatNumber(amount);
         const icons = { slash: "⚔️", dagger: "🗡️", lightning: "⚡", fire: "🔥", frost: "❄️", echo: "👻", counter: "🛡️", bleed: "🩸" };
         
         if (isCrit) {
             hitColor = "#e74c3c";
-            hitText = "💥 " + amount.toLocaleString();
+            hitText = "💥 " + window.formatNumber(amount);
         } else {
             if (type === 'lightning') hitColor = "#f1c40f";
             else if (type === 'fire') hitColor = "#e67e22";
@@ -10996,7 +10996,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let existingTotal = effects.find(e => e.isCumulative && e.life > 0);
         if (existingTotal) {
             existingTotal.amount += amount;
-            existingTotal.text = `⚡ TOTAL: ${existingTotal.amount.toLocaleString()}`;
+            existingTotal.text = `⚡ TOTAL: ${window.formatNumber(existingTotal.amount)}`;
             existingTotal.life = 55; // Reset the decay timer
             existingTotal.x = mob.x + mob.w / 2 - 25;
             existingTotal.y = mob.y - 25;
@@ -11004,7 +11004,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             effects.push({
                 x: mob.x + mob.w / 2 - 25,
                 y: mob.y - 25,
-                text: `⚡ TOTAL: ${amount.toLocaleString()}`,
+                text: `⚡ TOTAL: ${window.formatNumber(amount)}`,
                 color: "#f1c40f", // Gold total indicator
                 life: 55,
                 isCumulative: true,
@@ -11052,7 +11052,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                     let healAmount = Math.ceil(p.maxHp * 0.10);
                     playerStats.currentHp = Math.min(p.maxHp, playerStats.currentHp + healAmount);
                     
-                    effects.push({ x: mob.x, y: mob.y - 20, text: "💥 RUPTURE! +" + healAmount.toLocaleString() + " HP", color: "#e74c3c", life: 65 });
+                    effects.push({ x: mob.x, y: mob.y - 20, text: "💥 RUPTURE! +" + window.formatNumber(healAmount) + " HP", color: "#e74c3c", life: 65 });
                     spawnDamageEffect(ruptureDmg, 'bleed', isRuptureCrit);
                     damageHistory.push({ time: Date.now(), amount: ruptureDmg });
                     
@@ -11213,7 +11213,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 let maxHealCap = Math.ceil(p.maxHp * 0.05);
                 if (heal > maxHealCap) heal = maxHealCap;
                 playerStats.currentHp = Math.min(p.maxHp, playerStats.currentHp + heal);
-                effects.push({ x: hero.x - 25, y: hero.y - 10, text: "❤️ +" + heal.toLocaleString(), color: "#2ecc71", life: 60 });
+                effects.push({ x: hero.x - 25, y: hero.y - 10, text: "❤️ +" + window.formatNumber(heal), color: "#2ecc71", life: 60 });
             }
             updateUI(); 
             if (mob.hp <= 0) handleMobDeath();
@@ -12289,7 +12289,7 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
 
                                     playerStats.currentHp -= netDamage;
                                     playerStats.damageTakenThisBattle = (playerStats.damageTakenThisBattle || 0) + netDamage;
-                                    effects.push({ x: hero.x, y: hero.y, text: "-" + netDamage.toLocaleString(), color: "#e74c3c", life: 40 });
+                                    effects.push({ x: hero.x, y: hero.y, text: "-" + window.formatNumber(netDamage), color: "#e74c3c", life: 40 });
                                     if (playerStats.currentHp <= 0) { 
                                         if (checkArtifactTrait("second_wind") && !playerStats.usedSecondWind) {
                                             playerStats.usedSecondWind = true; playerStats.currentHp = Math.floor(p.maxHp * 0.5);
