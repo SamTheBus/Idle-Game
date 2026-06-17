@@ -7980,18 +7980,6 @@ function formatStatRangeStr(item, statKey, isPct = false) {
 
     let chosenType = allowArtifact ? "artifact" : types[Math.floor(Math.random() * types.length)];
 
-    if (chosenType === "artifact") {
-        if (inventory.ARTIFACT.length >= maxBag) {
-            if(!silent) { pushHeaderToast(`Artifact Sack Full! Astral Essence gained.`, "#e74c3c"); addEtcDrop("Astral Essence", 1); }
-            return;
-        }
-    } else {
-        if (inventory.EQUIP.length >= maxBag) {
-            if(!silent) { pushHeaderToast(`Bag Full! Soul gained.`, "#e74c3c"); addEtcDrop(isBossKill ? "Ancient Core" : (isRareMob ? "Luminous Soul" : "Monster Soul"), 1); }
-            return;
-        }
-    }
-
     let statLinesCount = 0; let luckMultiplier = p.qly; let roll = Math.random() * 100;
         
         if (minStars === 1) {
@@ -8017,6 +8005,24 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         
         // Construct the item passing down the dynamic allowed target farm traits
         let newItem = createItemObject(chosenType, statLinesCount, stageScale, minStars, allowedTraits);
+        
+        // 1. Process Auto-Salvage Check First (keeps bags tidy before capacity check)
+        if (checkAutoSalvage(newItem, silent)) {
+            return;
+        }
+
+        // 2. Process Backpack Space Validation Only for Surviving Items
+        if (newItem.type === "artifact") {
+            if (inventory.ARTIFACT.length >= maxBag) {
+                if(!silent) { pushHeaderToast(`Artifact Sack Full! Astral Essence gained.`, "#e74c3c"); addEtcDrop("Astral Essence", 1); }
+                return;
+            }
+        } else {
+            if (inventory.EQUIP.length >= maxBag) {
+                if(!silent) { pushHeaderToast(`Bag Full! Soul gained.`, "#e74c3c"); addEtcDrop(isBossKill ? "Ancient Core" : (isRareMob ? "Luminous Soul" : "Monster Soul"), 1); }
+                return;
+            }
+        }
         
         if (!silent) {
             if (newItem.type === "artifact") {
