@@ -1055,6 +1055,21 @@
 <script>
 window.onload = function() {
 
+    // Tap Titans Suffix Engine (Handles massive scaling smoothly up to 10^308)
+    window.formatNumber = function(num) {
+        if (num === null || num === undefined || isNaN(num)) return "0";
+        if (num < 1000) {
+            return num % 1 === 0 ? num.toFixed(0) : num.toFixed(1);
+        }
+        const suffixes = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "aa", "ab", "ac", "ad", "ae", "af", "ag", "ah", "ai", "aj", "ak", "al", "am", "an", "ao", "ap", "aq", "ar", "as", "at", "au", "av", "aw", "ax", "ay", "az", "ba", "bb", "bc", "bd", "be", "bf", "bg", "bh", "bi", "bj", "bk", "bl", "bm", "bn", "bo", "bp", "bq", "br", "bs", "bt", "bu", "bv", "bw", "bx", "by", "bz"];
+        const i = Math.floor(Math.log10(num) / 3);
+        if (i >= suffixes.length) {
+            return num.toExponential(2); // Fallback to clean scientific notation (e.g. 1.23e120)
+        }
+        const formatted = (num / Math.pow(10, i * 3)).toFixed(2);
+        return `${formatted} ${suffixes[i]}`;
+    }
+
     // Procedural decoration asset definitions
     const flowerColors = ["#e74c3c", "#9b59b6", "#f1c40f", "#3498db", "#e67e22", "#e84393"];
     
@@ -2808,6 +2823,95 @@ window.onload = function() {
                     c.fill();
                 }
             }
+            else if (vType === "sand_beetle") {
+                // Tier 5 Sand Beetle (Clockwork mechanisms)
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h / 2 + Math.sin(Date.now() / 100) * 3;
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#dca04c";
+                c.beginPath();
+                c.ellipse(cx, cy, 12, 8, 0, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+                
+                // Little turning gears on its back
+                if (m.flashTimer === 0) {
+                    c.strokeStyle = "#111";
+                    c.lineWidth = 1;
+                    c.beginPath();
+                    c.arc(cx - 2, cy - 2, 3, 0, Math.PI * 2);
+                    c.stroke();
+                }
+            }
+            else if (vType === "temporal_watcher") {
+                // Tier 5 Floating Hourglass Entity
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h / 2 + Math.sin(Date.now() / 130) * 5;
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#2c3e50";
+                c.beginPath();
+                c.moveTo(cx - 8, cy - 12);
+                c.lineTo(cx + 8, cy - 12);
+                c.lineTo(cx - 4, cy);
+                c.lineTo(cx + 8, cy + 12);
+                c.lineTo(cx - 8, cy + 12);
+                c.lineTo(cx + 4, cy);
+                c.closePath();
+                c.fill();
+                c.stroke();
+            }
+            else if (vType === "clockwork_drone") {
+                // Tier 5 Mechanical Eye Drone
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h / 2 + Math.sin(Date.now() / 150) * 4;
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#f1c40f";
+                c.beginPath();
+                c.arc(cx, cy, 7, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+            }
+            else if (vType === "neon_spider") {
+                // Tier 6 Cyber Neon Spider (Glowing pink lines)
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h / 2;
+                c.strokeStyle = m.flashTimer > 0 ? "#ffffff" : "#ff007f";
+                c.lineWidth = 2.0;
+                c.beginPath();
+                c.arc(cx, cy, 6, 0, Math.PI * 2);
+                c.stroke();
+                // Spiky vector legs
+                for (let i = 0; i < 4; i++) {
+                    let side = i % 2 === 0 ? -1 : 1;
+                    let yDir = i < 2 ? -1 : 1;
+                    c.beginPath();
+                    c.moveTo(cx, cy);
+                    c.lineTo(cx + 12 * side, cy + 4 * yDir);
+                    c.lineTo(cx + 16 * side, cy + 14 * yDir);
+                    c.stroke();
+                }
+            }
+            else if (vType === "cyber_wraith") {
+                // Tier 6 Glitching Cyber Wraith
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h / 2 + Math.sin(Date.now() / 80) * 4;
+                let glitchOffset = Math.sin(Date.now() / 10) > 0.85 ? randFloat(-5, 5) : 0;
+                
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "rgba(46, 204, 113, 0.8)";
+                c.beginPath();
+                c.rect(cx - 10 + glitchOffset, cy - 14, 20, 28);
+                c.fill();
+                c.stroke();
+            }
+            else if (vType === "wireframe_orb") {
+                // Tier 6 Vector Wireframe Ring
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h / 2;
+                c.strokeStyle = m.flashTimer > 0 ? "#ffffff" : "#3498db";
+                c.lineWidth = 1.5;
+                c.save();
+                c.translate(cx, cy);
+                c.rotate(Date.now() / 600);
+                c.strokeRect(-10, -10, 20, 20);
+                c.restore();
+            }
 
             // Floating golden halo above the head of any rare creature
             if (m.isRare) {
@@ -4260,9 +4364,10 @@ window.onload = function() {
         if (st <= 100) return 1; // Peaks/Ruins (Stages 51 - 100)
         if (st <= 150) return 2; // Inferno (Stages 101 - 150)
         if (st <= 200) return 3; // Swamp (Stages 151 - 200)
-        return 4;                // Void (Stages 201+)
+        if (st <= 300) return 4; // Void (Stages 201 - 300)
+        if (st <= 400) return 5; // Temporal Sanctorum (Stages 301 - 400)
+        return 6;                // Cyberspace Nexus (Stages 401+)
     }
-
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
@@ -7850,13 +7955,15 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 let isRare = Math.random() < p.rareSpawn;
                 let hpMult = isRare ? 2.5 : 1; let dmgMult = isRare ? 1.5 : 1;
                 
-                // Refined, high-performance campaign enemy selection pool
+                // Refined, high-performance campaign enemy selection pool (expanded up to Tier 6)
                 let visualPool = {
                     0: ["slime", "sprout", "thorn_wyrm"],
                     1: ["golem", "wyrmling", "gargoyle"],
                     2: ["magma_elemental", "lava_serpent", "hell_bat"],
                     3: ["marsh_ghost", "swamp_basilisk", "toxic_fly"],
-                    4: ["void_orb", "void_crawler", "void_spectre"]
+                    4: ["void_orb", "void_crawler", "void_spectre"],
+                    5: ["sand_beetle", "temporal_watcher", "clockwork_drone"],
+                    6: ["neon_spider", "cyber_wraith", "wireframe_orb"]
                 };
                 let choices = visualPool[tier] || ["slime"];
                 let visualType = choices[Math.floor(Math.random() * choices.length)];
@@ -8315,13 +8422,13 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         }
 
         if (item.id !== "dummy") {
-            if (item.atk > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• ⚔️ Attack: +${item.atk.toLocaleString()}${getStatEnchantSuffix(item, 'atk')}${formatStatRangeStr(item, 'atk')}</div>`;
-            if (item.maxHp > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• ❤️ Max HP: +${item.maxHp.toLocaleString()}${getStatEnchantSuffix(item, 'maxHp')}${formatStatRangeStr(item, 'maxHp')}</div>`;
-            if (item.def > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 🛡️ Defense: +${item.def.toLocaleString()}${getStatEnchantSuffix(item, 'def')}${formatStatRangeStr(item, 'def')}</div>`;
-            if (item.moveSpeed > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 👟 Move Speed: +${item.moveSpeed.toLocaleString()}${getStatEnchantSuffix(item, 'moveSpeed')}${formatStatRangeStr(item, 'moveSpeed')}</div>`;
-            if (item.str > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 💪 STR (Strength): +${item.str.toLocaleString()}${getStatEnchantSuffix(item, 'str')}${formatStatRangeStr(item, 'str')}</div>`;
-            if (item.dex > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 🎯 DEX (Dexterity): +${item.dex.toLocaleString()}${getStatEnchantSuffix(item, 'dex')}${formatStatRangeStr(item, 'dex')}</div>`;
-            if (item.int > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 🧠 INT (Intelligence): +${item.int.toLocaleString()}${getStatEnchantSuffix(item, 'int')}${formatStatRangeStr(item, 'int')}</div>`;
+            if (item.atk > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• ⚔️ Attack: +${formatNumber(item.atk)}${getStatEnchantSuffix(item, 'atk')}${formatStatRangeStr(item, 'atk')}</div>`;
+            if (item.maxHp > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• ❤️ Max HP: +${formatNumber(item.maxHp)}${getStatEnchantSuffix(item, 'maxHp')}${formatStatRangeStr(item, 'maxHp')}</div>`;
+            if (item.def > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 🛡️ Defense: +${formatNumber(item.def)}${getStatEnchantSuffix(item, 'def')}${formatStatRangeStr(item, 'def')}</div>`;
+            if (item.moveSpeed > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 👟 Move Speed: +${formatNumber(item.moveSpeed)}${getStatEnchantSuffix(item, 'moveSpeed')}${formatStatRangeStr(item, 'moveSpeed')}</div>`;
+            if (item.str > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 💪 STR (Strength): +${formatNumber(item.str)}${getStatEnchantSuffix(item, 'str')}${formatStatRangeStr(item, 'str')}</div>`;
+            if (item.dex > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 🎯 DEX (Dexterity): +${formatNumber(item.dex)}${getStatEnchantSuffix(item, 'dex')}${formatStatRangeStr(item, 'dex')}</div>`;
+            if (item.int > 0) html += `<div class="tt-stat-line" style="color:#ecf0f1;">• 🧠 INT (Intelligence): +${formatNumber(item.int)}${getStatEnchantSuffix(item, 'int')}${formatStatRangeStr(item, 'int')}</div>`;
             
             if (item.critChance > 0) html += `<div class="tt-stat-line" style="color:#e67e22;">• ✨ Crit Chance: +${Math.floor(item.critChance*100)}%${getStatEnchantSuffix(item, 'critChance')}${formatStatRangeStr(item, 'critChance', true)}</div>`;
             if (item.critDamage > 0) html += `<div class="tt-stat-line" style="color:#f1c40f;">• 💥 Crit Multi: +${Math.floor(item.critDamage*100)}%${getStatEnchantSuffix(item, 'critDamage')}${formatStatRangeStr(item, 'critDamage', true)}</div>`;
@@ -10376,21 +10483,15 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         }
 
         let maxBag = getMaxBagSlots();
-        document.getElementById('hud-hp').innerText = `${Math.floor(playerStats.currentHp).toLocaleString()}/${Math.floor(p.maxHp).toLocaleString()}`; document.getElementById('hud-coins').innerText = Math.floor(playerStats.coins).toLocaleString();
+        document.getElementById('hud-hp').innerText = `${formatNumber(playerStats.currentHp)}/${formatNumber(p.maxHp)}`; document.getElementById('hud-coins').innerText = formatNumber(playerStats.coins);
         document.getElementById('hud-bag').innerText = `${inventory.EQUIP.length}/${maxBag} (A:${inventory.ARTIFACT.length})`; document.getElementById('hud-bag').style.color = (inventory.EQUIP.length >= maxBag || inventory.ARTIFACT.length >= maxBag) ? "#e74c3c" : "#2ecc71";
         document.getElementById('btn-bag-count').innerText = inventory.EQUIP.length; document.getElementById('btn-bag-max').innerText = maxBag;
-        let btnArtCount = document.getElementById('btn-art-count');
-        if (btnArtCount) btnArtCount.innerText = inventory.ARTIFACT.length;
-        let btnArtMax = document.getElementById('btn-art-max');
-        if (btnArtMax) btnArtMax.innerText = maxBag;
 
         
-        document.getElementById('stat-str').innerText = p.str.toLocaleString();
-        document.getElementById('stat-dex').innerText = p.dex.toLocaleString();
-        document.getElementById('stat-int').innerText = p.int.toLocaleString();
-
-        document.getElementById('stat-atk').innerText = p.atk.toLocaleString(); document.getElementById('stat-mhp').innerText = p.maxHp.toLocaleString(); 
-        document.getElementById('stat-def').innerText = p.def.toLocaleString(); document.getElementById('stat-mov').innerText = p.moveSpeed.toLocaleString();
+        let maxBag = getMaxBagSlots();
+        document.getElementById('hud-hp').innerText = `${formatNumber(playerStats.currentHp)}/${formatNumber(p.maxHp)}`; document.getElementById('hud-coins').innerText = formatNumber(playerStats.coins);
+        document.getElementById('hud-bag').innerText = `${inventory.EQUIP.length}/${maxBag} (A:${inventory.ARTIFACT.length})`; document.getElementById('hud-bag').style.color = (inventory.EQUIP.length >= maxBag || inventory.ARTIFACT.length >= maxBag) ? "#e74c3c" : "#2ecc71";
+        document.getElementById('btn-bag-count').innerText = inventory.EQUIP.length; document.getElementById('btn-bag-max').innerText = maxBag;
         document.getElementById('stat-crt').innerText = Math.floor(p.critChance * 100) + "%"; document.getElementById('stat-crd').innerText = Math.floor(p.critDamage * 100) + "%";
         document.getElementById('stat-blk').innerText = Math.floor(p.block * 100) + "%"; document.getElementById('stat-pry').innerText = Math.floor(p.parry * 100) + "%";
         document.getElementById('stat-ias').innerText = p.idleAttackSpeed + "f"; document.getElementById('stat-aas').innerText = p.activeAttackSpeed + "f";
@@ -11721,7 +11822,7 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
                 
                 ctx.fillStyle = "#07140c"; ctx.beginPath(); ctx.ellipse(50, 170, 80, 50, 0, 0, Math.PI*2); ctx.ellipse(750, 160, 90, 60, 0, 0, Math.PI*2); ctx.fill();
                 ctx.stroke();
-            } else {
+            } else if (tier === 4) {
                 // TIER 4: Proper Void Space / Starry Nebula background (Corrected to remove 'm' variable crash & shifted down)
                 let nebula = ctx.createRadialGradient(canvas.width / 2, 100, 5, canvas.width / 2, 100, 120); 
                 nebula.addColorStop(0, "rgba(155, 89, 182, 0.3)"); 
@@ -11765,6 +11866,70 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
                 ctx.ellipse(650, 140 - hover * 1.2, 35, 10, -Math.PI / 8, 0, Math.PI * 2); 
                 ctx.fill();
                 ctx.stroke();
+            } else if (tier === 5) {
+                // TIER 5: Temporal Sanctorum (Golden clockwork temporal rift & floating arches)
+                let goldenGlow = ctx.createLinearGradient(0, 0, 0, 230);
+                goldenGlow.addColorStop(0, "#1c1400");
+                goldenGlow.addColorStop(0.6, "#2d1f05");
+                goldenGlow.addColorStop(1, "#120a00");
+                ctx.fillStyle = goldenGlow;
+                ctx.fillRect(0, 0, canvas.width, 230);
+
+                // Slowly spinning brass background gears
+                let gearAngle = Date.now() / 4000;
+                ctx.save();
+                ctx.translate(canvas.width / 2 + 100, 80);
+                ctx.rotate(gearAngle);
+                ctx.strokeStyle = "#f1c40f";
+                ctx.lineWidth = 1.5;
+                ctx.fillStyle = "rgba(241, 196, 15, 0.05)";
+                ctx.beginPath();
+                ctx.arc(0, 0, 45, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                for (let i = 0; i < 8; i++) {
+                    ctx.rotate(Math.PI / 4);
+                    ctx.fillRect(-6, -55, 12, 10);
+                    ctx.strokeRect(-6, -55, 12, 10);
+                }
+                ctx.restore();
+
+                // Floating temporal marble columns
+                ctx.fillStyle = "#2d1a04";
+                ctx.strokeStyle = "#000000";
+                ctx.lineWidth = penFar;
+                let hover = Math.sin(Date.now() / 350) * 5;
+                ctx.beginPath();
+                ctx.roundRect(140, 40 + hover, 24, 110, [3]);
+                ctx.roundRect(580, 50 - hover, 20, 95, [3]);
+                ctx.fill();
+                ctx.stroke();
+            } else {
+                // TIER 6: Cyberspace Nexus (Neon vector grid and code matrix rain)
+                let cyberSky = ctx.createLinearGradient(0, 0, 0, 230);
+                cyberSky.addColorStop(0, "#01040a");
+                cyberSky.addColorStop(1, "#000000");
+                ctx.fillStyle = cyberSky;
+                ctx.fillRect(0, 0, canvas.width, 230);
+
+                // Grid horizon line elements converging at center
+                ctx.strokeStyle = "rgba(52, 152, 219, 0.25)";
+                ctx.lineWidth = 1.0;
+                let horizonY = 150;
+                for (let i = -100; i < canvas.width + 100; i += 60) {
+                    ctx.beginPath();
+                    ctx.moveTo(i, horizonY);
+                    ctx.lineTo(i * 1.8 - (canvas.width * 0.4), 230);
+                    ctx.stroke();
+                }
+
+                // Vertical digital matrix raindrops falling
+                ctx.fillStyle = "rgba(46, 204, 113, 0.45)";
+                for (let i = 0; i < 15; i++) {
+                    let rx = (i * 57) % canvas.width;
+                    let ry = (Date.now() / 6 + i * 35) % 190 + 40;
+                    ctx.fillRect(rx, ry, 1.2, 12);
+                }
             }
         }
 
