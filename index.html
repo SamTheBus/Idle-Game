@@ -4661,11 +4661,12 @@ window.onload = function() {
                 } 
 
                 if (m.flashTimer === 0) {
-                    c.fillStyle = "#ff007f";
-                    c.beginPath(); c.rect(m.x + 12, m.y + 7 + bounce, m.w - 24, 2); c.fill(); c.stroke();
+                            c.fillStyle = "#ff007f";
+                            c.beginPath(); c.rect(m.x + 12, m.y + 7 + bounce, m.w - 24, 2); c.fill(); c.stroke();
+                        }
+                    }
                 }
-            }
-        }
+    };
 
     // Render an interactive live preview of the nemesis who vanquished the hero
     function renderNemesisPreview(mobData) {
@@ -6749,11 +6750,11 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 item.name = `🔥 Phoenix Ignition Staff (Lv. ${stageScale})`;
                 item.desc = "Launches penetrating fireballs that deal 25% Attack damage (3s Cooldown).";
             } else {
-                mythicItem.isUniqueSword = true;
-                mythicItem.noun = "Sanguine Reaver";
-                mythicItem.setName = null;
-                mythicItem.name = `🩸 Crimson Sanguine Reaver (Lv. ${stageScale})`;
-                mythicItem.desc = "Strikes apply stacking Bleed (Max 5). Each stack ticks 4x per second. Striking at max stacks triggers Rupture, dealing 300% weapon damage and siphoning 10% Max HP.";
+                item.isUniqueSword = true;
+                item.noun = "Sanguine Reaver";
+                item.setName = null;
+                item.name = `🩸 Crimson Sanguine Reaver (Lv. ${stageScale})`;
+                item.desc = "Strikes apply stacking Bleed (Max 5). Each stack ticks 4x per second. Striking at max stacks triggers Rupture, dealing 300% weapon damage and siphoning 10% Max HP.";
             }
         }
 
