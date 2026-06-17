@@ -8483,7 +8483,34 @@ window.loadGame = function() {
         // Schedule sword swing SFX safely via user-gesture action
         SoundManager.play('swing');
         
-        hero.attackTimer = cooldownCap; executeHitCalculations();
+        hero.attackTimer = cooldownCap; 
+
+        // UNIQUE: Phoenix Staff Fireball on manual click / auto-slash
+        if (equippedSlots.weapon && equippedSlots.weapon.isUniqueStaff) {
+            projectiles.push({
+                x: hero.x + 35,
+                y: hero.y + 10,
+                r: 10,
+                hitMobs: [],
+                pulseOffset: Math.random() * 10
+            });
+            
+            // Spawn rapid fire sparks at staff head
+            for (let i = 0; i < 4; i++) {
+                particles.push({
+                    x: hero.x + 35,
+                    y: hero.y + 10,
+                    vx: randFloat(1, 3),
+                    vy: randFloat(-2, 2),
+                    radius: randFloat(1.5, 3),
+                    color: "#e67e22",
+                    alpha: 1,
+                    life: randInt(15, 25)
+                });
+            }
+        }
+
+        executeHitCalculations();
     };
 
     window.addEventListener('keydown', function(e) { if (e.code === 'Space' && !spacePressed) { e.preventDefault(); spacePressed = true; window.triggerPlayerSlash(); } });
