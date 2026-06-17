@@ -10634,20 +10634,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 html += `<div style="font-size:11px; color:#2ecc71; font-weight:bold; margin-bottom:15px;">✨ 100% Awakening Guaranteed</div>`;
                 html += `<button class="forge-anvil-button" style="width:100%; border-color:#e67e22;" ${(playerStats.coins >= costGold) && (playerScrap >= scrapReqAmount) ? '' : 'disabled'} onclick="temperItem()">Awaken Rarity</button>`;
             }
-        } else if (forgeMode === 'reset_enchant') {
-            let currentEnchants = item.totalEnchants || 0;
-            if (currentEnchants === 0) {
-                html += `<div style="color:#7f8c8d; font-weight:bold; text-align:center; padding: 20px 0; font-size:11px;">THIS ITEM HAS NO ACTIVE ENCHANTMENTS</div>`;
-            } else {
-                let resetGoldCost = 1000 * item.stageLevel * (item.statsRolled || 1);
-                let goldColor = playerStats.coins >= resetGoldCost ? "#f1c40f" : "#e74c3c";
-                
-                html += `<div style="font-size:11px; margin-bottom:10px; color:#aaa;">Active Enchantments to Purge: <span style="color:#9b59b6; font-weight:bold;">${currentEnchants}</span></div>`;
-                html += `<div style="font-size:11px; color:${goldColor}; margin-bottom:15px;">• ${formatNumber(resetGoldCost)} Gold Required (Owned: ${formatNumber(playerStats.coins)})</div>`;
-                html += `<div style="font-size:11px; color:#e74c3c; font-weight:bold; margin-bottom:15px;">⚠️ Restores all enchanted parameters to their original pre-enchanted values. Material scraps are non-refundable.</div>`;
-                html += `<button class="forge-anvil-button" style="width:100%; border-color:#e74c3c; background: linear-gradient(135deg, #c0392b, #111);" ${playerStats.coins >= resetGoldCost ? '' : 'disabled'} onclick="resetItemEnchants()">Purge Enchantments</button>`;
-            }
-        }
+        } else if (forgeMode === 'enchant') {
             let maxEnchants = getMaxEnchants(item);
             let currentEnchants = item.totalEnchants || 0;
             let maxT = getMaxTemper(item.statsRolled, item.type);
