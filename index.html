@@ -10164,6 +10164,10 @@ window.loadGame = function() {
             html += `<div class="tt-trait">${item.breakdown}</div>`;
             html += `<div style="font-weight:bold; color:#aaa; margin-top:8px; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Bonus Parameters:</div>`;
         } else if (item.id !== "dummy") {
+            let itemUniqueStyle = window.getUniqueItemStyle(item);
+            if (itemUniqueStyle && item.desc) {
+                html += `<div class="tt-stat-line" style="color:#ffeaa7; margin-bottom: 10px; white-space:normal; line-height:1.4; padding:6px; border:1px dashed ${itemUniqueStyle.border}; background:rgba(0,0,0,0.4); border-radius:4px;"><strong>• Unique Effect:</strong> ${item.desc}</div>`;
+            }
             if (item.totalEnchants > 0) {
                 html += `<div style="color:#9b59b6; font-size:10px; font-weight:bold; margin-bottom:6px; letter-spacing:0.5px; border: 1px dashed #9b59b6; padding: 3px; border-radius: 3px; background: rgba(155, 89, 182, 0.05); text-align: center;">🔮 MYSTICAL ENCHANTS: ${item.totalEnchants} ACTIVE</div>`;
             }
