@@ -1006,12 +1006,20 @@
                     <div class="market-card" style="border-color: #9b59b6;">
                         <div>
                             <h3 style="margin-top:0; color:#9b59b6; font-size:14px;">🔮 ANCIENT ALTAR</h3>
-                            <p style="font-size:11px; color:#aaa; min-height:36px;">Sacrifice Cores to spawn a Rift Guardian, or inspect the Artifact pool.</p>
+                            <p style="font-size:11px; color:#aaa; min-height:36px;">Sacrifice Cores to open a Reality Rift and hunt legendary Tiered Rift Bosses.</p>
                         </div>
                         <div>
                             <button class="btn-action forge" style="background:#2c3e50; border: 1px solid #9b59b6; margin-bottom: 8px;" onclick="document.getElementById('altar-modal').style.display='block'; buildAltarModal();">View Artifact Pool</button>
-                            <div style="font-weight:bold; color:#9b59b6; margin-bottom:5px; font-size:13px;">Cost: 5 Ancient Cores</div>
-                            <button class="btn-action forge" style="background:#9b59b6;" onclick="summonUberBoss()">Open Reality Rift</button>
+                            
+                            <!-- Rift Selection Dropdown -->
+                            <div style="font-size:11px; color:#9b59b6; font-weight:bold; margin-bottom:4px; text-align:left;">SELECT TARGET:</div>
+                            <select id="rift-hunt-select" style="width:100%; background:#111; color:#fff; border:1px solid #9b59b6; padding:6px; border-radius:4px; font-size:11px; font-weight:bold; margin-bottom:10px; cursor:pointer;">
+                                <option value="guardian">🌌 Tier 1: Rift Guardian (5 Cores)</option>
+                                <option value="chronos">⏳ Tier 2: Chronos Arbitrator (12 Cores / Lv 35+)</option>
+                                <option value="nexus">👾 Tier 3: Nexus Overseer (25 Cores / Lv 45+)</option>
+                            </select>
+                            
+                            <button class="btn-action forge" style="background:#9b59b6;" onclick="summonUberBossFromSelect()">Open Reality Rift</button>
                         </div>
                     </div>
                 </div>
@@ -2823,6 +2831,55 @@ window.onload = function() {
                     c.fill();
                 }
             }
+            else if (vType === "clockwork_scarab") {
+                // Tier 5 Clockwork Scarab (Highly detailed brass mechanical beetle)
+                let cx = m.x + m.w / 2;
+                let cy = m.y + m.h / 2 + Math.sin(Date.now() / 100) * 3;
+                
+                // Polished brass back plate
+                c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#dca04c";
+                c.beginPath();
+                c.ellipse(cx, cy, 12, 9, 0, 0, Math.PI * 2);
+                c.fill();
+                c.stroke();
+
+                if (m.flashTimer === 0) {
+                    // Gear lines/cog marks on its back
+                    c.strokeStyle = "#4d2e1a";
+                    c.lineWidth = 1.2;
+                    c.beginPath();
+                    c.moveTo(cx, cy - 9);
+                    c.lineTo(cx, cy + 9);
+                    c.stroke();
+
+                    // Tiny revolving brass gear centerpiece
+                    c.save();
+                    c.translate(cx, cy);
+                    c.rotate(Date.now() / 1500);
+                    c.fillStyle = "#f1c40f";
+                    c.beginPath();
+                    c.arc(0, 0, 4, 0, Math.PI * 2);
+                    c.fill();
+                    c.stroke();
+                    c.restore();
+                }
+                
+                // Gear-articulated brass legs
+                c.strokeStyle = "#7a5c1f";
+                c.lineWidth = 1.8;
+                for (let i = -1; i <= 1; i += 2) {
+                    let legSwing = Math.sin(Date.now() / 80 + i) * 3;
+                    c.beginPath();
+                    c.moveTo(cx + 6 * i, cy);
+                    c.lineTo(cx + (14 * i) + legSwing, cy + 6);
+                    c.stroke();
+                    
+                    c.beginPath();
+                    c.moveTo(cx + 6 * i, cy - 4);
+                    c.lineTo(cx + (15 * i) + legSwing, cy - 6);
+                    c.stroke();
+                }
+            }
             else if (vType === "sand_beetle") {
                 // Tier 5 Sand Beetle (Clockwork mechanisms)
                 let cx = m.x + m.w / 2;
@@ -3592,10 +3649,21 @@ window.onload = function() {
 
             c.restore(); // end master translate & scale
         }
-        else if (m.type === "boss" || m.type === "dungeon_boss") {
+        else if (m.type === "boss" || m.type === "dungeon_boss" || m.type === "chronos_arbitrator" || m.type === "nexus_overseer" || m.type === "rift_guardian") {
             c.lineWidth = 2.4;
 
             if (m.type === "dungeon_boss") {
+                // Dungeon specific visual blocks
+            } else {
+                // Standard campaign Area Bosses & Tiered Raid Hunts
+                let currentTier = t !== undefined ? t : getStageTier();
+                
+                // Map Rift Hunt types to their exact visual drawing loops
+                if (m.type === "rift_guardian") currentTier = 4;
+                if (m.type === "chronos_arbitrator") currentTier = 5;
+                if (m.type === "nexus_overseer") currentTier = 6;
+                
+                let bounce = 0; // Prevent ReferenceError
                 if (m.isCrucible) {
                     let bounce = Math.sin(Date.now() / 150) * 4;
                     let coreColor = m.flashTimer > 0 ? "#ffffff" : "#9b59b6";
@@ -4179,60 +4247,89 @@ window.onload = function() {
                 } // Closes the 'else if (currentTier === 1)' block
                 else {
                     let currentTier = t !== undefined ? t : getStageTier();
+                    
+                    // Route Rift Hunt types to their exact visual drawing loops
+                    if (m.type === "rift_guardian") currentTier = 4;
+                    if (m.type === "chronos_arbitrator") currentTier = 7;
+                    if (m.type === "nexus_overseer") currentTier = 8;
+
                     if (currentTier === 2) {
-                        // TIER 2: Inferno Magma Lord Boss (Brimstone skull, blazing crown, magma core)
+                        // TIER 2: Revamped Inferno Boss (Brimstone Colossus - Ignis)
                         let bounce = Math.sin(Date.now() / 150) * 3.5;
                         let cx = m.x + m.w / 2;
                         let cy = m.y + m.h / 2 + bounce;
 
-                        // Giant Molten Obsidian Torso with lava lines
-                        c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#110200";
+                        // Heavy Jagged Charcoal Obsidian shoulders (curved pauldrons)
+                        c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#1c1c1f"; // deep charcoal
                         c.beginPath();
-                        c.moveTo(cx - 24, cy + 40);
-                        c.lineTo(cx - 18, cy + 5);
-                        c.lineTo(cx + 18, cy + 5);
-                        c.lineTo(cx + 24, cy + 40);
+                        c.moveTo(cx - 28, cy + 30);
+                        c.lineTo(cx - 22, cy - 5);
+                        c.lineTo(cx - 32, cy - 14); // shoulder point
+                        c.lineTo(cx - 10, cy - 10);
+                        c.lineTo(cx, cy); // neck joint
+                        c.lineTo(cx + 10, cy - 10);
+                        c.lineTo(cx + 32, cy - 14); // shoulder point
+                        c.lineTo(cx + 22, cy - 5);
+                        c.lineTo(cx + 28, cy + 30);
                         c.closePath();
                         c.fill();
                         c.stroke();
 
-                        // Blazing Magma Core in chest
+                        // Glowing magma fissures running down the armor plates
                         if (m.flashTimer === 0) {
-                            let grad = c.createRadialGradient(cx, cy + 22, 2, cx, cy + 22, 16);
-                            grad.addColorStop(0, "#f1c40f");
-                            grad.addColorStop(0.4, "#e67e22");
-                            grad.addColorStop(1, "rgba(0,0,0,0)");
-                            c.fillStyle = grad;
-                            c.beginPath(); c.arc(cx, cy + 22, 16, 0, Math.PI*2); c.fill();
+                            c.strokeStyle = "#d35400";
+                            c.lineWidth = 2;
+                            c.beginPath();
+                            c.moveTo(cx - 20, cy + 10);
+                            c.lineTo(cx - 8, cy + 22);
+                            c.lineTo(cx - 14, cy + 26);
+                            c.moveTo(cx + 20, cy + 10);
+                            c.lineTo(cx + 8, cy + 22);
+                            c.lineTo(cx + 14, cy + 26);
+                            c.stroke();
                         }
 
-                        // Molten Brimstone Demon Skull Head
-                        c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#2d0b03";
+                        // Molten core in the center flaring
+                        if (m.flashTimer === 0) {
+                            let corePulse = 10 + Math.sin(Date.now() / 80) * 3;
+                            let coreGrad = c.createRadialGradient(cx, cy + 16, 2, cx, cy + 16, corePulse);
+                            coreGrad.addColorStop(0, "#ffffff");
+                            coreGrad.addColorStop(0.4, "#f39c12");
+                            coreGrad.addColorStop(1, "rgba(231, 76, 60, 0)");
+                            c.fillStyle = coreGrad;
+                            c.beginPath();
+                            c.arc(cx, cy + 16, corePulse, 0, Math.PI * 2);
+                            c.fill();
+                        }
+
+                        // Giant sulfur-horned helmet
+                        c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#2f3238";
                         c.beginPath();
-                        c.roundRect(cx - 16, cy - 20, 32, 25, [6]);
+                        c.roundRect(cx - 12, cy - 26, 24, 20, [3]);
                         c.fill();
                         c.stroke();
 
-                        // Molten Spiked Crown
+                        // Massive curved horns curling up from helmet
                         c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#e67e22";
                         c.beginPath();
-                        c.moveTo(cx - 16, cy - 20);
-                        c.lineTo(cx - 22, cy - 35);
-                        c.lineTo(cx - 8, cy - 23);
-                        c.lineTo(cx, cy - 38);
-                        c.lineTo(cx + 8, cy - 23);
-                        c.lineTo(cx + 22, cy - 35);
-                        c.lineTo(cx + 16, cy - 20);
+                        // Left
+                        c.moveTo(cx - 11, cy - 20);
+                        c.quadraticCurveTo(cx - 25, cy - 40, cx - 28, cy - 35);
+                        c.lineTo(cx - 8, cy - 14);
+                        c.closePath();
+                        // Right
+                        c.moveTo(cx + 11, cy - 20);
+                        c.quadraticCurveTo(cx + 25, cy - 40, cx + 28, cy - 35);
+                        c.lineTo(cx + 8, cy - 14);
                         c.closePath();
                         c.fill();
                         c.stroke();
 
+                        // Molten iron visor slit
                         if (m.flashTimer === 0) {
-                            // Blazing yellow boss eyes
-                            c.fillStyle = "#f1c40f";
+                            c.fillStyle = "#ff3b30";
                             c.beginPath();
-                            c.arc(cx - 5, cy - 10, 2.5, 0, Math.PI * 2);
-                            c.arc(cx + 5, cy - 10, 2.5, 0, Math.PI * 2);
+                            c.rect(cx - 8, cy - 18, 16, 3);
                             c.fill();
                         }
                     }
@@ -4273,8 +4370,8 @@ window.onload = function() {
                             c.fill();
                         }
                     }
-                    else {
-                        // TIER 4+: Void Overseer Boss (Levitating levitational multi-eyed space singularity)
+                    else if (currentTier === 4) {
+                        // TIER 4: Void Overseer Boss (Levitating levitational multi-eyed space singularity)
                         let hover = Math.sin(Date.now() / 140) * 6;
                         let cx = m.x + m.w / 2;
                         let cy = m.y + m.h / 2 - 10 + hover;
@@ -4310,6 +4407,249 @@ window.onload = function() {
                             c.arc(cx - 8, cy + 8, 1.8, 0, Math.PI*2);
                             c.arc(cx + 8, cy + 8, 1.8, 0, Math.PI*2);
                             c.fill();
+                        }
+                    }
+                    else if (currentTier === 5) {
+                        // TIER 5: Gilded Clockwork Sphinx (Temporal Sanctorum Campaign Warden)
+                        let bounce = Math.sin(Date.now() / 150) * 4;
+                        let cx = m.x + m.w / 2;
+                        let cy = m.y + m.h / 2 + bounce;
+
+                        // Sphinx lion torso & sand wings
+                        c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#dca04c";
+                        c.beginPath();
+                        c.ellipse(cx, cy + 15, 18, 22, 0, 0, Math.PI * 2);
+                        c.fill();
+                        c.stroke();
+
+                        // Golden Pharaoh Headdress
+                        c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#f1c40f";
+                        c.beginPath();
+                        c.moveTo(cx, cy - 28);
+                        c.lineTo(cx - 18, cy - 10);
+                        c.lineTo(cx - 12, cy + 6);
+                        c.lineTo(cx, cy - 2);
+                        c.lineTo(cx + 12, cy + 6);
+                        c.lineTo(cx + 18, cy - 10);
+                        c.closePath();
+                        c.fill();
+                        c.stroke();
+
+                        // Sphinx Face
+                        c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#e5c185";
+                        c.beginPath();
+                        c.roundRect(cx - 8, cy - 18, 16, 18, [3]);
+                        c.fill();
+                        c.stroke();
+
+                        if (m.flashTimer === 0) {
+                            // Blank white glowing eyes
+                            c.fillStyle = "#ffffff";
+                            c.shadowBlur = 6;
+                            c.shadowColor = "#ffffff";
+                            c.beginPath();
+                            c.arc(cx - 3.5, cy - 10, 1.8, 0, Math.PI * 2);
+                            c.arc(cx + 3.5, cy - 10, 1.8, 0, Math.PI * 2);
+                            c.fill();
+                            c.shadowBlur = 0;
+                        }
+                    }
+                    else if (currentTier === 6) {
+                        // TIER 6: Grid Centurion (Cyberspace Nexus Campaign Warden)
+                        let hover = Math.sin(Date.now() / 120) * 6;
+                        let cx = m.x + m.w / 2;
+                        let cy = m.y + m.h / 2 + hover;
+
+                        // Floating neon vector shield
+                        c.strokeStyle = m.flashTimer > 0 ? "#ffffff" : "#3498db";
+                        c.lineWidth = 1.5;
+                        c.save();
+                        c.translate(cx - 24, cy + 4);
+                        c.rotate(Date.now() / 500);
+                        c.strokeRect(-8, -8, 16, 16);
+                        c.restore();
+
+                        // Visor helmet
+                        c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#1a1c23";
+                        c.beginPath();
+                        c.roundRect(cx - 12, cy - 18, 24, 22, [4]);
+                        c.fill();
+                        c.stroke();
+
+                        if (m.flashTimer === 0) {
+                            // Visor
+                            c.fillStyle = "#00d2ff";
+                            c.beginPath();
+                            c.rect(cx - 8, cy - 11, 16, 4);
+                            c.fill();
+
+                            // Falling green matrix cape code blocks
+                            c.fillStyle = "rgba(46, 204, 113, 0.65)";
+                            for (let i = 0; i < 3; i++) {
+                                let offset = (i - 1) * 8;
+                                let yProgress = (Date.now() / 6 + i * 20) % 20;
+                                c.fillRect(cx + offset - 1, cy + 4 + yProgress, 2, 8);
+                            }
+                        }
+                    }
+                    else if (currentTier === 7) {
+                        // TIER 7: Chronos Arbitrator (The Clockwork God - exclusive T2 Altar Summon)
+                        let hover = Math.sin(Date.now() / 200) * 8;
+                        let cx = m.x + m.w / 2;
+                        let cy = m.y + m.h / 2 + hover;
+
+                        // Glowing brass gear halo
+                        let gearAngle = Date.now() / 4000;
+                        c.save();
+                        c.translate(cx, cy);
+                        c.rotate(gearAngle);
+                        c.strokeStyle = "#f1c40f";
+                        c.lineWidth = 2.0;
+                        c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "rgba(241, 196, 15, 0.08)";
+                        c.beginPath();
+                        c.arc(0, 0, 42, 0, Math.PI * 2);
+                        c.fill();
+                        c.stroke();
+                        for (let i = 0; i < 8; i++) {
+                            c.rotate(Math.PI / 4);
+                            c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#dca04c";
+                            c.beginPath();
+                            c.rect(-5, -50, 10, 10);
+                            c.fill();
+                            c.stroke();
+                        }
+                        c.restore();
+
+                        // Cracked Ivory Mask Plate
+                        c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#fdf6e2";
+                        c.strokeStyle = "#000000";
+                        c.lineWidth = 2.4;
+                        c.beginPath();
+                        c.moveTo(cx, cy - 25);
+                        c.quadraticCurveTo(cx - 20, cy - 20, cx - 20, cy);
+                        c.lineTo(cx - 12, cy + 28);
+                        c.lineTo(cx + 12, cy + 28);
+                        c.lineTo(cx + 20, cy);
+                        c.quadraticCurveTo(cx + 20, cy - 20, cx, cy - 25);
+                        c.closePath();
+                        c.fill();
+                        c.stroke();
+
+                        if (m.flashTimer === 0) {
+                            // Shimmering cracks
+                            c.strokeStyle = "#1a0f02";
+                            c.lineWidth = 1.5;
+                            c.beginPath();
+                            c.moveTo(cx - 10, cy - 10);
+                            c.lineTo(cx - 4, cy - 4);
+                            c.lineTo(cx - 8, cy + 2);
+                            c.moveTo(cx + 10, cy - 8);
+                            c.lineTo(cx + 6, cy - 2);
+                            c.stroke();
+
+                            // White glowing eyes
+                            c.fillStyle = "#ffffff";
+                            c.shadowBlur = 8;
+                            c.shadowColor = "#ffffff";
+                            c.beginPath();
+                            c.arc(cx - 6, cy - 5, 3, 0, Math.PI * 2);
+                            c.arc(cx + 6, cy - 5, 3, 0, Math.PI * 2);
+                            c.fill();
+                            c.shadowBlur = 0;
+                        }
+
+                        // Golden clock hands sweeping behind mask
+                        c.save();
+                        c.translate(cx, cy);
+                        c.strokeStyle = "#e67e22";
+                        c.lineWidth = 3.0;
+                        c.lineCap = "round";
+                        
+                        let hourAngle = Date.now() / 15000;
+                        c.beginPath();
+                        c.moveTo(0, 0);
+                        c.lineTo(Math.cos(hourAngle) * 16, Math.sin(hourAngle) * 16);
+                        c.stroke();
+                        
+                        let minAngle = Date.now() / 2500;
+                        c.beginPath();
+                        c.moveTo(0, 0);
+                        c.lineTo(Math.cos(minAngle) * 24, Math.sin(minAngle) * 24);
+                        c.stroke();
+                        c.restore();
+                    }
+                    else {
+                        // TIER 8+: Nexus Overseer (The Glitch Singularity - exclusive T3 Altar Summon)
+                        let cx = m.x + m.w / 2;
+                        let cy = m.y + m.h / 2;
+                        
+                        // High-frequency jitter glitch offsets
+                        let jitterX = Math.sin(Date.now() / 10) > 0.85 ? randFloat(-4, 4) : 0;
+                        let jitterY = Math.sin(Date.now() / 8) > 0.85 ? randFloat(-3, 3) : 0;
+                        let px = cx + glitchOffset || cx + jitterX; // safe fallback inside loops
+                        let py = cy + jitterY;
+
+                        c.save();
+                        c.translate(px, py);
+                        c.rotate(Date.now() / 800);
+                        c.strokeStyle = m.flashTimer > 0 ? "#ffffff" : "#ff007f";
+                        c.lineWidth = 2.0;
+                        
+                        // Cycle polyhedron models every 5 seconds
+                        let cycle = Math.floor(Date.now() / 5000) % 3;
+                        if (cycle === 0) {
+                            // Wireframe digital cube
+                            c.strokeRect(-18, -18, 36, 36);
+                            c.strokeRect(-12, -12, 24, 24);
+                            c.beginPath();
+                            c.moveTo(-18, -18); c.lineTo(-12, -12);
+                            c.moveTo(18, -18); c.lineTo(12, -12);
+                            c.moveTo(-18, 18); c.lineTo(-12, 12);
+                            c.moveTo(18, 18); c.lineTo(12, 12);
+                            c.stroke();
+                        } else if (cycle === 1) {
+                            // Wireframe digital pyramid
+                            c.beginPath();
+                            c.moveTo(0, -22); c.lineTo(-18, 14);
+                            c.lineTo(18, 14); c.closePath();
+                            c.moveTo(0, -22); c.lineTo(0, 18);
+                            c.lineTo(-18, 14);
+                            c.moveTo(0, 18); c.lineTo(18, 14);
+                            c.stroke();
+                        } else {
+                            // Wireframe icosahedron star segment
+                            c.beginPath();
+                            for (let i = 0; i < 5; i++) {
+                                let angle = (i * Math.PI * 2) / 5;
+                                c.lineTo(Math.cos(angle) * 22, Math.sin(angle) * 22);
+                            }
+                            c.closePath();
+                            c.stroke();
+                            
+                            c.beginPath();
+                            for (let i = 0; i < 5; i++) {
+                                let angle = (i * Math.PI * 2) / 5;
+                                c.moveTo(0, 0);
+                                c.lineTo(Math.cos(angle) * 22, Math.sin(angle) * 22);
+                            }
+                            c.stroke();
+                        }
+                        c.restore();
+
+                        // Blinking matrix green central eye
+                        if (m.flashTimer === 0) {
+                            let eyePulse = 6 + Math.sin(Date.now() / 150) * 1.5;
+                            c.fillStyle = "#00b894";
+                            c.beginPath();
+                            c.arc(px, py, eyePulse, 0, Math.PI * 2);
+                            c.fill();
+                            c.strokeStyle = "#000000";
+                            c.lineWidth = 1.5;
+                            c.stroke();
+                            
+                            // Neon pink vertical pupil
+                            c.fillStyle = "#ff007f";
+                            c.fillRect(px - 1.2, py - 4, 2.4, 8);
                         }
                     }
                 }
@@ -7924,21 +8264,42 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             let tier = getStageTier();
             if (playerStats.isBossMode) {
                 if (playerStats.isUberBoss) {
-                    // Rift Guardian (Uber Boss) HP bound to Standard Boss HP (60 * scale) scaled linearly by 3.0x
-                    let hp = Math.floor(3 * (60 * scale));
-                    let dmg = Math.floor((4 + (3 * dmgScale)) * 6.0);
+                    let bossType = playerStats.currentUberBoss || 'guardian';
+                    let hpMult = 3.0;
+                    let dmgMult = 6.0;
+                    let speedMult = 100;
+                    let mType = "rift_guardian";
+                    let logText = "You have entered the Aether Rift! **The Nameless Terror** has materialized!";
+                    
+                    if (bossType === 'chronos') {
+                        hpMult = 8.5; // Tier 2 has 8.5x Boss health scale
+                        dmgMult = 9.0; // 9.0x Damage
+                        speedMult = 90; // Slightly faster attack speed
+                        mType = "chronos_arbitrator";
+                        logText = "**Chronos Arbitrator** has stepped from the temporal flow!";
+                    } else if (bossType === 'nexus') {
+                        hpMult = 20.0; // Tier 3 is a legendary end-game raid boss!
+                        dmgMult = 15.0; // 15.0x Damage
+                        speedMult = 80; // Fast glitching attack speed
+                        mType = "nexus_overseer";
+                        logText = "**Nexus Overseer** has infected the reality stream!";
+                    }
+
+                    let hp = Math.floor(hpMult * (60 * scale));
+                    let dmg = Math.floor((4 + (3 * dmgScale)) * dmgMult);
+                    
                     mob = { 
                         x: 750, y: 115, w: 60, h: 100, 
-                        type: "rift_guardian", 
+                        type: mType, 
                         isRare: false, 
                         hp: hp, maxHp: hp, 
                         damage: dmg, 
                         flashTimer: 0, 
                         isStopped: false,
-                        attackCooldown: 100,
-                        attackTimer: 100
+                        attackCooldown: speedMult,
+                        attackTimer: speedMult
                     };
-                    pushLog(`<span style='color:#9b59b6; font-weight:bold;'>[VOID ENCOUNTER]</span> You have entered the Aether Rift! **The Nameless Terror** has materialized!`);
+                    pushLog(`<span style='color:#9b59b6; font-weight:bold;'>[RIFT HUNT]</span> ${logText}`);
                 } else {
                     // Standard Campaign Boss Buffed: Base HP increased to 60, Damage Multiplier to 5.8
                     let baseBossHp = 60 * scale;
@@ -7955,14 +8316,14 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 let isRare = Math.random() < p.rareSpawn;
                 let hpMult = isRare ? 2.5 : 1; let dmgMult = isRare ? 1.5 : 1;
                 
-                // Refined, high-performance campaign enemy selection pool (expanded up to Tier 6)
+                // Refined, high-performance campaign enemy selection pool
                 let visualPool = {
                     0: ["slime", "sprout", "thorn_wyrm"],
                     1: ["golem", "wyrmling", "gargoyle"],
                     2: ["magma_elemental", "lava_serpent", "hell_bat"],
                     3: ["marsh_ghost", "swamp_basilisk", "toxic_fly"],
                     4: ["void_orb", "void_crawler", "void_spectre"],
-                    5: ["sand_beetle", "temporal_watcher", "clockwork_drone"],
+                    5: ["clockwork_scarab", "temporal_watcher", "clockwork_drone"],
                     6: ["neon_spider", "cyber_wraith", "wireframe_orb"]
                 };
                 let choices = visualPool[tier] || ["slime"];
@@ -8332,29 +8693,74 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         rollGachaDrop(); updateUI(); renderInventory(); window.saveGame();
     };
 
-    window.summonUberBoss = function() {
+    window.summonUberBossFromSelect = function() {
+        let selectEl = document.getElementById('rift-hunt-select');
+        if (!selectEl) return;
+        let bossType = selectEl.value; // 'guardian', 'chronos', 'nexus'
+        window.summonUberBoss(bossType);
+    };
+
+    window.summonUberBoss = function(bossType = 'guardian') {
         if (playerStats.isDungeonMode || playerStats.isCrucibleMode || playerStats.isPrestigeBossMode) {
             pushHeaderToast("Cannot summon inside an activity!", "#e74c3c");
             return;
         }
         if (playerStats.isUberBoss || playerStats.isBossMode) { pushHeaderToast("Already in Boss Combat!", "#e74c3c"); return; }
-        if (!inventory.ETC["Ancient Core"] || inventory.ETC["Ancient Core"] < 5) { pushHeaderToast("Requires 5 Ancient Cores!", "#e74c3c"); return; }
         
-        if (!confirm("Sacrifice 5 Ancient Cores to summon the Enraged Rift Guardian?")) return;
+        let cost = 5;
+        let reqLvl = 1;
+        let bossName = "Enraged Rift Guardian";
+        
+        if (bossType === 'chronos') {
+            cost = 12;
+            reqLvl = 35;
+            bossName = "Chronos Arbitrator, The Timeless God";
+        } else if (bossType === 'nexus') {
+            cost = 25;
+            reqLvl = 45;
+            bossName = "Nexus Overseer, The Glitch Singularity";
+        }
+        
+        if (playerStats.level < reqLvl) {
+            pushHeaderToast(`🔒 Requires Level ${reqLvl} to summon this Hunt!`, "#e74c3c");
+            return;
+        }
+        
+        if (!inventory.ETC["Ancient Core"] || inventory.ETC["Ancient Core"] < cost) { 
+            pushHeaderToast(`Requires ${cost} Ancient Cores!`, "#e74c3c"); 
+            return; 
+        }
+        
+        if (!confirm(`Sacrifice ${cost} Ancient Cores to open the Rift for ${bossName}?`)) return;
 
-        inventory.ETC["Ancient Core"] -= 5; if (inventory.ETC["Ancient Core"] === 0) delete inventory.ETC["Ancient Core"];
+        inventory.ETC["Ancient Core"] -= cost; 
+        if (inventory.ETC["Ancient Core"] === 0) delete inventory.ETC["Ancient Core"];
         
-        playerStats.isBossMode = true; playerStats.isFarmingLoop = false; playerStats.isUberBoss = true; mob = null; 
-        let p = resolvePlayerStats(); playerStats.currentHp = p.maxHp; 
+        playerStats.isBossMode = true; 
+        playerStats.isFarmingLoop = false; 
+        playerStats.isUberBoss = true; 
+        playerStats.currentUberBoss = bossType; // Track active target
+        mob = null; 
         
-        pushLog("<span style='color:#9b59b6; font-weight:bold;'>[ALTAR] A reality rift tears open! An Enraged Rift Guardian approaches!</span>");
+        let p = resolvePlayerStats(); 
+        playerStats.currentHp = p.maxHp; 
         
-        // Trigger colossal rift tear screen effect
+        pushLog(`<span style='color:#9b59b6; font-weight:bold;'>[ALTAR] A dimensional rift tears open! ${bossName} approaches!</span>`);
+        
+        // Trigger colossal rift tear screen effect (with custom boss color mapping)
         if (typeof window.spawnPurchaseCelebration === "function") {
-            window.spawnPurchaseCelebration('altar', '#9b59b6', 'UNIQUE');
+            let rColors = { 'guardian': '#9b59b6', 'chronos': '#f1c40f', 'nexus': '#ff007f' };
+            window.spawnPurchaseCelebration('altar', rColors[bossType] || '#9b59b6', 'UNIQUE');
         }
 
-        updateUI(); renderInventory(); window.saveGame();
+        // Reset session combat achievement variables
+        playerStats.hasClickedThisBattle = false;
+        playerStats.damageTakenThisBattle = 0;
+        playerStats.ankhTriggeredThisBattle = false;
+
+        updateUI(); 
+        renderInventory(); 
+        window.saveGame();
     };
 
     function generateItemCardHtml(item, compareEq = null, isCurrentlyEquipped = false) {
@@ -9881,9 +10287,33 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         }
         
         if (playerStats.isUberBoss) {
-            addEtcDrop("Gacha Key", 1); pushToast("Gacha Key", null, "#f1c40f", true, 1);
+            let bossType = playerStats.currentUberBoss || 'guardian';
+            if (bossType === 'chronos') {
+                // Tier 2: Chronos Arbitrator Loot Pool
+                addEtcDrop("Gacha Key", 2);
+                addEtcDrop("Eridium Shard", randInt(2, 4));
+                addEtcDrop("Legendary Scrap", randInt(1, 3));
+                if (Math.random() < 0.40) {
+                    rollEquipmentDrop(true, false, 0, false); // Massive 40% flat artifact rate
+                }
+                pushLog("<span style='color:#f1c40f; font-weight:bold;'>[VICTORY] Chronos Arbitrator defeated! Salvaged high-tier Temporal components and Gacha Keys.</span>");
+                pushHeaderToast("⏳ Chronos Hunt Successful! +2 Keys", "#f1c40f");
+            } else if (bossType === 'nexus') {
+                // Tier 3: Nexus Overseer Loot Pool
+                addEtcDrop("Gacha Key", 3);
+                addEtcDrop("Catalyst Core", 1);
+                addEtcDrop("Mythic Scrap", randInt(1, 2));
+                // Guaranteed 4-star+ Gear Drop (drops Legendary/Mythic weapons or armor)
+                rollEquipmentDrop(true, false, 4, false);
+                pushLog("<span style='color:#ff007f; font-weight:bold;'>[VICTORY] Nexus Overseer purged! Harvested raw Catalyst Cores, Mythic scraps, and Legendary gear!</span>");
+                pushHeaderToast("👾 Nexus Purge Successful! +1 Catalyst Core", "#ff007f");
+            } else {
+                // Standard Tier 1 Rift Guardian Loot Pool
+                addEtcDrop("Gacha Key", 1); 
+                pushToast("Gacha Key", null, "#f1c40f", true, 1);
+            }
             playerStats.riftGuardiansSlain = (playerStats.riftGuardiansSlain || 0) + 1;
-        } else if (mob.type === "boss") { 
+        } else if (mob.type === "boss") {
             if (Math.random() < 0.40) { addEtcDrop("Ancient Core", 1); pushToast("Ancient Core", null, "#9b59b6", true, 1); }
             if (Math.random() < 0.10) { addEtcDrop("Eridium Shard", 1); pushToast("Eridium Shard", null, "#8e44ad", true, 1); }
         } else if (!isBoss && !playerStats.isDungeonMode) { 
@@ -13092,8 +13522,8 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
             ctx.restore();
         }
 
-        // --- ROW 2: CINEMATIC TOP-SCREEN BOSS HP BAR (Shifted to Y=52 to separate from Row 1) ---
-        if (mob && (mob.type === "boss" || mob.type === "dungeon_boss" || mob.type === "prestige_boss" || mob.type === "rift_guardian")) {
+        // --- CINEMATIC TOP-SCREEN BOSS HP BAR ---
+        if (mob && (mob.type === "boss" || mob.type === "dungeon_boss" || mob.type === "prestige_boss" || mob.type === "rift_guardian" || mob.type === "chronos_arbitrator" || mob.type === "nexus_overseer")) {
             ctx.save();
             
             let bossName = "Threat Detected";
@@ -13107,6 +13537,14 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
             } else if (mob.type === "rift_guardian") {
                 bossName = "Enraged Rift Guardian";
                 barColor = "#9b59b6";
+                barGlow = "#e84393";
+            } else if (mob.type === "chronos_arbitrator") {
+                bossName = "Chronos Arbitrator, The Timeless God";
+                barColor = "#f1c40f";
+                barGlow = "#dca04c";
+            } else if (mob.type === "nexus_overseer") {
+                bossName = "Nexus Overseer, The Glitch Singularity";
+                barColor = "#ff007f";
                 barGlow = "#e84393";
             } else if (mob.type === "dungeon_boss") {
                 if (mob.isCrucible) {
