@@ -5045,12 +5045,12 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                     mythicItem.name = `🔥 Phoenix Ignition Staff (Lv. ${stageScale})`;
                     mythicItem.desc = "Launches penetrating fireballs that deal 25% Attack damage (3s Cooldown).";
                 } else {
-                    mythicItem.isUniqueSword = true;
-                    mythicItem.noun = "Sanguine Reaver";
-                    mythicItem.setName = null;
-                    mythicItem.name = `🩸 Crimson Sanguine Reaver (Lv. ${stageScale})`;
-                    mythicItem.desc = "Sword attacks apply a 5-second Bleed effect dealing 10% of slash damage per second.";
-                }
+                mythicItem.isUniqueSword = true;
+                mythicItem.noun = "Sanguine Reaver";
+                mythicItem.setName = null;
+                mythicItem.name = `🩸 Crimson Sanguine Reaver (Lv. ${stageScale})`;
+                mythicItem.desc = "Strikes apply stacking Bleed (Max 5). Each stack ticks 4x per second. Striking at max stacks triggers Rupture, dealing 300% weapon damage and siphoning 10% Max HP.";
+            }
             }
         } else {
             let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
@@ -6300,12 +6300,12 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                 item.setName = null; // No set bonus
                 item.name = `🔥 Phoenix Ignition Staff (Lv. ${stageScale})`;
                 item.desc = "Launches penetrating fireballs that deal 25% Attack damage (3s Cooldown).";
-            } else if (randUnique < 0.30) {
-                item.isUniqueSword = true;
-                item.noun = "Sanguine Reaver";
-                item.setName = null; // No set bonus
-                item.name = `🩸 Crimson Sanguine Reaver (Lv. ${stageScale})`;
-                item.desc = "Sword attacks apply a 5-second Bleed effect dealing 10% of slash damage per second.";
+            } else {
+                mythicItem.isUniqueSword = true;
+                mythicItem.noun = "Sanguine Reaver";
+                mythicItem.setName = null;
+                mythicItem.name = `🩸 Crimson Sanguine Reaver (Lv. ${stageScale})`;
+                mythicItem.desc = "Strikes apply stacking Bleed (Max 5). Each stack ticks 4x per second. Striking at max stacks triggers Rupture, dealing 300% weapon damage and siphoning 10% Max HP.";
             }
         }
 
@@ -8237,6 +8237,26 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let badge = isCurrentlyEquipped ? `<div style="background:#c0392b; color:white; text-align:center; font-weight:bold; padding:3px; margin-bottom:8px; border-radius:3px; font-size:10px; letter-spacing: 1px;">CURRENTLY EQUIPPED</div>` : ``;
         html += badge;
 
+        // Custom variables for Diablo Uber Unique styled framing
+        let isUniqueWeapon = item.isUniqueSword || item.isUniqueStaff;
+        let cardBg = "";
+        let cardBorder = "";
+        let cardShadow = "";
+        let runicBadge = `<div style="color: #f1c40f; font-family: monospace; font-weight: 800; font-size: 10px; margin-bottom: 6px; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);">⚡ UBER UNIQUE ⚡</div>`;
+        let loreText = "";
+
+        if (item.isUniqueSword) {
+            cardBg = "linear-gradient(135deg, #1c0000, #070000)";
+            cardBorder = "2px solid #960018";
+            cardShadow = "inset 0 0 20px #5c000c, 0 0 15px rgba(150, 0, 24, 0.6)";
+            loreText = `<i>"Forged in the veins of the first red dragon, this blade sings a silent, thirsty song. It does not merely cut flesh; it harvests the soul's very current."</i>`;
+        } else if (item.isUniqueStaff) {
+            cardBg = "linear-gradient(135deg, #1c0e00, #070200)";
+            cardBorder = "2px solid #e67e22";
+            cardShadow = "inset 0 0 20px #853c00, 0 0 15px rgba(230, 126, 34, 0.6)";
+            loreText = `<i>"Born of a feather plucked from the solar phoenix, its core burns with the warmth of a thousand dying suns. Even in the deepest cold of the void, its fire never falters."</i>`;
+        }
+
         let tierColor = getTierColor(item.statsRolled); let titleColor = item.type === "artifact" ? "#1abc9c" : tierColor;
         let tierName = getTierName(item.statsRolled); let tierDisplay = item.statsRolled === "UNIQUE" ? "UNIQUE" : `${item.statsRolled}★ ${getTierName(item.statsRolled)}`;
         let labelDisplay = item.type.toUpperCase();
@@ -8369,6 +8389,18 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             });
             if (!hasDiffs) html += `<div class="tt-stat-line" style="color:#7f8c8d; font-style:italic;">No net difference.</div>`;
         }
+
+        // Apply Diablo Uber Unique styled full-card wrappers
+        if (isUniqueWeapon) {
+            if (loreText) {
+                html += `<div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #555; color: #ffb6c1; font-size: 9.5px; line-height: 1.35; font-style: italic; white-space: normal;">${loreText}</div>`;
+            }
+            html = `<div style="background: ${cardBg}; border: ${cardBorder}; box-shadow: ${cardShadow}; padding: 12px; margin: -10px; border-radius: 4px; box-sizing: border-box; min-width: 250px;">
+                ${runicBadge}
+                ${html}
+            </div>`;
+        }
+
         return html;
     }
 
@@ -10063,25 +10095,65 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             spawnDamageEffect(finalDamage, 'slash', isCrit);
             damageHistory.push({ time: Date.now(), amount: finalDamage });
 
-            // Apply Bleed DoT status if the Crimson Sanguine Reaver is equipped
+            // Stacking Bleed & Sanguine Rupture on hit
             if (equippedSlots.weapon && equippedSlots.weapon.isUniqueSword) {
-                let bleedDmg = Math.max(1, Math.ceil(finalDamage * 0.10));
-                mob.bleedTimer = 5; 
-                mob.bleedDmgPerSecond = bleedDmg;
-                mob.bleedTickCounter = 0; 
+                mob.bleedStacks = (mob.bleedStacks || 0) + 1;
+                mob.bleedTimer = 300; // 5-second hold
+                mob.bleedDmgPerSecond = Math.max(1, Math.ceil(p.atk * 0.15)); // 15% weapon scaling per stack
                 
-                // Spawn a bloody slash impact spray
-                for (let i = 0; i < 5; i++) {
-                    particles.push({
-                        x: mob.x + mob.w / 2,
-                        y: mob.y + mob.h / 2,
-                        vx: randFloat(-3, 3),
-                        vy: randFloat(-4, -1),
-                        radius: randFloat(1.5, 3.5),
-                        color: "#c0392b",
-                        alpha: 1,
-                        life: randInt(10, 20)
-                    });
+                if (mob.bleedStacks >= 5) {
+                    // HEMORRHAGIC RUPTURE (300% critical physical burst + 10% Max HP Life-Siphon)
+                    let ruptureDmg = Math.ceil(p.atk * 3.0);
+                    let isRuptureCrit = Math.random() < p.critChance;
+                    if (isRuptureCrit) ruptureDmg = Math.ceil(ruptureDmg * p.critDamage);
+                    
+                    mob.hp -= ruptureDmg;
+                    mob.flashTimer = 8;
+                    
+                    let healAmount = Math.ceil(p.maxHp * 0.10);
+                    playerStats.currentHp = Math.min(p.maxHp, playerStats.currentHp + healAmount);
+                    
+                    effects.push({ x: mob.x, y: mob.y - 20, text: "💥 RUPTURE! +" + healAmount.toLocaleString() + " HP", color: "#e74c3c", life: 65 });
+                    spawnDamageEffect(ruptureDmg, 'bleed', isRuptureCrit);
+                    damageHistory.push({ time: Date.now(), amount: ruptureDmg });
+                    
+                    // Trigger custom blood explosion physics particles
+                    for (let i = 0; i < 25; i++) {
+                        let angle = Math.random() * Math.PI * 2;
+                        let vel = randFloat(3, 7);
+                        particles.push({
+                            x: mob.x + mob.w / 2,
+                            y: mob.y + mob.h / 2,
+                            vx: Math.cos(angle) * vel,
+                            vy: Math.sin(angle) * vel - 1.5,
+                            radius: randFloat(2.0, 5.0),
+                            color: "#960018",
+                            alpha: 1,
+                            life: randInt(22, 38)
+                        });
+                    }
+                    
+                    SoundManager.play('death'); // Play heavy impact sound
+                    
+                    // Reset stacks on Rupture explosion
+                    mob.bleedStacks = 0;
+                    mob.bleedTimer = 0;
+                    mob.bleedTickCounter = 0;
+                } else {
+                    // Regular strike spray
+                    for (let i = 0; i < 6; i++) {
+                        particles.push({
+                            x: mob.x + mob.w / 2,
+                            y: mob.y + mob.h / 2,
+                            vx: randFloat(-3, 3),
+                            vy: randFloat(-4, -1),
+                            radius: randFloat(1.5, 3.5),
+                            color: "#c0392b",
+                            alpha: 1,
+                            life: randInt(10, 20)
+                        });
+                    }
+                    effects.push({ x: mob.x + mob.w / 2, y: mob.y - 12, text: "🩸 HEMORRHAGE (" + mob.bleedStacks + "/5)", color: "#c0392b", life: 30 });
                 }
             }
 
@@ -10971,26 +11043,30 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
             }
 
             if (mob.bleedTimer && mob.bleedTimer > 0) {
+                mob.bleedTimer--;
                 mob.bleedTickCounter = (mob.bleedTickCounter || 0) + 1;
-                if (mob.bleedTickCounter >= 60) {
+                if (mob.bleedTickCounter >= 15) { // Ticks 4x per second (buttery smooth cascade)
                     mob.bleedTickCounter = 0;
-                    mob.bleedTimer--;
                     
-                    let bleedDmg = mob.bleedDmgPerSecond || 1;
+                    let stacks = mob.bleedStacks || 1;
+                    let baseDmgPerSecond = mob.bleedDmgPerSecond || 1;
+                    // Divide damage by 4 because we are ticking at 4x frequency
+                    let bleedDmg = Math.max(1, Math.ceil((baseDmgPerSecond * stacks) / 4));
+                    
                     mob.hp -= bleedDmg;
                     mob.flashTimer = 5;
                     
-                    // Spawn cascading blood red droplets
-                    for (let i = 0; i < 4; i++) {
+                    // Spawn rapid-cascading blood red droplets
+                    for (let i = 0; i < 3; i++) {
                         particles.push({
                             x: mob.x + mob.w / 2 + randFloat(-10, 10),
                             y: mob.y + mob.h / 2 + randFloat(-10, 10),
-                            vx: randFloat(-1.2, 1.2),
-                            vy: randFloat(-3, -1),
-                            radius: randFloat(1.5, 3),
+                            vx: randFloat(-1.0, 1.0),
+                            vy: randFloat(-2.5, -0.5),
+                            radius: randFloat(1.2, 2.5),
                             color: "#960018", 
                             alpha: 1,
-                            life: randInt(15, 25)
+                            life: randInt(10, 18)
                         });
                     }
                     
