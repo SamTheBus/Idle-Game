@@ -14889,6 +14889,7 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
         ctx.beginPath(); ctx.rect(-9, -16 + bounce, 8, 4); ctx.fill(); ctx.stroke();
 
         // Main Weapon (Slash/Staff/Uniques mechanics)
+        ctx.save(); // Save character state before translating weapon space
         ctx.translate(2, 6 + bounce);
         let isStaff = equippedSlots.weapon && equippedSlots.weapon.isUniqueStaff;
         let isUniqueSword = equippedSlots.weapon && equippedSlots.weapon.isUniqueSword;
