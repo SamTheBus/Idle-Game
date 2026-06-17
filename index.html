@@ -11428,6 +11428,15 @@ function formatStatRangeStr(item, statKey, isPct = false) {
     function updateUI() {
         let p = resolvePlayerStats(); 
         
+        // Dynamic DOM bindings for Core Attributes & Matrix stats
+        document.getElementById('stat-str').innerText = p.str.toLocaleString();
+        document.getElementById('stat-dex').innerText = p.dex.toLocaleString();
+        document.getElementById('stat-int').innerText = p.int.toLocaleString();
+        document.getElementById('stat-atk').innerText = formatNumber(p.atk);
+        document.getElementById('stat-mhp').innerText = formatNumber(p.maxHp);
+        document.getElementById('stat-def').innerText = formatNumber(p.def);
+        document.getElementById('stat-mov').innerText = formatNumber(p.moveSpeed);
+        
         document.getElementById('char-level').innerText = playerStats.level.toLocaleString();
         document.getElementById('char-sp').innerText = playerStats.sp.toLocaleString();
         
