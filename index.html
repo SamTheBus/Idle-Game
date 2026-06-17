@@ -13543,8 +13543,7 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
         if (mob.hp < mob.maxHp && mob.type !== "boss" && mob.type !== "dungeon_boss" && mob.type !== "prestige_boss" && mob.type !== "rift_guardian" && mob.type !== "aegis_goliath" && mob.type !== "chronos_arbitrator" && mob.type !== "nexus_overseer") {
             // Floating health bars with trailing white damage-lag effect
             let barW = (mob.type === "boss" || mob.type === "dungeon_boss") ? 50 : mob.w;
-                let barW = (mob.type === "boss" || mob.type === "dungeon_boss") ? 50 : mob.w;
-                let barX = (mob.type === "boss" || mob.type === "dungeon_boss") ? mob.x - 7 : mob.x;
+            let barX = (mob.type === "boss" || mob.type === "dungeon_boss") ? mob.x - 7 : mob.x;
                 
                 // 1. Dark Charcoal Backing
                 ctx.fillStyle = "#111111";
