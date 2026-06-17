@@ -7109,7 +7109,13 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         renderMarketShop();
     }
 
-    return `<div class="shop-row ${shopItem.isIOTD ? 'iotd' : ''}" onmouseenter="showMarketTooltip(event, ${index})" onmouseleave="hideTooltip()" ontouchstart="showMarketTooltip(event, ${index})">
+    window.renderMarketShop = function() {
+        let el = document.getElementById('gold-shop-list');
+        if (!el) return;
+        el.innerHTML = playerStats.shopItems.map((shopItem, index) => {
+            let nameColor = getTierColor(shopItem.statsRolled);
+            let costColor = playerStats.coins >= shopItem.cost ? "#2ecc71" : "#e74c3c";
+            return `<div class="shop-row ${shopItem.isIOTD ? 'iotd' : ''}" onmouseenter="showMarketTooltip(event, ${index})" onmouseleave="hideTooltip()" ontouchstart="showMarketTooltip(event, ${index})">
                     <div>${shopItem.isIOTD ? '<span style="background:#f1c40f; color:#000; font-size:9px; font-weight:bold; padding:1px 3px; border-radius:2px;">ITEM OF THE DAY</span><br>' : ''}<strong style="color:${nameColor}; font-size:12px;">${shopItem.name}</strong><br><span style="font-size:10px; color:#aaa;">${shopItem.statsRolled}★ Quality</span></div>
                     <div style="text-align:right; position:relative; z-index:10;"><div style="color:${costColor}; font-weight:bold; font-size:11px; margin-bottom:4px;">${formatNumber(shopItem.cost)} Gold</div><button class="btn-action" style="${shopItem.purchased || playerStats.coins < shopItem.cost ? 'opacity:0.5; cursor:not-allowed; background:#444;' : 'background:#f1c40f; color:#000;'}" onclick="buyShopItem(${index})">${shopItem.purchased ? 'SOLD' : 'BUY'}</button></div>
                 </div>`;
