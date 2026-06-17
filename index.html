@@ -3349,7 +3349,7 @@ window.onload = function() {
             c.fill();
             c.stroke();
 
-            // Internal visual wing bones
+           // Internal visual wing bones
             c.strokeStyle = "#851c1c";
             c.lineWidth = 1.8;
             c.beginPath();
@@ -3616,7 +3616,7 @@ window.onload = function() {
             c.fillStyle = "#ffeaa7";
             c.beginPath();
             c.moveTo(-12, 7);
-            c.lineTo(-19, 10); 
+            c.lineTo(-19, 10);
             c.lineTo(-7, 8);
             c.closePath();
             c.fill();
@@ -3857,7 +3857,7 @@ window.onload = function() {
                 c.beginPath();
                 c.moveTo(0, 0);
                 c.lineTo(Math.cos(hrAngle) * 15, Math.sin(hrAngle) * 15);
-                ctx.stroke();
+                c.stroke();
 
                 let minAngle = Date.now() / 1800;
                 c.strokeStyle = "#d35400";
@@ -3948,16 +3948,14 @@ window.onload = function() {
                 c.restore();
             }
             else if (m.type === "dungeon_boss") {
-                let bounce = 0; // Prevent ReferenceError
+                let bounce = 0;
+                let coreColor = "#9b59b6";
+                let glowColor = "#e84393";
+                let shadowColor = "#1a052e";
+
                 if (m.isCrucible) {
-                    let bounce = Math.sin(Date.now() / 150) * 4;
-                    let coreColor = m.flashTimer > 0 ? "#ffffff" : "#9b59b6";
-                let bounce = 0; // Prevent ReferenceError
-                if (m.isCrucible) {
-                    let bounce = Math.sin(Date.now() / 150) * 4;
-                    let coreColor = m.flashTimer > 0 ? "#ffffff" : "#9b59b6";
-                    let glowColor = "#e84393";
-                    let shadowColor = "#1a052e";
+                    bounce = Math.sin(Date.now() / 150) * 4;
+                    coreColor = m.flashTimer > 0 ? "#ffffff" : "#9b59b6";
 
                     // 1. Floating Ethereal Ring
                     c.strokeStyle = glowColor;
@@ -4965,6 +4963,7 @@ window.onload = function() {
                         }
                     }
                 }
+        c.restore(); // Balance the top c.save() to prevent canvas transform matrix state stack overflow
     };
 
     // Render an interactive live preview of the nemesis who vanquished the hero
