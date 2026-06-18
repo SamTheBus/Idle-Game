@@ -40,6 +40,7 @@
             border: 2px solid var(--border-color); border-radius: 8px; overflow: visible;
             position: relative;
             box-sizing: border-box;
+            will-change: transform;
         }
         
         #top-nav {
@@ -485,7 +486,7 @@
             padding-left: 6px;
         }
 
-        #death-stats-grid {
+        .death-stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 8px;
@@ -635,7 +636,7 @@
                         <div style="color: #f1c40f; font-weight: bold; margin-bottom: 8px; font-size: 14px; text-align:center; border-bottom:1px solid #333; padding-bottom:5px;">🏰 Infinite Dungeons</div>
                         
                         <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; align-items:center;">
-                            <span style="color:#3498db; font-weight:bold;">⚔️ Equip: <span id="dk-equip">8</span>/8</span>
+                            <span style="color:#3498db; font-weight:bold;">⚔️ Equip: <span id="dk-equip">3</span>/3</span>
                             <span id="dt-equip" style="color:#aaa;">(Full)</span>
                         </div>
                         <div style="display:flex; justify-content:space-between; font-size:10px; color:#3498db; margin-bottom:4px; padding:0 2px; font-family: monospace;">
@@ -645,7 +646,7 @@
                         <button onclick="enterDungeon('equip')" style="width: 100%; background: #3498db; color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; margin-bottom:12px;">Enter Equipment Dungeon</button>
                         
                         <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; align-items:center;">
-                            <span style="color:#f1c40f; font-weight:bold;">💰 Gold: <span id="dk-gold">8</span>/8</span>
+                            <span style="color:#f1c40f; font-weight:bold;">💰 Gold: <span id="dk-gold">3</span>/3</span>
                             <span id="dt-gold" style="color:#aaa;">(Full)</span>
                         </div>
                         <div style="display:flex; justify-content:space-between; font-size:10px; color:#f1c40f; margin-bottom:4px; padding:0 2px; font-family: monospace;">
@@ -655,7 +656,7 @@
                         <button onclick="enterDungeon('gold')" style="width: 100%; background: #f1c40f; color: #111; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; margin-bottom:12px;">Enter Gold Mine Caverns</button>
                         
                         <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; align-items:center;">
-                            <span style="color:#2ecc71; font-weight:bold;">📦 Mats: <span id="dk-mat">8</span>/8</span>
+                            <span style="color:#2ecc71; font-weight:bold;">📦 Mats: <span id="dk-mat">3</span>/3</span>
                             <span id="dt-mat" style="color:#aaa;">(Full)</span>
                         </div>
                         <div style="display:flex; justify-content:space-between; font-size:10px; color:#2ecc71; margin-bottom:4px; padding:0 2px; font-family: monospace;">
@@ -684,7 +685,7 @@
                         
                         <div style="margin-bottom: 10px;">
                             <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
-                                <span style="color:#aaa;">Master Vol:</span>
+                                <label for="slider-vol-master" style="color:#aaa;">Master Vol:</label>
                                 <span id="vol-master-label" style="color:#3498db; font-weight:bold;">50%</span>
                             </div>
                             <input type="range" id="slider-vol-master" min="0" max="1" step="0.05" value="0.5" oninput="changeVolume('master', this.value)" style="width: 100%; background:#333; outline:none; height:4px; border-radius:2px; appearance:none; cursor:pointer;">
@@ -692,7 +693,7 @@
                         
                         <div style="margin-bottom: 12px;">
                             <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
-                                <span style="color:#aaa;">SFX Vol:</span>
+                                <label for="slider-vol-sfx" style="color:#aaa;">SFX Vol:</label>
                                 <span id="vol-sfx-label" style="color:#2ecc71; font-weight:bold;">80%</span>
                             </div>
                             <input type="range" id="slider-vol-sfx" min="0" max="1" step="0.05" value="0.8" oninput="changeVolume('sfx', this.value)" style="width: 100%; background:#333; outline:none; height:4px; border-radius:2px; appearance:none; cursor:pointer;">
@@ -743,21 +744,21 @@
             <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 12px;">
                 <button onclick="window.switchDevTab('dev-prog')" class="tab-btn active dev-tab-btn" id="btn-dev-prog" style="font-size:10px; padding: 4px; min-width: 0;">Progress</button>
                 <button onclick="window.switchDevTab('dev-currency')" class="tab-btn dev-tab-btn" id="btn-dev-currency" style="font-size:10px; padding: 4px; min-width: 0;">Currency</button>
-                <button onclick="window.switchDevTab('dev-items')" class="tab-btn dev-tab-btn" id="btn-dev-items" style="font-size:10px; padding: 4px; min-width: 0;">Items</button>
+                <button onclick="window.switchDevTab('dev-items'); window.buildDevArchitectUI();" class="tab-btn dev-tab-btn" id="btn-dev-items" style="font-size:10px; padding: 4px; min-width: 0;">Items</button>
                 <button onclick="window.switchDevTab('dev-cheats')" class="tab-btn dev-tab-btn" id="btn-dev-cheats" style="font-size:10px; padding: 4px; min-width: 0;">Cheats</button>
             </div>
 
             <div id="dev-prog" class="dev-tab-content" style="display:block;">
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
                     <div>
-                        <label style="font-size:11px; color:#aaa;">Hero Level:</label>
+                        <label for="dev-level-input" style="font-size:11px; color:#aaa;">Hero Level:</label>
                         <div style="display:flex; gap:4px; margin-top:4px;">
                             <input type="number" id="dev-level-input" style="width:100%; background:#222; color:#fff; border:1px solid #444; padding:4px; border-radius:3px;" value="1">
                             <button onclick="window.devSetLevel()" class="btn-action" style="background:var(--accent-blue);">SET</button>
                         </div>
                     </div>
                     <div>
-                        <label style="font-size:11px; color:#aaa;">Skill Points (SP):</label>
+                        <label for="dev-sp-input" style="font-size:11px; color:#aaa;">Skill Points (SP):</label>
                         <div style="display:flex; gap:4px; margin-top:4px;">
                             <input type="number" id="dev-sp-input" style="width:100%; background:#222; color:#fff; border:1px solid #444; padding:4px; border-radius:3px;" value="0">
                             <button onclick="window.devSetSP()" class="btn-action" style="background:var(--accent-blue);">SET</button>
@@ -766,17 +767,33 @@
                 </div>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
                     <div>
-                        <label style="font-size:11px; color:#aaa;">Campaign Stage:</label>
+                        <label for="dev-stage-input" style="font-size:11px; color:#aaa;">Campaign Stage:</label>
                         <div style="display:flex; gap:4px; margin-top:4px;">
                             <input type="number" id="dev-stage-input" style="width:100%; background:#222; color:#fff; border:1px solid #444; padding:4px; border-radius:3px;" value="1">
                             <button onclick="window.devSetStage()" class="btn-action" style="background:var(--accent-blue);">SET</button>
                         </div>
                     </div>
                     <div>
-                        <label style="font-size:11px; color:#aaa;">Max Stage Reached:</label>
+                        <label for="dev-maxstage-input" style="font-size:11px; color:#aaa;">Max Stage Reached:</label>
                         <div style="display:flex; gap:4px; margin-top:4px;">
                             <input type="number" id="dev-maxstage-input" style="width:100%; background:#222; color:#fff; border:1px solid #444; padding:4px; border-radius:3px;" value="1">
                             <button onclick="window.devSetMaxStage()" class="btn-action" style="background:var(--accent-blue);">SET</button>
+                        </div>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                    <div>
+                        <label for="dev-prestige-input" style="font-size:11px; color:#aaa;">Total Ascensions (Prestige):</label>
+                        <div style="display:flex; gap:4px; margin-top:4px;">
+                            <input type="number" id="dev-prestige-input" style="width:100%; background:#222; color:#fff; border:1px solid #444; padding:4px; border-radius:3px;" value="0">
+                            <button onclick="window.devSetPrestige()" class="btn-action" style="background:var(--accent-blue);">SET</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="dev-pp-input" style="font-size:11px; color:#aaa;">Prestige Points (PP):</label>
+                        <div style="display:flex; gap:4px; margin-top:4px;">
+                            <input type="number" id="dev-pp-input" style="width:100%; background:#222; color:#fff; border:1px solid #444; padding:4px; border-radius:3px;" value="0">
+                            <button onclick="window.devSetPP()" class="btn-action" style="background:var(--accent-blue);">SET</button>
                         </div>
                     </div>
                 </div>
@@ -785,56 +802,56 @@
             <div id="dev-currency" class="dev-tab-content" style="display:none;">
                 <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; margin-bottom:10px;">
                     <div style="background:#222; padding:6px; border-radius:4px;">
-                        <div style="font-size:11px; color:#fff; font-weight:bold; margin-bottom:4px;">Gold</div>
+                        <label for="dev-gold-val" style="display:block; font-size:11px; color:#fff; font-weight:bold; margin-bottom:4px;">Gold</label>
                         <div style="display:flex; gap:4px;">
                             <input type="number" id="dev-gold-val" value="100000" style="width:100%; background:#111; color:#fff; border:1px solid #444; padding:2px;">
                             <button onclick="window.devAddCurrency('gold')" class="btn-action" style="background:var(--accent-green);">+ADD</button>
                         </div>
                     </div>
                     <div style="background:#222; padding:6px; border-radius:4px;">
-                        <div style="font-size:11px; color:#ffb6c1; font-weight:bold; margin-bottom:4px;">Luminous Souls</div>
+                        <label for="dev-luminous-val" style="display:block; font-size:11px; color:#ffb6c1; font-weight:bold; margin-bottom:4px;">Luminous Souls</label>
                         <div style="display:flex; gap:4px;">
                             <input type="number" id="dev-luminous-val" value="50" style="width:100%; background:#111; color:#fff; border:1px solid #444; padding:2px;">
                             <button onclick="window.devAddCurrency('luminous')" class="btn-action" style="background:var(--accent-green);">+ADD</button>
                         </div>
                     </div>
                     <div style="background:#222; padding:6px; border-radius:4px;">
-                        <div style="font-size:11px; color:#fff; font-weight:bold; margin-bottom:4px;">Monster Souls</div>
+                        <label for="dev-monster-val" style="display:block; font-size:11px; color:#fff; font-weight:bold; margin-bottom:4px;">Monster Souls</label>
                         <div style="display:flex; gap:4px;">
                             <input type="number" id="dev-monster-val" value="500" style="width:100%; background:#111; color:#fff; border:1px solid #444; padding:2px;">
                             <button onclick="window.devAddCurrency('monster')" class="btn-action" style="background:var(--accent-green);">+ADD</button>
                         </div>
                     </div>
                     <div style="background:#222; padding:6px; border-radius:4px;">
-                        <div style="font-size:11px; color:#8e44ad; font-weight:bold; margin-bottom:4px;">Eridium Shards</div>
+                        <label for="dev-eridium-val" style="display:block; font-size:11px; color:#8e44ad; font-weight:bold; margin-bottom:4px;">Eridium Shards</label>
                         <div style="display:flex; gap:4px;">
                             <input type="number" id="dev-eridium-val" value="20" style="width:100%; background:#111; color:#fff; border:1px solid #444; padding:2px;">
                             <button onclick="window.devAddCurrency('eridium')" class="btn-action" style="background:var(--accent-green);">+ADD</button>
                         </div>
                     </div>
                     <div style="background:#222; padding:6px; border-radius:4px;">
-                        <div style="font-size:11px; color:#9b59b6; font-weight:bold; margin-bottom:4px;">Astral Essence</div>
+                        <label for="dev-astral-val" style="display:block; font-size:11px; color:#9b59b6; font-weight:bold; margin-bottom:4px;">Astral Essence</label>
                         <div style="display:flex; gap:4px;">
                             <input type="number" id="dev-astral-val" value="10" style="width:100%; background:#111; color:#fff; border:1px solid #444; padding:2px;">
                             <button onclick="window.devAddCurrency('astral')" class="btn-action" style="background:var(--accent-green);">+ADD</button>
                         </div>
                     </div>
                     <div style="background:#222; padding:6px; border-radius:4px;">
-                        <div style="font-size:11px; color:#2ecc71; font-weight:bold; margin-bottom:4px;">Catalyst Cores</div>
+                        <label for="dev-catalyst-val" style="display:block; font-size:11px; color:#2ecc71; font-weight:bold; margin-bottom:4px;">Catalyst Cores</label>
                         <div style="display:flex; gap:4px;">
                             <input type="number" id="dev-catalyst-val" value="10" style="width:100%; background:#111; color:#fff; border:1px solid #444; padding:2px;">
                             <button onclick="window.devAddCurrency('catalyst')" class="btn-action" style="background:var(--accent-green);">+ADD</button>
                         </div>
                     </div>
                     <div style="background:#222; padding:6px; border-radius:4px;">
-                        <div style="font-size:11px; color:#f1c40f; font-weight:bold; margin-bottom:4px;">Gacha Keys</div>
+                        <label for="dev-gachakeys-val" style="display:block; font-size:11px; color:#f1c40f; font-weight:bold; margin-bottom:4px;">Gacha Keys</label>
                         <div style="display:flex; gap:4px;">
                             <input type="number" id="dev-gachakeys-val" value="5" style="width:100%; background:#111; color:#fff; border:1px solid #444; padding:2px;">
                             <button onclick="window.devAddCurrency('gachakeys')" class="btn-action" style="background:var(--accent-green);">+ADD</button>
                         </div>
                     </div>
                     <div style="background:#222; padding:6px; border-radius:4px;">
-                        <div style="font-size:11px; color:#9b59b6; font-weight:bold; margin-bottom:4px;">Prestige Points (PP)</div>
+                        <label for="dev-pp-val" style="display:block; font-size:11px; color:#9b59b6; font-weight:bold; margin-bottom:4px;">Prestige Points (PP)</label>
                         <div style="display:flex; gap:4px;">
                             <input type="number" id="dev-pp-val" value="5" style="width:100%; background:#111; color:#fff; border:1px solid #444; padding:2px;">
                             <button onclick="window.devAddCurrency('pp')" class="btn-action" style="background:var(--accent-green);">+ADD</button>
@@ -845,9 +862,23 @@
 
             <div id="dev-items" class="dev-tab-content" style="display:none;">
                 <div style="background:#222; padding:10px; border-radius:5px; margin-bottom:10px;">
+                    <div style="font-size:11px; color:#3498db; font-weight:bold; margin-bottom:6px;">Quick Rarity Spawner (Random Type)</div>
+                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:4px; margin-bottom:8px;">
+                        <button onclick="window.devQuickSpawn(0)" class="btn-action" style="background:#888;">Common (0★)</button>
+                        <button onclick="window.devQuickSpawn(1)" class="btn-action" style="background:#3498db;">Rare (1★)</button>
+                        <button onclick="window.devQuickSpawn(2)" class="btn-action" style="background:#9b59b6;">Magic (2★)</button>
+                        <button onclick="window.devQuickSpawn(3)" class="btn-action" style="background:#e67e22;">Epic (3★)</button>
+                        <button onclick="window.devQuickSpawn(4)" class="btn-action" style="background:#f1c40f; color:#000;">Legendary (4★)</button>
+                        <button onclick="window.devQuickSpawn(5)" class="btn-action" style="background:#e74c3c;">Mythic (5★)</button>
+                    </div>
+                    <button onclick="window.devQuickSpawn('UNIQUE')" class="btn-action forge" style="background:#1abc9c; margin:0;">Spawn Random Unique Artifact</button>
+                </div>
+
+                <div style="background:#222; padding:10px; border-radius:5px; margin-bottom:10px;">
                     <div style="font-size:11px; color:#f1c40f; font-weight:bold; margin-bottom:6px;">Spawn Custom Gear</div>
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:6px;">
-                        <select id="dev-item-type" style="background:#111; color:#fff; border:1px solid #444; padding:4px;">
+                        <label for="dev-item-type" style="display:none;">Item Type</label>
+                        <select id="dev-item-type" style="background:#111; color:#fff; border:1px solid #444; padding:4px;" onchange="window.updateArchitectRanges()">
                             <option value="weapon">Weapon</option>
                             <option value="shield">Shield (Sub)</option>
                             <option value="dagger">Dagger (Sub)</option>
@@ -858,7 +889,8 @@
                             <option value="overall">Overall Suit</option>
                             <option value="boots">Boots</option>
                         </select>
-                        <select id="dev-item-rarity" style="background:#111; color:#fff; border:1px solid #444; padding:4px;">
+                        <label for="dev-item-rarity" style="display:none;">Item Rarity</label>
+                        <select id="dev-item-rarity" style="background:#111; color:#fff; border:1px solid #444; padding:4px;" onchange="window.updateArchitectRanges()">
                             <option value="0">Common (0★)</option>
                             <option value="1">Rare (1★)</option>
                             <option value="2">Magic (2★)</option>
@@ -867,36 +899,56 @@
                             <option value="5">Mythic (5★)</option>
                         </select>
                     </div>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
-                        <input type="number" id="dev-item-lvl" value="1" placeholder="Stage Level scale" style="background:#111; color:#fff; border:1px solid #444; padding:4px;">
-                        <select id="dev-item-set" style="background:#111; color:#fff; border:1px solid #444; padding:4px;">
-                            <option value="">No Set Synergy</option>
-                            <option value="Vanguard">Vanguard</option>
-                            <option value="Colossus">Colossus</option>
-                            <option value="Bastion">Bastion</option>
-                            <option value="Windrunner">Windrunner</option>
-                            <option value="Wraith">Wraith</option>
-                            <option value="Reaver">Reaver</option>
-                            <option value="Dreadnought">Dreadnought</option>
-                            <option value="Duellist">Duellist</option>
-                            <option value="Scholar">Scholar</option>
-                            <option value="Berserker">Berserker</option>
-                            <option value="Scout">Scout</option>
-                            <option value="Fortune">Fortune</option>
-                            <option value="Mystic">Mystic</option>
-                            <option value="Alchemist">Alchemist</option>
-                            <option value="Midas">Midas' Legacy</option>
-                            <option value="Biohazard">Biohazard</option>
-                            <option value="Warlord">Warlord</option>
-                            <option value="VoidTouched">Void-Touched</option>
-                        </select>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; margin-bottom:8px;">
+                        <div>
+                            <label style="display:block; font-size:9px; color:#aaa; margin-bottom:2px;">Item Level</label>
+                            <input type="number" id="dev-item-lvl" value="1" style="width:100%; background:#111; color:#fff; border:1px solid #444; padding:4px;" oninput="window.updateArchitectRanges()">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:9px; color:#aaa; margin-bottom:2px;">Set Override</label>
+                            <select id="dev-item-set" style="width:100%; background:#111; color:#fff; border:1px solid #444; padding:4px;">
+                                <option value="">None</option>
+                                <option value="Vanguard">Vanguard</option>
+                                <option value="Colossus">Colossus</option>
+                                <option value="Bastion">Bastion</option>
+                                <option value="Windrunner">Windrunner</option>
+                                <option value="Wraith">Wraith</option>
+                                <option value="Reaver">Reaver</option>
+                                <option value="Dreadnought">Dreadnought</option>
+                                <option value="Duellist">Duellist</option>
+                                <option value="Scholar">Scholar</option>
+                                <option value="Berserker">Berserker</option>
+                                <option value="Scout">Scout</option>
+                                <option value="Fortune">Fortune</option>
+                                <option value="Mystic">Mystic</option>
+                                <option value="Alchemist">Alchemist</option>
+                                <option value="Midas">Midas' Legacy</option>
+                                <option value="Biohazard">Biohazard</option>
+                                <option value="Warlord">Warlord</option>
+                                <option value="VoidTouched">Void-Touched</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:9px; color:#aaa; margin-bottom:2px;">Spawn Prestige</label>
+                            <input type="number" id="dev-item-prestige" value="0" style="width:100%; background:#111; color:#fff; border:1px solid #444; padding:4px;">
+                        </div>
                     </div>
                     <button onclick="window.devSpawnGear()" class="btn-action forge" style="background:var(--accent-orange); color:#fff; margin:0;">Spawn Gear</button>
+                </div>
+
+                <div style="background:#222; padding:10px; border-radius:5px; margin-bottom:10px;">
+                    <div style="font-size:11px; color:#e84393; font-weight:bold; margin-bottom:6px;">🛠️ Granular Item Architect</div>
+                    <p style="font-size:9px; color:#aaa; margin-bottom:8px;">Manually define up to 5 stat lines and their exact values.</p>
+                    <div id="dev-architect-lines" style="display:flex; flex-direction:column; gap:4px; margin-bottom:8px;">
+                        <!-- JS populated stat rows -->
+                    </div>
+                    <button onclick="window.devSpawnArchitectGear()" class="btn-action forge" style="background:#e84393; color:#fff; margin:0;">Architect & Spawn Gear</button>
                 </div>
 
                 <div style="background:#222; padding:10px; border-radius:5px;">
                     <div style="font-size:11px; color:#1abc9c; font-weight:bold; margin-bottom:6px;">Spawn Unique Artifacts & Weapons</div>
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
+                        <label for="dev-unique-sel" style="display:none;">Unique/Artifact Selection</label>
                         <select id="dev-unique-sel" style="background:#111; color:#fff; border:1px solid #444; padding:4px;">
                             <option value="weapon-staff">🔥 Unique Phoenix Staff</option>
                             <option value="weapon-sword">🩸 Unique Sanguine Reaver</option>
@@ -929,6 +981,7 @@
                             <option value="art-philosopher_catalyst">Philosopher's Catalyst</option>
                             <option value="art-cauldron_eternity">Cauldron of Eternity</option>
                         </select>
+                        <label for="dev-unique-lvl" style="display:none;">Unique/Artifact Level</label>
                         <input type="number" id="dev-unique-lvl" value="1" placeholder="Stage Level" style="background:#111; color:#fff; border:1px solid #444; padding:4px;">
                     </div>
                     <button onclick="window.devSpawnUnique()" class="btn-action forge" style="background:#1abc9c; color:#fff; margin:0;">Spawn Unique/Artifact</button>
@@ -956,7 +1009,7 @@
                 <div id="death-quote">"The path to glory is paved with countless falls."</div>
                 
                 <div class="death-section-title">⚔️ Fatal Encounter</div>
-                <div id="death-stats-grid">
+                <div class="death-stats-grid">
                     <div class="death-stat-box" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80px; overflow: hidden; padding: 2px;">
                         <span class="death-stat-label" style="margin-bottom: 2px;">Nemesis</span>
                         <canvas id="death-enemy-canvas" width="60" height="60" style="background: rgba(0,0,0,0.5); border: 1px solid #781c1c; border-radius: 4px; display: block;"></canvas>
@@ -972,7 +1025,7 @@
                 </div>
 
                 <div class="death-section-title">📊 Spoils from this Attempt</div>
-                <div id="death-stats-grid">
+                <div class="death-stats-grid">
                     <div class="death-stat-box">
                         <span class="death-stat-label">Slain</span>
                         <span class="death-stat-val" id="death-stat-kills" style="color: #ffffff;">0</span>
@@ -1063,10 +1116,10 @@
                     <button id="sub-tab-use" class="sub-tab-btn" onclick="switchSubTab('USE')">Use Items</button>
                 </div>
                 
-               <!-- Dynamic Bulk Salvage & Active Auto-Salvage Controls -->
+                <!-- Dynamic Bulk Salvage & Active Auto-Salvage Controls -->
                 <div id="bulk-salvage-bar" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; background: #151515; padding: 8px; border-radius: 4px; border: 1px dashed #444;">
                     <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
-                        <span style="font-size: 11px; font-weight: bold; color: #e74c3c; white-space: nowrap;">♻️ BULK SALVAGE:</span>
+                        <label for="bulk-salvage-rarity" style="font-size: 11px; font-weight: bold; color: #e74c3c; white-space: nowrap;">♻️ BULK SALVAGE:</label>
                         <select id="bulk-salvage-rarity" style="flex: 1; background: #222; color: #fff; border: 1px solid #444; padding: 4px; border-radius: 3px; font-size: 11px;">
                             <option value="0">Common Gear (0★)</option>
                             <option value="1">Rare & Under (1★)</option>
@@ -1076,7 +1129,7 @@
                         <button class="btn-action un" onclick="triggerBulkSalvage()" style="font-size: 11px; padding: 4px 8px; font-weight: bold;">Deconstruct</button>
                     </div>
                     <div style="display: flex; gap: 8px; align-items: center; width: 100%; border-top: 1px dashed #333; padding-top: 6px;">
-                        <span style="font-size: 11px; font-weight: bold; color: #2ecc71; white-space: nowrap;">⚡ AUTO-SALVAGE:</span>
+                        <label for="auto-salvage-setting" style="font-size: 11px; font-weight: bold; color: #2ecc71; white-space: nowrap;">⚡ AUTO-SALVAGE:</label>
                         <select id="auto-salvage-setting" onchange="changeAutoSalvage(this.value)" style="flex: 1; background: #222; color: #fff; border: 1px solid #444; padding: 4px; border-radius: 3px; font-size: 11px;">
                             <option value="-1">None (Keep All Drops)</option>
                             <option value="0">Common Gear (0★)</option>
@@ -1237,7 +1290,7 @@
             
             <div id="tab-forge" class="tab-content" onscroll="hideTooltip()" ontouchmove="hideTooltip()">
                 <div id="forge-station-container" style="margin-bottom:12px; display:flex; align-items:center; gap:8px; background:#1a1d20; padding:6px; border-radius:4px; border:1px solid #333;">
-                    <span style="font-size:11px; font-weight:bold; color:#e67e22; white-space:nowrap;">🔨 FORGING POST:</span>
+                    <label for="forge-station-select" style="font-size:11px; font-weight:bold; color:#e67e22; white-space:nowrap;">🔨 FORGING POST:</label>
                     <select id="forge-station-select" onchange="switchForgeStation(this.value)" style="flex:1; background:#111; color:#fff; border:1px solid #e67e22; padding:4px 6px; border-radius:4px; font-weight:bold; font-size:11px;">
                         <option value="blacksmith">🛡️ Blacksmith Station (Temper / Level / Tier)</option>
                         <option value="enchanter">🔮 Mystical Enchanter (Infuse / Purge)</option>
@@ -1278,7 +1331,7 @@
                             <button class="btn-action forge" style="background:#2c3e50; border: 1px solid #9b59b6; margin-bottom: 8px;" onclick="document.getElementById('altar-modal').style.display='block'; buildAltarModal();">View Artifact Pool</button>
                             
                             <!-- Rift Selection Dropdown -->
-                            <div style="font-size:11px; color:#9b59b6; font-weight:bold; margin-bottom:4px; text-align:left;">SELECT TARGET:</div>
+                            <label for="rift-hunt-select" style="display:block; font-size:11px; color:#9b59b6; font-weight:bold; margin-bottom:4px; text-align:left;">SELECT TARGET:</label>
                             <select id="rift-hunt-select" style="width:100%; background:#111; color:#fff; border:1px solid #9b59b6; padding:6px; border-radius:4px; font-size:11px; font-weight:bold; margin-bottom:10px; cursor:pointer;">
                                 <option value="guardian">🛡️ Aegis Goliath (10 Cores / Lv 30+)</option>
                                 <option value="chronos">⏳ Chronos Arbitrator (10 Cores / Lv 30+)</option>
@@ -1324,6 +1377,7 @@
         </div>
         <div id="log-panel-container" style="display:none;">
             <div style="display: flex; gap: 6px; margin-bottom: 6px; width: 100%;">
+                <label for="dev-console-input" style="display:none;">Developer Console Command</label>
                 <input type="text" id="dev-console-input" placeholder="Type a command (e.g., /dev, /gold, /level)..." style="flex: 1; background: #111; color: #fff; border: 1px solid #444; padding: 6px; border-radius: 4px; font-family: monospace; font-size: 11px;" onkeydown="window.handleConsoleInput(event)">
                 <button onclick="window.submitConsoleCommand()" class="btn-action" style="background: var(--accent-orange); padding: 6px 12px; font-weight: bold; font-family: monospace; height: 100%;">EXECUTE</button>
             </div>
@@ -2010,7 +2064,7 @@ window.onload = function() {
 
     const ARTIFACT_POOL = [
         { name: "Berserker Stone", trait: "frenzy", desc: "Grants Frenzy Mode for 10s every 8 kills. Passive +5% Crit Chance.", breakdown: "<strong>Frenzy Buff Breakdown:</strong><br>• Trigger Requirement: <span style='color:#2ecc71;'>Reduced to 8 kills</span><br>• Active Atk Spd: Max Haste (4-frame cap)<br>• Crit Chance: <span style='color:#e67e22;'>100% Guaranteed</span><br>• Crit Multi: <span style='color:#f1c40f;'>+50% Extra Multiplier</span><br>• Passive: <span style='color:#e67e22;'>+5% Base Crit Chance</span>", critChance: 0.05, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
-        { name: "Blood-Soaked Chalice", trait: "vampirism", desc: "Heals 3% of damage dealt on hit (Capped at 5% Max HP). Passive +30 Max HP.", breakdown: "<strong>Vampirism Breakdown:</strong><br>• Life Steal: <span style='color:#e74c3c;'>3% of total slash damage</span> directly heals your HP pool.<br>• Max Healing Cap: <span style='color:#aaa;'>Capped at 5% of Max HP per hit</span> to keep progression healthy.<br>• Passive: <span style='color:#e74c3c;'>+30 Flat Max HP</span>", maxHp: 30, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
+        { name: "Blood-Soaked Chalice", trait: "vampirism", desc: "Heals 0.5% of damage dealt on hit (Capped at 1% Max HP). Passive +30 Max HP.", breakdown: "<strong>Vampirism Breakdown:</strong><br>• Life Steal: <span style='color:#e74c3c;'>0.5% of total slash damage</span> directly heals your HP pool.<br>• Max Healing Cap: <span style='color:#aaa;'>Capped at 1% of Max HP per hit</span> to keep progression healthy.<br>• Passive: <span style='color:#e74c3c;'>+30 Flat Max HP</span>", maxHp: 30, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
         { name: "Philosopher's Anchor", trait: "gold_hoard", desc: "Permanent x1.50 Gold Multiplier bonus. Passive +15 Attack.", breakdown: "<strong>Hoard Breakdown:</strong><br>• Gold: Multiplies direct gold drops from mobs and bosses by flat <span style='color:#f1c40f;'>+50%</span>.<br>• Passive: <span style='color:#f1c40f;'>+15 Flat Attack</span> to support combat pacing.", atk: 15, dropRate: 0, quality: 0, goldMulti: 0.50, rareSpawn: 0, fairySpawn: 0 },
         { name: "Gilded Scarab", trait: "magic_find", desc: "+50% Drop Rate and +30% Drop Quality. Passive +5 DEX.", breakdown: "<strong>Scarab Hunting Breakdown:</strong><br>• Drop Rate: <span style='color:#2ecc71;'>+50% Item Frequency</span><br>• Drop Quality: <span style='color:#9b59b6;'>+30% Higher Stat Line Probability</span><br>• Passive: <span style='color:#3498db;'>+5 Flat DEX</span>", dex: 5, dropRate: 0.50, quality: 0.30, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
         { name: "Windwalker Boots", trait: "move_speed", desc: "Grants +15% Movement Speed and +5% Parry Rate.", breakdown: "<strong>Fleet Footed:</strong><br>• Movement: Grants a massive <span style='color:#3498db;'>+15% Movement Speed</span> multiplier.<br>• Defensive: Grants <span style='color:#e74c3c;'>+5% Parry Rate</span> to evade high-stage damage.", moveSpeedPct: 0.15, parry: 0.05, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0 },
@@ -2819,7 +2873,7 @@ window.onload = function() {
                 let time = Date.now() / 140;
 
                 // Lava heat vents particles
-                if (Math.random() < 0.15 && !isGamePaused) {
+                if (Math.random() < 0.15 && particles.length < 200 && !isGamePaused) {
                     particles.push({
                         x: cx + randFloat(0, 30),
                         y: cy - 10,
@@ -5351,7 +5405,7 @@ window.onload = function() {
         return 6;                // Cyberspace Nexus (Stages 401+)
     }
     const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false });
 
     // Adjust canvas dimensions dynamically to scale up and focus combat action on mobile
     const isMobile = window.innerWidth <= 600;
@@ -5383,7 +5437,7 @@ window.onload = function() {
         currentHp: 100, coins: 0, stage: 1, maxStage: 1, killCount: 0, totalLifetimeKills: 0, targetsRequired: 5,
         isBossMode: false, isFarmingLoop: false, isUberBoss: false, frenzyTimer: 0, frenzyKillCount: 0, adrenalineTimer: 0, usedSecondWind: false,
         isDungeonMode: false, currentDungeon: null, dungeonWave: 1, 
-        equipKeys: 8, goldKeys: 8, matKeys: 8, nextEquipKeyTime: 0, nextGoldKeyTime: 0, nextMatKeyTime: 0,
+        equipKeys: 3, goldKeys: 3, matKeys: 3, nextEquipKeyTime: 0, nextGoldKeyTime: 0, nextMatKeyTime: 0,
         shopRefreshTime: 0, shopItems: [],
         
         atkPotionTimer: 0, hpPotionTimer: 0, defPotionTimer: 0, hastePotionTimer: 0,
@@ -5414,7 +5468,7 @@ window.onload = function() {
 
         // Prestige System Additions
         prestigePoints: 0,
-        prestigeUpgrades: { bag: 0, gold: 0, exp: 0, drop: 0 },
+        prestigeUpgrades: { bag: 0, gold: 0, exp: 0, drop: 0, fairy: 0 },
         prestigeCount: 0,
         lifetimePeakStage: 1,
         isPrestigeBossMode: false,
@@ -5624,16 +5678,6 @@ window.onload = function() {
         }
         let prefix = getTierName(stars);
         
-        let highestKey = "maxHp";
-        let maxVal = -9999;
-        const checkKeys = ["bonusAtk", "bonusMaxHp", "bonusDef", "bonusMoveSpeed", "bonusCritChance", "bonusCritDamage", "bonusBlock", "bonusParry", "bonusStr", "bonusDex", "bonusInt"];
-        checkKeys.forEach(k => {
-            if (item[k] && item[k] > maxVal) {
-                maxVal = item[k];
-                highestKey = k;
-            }
-        });
-
         const nomenclature = {
             bonusAtk: { name: "Vanguard", suffix: "of Shattering" },
             bonusMaxHp: { name: "Colossus", suffix: "of Vitality" },
@@ -5648,7 +5692,24 @@ window.onload = function() {
             bonusInt: { name: "Scholar", suffix: "of Knowledge" }
         };
 
-        const theme = nomenclature[highestKey] || { name: "Standard", suffix: "of Adaptation" };
+        let theme = { name: "Standard", suffix: "of Adaptation" };
+
+        if (stars > 0) {
+            let highestKey = null;
+            let maxVal = -9999;
+            const checkKeys = ["bonusAtk", "bonusMaxHp", "bonusDef", "bonusMoveSpeed", "bonusCritChance", "bonusCritDamage", "bonusBlock", "bonusParry", "bonusStr", "bonusDex", "bonusInt"];
+            checkKeys.forEach(k => {
+                if (item[k] !== undefined && item[k] > maxVal && item[k] > 0) {
+                    maxVal = item[k];
+                    highestKey = k;
+                }
+            });
+
+            if (highestKey && nomenclature[highestKey]) {
+                theme = nomenclature[highestKey];
+            }
+        }
+
         let itemNoun = item.noun || item.type.toUpperCase();
         return `${prefix} ${theme.name} ${itemNoun} ${theme.suffix} (Lv. ${item.stageLevel})`;
     }
@@ -5665,49 +5726,24 @@ function getStatBaseRange(item, statKey) {
     let max = 0;
     
     if (statKey === "atk") {
-        if (item.type === "weapon") {
-            min += 2 * stageLevel;
-            max += 4 * stageLevel;
-        } else if (item.type === "subweapon" && item.subType === "dagger") {
-            min += 1 * stageLevel;
-            max += 2 * stageLevel;
-        }
         if (item.bonusAtk > 0) {
             min += Math.ceil(1 * stageLevel * rarityMult);
             max += Math.ceil(2 * stageLevel * rarityMult);
         }
     }
     else if (statKey === "maxHp") {
-        if (item.type === "overall") {
-            min += 35 * stageLevel * 1.8;
-            max += 55 * stageLevel * 1.8;
-        } else if (["chest", "leggings", "helmet"].includes(item.type) && item.baseMaxHp > 0) {
-            min += 12 * stageLevel;
-            max += 24 * stageLevel;
-        }
         if (item.bonusMaxHp > 0) {
             min += Math.ceil(3 * stageLevel * rarityMult);
             max += Math.ceil(8 * stageLevel * rarityMult);
         }
     }
     else if (statKey === "def") {
-        if (item.type === "subweapon" && item.subType === "shield") {
-            min += 10 * stageLevel;
-            max += 18 * stageLevel;
-        } else if (["chest", "leggings", "helmet"].includes(item.type) && item.baseDef > 0) {
-            min += 4 * stageLevel;
-            max += 8 * stageLevel;
-        }
         if (item.bonusDef > 0) {
             min += Math.ceil(1 * stageLevel * rarityMult);
             max += Math.ceil(2 * stageLevel * rarityMult);
         }
     }
     else if (statKey === "moveSpeed") {
-        if (item.type === "boots") {
-            min += 1 * stageLevel;
-            max += 3 * stageLevel;
-        }
         if (item.bonusMoveSpeed > 0) {
             min += Math.ceil(1 * stageLevel * rarityMult);
             max += Math.ceil(2 * stageLevel * rarityMult);
@@ -5726,10 +5762,6 @@ function getStatBaseRange(item, statKey) {
         }
     }
     else if (statKey === "int") {
-        if (item.type === "subweapon" && item.subType === "tome") {
-            min += 1 * stageLevel;
-            max += 2 * stageLevel;
-        }
         if (item.bonusInt > 0) {
             min += Math.ceil(1 * stageLevel * rarityMult);
             max += Math.ceil(3 * stageLevel * rarityMult);
@@ -5748,20 +5780,12 @@ function getStatBaseRange(item, statKey) {
         }
     }
     else if (statKey === "block") {
-        if (item.type === "subweapon" && item.subType === "shield") {
-            min += 0.03 * stageLevel;
-            max += 0.03 * stageLevel;
-        }
         if (item.bonusBlock > 0) {
             min += 0.005 * Math.sqrt(stageLevel) * rarityMult;
             max += 0.015 * Math.sqrt(stageLevel) * rarityMult;
         }
     }
     else if (statKey === "parry") {
-        if (item.type === "subweapon" && item.subType === "dagger") {
-            min += 0.02 * stageLevel;
-            max += 0.02 * stageLevel;
-        }
         if (item.bonusParry > 0) {
             min += 0.005 * Math.sqrt(stageLevel) * rarityMult;
             max += 0.015 * Math.sqrt(stageLevel) * rarityMult;
@@ -5812,7 +5836,7 @@ function getStatBaseRange(item, statKey) {
 
     const unscaledStats = ["activeAttackSpeed", "idleAttackSpeed"];
     if (!unscaledStats.includes(statKey)) {
-        let prestigeMult = Math.pow(1.067, playerStats.prestigeCount || 0);
+        let prestigeMult = Math.pow(1.08, playerStats.prestigeCount || 0);
         min = min * prestigeMult;
         max = max * prestigeMult;
     }
@@ -5955,13 +5979,15 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         let dropPts = upgrades.drop || 0;
         let atkPts = upgrades.atk || 0;
         let fortPts = upgrades.fort || 0;
+        let fairyPts = upgrades.fairy || 0;
 
         let bagDisabled = p.prestigePoints < 1 ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
         let goldDisabled = p.prestigePoints < 1 ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
         let expDisabled = p.prestigePoints < 1 ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
         let dropDisabled = p.prestigePoints < 1 ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
-        let atkDisabled = (p.prestigePoints < 1 || atkPts >= 10) ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
-        let fortDisabled = (p.prestigePoints < 1 || fortPts >= 10) ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
+        let atkDisabled = p.prestigePoints < 1 ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
+        let fortDisabled = p.prestigePoints < 1 ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
+        let fairyDisabled = p.prestigePoints < 1 ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
 
         // Enforce progression limits: challenge requires reaching at least 85% of lifetime peak stage (minimum floor: Stage 25)
         let requiredStage = Math.max(25, Math.floor((p.lifetimePeakStage || 1) * 0.85));
@@ -6038,8 +6064,8 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                         <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
                             <div>
                                 <strong style="color:#e74c3c; font-size:12px;">🔱 Gladiator's Might</strong>
-                                <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +10% Global Attack power. (Max 10)</div>
-                                <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">+${(atkPts * 10).toLocaleString()}% Atk</span></div>
+                                <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +12% Compounding Global Attack power.</div>
+                                <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">x${Math.pow(1.12, atkPts).toFixed(2)} Mult</span></div>
                             </div>
                             <button class="btn-action" style="margin-top:8px; background:#e74c3c;" ${atkDisabled} onclick="buyPrestigeUpgrade('atk')">Upgrade (1 PP)</button>
                         </div>
@@ -6048,10 +6074,20 @@ function formatStatRangeStr(item, statKey, isPct = false) {
                         <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
                             <div>
                                 <strong style="color:#1abc9c; font-size:12px;">🛡️ Colossal Fortitude</strong>
-                                <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +10% Global Max HP and +5% Defense. (Max 10)</div>
-                                <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">+${(fortPts * 10).toLocaleString()}% HP, +${(fortPts * 5).toLocaleString()}% Def</span></div>
+                                <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +10% Global HP and +5% Defense (Compounding).</div>
+                                <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">x${Math.pow(1.10, fortPts).toFixed(2)} HP, x${Math.pow(1.05, fortPts).toFixed(2)} Def</span></div>
                             </div>
                             <button class="btn-action" style="margin-top:8px; background:#1abc9c;" ${fortDisabled} onclick="buyPrestigeUpgrade('fort')">Upgrade (1 PP)</button>
+                        </div>
+
+                        <!-- Aetheric Beacon -->
+                        <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
+                            <div>
+                                <strong style="color:#ffb6c1; font-size:12px;">🧚 Aetheric Beacon</strong>
+                                <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +5% Multi-Fairy Spawn chance per level.</div>
+                                <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">+${(fairyPts * 5).toLocaleString()}% Spawn</span></div>
+                            </div>
+                            <button class="btn-action" style="margin-top:8px; background:#ffb6c1; color:#000;" ${fairyDisabled} onclick="buyPrestigeUpgrade('fairy')">Upgrade (1 PP)</button>
                         </div>
                     </div>
                 </div>
@@ -6370,7 +6406,7 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             
             // TTK Calculations
             let ttk = avgHp / playerDps;
-            let cycleTime = ttk + 2.0; // Dynamic combat time + travel buffer
+            let cycleTime = ttk + 10.0; // Dynamic combat time + travel buffer
             cycleTime = Math.max(0.5, Math.min(300, cycleTime)); // Performance limits
 
             // Progressive Survival Audit (Raw Stage Attrition without recovery) using adjusted dmgScale
@@ -6920,9 +6956,9 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             addEtcDrop("Catalyst Core", val);
             pushLog(`<span style="color:#2ecc71;">[DEV GUI] Added +${val} Catalyst Cores</span>`);
         } else if (type === 'gachakeys') {
-            playerStats.equipKeys = Math.min(8, playerStats.equipKeys + val);
-            playerStats.goldKeys = Math.min(8, playerStats.goldKeys + val);
-            playerStats.matKeys = Math.min(8, playerStats.matKeys + val);
+            playerStats.equipKeys = Math.min(3, playerStats.equipKeys + val);
+            playerStats.goldKeys = Math.min(3, playerStats.goldKeys + val);
+            playerStats.matKeys = Math.min(3, playerStats.matKeys + val);
             addEtcDrop("Gacha Key", val);
             pushLog(`<span style="color:#2ecc71;">[DEV GUI] Added +${val} Gacha Keys</span>`);
         } else if (type === 'pp') {
@@ -6935,11 +6971,64 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         window.saveGame();
     };
 
+    window.devSetPP = function() {
+        let val = parseInt(document.getElementById('dev-pp-input').value, 10);
+        if (val >= 0) {
+            playerStats.prestigePoints = val;
+            pushLog(`<span style="color:#2ecc71;">[DEV GUI] Set Prestige Points to ${val}!</span>`);
+            if (typeof renderPrestigeTab === "function") renderPrestigeTab();
+            updateUI();
+            window.saveGame();
+        }
+    };
+
+    window.devSetPrestige = function() {
+        let val = parseInt(document.getElementById('dev-prestige-input').value, 10);
+        if (val >= 0) {
+            playerStats.prestigeCount = val;
+            pushLog(`<span style="color:#2ecc71;">[DEV GUI] Set Prestige Count to ${val}!</span>`);
+            if (typeof renderPrestigeTab === "function") renderPrestigeTab();
+            updateUI();
+            window.saveGame();
+        }
+    };
+
+    window.devQuickSpawn = function(rarity) {
+        let maxBag = getMaxBagSlots();
+        let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+        let chosenType = rarity === 'UNIQUE' ? "artifact" : types[Math.floor(Math.random() * types.length)];
+
+        if (chosenType === "artifact") {
+            if (inventory.ARTIFACT.length >= maxBag) { pushHeaderToast("Artifact Sack Full!", "#e74c3c"); return; }
+        } else {
+            if (inventory.EQUIP.length >= maxBag) { pushHeaderToast("Inventory Full!", "#e74c3c"); return; }
+        }
+
+        let runPeak = Math.max(playerStats.stage, playerStats.maxStage || 1);
+        let stageScale = Math.floor((runPeak - 1) / 10) + 1;
+        let statLines = rarity === 'UNIQUE' ? 3 : rarity;
+
+        let item = createItemObject(chosenType, statLines, stageScale, rarity === 'UNIQUE' ? 0 : rarity);
+        item.locked = true;
+
+        if (item.type === "artifact") {
+            inventory.ARTIFACT.push(item);
+        } else {
+            inventory.EQUIP.push(item);
+        }
+
+        pushLog(`<span style="color:#2ecc71;">[DEV GUI] Quick Spawned: ${item.name}</span>`);
+        renderInventory();
+        updateUI();
+        window.saveGame();
+    };
+
     window.devSpawnGear = function() {
         let type = document.getElementById('dev-item-type').value;
         let rarity = parseInt(document.getElementById('dev-item-rarity').value, 10);
         let lvl = parseInt(document.getElementById('dev-item-lvl').value, 10) || 1;
         let setName = document.getElementById('dev-item-set').value;
+        let prestigeOverride = parseInt(document.getElementById('dev-item-prestige').value, 10) || 0;
 
         let maxBag = getMaxBagSlots();
         if (inventory.EQUIP.length >= maxBag) {
@@ -6947,7 +7036,15 @@ function formatStatRangeStr(item, statKey, isPct = false) {
             return;
         }
 
+        // Temporarily override prestige for scaling
+        let realPrestige = playerStats.prestigeCount;
+        playerStats.prestigeCount = prestigeOverride;
+
         let item = createItemObject(type, rarity, lvl, rarity);
+
+        // Restore real prestige
+        playerStats.prestigeCount = realPrestige;
+
         if (setName) {
             item.setName = setName;
             item.name = item.name.replace(getTierName(item.statsRolled), `${setName} Set ${getTierName(item.statsRolled)}`);
@@ -6955,7 +7052,143 @@ function formatStatRangeStr(item, statKey, isPct = false) {
         item.locked = true;
         inventory.EQUIP.push(item);
         
-        pushLog(`<span style="color:#2ecc71;">[DEV GUI] Spawned Custom Item: ${item.name}</span>`);
+        pushLog(`<span style="color:#2ecc71;">[DEV GUI] Spawned Custom Item: ${item.name} (at Prestige ${prestigeOverride})</span>`);
+        renderInventory();
+        updateUI();
+        window.saveGame();
+    };
+
+    window.buildDevArchitectUI = function() {
+        let container = document.getElementById('dev-architect-lines');
+        if (!container) return;
+
+        let stats = [
+            {v: "atk", l: "⚔️ Attack"}, {v: "maxHp", l: "❤️ Max HP"}, {v: "def", l: "🛡️ Defense"},
+            {v: "moveSpeed", l: "👟 Move Spd"}, {v: "critChance", l: "✨ Crit %"}, {v: "critDamage", l: "💥 Crit Multi"},
+            {v: "block", l: "🛡️ Block %"}, {v: "parry", l: "⚡ Parry %"}, {v: "str", l: "💪 STR"},
+            {v: "dex", l: "🎯 DEX"}, {v: "int", l: "🧠 INT"}, {v: "activeAttackSpeed", l: "⚡ Active Frm"},
+            {v: "idleAttackSpeed", l: "⏱️ Idle Frm"}, {v: "dropRate", l: "🍀 Drop Rate"}, {v: "quality", l: "💎 Quality"},
+            {v: "goldMulti", l: "🟡 Gold Mult"}, {v: "rareSpawn", l: "✨ Rare Rate"}, {v: "fairySpawn", l: "🧚 Fairy Rate"}
+        ];
+
+        let html = "";
+        for (let i = 0; i < 5; i++) {
+            html += `<div style="background:#1a1d20; border:1px solid #333; padding:8px; border-radius:4px; margin-bottom:4px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <select id="dev-arch-stat-${i}" style="flex:1; background:#111; color:#fff; border:1px solid #444; font-size:10px; padding:2px;" onchange="window.updateArchitectRanges()">
+                        <option value="">- Empty Slot -</option>
+                        ${stats.map(s => `<option value="${s.v}">${s.l}</option>`).join("")}
+                    </select>
+                    <span id="dev-arch-range-label-${i}" style="font-size:9px; color:#aaa; margin-left:8px; font-family:monospace;">(0 ~ 0)</span>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <input type="range" id="dev-arch-slider-${i}" min="0" max="0" step="any" value="0" style="flex:1; height:4px;" oninput="document.getElementById('dev-arch-val-${i}').value = this.value">
+                    <input type="number" id="dev-arch-val-${i}" value="0" step="any" style="width:60px; background:#111; color:#fff; border:1px solid #444; font-size:10px; padding:2px;" oninput="document.getElementById('dev-arch-slider-${i}').value = this.value">
+                </div>
+            </div>`;
+        }
+        container.innerHTML = html;
+        window.updateArchitectRanges();
+    };
+
+    window.updateArchitectRanges = function() {
+        let type = document.getElementById('dev-item-type').value;
+        let rarity = parseInt(document.getElementById('dev-item-rarity').value, 10);
+        let lvl = parseInt(document.getElementById('dev-item-lvl').value, 10) || 1;
+
+        let dummyItem = {
+            type: type,
+            statsRolled: rarity,
+            stageLevel: lvl,
+            bonusAtk: 1, bonusMaxHp: 1, bonusDef: 1, bonusMoveSpeed: 1,
+            bonusCritChance: 1, bonusCritDamage: 1, bonusBlock: 1, bonusParry: 1,
+            bonusActiveSpeed: 1, bonusIdleSpeed: 1,
+            bonusStr: 1, bonusDex: 1, bonusInt: 1,
+            rareSpawn: 1, dropRate: 1, quality: 1, goldMulti: 1, fairySpawn: 1,
+            baseAtk: 0, baseMaxHp: 0, baseDef: 0, baseMoveSpeed: 0, baseBlock: 0, baseParry: 0, baseInt: 0,
+            temperLevel: 0
+        };
+
+        if (type === "subweapon") dummyItem.subType = "shield";
+
+        for (let i = 0; i < 5; i++) {
+            let stat = document.getElementById(`dev-arch-stat-${i}`).value;
+            let slider = document.getElementById(`dev-arch-slider-${i}`);
+            let valInput = document.getElementById(`dev-arch-val-${i}`);
+            let rangeLabel = document.getElementById(`dev-arch-range-label-${i}`);
+
+            if (!stat) {
+                slider.disabled = true; slider.min = 0; slider.max = 0; slider.value = 0;
+                valInput.disabled = true; valInput.value = 0;
+                rangeLabel.innerText = "(0 ~ 0)";
+                continue;
+            }
+
+            slider.disabled = false; valInput.disabled = false;
+            let range = getStatBaseRange(dummyItem, stat);
+
+            // Handle inverted speed frame ranges
+            if (stat === "activeAttackSpeed" || stat === "idleAttackSpeed") {
+                if (range.min === 0 && range.max === 0) {
+                    range.min = -10; range.max = -1;
+                }
+            }
+
+            slider.min = range.min;
+            slider.max = range.max;
+
+            let curVal = parseFloat(valInput.value);
+            if (curVal < range.min) { valInput.value = range.min; slider.value = range.min; }
+            else if (curVal > range.max) { valInput.value = range.max; slider.value = range.max; }
+            else { slider.value = curVal; }
+
+            let isPct = ["critChance", "critDamage", "block", "parry", "dropRate", "quality", "goldMulti", "fairySpawn"].includes(stat);
+            let format = (v) => isPct ? (v * 100).toFixed(1) + "%" : (stat === "rareSpawn" ? (v * 100).toFixed(2) + "%" : Math.round(v));
+            rangeLabel.innerText = `(${format(range.min)} ~ ${format(range.max)})`;
+        }
+    };
+
+    window.devSpawnArchitectGear = function() {
+        let type = document.getElementById('dev-item-type').value;
+        let lvl = parseInt(document.getElementById('dev-item-lvl').value, 10) || 1;
+        let rarity = parseInt(document.getElementById('dev-item-rarity').value, 10);
+
+        let maxBag = getMaxBagSlots();
+        if (inventory.EQUIP.length >= maxBag) { pushHeaderToast("Inventory Full!", "#e74c3c"); return; }
+
+        let item = {
+            id: idCounter++, name: "Architect Refined Gear", type: type, statsRolled: rarity, temperLevel: 0, stageLevel: lvl,
+            atk: 0, maxHp: 0, def: 0, moveSpeed: 0, critChance: 0, critDamage: 0, block: 0, parry: 0, dropRate: 0, quality: 0, goldMulti: 0, rareSpawn: 0, fairySpawn: 0,
+            activeAttackSpeed: 0, idleAttackSpeed: 0,
+            bonusAtk: 0, bonusMaxHp: 0, bonusDef: 0, bonusMoveSpeed: 0, bonusCritChance: 0, bonusCritDamage: 0, bonusBlock: 0, bonusParry: 0,
+            bonusActiveSpeed: 0, bonusIdleSpeed: 0,
+            bonusStr: 0, bonusDex: 0, bonusInt: 0, str: 0, dex: 0, int: 0,
+            locked: true
+        };
+
+        if (type === "subweapon") item.subType = "shield";
+
+        for (let i = 0; i < 5; i++) {
+            let stat = document.getElementById(`dev-arch-stat-${i}`).value;
+            let val = parseFloat(document.getElementById(`dev-arch-val-${i}`).value) || 0;
+            if (stat && val !== 0) {
+                let bonusKey = "bonus" + stat.charAt(0).toUpperCase() + stat.slice(1);
+                if (stat === "activeAttackSpeed") bonusKey = "bonusActiveSpeed";
+                if (stat === "idleAttackSpeed") bonusKey = "bonusIdleSpeed";
+
+                if (item[bonusKey] !== undefined) {
+                    item[bonusKey] = val;
+                } else {
+                    item[stat] = val;
+                }
+            }
+        }
+        item.name = buildProceduralName(item);
+
+        recalculateItemStats(item);
+        inventory.EQUIP.push(item);
+
+        pushLog(`<span style="color:#e84393;">[DEV ARCHITECT] Custom item spawned: ${item.name}</span>`);
         renderInventory();
         updateUI();
         window.saveGame();
@@ -7222,10 +7455,11 @@ window.loadGame = function() {
                 // Safe Prestige migrations
                 if (playerStats.prestigePoints === undefined) playerStats.prestigePoints = 0;
                 if (playerStats.prestigeUpgrades === undefined) {
-                    playerStats.prestigeUpgrades = { bag: 0, gold: 0, exp: 0, drop: 0, atk: 0, fort: 0 };
+                    playerStats.prestigeUpgrades = { bag: 0, gold: 0, exp: 0, drop: 0, atk: 0, fort: 0, fairy: 0 };
                 } else {
                     playerStats.prestigeUpgrades.atk = playerStats.prestigeUpgrades.atk || 0;
                     playerStats.prestigeUpgrades.fort = playerStats.prestigeUpgrades.fort || 0;
+                    playerStats.prestigeUpgrades.fairy = playerStats.prestigeUpgrades.fairy || 0;
                 }
                 if (playerStats.prestigeCount === undefined) playerStats.prestigeCount = 0;
                 if (playerStats.lifetimePeakStage === undefined) playerStats.lifetimePeakStage = playerStats.maxStage || 1;
@@ -7285,12 +7519,12 @@ window.loadGame = function() {
                     keyTypes.forEach(k => {
                         let count = k + 'Keys';
                         let time = 'next' + k.charAt(0).toUpperCase() + k.slice(1) + 'KeyTime';
-                        if (playerStats[count] < 8) {
+                        if (playerStats[count] < 3) {
                             let keyTime = playerStats[time] || now;
                             let msSinceNextKey = now - keyTime;
                             if (msSinceNextKey >= 0) {
                                 let keysEarned = 1 + Math.floor(msSinceNextKey / 3600000);
-                                playerStats[count] = Math.min(8, playerStats[count] + keysEarned);
+                                playerStats[count] = Math.min(3, playerStats[count] + keysEarned);
                                 playerStats[time] = now + (3600000 - (msSinceNextKey % 3600000));
                             }
                         }
@@ -7432,17 +7666,17 @@ window.loadGame = function() {
     function recalculateItemStats(item) {
         // Apply specialized baseline parameters for Unique Items
         if (item.isUniqueSingularity || item.isUniqueMaelstrom) {
-            item.baseAtk = Math.ceil(3.5 * (item.stageLevel || 1) * Math.pow(1.067, playerStats.prestigeCount || 0));
+            item.baseAtk = Math.ceil(3.5 * (item.stageLevel || 1) * Math.pow(1.08, playerStats.prestigeCount || 0));
         } else if (item.isUniqueAegis) {
-            item.baseDef = Math.ceil(14 * (item.stageLevel || 1) * Math.pow(1.067, playerStats.prestigeCount || 0));
+            item.baseDef = Math.ceil(14 * (item.stageLevel || 1) * Math.pow(1.08, playerStats.prestigeCount || 0));
             item.baseBlock = 0.05 * (item.stageLevel || 1);
         } else if (item.isUniqueWatch || item.isUniqueChronicle) {
-            item.baseInt = Math.ceil(2.5 * (item.stageLevel || 1) * Math.pow(1.067, playerStats.prestigeCount || 0));
+            item.baseInt = Math.ceil(2.5 * (item.stageLevel || 1) * Math.pow(1.08, playerStats.prestigeCount || 0));
         } else if (item.isUniqueWarpCore) {
-            item.baseMoveSpeed = Math.ceil(3 * (item.stageLevel || 1) * Math.pow(1.067, playerStats.prestigeCount || 0));
+            item.baseMoveSpeed = Math.ceil(3 * (item.stageLevel || 1) * Math.pow(1.08, playerStats.prestigeCount || 0));
         } else if (item.isUniqueTempest) {
-            item.baseMaxHp = Math.ceil(20 * (item.stageLevel || 1) * Math.pow(1.067, playerStats.prestigeCount || 0));
-            item.baseDef = Math.ceil(6 * (item.stageLevel || 1) * Math.pow(1.067, playerStats.prestigeCount || 0));
+            item.baseMaxHp = Math.ceil(20 * (item.stageLevel || 1) * Math.pow(1.08, playerStats.prestigeCount || 0));
+            item.baseDef = Math.ceil(6 * (item.stageLevel || 1) * Math.pow(1.08, playerStats.prestigeCount || 0));
         }
 
         // 1. Reset parameters to un-tempered base + bonus values
@@ -7617,7 +7851,7 @@ window.loadGame = function() {
             item.noun = nounList ? nounList[Math.floor(Math.random() * nounList.length)] : chosenType.toUpperCase();
         }
 
-        let prestigeMult = Math.pow(1.067, playerStats.prestigeCount || 0);
+        let prestigeMult = Math.pow(1.08, playerStats.prestigeCount || 0);
 
         if (isArt) {
             let filterPool = ARTIFACT_POOL;
@@ -7657,49 +7891,30 @@ window.loadGame = function() {
             statLinesCount = 3; 
         } 
         else {
-            if (chosenType === "overall") { 
-                item.baseMaxHp = Math.ceil(randInt(35, 55) * stageScale * prestigeMult * 1.8); 
-            }
-            else if (chosenType === "chest" || chosenType === "leggings" || chosenType === "helmet") { 
-                item.baseMaxHp = Math.ceil(randInt(12, 24) * stageScale * prestigeMult); 
-                item.baseDef = Math.ceil(randInt(4, 8) * stageScale * prestigeMult); 
-            }
-            else if (chosenType === "weapon") { 
-                item.baseAtk = Math.ceil(randInt(2, 4) * stageScale * prestigeMult); 
-            }
-            else if (chosenType === "subweapon") {
-                if (item.subType === "shield") { 
-                    item.baseDef = Math.ceil(randInt(10, 18) * stageScale * prestigeMult); 
-                    item.baseBlock = 0.03 * stageScale * prestigeMult; 
-                }
-                else if (item.subType === "dagger") { 
-                    item.baseAtk = Math.ceil(randInt(1, 2) * stageScale * prestigeMult); 
-                    item.baseParry = 0.02 * stageScale * prestigeMult; 
-                }
-                else if (item.subType === "tome") { 
-                    item.baseInt = Math.ceil(randInt(1, 2) * stageScale * prestigeMult); 
-                }
-            }
-            else if (chosenType === "boots") { 
-                item.baseMoveSpeed = Math.ceil(randInt(1, 3) * stageScale * prestigeMult); 
-            }
+            // Standard Gear now rolls purely from Bonus Stats
+            // Mechanical passives (like Shield Block Cap) are still handled by chosenType/subType in resolvePlayerStats()
         }
 
         let pool = ["critChance", "critDamage", "block", "parry", "atk", "maxHp", "def", "moveSpeed", "activeSpd", "idleSpd", "str", "dex", "int"];
         if (isArt) {
             pool = ["dropRate", "quality", "goldMulti", "rareSpawn", "fairySpawn", "str", "dex", "int"];
         } else if (chosenType === "subweapon") {
-            if (item.subType === "shield") pool = ["block", "atk", "maxHp", "def", "str"];
-            else if (item.subType === "dagger") pool = ["parry", "atk", "critChance", "dex"];
-            else if (item.subType === "tome") pool = ["critDamage", "int", "activeSpd", "idleSpd"];
+            if (item.subType === "shield") pool = ["block", "atk", "maxHp", "def", "str", "moveSpeed", "dex"];
+            else if (item.subType === "dagger") pool = ["parry", "atk", "critChance", "dex", "moveSpeed", "str"];
+            else if (item.subType === "tome") pool = ["critDamage", "int", "activeSpd", "idleSpd", "maxHp", "critChance"];
         }
 
+        // Shuffle the pool for variety
         pool.sort(() => Math.random() - 0.5);
+
         let rarityMult = isArt ? 1.45 : (1 + (statLinesCount * 0.15));
         if (chosenType === "overall") { rarityMult *= 1.8; }
 
+        // Stat Uniqueness Guarantee: Remove used stats from pool
         for (let i = 0; i < statLinesCount; i++) {
-            let selectedStat = pool[i % pool.length];
+            if (pool.length === 0) break;
+            let selectedStat = pool.pop();
+
             if (selectedStat === "atk") item.bonusAtk += Math.ceil(randInt(1, 2) * stageScale * rarityMult * prestigeMult); 
             else if (selectedStat === "maxHp") item.bonusMaxHp += Math.ceil(randInt(3, 8) * stageScale * rarityMult * prestigeMult); 
             else if (selectedStat === "def") item.bonusDef += Math.ceil(randInt(1, 2) * stageScale * rarityMult * prestigeMult);
@@ -7762,7 +7977,7 @@ window.loadGame = function() {
 
         // Expanded Unique Items Generation System
         if (statLinesCount === 5 && !isArt) {
-            let rollUnique = Math.random() < 0.15; // 15% chance for a 5-star roll to become Unique
+            let rollUnique = Math.random() < 0.005; // 0.5% chance for a 5-star roll to become Unique
             if (rollUnique) {
                 if (chosenType === "weapon") {
                     let weapons = ["staff", "sword", "singularity", "maelstrom"];
@@ -7859,7 +8074,7 @@ window.loadGame = function() {
                 }
 
                 let chosenType = types[Math.floor(Math.random() * types.length)];
-                let cost = Math.floor(250 * stageScale * Math.pow(2.5, statLinesCount));
+                let cost = Math.floor(500 * Math.pow(2.15, stageScale - 1) * Math.pow(2.5, statLinesCount));
                 
                 let shopItemData = createItemObject(chosenType, statLinesCount, stageScale, isIOTD ? 1 : 0);
                 shopItemData.cost = cost;
@@ -8591,7 +8806,15 @@ window.loadGame = function() {
     
     canvas.addEventListener('pointerdown', function(e) { 
         e.preventDefault(); 
-        
+
+        // Tooltip Click-to-Hide Logic
+        let gameTooltip = document.getElementById('game-tooltip');
+        let etcTooltip = document.getElementById('etc-tooltip');
+        if (gameTooltip.style.display === "block" || etcTooltip.style.display === "block") {
+            window.hideTooltip();
+            return; // Consume click to hide tooltip
+        }
+
         // Click track for Look Ma No Hands
         playerStats.hasClickedThisBattle = true;
         
@@ -8867,7 +9090,7 @@ window.loadGame = function() {
     function rollEquipmentDrop(isBossKill, silent = false, minStars = 0, isRareMob = false) {
     let p = resolvePlayerStats();
     let maxBag = getMaxBagSlots();
-    let allowArtifact = playerStats.isUberBoss && (Math.random() < 0.30); 
+    let allowArtifact = playerStats.isUberBoss && (Math.random() < 0.05);
     
     let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
     let allowedTraits = null;
@@ -8891,12 +9114,12 @@ window.loadGame = function() {
     let statLinesCount = 0; let luckMultiplier = p.qly; let roll = Math.random() * 100;
         
         if (minStars === 1) {
-            if (roll < (0.5 * luckMultiplier)) statLinesCount = 5; else if (roll < (2.0 * luckMultiplier)) statLinesCount = 4;
-            else if (roll < (25.0 * luckMultiplier)) statLinesCount = 3; else if (roll < (60.0 * luckMultiplier)) statLinesCount = 2; else statLinesCount = 1; 
+            if (roll < (0.02 * luckMultiplier)) statLinesCount = 5; else if (roll < (0.2 * luckMultiplier)) statLinesCount = 4;
+            else if (roll < (5.0 * luckMultiplier)) statLinesCount = 3; else if (roll < (25.0 * luckMultiplier)) statLinesCount = 2; else statLinesCount = 1;
         } else {
-            if (roll < (0.02 * luckMultiplier)) statLinesCount = 5; else if (roll < (0.18 * luckMultiplier)) statLinesCount = 4;
-            else if (roll < (0.80 * luckMultiplier)) statLinesCount = 3; else if (roll < (4.00 * luckMultiplier)) statLinesCount = 2; 
-            else if (roll < (15.00 * luckMultiplier)) statLinesCount = 1; else statLinesCount = 0;
+            if (roll < (0.001 * luckMultiplier)) statLinesCount = 5; else if (roll < (0.01 * luckMultiplier)) statLinesCount = 4;
+            else if (roll < (0.15 * luckMultiplier)) statLinesCount = 3; else if (roll < (1.50 * luckMultiplier)) statLinesCount = 2;
+            else if (roll < (10.00 * luckMultiplier)) statLinesCount = 1; else statLinesCount = 0;
         }
 
         let activeStage = playerStats.stage;
@@ -8964,7 +9187,7 @@ window.loadGame = function() {
 
     function rollGachaDrop() {
     let p = resolvePlayerStats();
-    let allowArtifact = (Math.random() < 0.01); 
+    let allowArtifact = (Math.random() < 0.0005);
     let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
     let chosenType = allowArtifact ? "artifact" : types[Math.floor(Math.random() * types.length)];
     
@@ -8980,8 +9203,8 @@ window.loadGame = function() {
     let luckMultiplier = p.qly + ((playerStats.vendingQLevel || 0) * 0.01); 
     let roll = Math.random() * 100;
         
-        if (roll < (0.5 * luckMultiplier)) statLinesCount = 5; else if (roll < (2.0 * luckMultiplier)) statLinesCount = 4;
-        else if (roll < (10.0 * luckMultiplier)) statLinesCount = 3; else if (roll < (30.0 * luckMultiplier)) statLinesCount = 2; else statLinesCount = 1; 
+        if (roll < (0.02 * luckMultiplier)) statLinesCount = 5; else if (roll < (0.10 * luckMultiplier)) statLinesCount = 4;
+        else if (roll < (1.0 * luckMultiplier)) statLinesCount = 3; else if (roll < (10.0 * luckMultiplier)) statLinesCount = 2; else statLinesCount = 1;
 
         let peakRunStage = Math.max(playerStats.stage, playerStats.maxStage || 1);
         let stageScale = Math.floor((peakRunStage - 1) / 10) + 1;
@@ -9222,7 +9445,10 @@ window.loadGame = function() {
         // Asymptotic INT-to-Avoidance scaling (Ceiling: +12% maximum each)
         p.block += parseFloat(((effectiveInt * 0.12) / (effectiveInt + 150)).toFixed(4));
         p.parry += parseFloat(((effectiveInt * 0.12) / (effectiveInt + 150)).toFixed(4));
-        
+
+        // INT-to-Fairy Spawn scaling (+5% per 20 effective INT)
+        p.fairySpawn += parseFloat(((effectiveInt / 20) * 0.05).toFixed(4));
+
         // Initialize base Defense scaling with SP and Intelligence allocation
         let flatDef = playerStats.baseDef + (alloc.spDef * 4) + (effectiveInt * 1.0) + setCtx.flatDefBonus;
         let defMultiplier = 1.0 + setCtx.defPctBonus;
@@ -9357,6 +9583,9 @@ window.loadGame = function() {
         let prestigeDropBonus = (playerStats.prestigeUpgrades?.drop || 0) * 0.05;
         p.drop += prestigeDropBonus;
 
+        let prestigeFairyBonus = (playerStats.prestigeUpgrades?.fairy || 0) * 0.05;
+        p.fairySpawn += prestigeFairyBonus;
+
         // Apply stage-based progressive luck (+1.5% drop quality per active stage or dungeon floor)
         let activeStage = playerStats.stage;
         if (playerStats.isDungeonMode && playerStats.currentDungeon) {
@@ -9367,13 +9596,12 @@ window.loadGame = function() {
         // Apply Aura of Fortune upgrade (+1.5% global drop quality multiplier per level)
         p.qly += (playerStats.globalQLevel || 0) * 0.015;
 
-        // Apply Gladiator's Might (+10% global Attack per point)
-        let prestigeAtkMult = 1.0 + (playerStats.prestigeUpgrades?.atk || 0) * 0.10;
+        let prestigeAtkMult = Math.pow(1.12, playerStats.prestigeUpgrades?.atk || 0);
         p.atk = Math.floor(p.atk * prestigeAtkMult);
 
-        // Apply Colossal Fortitude (+10% global HP and +5% Defense per point)
-        let prestigeHpMult = 1.0 + (playerStats.prestigeUpgrades?.fort || 0) * 0.10;
-        let prestigeDefMult = 1.0 + (playerStats.prestigeUpgrades?.fort || 0) * 0.05;
+        // Apply Colossal Fortitude (Compounding 1.10x)
+        let prestigeHpMult = Math.pow(1.10, playerStats.prestigeUpgrades?.fort || 0);
+        let prestigeDefMult = Math.pow(1.05, playerStats.prestigeUpgrades?.fort || 0);
         p.maxHp = Math.floor(p.maxHp * prestigeHpMult);
         p.def = Math.floor(p.def * prestigeDefMult);
 
@@ -9702,6 +9930,7 @@ window.loadGame = function() {
         }
     }
     function spawnDeathParticles(x, y, mobType) {
+        if (particles.length > 250) return;
         let count = 15;
         let colors = ["#2ecc71", "#27ae60", "#a3fd83"]; // Default Slime Green
         let speed = 4;
@@ -9760,6 +9989,7 @@ window.loadGame = function() {
     }
 
     window.spawnPurchaseCelebration = function(theme, color, rarity) {
+        if (particles.length > 300) return;
         let spawnX = canvas.width / 2;
         let spawnY = canvas.height / 2;
         
@@ -11600,7 +11830,7 @@ window.loadGame = function() {
                 pushLog(`<strong style='color:#2ecc71;'>[MAELSTROM CLEAVE]</strong> Stored <span style='color:#2ecc71;'>${window.formatNumber(overkill)} overkill damage</span> to unleash on next spawn!`);
             }
         }
-        let isBoss = (mob.type === "boss" || mob.type === "dungeon_boss" || mob.type === "dungeon_miniboss" || mob.type === "rift_guardian" || mob.type === "prestige_boss");
+        let isBoss = (mob.type === "boss" || mob.type === "dungeon_boss" || mob.type === "dungeon_miniboss" || mob.type === "rift_guardian" || mob.type === "prestige_boss" || mob.type === "aegis_goliath" || mob.type === "chronos_arbitrator" || mob.type === "nexus_overseer");
         
         if (mob && mob.isRare) {
             playerStats.rareSpawnsSlain = (playerStats.rareSpawnsSlain || 0) + 1;
@@ -11653,14 +11883,15 @@ window.loadGame = function() {
             let scaleVal = playerStats.isDungeonMode ? (playerStats.currentDungeonStage[playerStats.currentDungeon] || 1) : playerStats.stage;
             
             if (playerStats.isCrucibleMode) {
-                // Slower wave XP progression: 10 base + 10 per wave
-                xpYield = 10 + (playerStats.crucibleWave * 10);
+                // Slower wave XP progression: 10 base + 5% exponential growth
+                xpYield = Math.floor(10 * Math.pow(1.05, playerStats.crucibleWave));
             } else if (playerStats.isDungeonMode) {
-                // Dungeon common/boss scaling adjustments: 15 base + 15/stage (75 base + 75/stage for Bosses)
-                xpYield = mob.type === "dungeon_boss" ? 75 + (scaleVal * 75) : 15 + (scaleVal * 15);
+                // Dungeon common/boss scaling adjustments: 15 base + 5% exponential growth (x5 for Bosses)
+                xpYield = mob.type === "dungeon_boss" ? Math.floor(75 * Math.pow(1.05, scaleVal)) : Math.floor(15 * Math.pow(1.05, scaleVal));
             } else {
-                // Standard campaign monster scaling adjustments: 5 base + 5/stage (15 base + 15/stage if Rare, 25 base + 25/stage if Boss)
-                xpYield = isBoss ? 25 + (scaleVal * 25) : (mob.isRare ? 15 + (scaleVal * 15) : 5 + (scaleVal * 5));
+                // Standard campaign monster scaling adjustments: 5 base + 5% exponential (Rare x3, Boss x5)
+                let baseExp = Math.floor(5 * Math.pow(1.05, scaleVal));
+                xpYield = isBoss ? baseExp * 5 : (mob.isRare ? baseExp * 3 : baseExp);
             }
             gainXp(xpYield);
         
@@ -11705,64 +11936,55 @@ window.loadGame = function() {
         if (playerStats.isDungeonMode) {
             if (playerStats.currentDungeon === 'equip') {
                 if (mob.type === "dungeon_boss") {
-                    if (Math.random() < 0.75) rollEquipmentDrop(true, false, 1, false); else rollEquipmentDrop(true, false, 0, false);
-                    addEtcDrop("Overlord's Sigil", 1); pushToast("Overlord's Sigil", null, "#1abc9c", true, 1);
+                    if (Math.random() < 0.05) rollEquipmentDrop(true, false, 1, false); else if (Math.random() < 0.20) rollEquipmentDrop(true, false, 0, false);
+                    if (Math.random() < 0.50) { addEtcDrop("Overlord's Sigil", 1); pushToast("Overlord's Sigil", null, "#1abc9c", true, 1); }
                 } else {
-                    if (Math.random() < 0.12) rollEquipmentDrop(false, false, 0, false);
+                    if (Math.random() < 0.01) rollEquipmentDrop(false, false, 0, false);
                 }
             } else if (playerStats.currentDungeon === 'mat') {
                 if (mob.type === "dungeon_boss") {
-                    if (Math.random() < 0.8) { addEtcDrop("Ancient Core", randInt(1, 3)); pushToast("Ancient Core", null, "#9b59b6", true, 1); }
-                    if (Math.random() < 0.5) { addEtcDrop("Gacha Key", 1); pushToast("Gacha Key", null, "#f1c40f", true, 1); }
-                    if (Math.random() < 0.25) { addEtcDrop("Eridium Shard", 1); pushToast("Eridium Shard", null, "#8e44ad", true, 1); }
-                    addEtcDrop("Legendary Scrap", randInt(1, 3));
+                    if (Math.random() < 0.10) { addEtcDrop("Ancient Core", 1); pushToast("Ancient Core", null, "#9b59b6", true, 1); }
+                    if (Math.random() < 0.02) { addEtcDrop("Gacha Key", 1); pushToast("Gacha Key", null, "#f1c40f", true, 1); }
+                    if (Math.random() < 0.01) { addEtcDrop("Eridium Shard", 1); pushToast("Eridium Shard", null, "#8e44ad", true, 1); }
+                    if (Math.random() < 0.40) addEtcDrop("Legendary Scrap", 1);
                 } else {
                     let r = Math.random();
-                    if (r < 0.10) addEtcDrop("Epic Scrap", 1); else if (r < 0.30) addEtcDrop("Magic Scrap", 1);
-                    else if (r < 0.60) addEtcDrop("Rare Scrap", 1); else addEtcDrop("Monster Soul", randInt(1, 3));
+                    if (r < 0.005) addEtcDrop("Epic Scrap", 1); else if (r < 0.02) addEtcDrop("Magic Scrap", 1);
+                    else if (r < 0.08) addEtcDrop("Rare Scrap", 1); else if (Math.random() < 0.20) addEtcDrop("Monster Soul", 1);
                 }
             } 
         } else {
-            let baseDropRate = isBoss ? 0.25 : (mob.isRare ? 0.15 : 0.045); 
+            let baseDropRate = playerStats.isUberBoss ? 1.0 : (isBoss ? 0.01 : (mob.isRare ? 0.005 : 0.001));
             if (Math.random() < (baseDropRate * p.drop * state.efficiency)) { rollEquipmentDrop(isBoss, false, 0, mob.isRare); }
         }
         
         if (playerStats.isUberBoss) {
             let bossType = playerStats.currentUberBoss || 'guardian';
             if (bossType === 'chronos') {
-                addEtcDrop("Gacha Key", 2);
-                addEtcDrop("Eridium Shard", randInt(2, 4));
-                addEtcDrop("Legendary Scrap", randInt(1, 3));
-                if (Math.random() < 0.35) {
-                    rollEquipmentDrop(true, false, 0, false);
-                }
-                pushLog("<span style='color:#f1c40f; font-weight:bold;'>[VICTORY] Chronos Arbitrator defeated! Salvaged high-tier Temporal components and Gacha Keys.</span>");
-                pushHeaderToast("⏳ Chronos Hunt Successful! +2 Keys", "#f1c40f");
+                if (Math.random() < 0.20) addEtcDrop("Gacha Key", 1);
+                if (Math.random() < 0.10) addEtcDrop("Eridium Shard", 1);
+                if (Math.random() < 0.15) addEtcDrop("Legendary Scrap", 1);
+                pushLog("<span style='color:#f1c40f; font-weight:bold;'>[VICTORY] Chronos Arbitrator defeated! Salvaged temporal components.</span>");
+                pushHeaderToast("⏳ Chronos Hunt Successful!", "#f1c40f");
             } else if (bossType === 'nexus') {
-                addEtcDrop("Gacha Key", 2);
-                addEtcDrop("Catalyst Core", 1);
-                addEtcDrop("Mythic Scrap", randInt(1, 2));
-                if (Math.random() < 0.35) {
-                    rollEquipmentDrop(true, false, 0, false);
-                }
-                pushLog("<span style='color:#ff007f; font-weight:bold;'>[VICTORY] Nexus Overseer purged! Harvested raw Catalyst Cores, Mythic scraps, and Legendary weapons!</span>");
-                pushHeaderToast("👾 Nexus Purge Successful! +1 Catalyst Core", "#ff007f");
+                if (Math.random() < 0.20) addEtcDrop("Gacha Key", 1);
+                if (Math.random() < 0.05) addEtcDrop("Catalyst Core", 1);
+                if (Math.random() < 0.15) addEtcDrop("Mythic Scrap", 1);
+                pushLog("<span style='color:#ff007f; font-weight:bold;'>[VICTORY] Nexus Overseer purged! Harvested raw components.</span>");
+                pushHeaderToast("👾 Nexus Purge Successful!", "#ff007f");
             } else {
-                addEtcDrop("Gacha Key", 2);
-                addEtcDrop("Eridium Shard", randInt(1, 3));
-                addEtcDrop("Legendary Scrap", randInt(1, 2));
-                if (Math.random() < 0.35) {
-                    rollEquipmentDrop(true, false, 0, false);
-                }
-                pushLog("<span style='color:#3498db; font-weight:bold;'>[VICTORY] Aegis Goliath defeated! Obtained protective plates, Gacha Keys, and Eridium Shards.</span>");
-                pushHeaderToast("🛡️ Aegis Hunt Successful! +2 Keys", "#3498db");
+                if (Math.random() < 0.20) addEtcDrop("Gacha Key", 1);
+                if (Math.random() < 0.10) addEtcDrop("Eridium Shard", 1);
+                if (Math.random() < 0.15) addEtcDrop("Legendary Scrap", 1);
+                pushLog("<span style='color:#3498db; font-weight:bold;'>[VICTORY] Aegis Goliath defeated! Obtained protective plates.</span>");
+                pushHeaderToast("🛡️ Aegis Hunt Successful!", "#3498db");
             }
             playerStats.riftGuardiansSlain = (playerStats.riftGuardiansSlain || 0) + 1;
         } else if (mob.type === "boss") {
-            if (Math.random() < 0.40) { addEtcDrop("Ancient Core", 1); pushToast("Ancient Core", null, "#9b59b6", true, 1); }
-            if (Math.random() < 0.10) { addEtcDrop("Eridium Shard", 1); pushToast("Eridium Shard", null, "#8e44ad", true, 1); }
+            if (Math.random() < 0.05) { addEtcDrop("Ancient Core", 1); pushToast("Ancient Core", null, "#9b59b6", true, 1); }
+            if (Math.random() < 0.01) { addEtcDrop("Eridium Shard", 1); pushToast("Eridium Shard", null, "#8e44ad", true, 1); }
         } else if (!isBoss && !playerStats.isDungeonMode) { 
-            if (Math.random() < (mob.isRare ? 0.50 : 0.15)) {
+            if (Math.random() < (mob.isRare ? 0.08 : 0.03)) {
                 let etcItemName = mob.isRare ? "Luminous Soul" : "Monster Soul";
                 addEtcDrop(etcItemName); effects.push({ x: mob.x + 10, y: mob.y + 10, text: "+1 " + etcItemName, color: mob.isRare ? "#f1c40f" : "#bdc3c7", life: 70 });
             }
@@ -12071,7 +12293,7 @@ window.loadGame = function() {
         let existingTotal = effects.find(e => e.isCumulative && e.life > 0);
         if (existingTotal) {
             existingTotal.amount += amount;
-            existingTotal.text = `⚡ TOTAL: ${window.formatNumber(existingTotal.amount)}`;
+            existingTotal.text = `TOTAL: ${window.formatNumber(existingTotal.amount)}`;
             existingTotal.life = 55; // Reset the decay timer
             existingTotal.x = mob.x + mob.w / 2 - 25;
             existingTotal.y = mob.y - 25;
@@ -12079,7 +12301,7 @@ window.loadGame = function() {
             effects.push({
                 x: mob.x + mob.w / 2 - 25,
                 y: mob.y - 25,
-                text: `⚡ TOTAL: ${window.formatNumber(amount)}`,
+                text: `TOTAL: ${window.formatNumber(amount)}`,
                 color: "#f1c40f", // Gold total indicator
                 life: 55,
                 isCumulative: true,
@@ -12135,7 +12357,7 @@ window.loadGame = function() {
                 mob.bleedDmgPerSecond = Math.max(1, Math.ceil(p.atk * 0.15)); // 15% weapon scaling per stack
                 
                 if (mob.bleedStacks >= 5) {
-                    // HEMORRHAGIC RUPTURE (300% critical physical burst + 10% Max HP Life-Siphon)
+                    // HEMORRHAGIC RUPTURE (300% critical physical burst + 3% Max HP Life-Siphon)
                     let ruptureDmg = Math.ceil(p.atk * 3.0);
                     let isRuptureCrit = Math.random() < p.critChance;
                     if (isRuptureCrit) ruptureDmg = Math.ceil(ruptureDmg * p.critDamage);
@@ -12143,7 +12365,7 @@ window.loadGame = function() {
                     mob.hp -= ruptureDmg;
                     mob.flashTimer = 8;
                     
-                    let healAmount = Math.ceil(p.maxHp * 0.10);
+                    let healAmount = Math.ceil(p.maxHp * 0.03);
                     playerStats.currentHp = Math.min(p.maxHp, playerStats.currentHp + healAmount);
                     
                     effects.push({ x: mob.x, y: mob.y - 20, text: "💥 RUPTURE! +" + window.formatNumber(healAmount) + " HP", color: "#e74c3c", life: 65 });
@@ -12323,8 +12545,8 @@ window.loadGame = function() {
                 damageHistory.push({ time: Date.now(), amount: echoDmg });
             }
             if (checkArtifactTrait("vampirism")) {
-                let heal = Math.max(1, Math.floor(finalDamage * 0.03));
-                let maxHealCap = Math.ceil(p.maxHp * 0.05);
+                let heal = Math.max(1, Math.floor(finalDamage * 0.005));
+                let maxHealCap = Math.ceil(p.maxHp * 0.01);
                 if (heal > maxHealCap) heal = maxHealCap;
                 playerStats.currentHp = Math.min(p.maxHp, playerStats.currentHp + heal);
                 effects.push({ x: hero.x - 25, y: hero.y - 10, text: "❤️ +" + window.formatNumber(heal), color: "#2ecc71", life: 60 });
@@ -12466,9 +12688,9 @@ window.loadGame = function() {
         }
         
         let drp = p.drop * state.efficiency;
-        document.getElementById('live-rate-mob').innerText = (4.5 * drp).toFixed(2) + "%"; 
-        document.getElementById('live-rate-rare').innerText = (15.0 * drp).toFixed(2) + "%"; 
-        document.getElementById('live-rate-boss').innerText = (25.0 * drp).toFixed(2) + "%"; 
+        document.getElementById('live-rate-mob').innerText = (0.1 * drp).toFixed(2) + "%";
+        document.getElementById('live-rate-rare').innerText = (0.5 * drp).toFixed(2) + "%";
+        document.getElementById('live-rate-boss').innerText = (1.0 * drp).toFixed(2) + "%";
         document.getElementById('live-rate-dmini').innerText = (30.0 * drp).toFixed(2) + "%";
         
         let elRateAcore = document.getElementById('live-rate-acore');
@@ -13056,14 +13278,14 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
         keyTypes.forEach(k => {
             let count = k + 'Keys'; 
             let time = 'next' + k.charAt(0).toUpperCase() + k.slice(1) + 'KeyTime';
-            if (playerStats[count] < 8) {
+            if (playerStats[count] < 3) {
                 if (!playerStats[time]) { 
                     playerStats[time] = now + 3600000; 
                 } else if (now >= playerStats[time]) {
                     let msOver = now - playerStats[time];
                     let keysEarned = 1 + Math.floor(msOver / 3600000);
-                    playerStats[count] = Math.min(8, playerStats[count] + keysEarned);
-                    if (playerStats[count] < 8) {
+                    playerStats[count] = Math.min(3, playerStats[count] + keysEarned);
+                    if (playerStats[count] < 3) {
                         playerStats[time] = now + (3600000 - (msOver % 3600000));
                     } else {
                         playerStats[time] = 0; // Timer reset at limit
@@ -13078,7 +13300,7 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
                 let time = 'next' + k.charAt(0).toUpperCase() + k.slice(1) + 'KeyTime';
                 let timerEl = document.getElementById('dt-' + k); 
                 let keysEl = document.getElementById('dk-' + k);
-                if (playerStats[count] < 8) {
+                if (playerStats[count] < 3) {
                     // Prevent visual negative desync on timer calculations
                     let msLeft = Math.max(0, playerStats[time] - now); 
                     let mins = Math.floor(msLeft / 60000); 
@@ -13452,7 +13674,7 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
             processEnemySpawn(); 
             scrollScenery(scrollSpeed);
         } else {
-            if (mob.isRare && Math.random() < 0.1) {
+            if (mob.isRare && Math.random() < 0.1 && particles.length < 200) {
                 particles.push({ x: mob.x + Math.random()*mob.w, y: mob.y + Math.random()*mob.h, vx: (Math.random()-0.5)*2, vy: -Math.random()*3, radius: Math.random()*2+1, color: "#f1c40f", alpha: 1, life: 20 });
             }
             
@@ -13473,7 +13695,7 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
                     if (!mob) return;
                     
                     // Constant scary dark smoke puff leakage from Hooktail's snout (gently rises upwards like real smoke)
-            if (mob && mob.type === "prestige_boss" && Math.random() < 0.20 && !isGamePaused) {
+            if (mob && mob.type === "prestige_boss" && Math.random() < 0.20 && particles.length < 200 && !isGamePaused) {
                 let hoverY = Math.sin(Date.now() / 150) * 6;
                 particles.push({
                     x: mob.x - 35, // Positioned at her nostril area
@@ -14369,7 +14591,7 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
             }
 
             // Rising fire embers from lava fissures
-            if (Math.random() < 0.15) {
+            if (Math.random() < 0.15 && particles.length < 200) {
                 particles.push({
                     x: Math.random() * canvas.width,
                     y: 245 + Math.random() * 45,
@@ -16070,7 +16292,7 @@ function engineCycle() {
         { id: "sing_alchemical_synth", name: "Alchemical Override", icon: "🔮", desc: "Override an active potion with a higher tier of the same type", isSingleTier: true, stats: { potStrengthPct: 0.05, potDurationPct: 0.05 } },
         { id: "sing_patient_shepherd", name: "Patient Shepherd", icon: "🧚", desc: "Let 3 fairies fly simultaneously, then capture all of them in 2 seconds", isSingleTier: true, stats: { fairySpawn: 0.10, moveSpeedPct: 0.05 } },
         { id: "sing_battlemage", name: "Battlemage's Legacy", icon: "🧙", desc: "Equip heavy plate armor in every slot while wielding the unique Staff", isSingleTier: true, stats: { atkPct: 0.05, defPct: 0.05, intPct: 0.05 } },
-        { id: "sing_bare_fists", name: "Bare Fists", icon: "🥊", desc: "Defeat any Stage or Dungeon Boss with no weapon equipped", isSingleTier: true, stats: { atk: 50, atkPct: 0.05 } },
+        { id: "sing_bare_fists", name: "Bare Fists", icon: "🥊", desc: "Defeat any Stage or Dungeon Boss with no weapon equipped", isSingleTier: true, stats: { atk: 10, atkPct: 0.02 } },
         { id: "sing_perfect_deflection", name: "Perfect Deflection", icon: "⚡", desc: "Parry three consecutive attacks without taking damage or blocking", isSingleTier: true, stats: { parry: 0.01, dexPct: 0.05 } },
         { id: "sing_night_owl", name: "Night Owl", icon: "🦉", desc: "Slay any monster between 12:00 AM and 4:00 AM local time", isSingleTier: true, stats: { critDamage: 0.05, atkPct: 0.03 } },
         { id: "sing_early_bird", name: "Early Bird", icon: "🌅", desc: "Slay any monster between 5:00 AM and 8:00 AM local time", isSingleTier: true, stats: { expPct: 0.05, maxHpPct: 0.03 } },
