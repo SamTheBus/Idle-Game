@@ -8245,6 +8245,21 @@ window.loadGame = function() {
     }
 
     function recalculateItemStats(item) {
+        // Fallbacks for legacy items lacking new template properties
+        item.bonusAtk = item.bonusAtk || 0;
+        item.bonusMaxHp = item.bonusMaxHp || 0;
+        item.bonusDef = item.bonusDef || 0;
+        item.bonusMoveSpeed = item.bonusMoveSpeed || 0;
+        item.bonusCritChance = item.bonusCritChance || 0;
+        item.bonusCritDamage = item.bonusCritDamage || 0;
+        item.bonusBlock = item.bonusBlock || 0;
+        item.bonusParry = item.bonusParry || 0;
+        item.bonusActiveSpeed = item.bonusActiveSpeed || 0;
+        item.bonusIdleSpeed = item.bonusIdleSpeed || 0;
+        item.bonusStr = item.bonusStr || 0;
+        item.bonusDex = item.bonusDex || 0;
+        item.bonusInt = item.bonusInt || 0;
+
         // Apply specialized baseline parameters for Unique Items (Unified Exponential)
         let expScale = Math.pow(1.06, (item.stageLevel || 1) * 10);
 
@@ -10270,6 +10285,10 @@ window.loadGame = function() {
         let prestigeDefMult = Math.pow(1.05, playerStats.prestigeUpgrades?.fort || 0);
         p.maxHp = Math.floor(p.maxHp * prestigeHpMult);
         p.def = Math.floor(p.def * prestigeDefMult);
+
+        // Final Sanity Shields against NaN/Infinity leakage
+        if (isNaN(p.idleAttackSpeed) || p.idleAttackSpeed <= 0 || !isFinite(p.idleAttackSpeed)) p.idleAttackSpeed = 60;
+        if (isNaN(p.activeAttackSpeed) || p.activeAttackSpeed <= 0 || !isFinite(p.activeAttackSpeed)) p.activeAttackSpeed = 15;
 
         return p;
     }
