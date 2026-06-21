@@ -14233,6 +14233,16 @@ for (let i = effects.length - 1; i >= 0; i--) { let eff = effects[i]; eff.y -= 0
         if (playerStats.hpPotionTimer > 0) playerStats.hpPotionTimer--;
         if (playerStats.defPotionTimer > 0) playerStats.defPotionTimer--;
         if (playerStats.hastePotionTimer > 0) playerStats.hastePotionTimer--;
+
+        // Decrement the hero's attack cooldown timer and handle swing animation frame
+        if (hero.attackTimer > 0) {
+            hero.attackTimer--;
+            let cooldownCap = playerStats.frenzyTimer > 0 ? 4 : p.activeAttackSpeed;
+            // Display the slash animation frame for the first 6 frames of the attack
+            hero.slashFrame = (hero.attackTimer > cooldownCap - 6);
+        } else {
+            hero.slashFrame = false;
+        }
         
         // Session and activity tracking
         if (!isGamePaused) {
