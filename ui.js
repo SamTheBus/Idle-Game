@@ -31,9 +31,12 @@ window.updateUI = function() {
 
     // 1. Hud overlays
     setText('hud-stage', window.playerStats.stage);
-    setText('hud-progress', `${window.playerStats.killCount}/${window.playerStats.targetsRequired}`);
-    setText('hud-hp', `${window.formatNumber(window.playerStats.currentHp)}/${window.formatNumber(p.maxHp)}`);
+    setText('hud-progress', `(${window.playerStats.killCount}/${window.playerStats.targetsRequired})`);
     setText('hud-coins', window.formatNumber(window.playerStats.coins));
+
+    // Update real-time DPS in bottom HUD bar
+    let actDps = window.calculateActiveDps ? window.calculateActiveDps() : "0.0";
+    setText('hud-dps', actDps);
 
     let maxBag = window.getMaxBagSlots();
     let bagEl = document.getElementById('hud-bag');
@@ -42,13 +45,10 @@ window.updateUI = function() {
         bagEl.style.color = (window.inventory.EQUIP.length >= maxBag || window.inventory.ARTIFACT.length >= maxBag) ? "#e74c3c" : "#2ecc71";
     }
 
-    // 2. Stats panel headers
-    setText('char-level', window.playerStats.level);
-    setText('char-sp', (window.draftAllocations !== null ? window.draftSP : window.playerStats.sp));
-    setText('char-maxstage', window.playerStats.maxStage);
-    setText('char-prestige-count', window.playerStats.prestigeCount || 0);
-    setText('char-lifetime-peak', window.playerStats.lifetimePeakStage || window.playerStats.maxStage || 1);
-    setText('char-xp-text', `${window.formatNumber(window.playerStats.xp)} / ${window.formatNumber(window.playerStats.xpReq)}`);
+    // 2. Stats panel headers (re-routed to unified selectors)
+        setText('char-level', window.playerStats.level);
+        setText('char-sp', (window.draftAllocations !== null ? window.draftSP : window.playerStats.sp));
+        setText('char-xp-text', `${window.formatNumber(window.playerStats.xp)} / ${window.formatNumber(window.playerStats.xpReq)}`);
 
     const xpFill = document.getElementById('char-xp-fill');
     if (xpFill) xpFill.style.width = Math.min(100, (window.playerStats.xp / window.playerStats.xpReq) * 100) + "%";
@@ -148,13 +148,13 @@ window.updateUI = function() {
         setsListEl.innerHTML = activeSetsHtml.length > 0 ? activeSetsHtml.join("") : "No active set synergies. Equip matching named gear (e.g. Colossus, Windrunner).";
     }
 
-    // Live drop rates
-    let drp = p.drop * window.state.efficiency;
-    setText('live-rate-mob', (4.5 * drp).toFixed(2) + "%");
-    setText('live-rate-rare', (15.0 * drp).toFixed(2) + "%");
-    document.getElementById('live-rate-boss').innerText = (25.0 * drp).toFixed(2) + "%";
-    document.getElementById('live-rate-dmini').innerText = (30.0 * drp).toFixed(2) + "%";
-    let elRateAcore = document.getElementById('live-rate-acore');
+    // Live drop rates (safely mapped using setText to prevent element missing errors)
+        let drp = p.drop * window.state.efficiency;
+        setText('live-rate-mob', (4.5 * drp).toFixed(2) + "%");
+        setText('live-rate-rare', (15.0 * drp).toFixed(2) + "%");
+        setText('live-rate-boss', (25.0 * drp).toFixed(2) + "%");
+        setText('live-rate-dmini', (30.0 * drp).toFixed(2) + "%");
+        let elRateAcore = document.getElementById('live-rate-acore');
     if (elRateAcore) elRateAcore.innerText = (40.0 * drp).toFixed(2) + "%";
 
     let chance5 = (p.qly >= 2.0) ? (0.02 * p.qly) : 0;
@@ -2197,6 +2197,9 @@ window.showUseTooltip = function(e, keyName) {
 
 window.switchTab = function(tabId) {
     window.hideTooltip();
+    // Keep backward-compatibility with code that tries to target 'gear' or 'stats'
+    if (tabId === 'gear' || tabId === 'stats') tabId = 'hero';
+
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
 
@@ -2206,7 +2209,7 @@ window.switchTab = function(tabId) {
     let contentEl = document.getElementById('tab-' + tabId);
     if (contentEl) contentEl.classList.add('active');
 
-    if (tabId === 'stats') {
+    if (tabId === 'hero') {
         window.ensureDraftInitialized();
     }
     if (tabId === 'forge') {
@@ -2867,4 +2870,158 @@ window.updateArchitectRanges = function() {
                 }
             }
             window.pushLog(`<span style='color:#e67e22;'>[DEV] God Mode (Invulnerability) ${window.playerStats.godMode ? 'ON' : 'OFF'}</span>`);
+        };
+        
+        // ==========================================================================
+        // --- INTERACTIVE DRAGGABLE WINDOW SYSTEM ---
+        // ==========================================================================
+
+        window.openEquipSwapWindow = function(e, slotKey) {
+            if (e) {
+                e.stopPropagation();
+                e.preventDefault();
+            }
+
+            // Check if slot is locked by overall suit to prevent UI conflicts
+            if ((slotKey === 'chest' || slotKey === 'leggings') && window.equippedSlots.overall) {
+                if (typeof window.pushHeaderToast === "function") window.pushHeaderToast("🔒 Locked by Overall Suit!", "#e74c3c");
+                return;
+            }
+            if (slotKey === 'overall' && (window.equippedSlots.chest || window.equippedSlots.leggings)) {
+                if (typeof window.pushHeaderToast === "function") window.pushHeaderToast("🔒 Locked by equipped Piece gear!", "#e74c3c");
+                return;
+            }
+
+            let existingWin = document.getElementById('equip-swap-window');
+            if (existingWin) existingWin.remove();
+
+            let isArt = slotKey.startsWith("art");
+            let targetType = isArt ? "artifact" : slotKey;
+
+            // Filter unequipped inventory items that fit this exact slot
+            let eligibleItems = [];
+            if (isArt) {
+                eligibleItems = window.inventory.ARTIFACT.filter(item => item && item.type === "artifact");
+            } else {
+                eligibleItems = window.inventory.EQUIP.filter(item => item && item.type === targetType);
+            }
+
+            let win = document.createElement('div');
+            win.id = 'equip-swap-window';
+            win.className = 'draggable-window';
+
+            // Position window nicely to the left of the live stats panel
+            let container = document.getElementById('game-container').getBoundingClientRect();
+            let leftOffset = (e && e.clientX) ? (e.clientX - container.left - 145) : 35;
+            let topOffset = (e && e.clientY) ? (e.clientY - container.top - 80) : 100;
+
+            // Clamp coordinates safely within the game-container
+            if (leftOffset < 5) leftOffset = 5;
+            if (topOffset < 5) topOffset = 5;
+            win.style.left = leftOffset + 'px';
+            win.style.top = topOffset + 'px';
+
+            let headerTitle = `Swap: ${slotKey.charAt(0).toUpperCase() + slotKey.slice(1)}`;
+            let contentHtml = "";
+
+            if (eligibleItems.length === 0) {
+                contentHtml = `<div style="color:#666; text-align:center; padding: 25px 0; font-size:11px; font-style:italic;">No unequipped ${targetType}s found.</div>`;
+            } else {
+                contentHtml = eligibleItems.map(item => {
+                    let color = window.getTierColor(item.statsRolled);
+                    let rating = item.statsRolled === "UNIQUE" ? "UNIQUE" : `${item.statsRolled}★`;
+                    let comparisonBadge = window.getComparisonDeltaBadge(item);
+
+                    return `
+                        <div class="bag-item" style="padding:6px; margin-bottom:5px; background:#181c22; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;"
+                             onmouseenter="window.showInventoryTooltip(event, ${item.id})"
+                             ontouchstart="window.showInventoryTooltip(event, ${item.id})"
+                             onmouseleave="window.hideTooltip()">
+                            <div style="text-align:left; max-width: 170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                <strong style="color:${color}; font-size:11px;">${item.name}</strong><br>
+                                <span style="font-size:9.5px; color:#aaa;">${rating} | Lv. ${item.stageLevel}</span>${comparisonBadge}
+                            </div>
+                            <button class="btn-action" style="padding:3px 8px; font-size:10px; font-weight:bold; background:var(--accent-green);" onclick="window.executeSwapItem('${slotKey}', ${item.id})">Equip</button>
+                        </div>
+                    `;
+                }).join("");
+            }
+
+            win.innerHTML = `
+                <div class="draggable-header" id="swap-win-handle">
+                    <span>${headerTitle}</span>
+                    <button onclick="document.getElementById('equip-swap-window').remove(); window.hideTooltip();" style="background:transparent; border:none; color:#e74c3c; font-weight:bold; cursor:pointer; font-size:11px; padding:2px;">[X]</button>
+                </div>
+                <div class="draggable-content" onscroll="window.hideTooltip()" ontouchmove="window.hideTooltip()">
+                    ${contentHtml}
+                </div>
+            `;
+
+            document.getElementById('game-container').appendChild(win);
+            window.makeWindowDraggable(win, document.getElementById('swap-win-handle'));
+        };
+
+        window.executeSwapItem = function(slotKey, itemId) {
+            // Standard equip handling
+            window.equipItem(itemId);
+
+            // Refresh content inside window to reflect newly unequipped items in inventory
+            window.openEquipSwapWindow(null, slotKey);
+            window.hideTooltip();
+        };
+
+        window.makeWindowDraggable = function(el, handle) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            handle.onmousedown = dragMouseDown;
+            handle.ontouchstart = dragTouchStart;
+
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function dragTouchStart(e) {
+                if (e.touches.length > 0) {
+                    pos3 = e.touches[0].clientX;
+                    pos4 = e.touches[0].clientY;
+                    document.ontouchend = closeDragElement;
+                    document.ontouchmove = elementTouchDrag;
+                }
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+
+                // Apply reposition coordinates
+                el.style.top = (el.offsetTop - pos2) + "px";
+                el.style.left = (el.offsetLeft - pos1) + "px";
+            }
+
+            function elementTouchDrag(e) {
+                if (e.touches.length > 0) {
+                    pos1 = pos3 - e.touches[0].clientX;
+                    pos2 = pos4 - e.touches[0].clientY;
+                    pos3 = e.touches[0].clientX;
+                    pos4 = e.touches[0].clientY;
+
+                    el.style.top = (el.offsetTop - pos2) + "px";
+                    el.style.left = (el.offsetLeft - pos1) + "px";
+                }
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+                document.ontouchend = null;
+                document.ontouchmove = null;
+            }
         };

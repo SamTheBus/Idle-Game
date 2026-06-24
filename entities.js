@@ -2314,13 +2314,6 @@ window.draw = function() {
         ctx.restore();
     });
 
-    let actDps = window.calculateActiveDps ? window.calculateActiveDps() : "0.0";
-    ctx.fillStyle = "#1e1e1e"; ctx.beginPath(); ctx.rect(canvas.width - 150, 10, 140, 32); ctx.fill(); ctx.strokeStyle = "#000000"; ctx.lineWidth = 3; ctx.stroke();
-    ctx.strokeStyle = "#9b59b6"; ctx.lineWidth = 1.2; ctx.strokeRect(canvas.width - 147, 13, 134, 26);
-    ctx.fillStyle = "#fff"; ctx.font = "bold 10px sans-serif"; ctx.strokeStyle = "#000000"; ctx.lineWidth = 3;
-    ctx.strokeText("ACTIVE DPS", canvas.width - 140, 24); ctx.fillText("ACTIVE DPS", canvas.width - 140, 24);
-    ctx.fillStyle = "#e74c3c"; ctx.font = "bold 13px sans-serif"; ctx.strokeText(actDps, canvas.width - 70, 25); ctx.fillText(actDps, canvas.width - 70, 25);
-
     window.particles.forEach(pt => {
         ctx.save(); if (pt.alpha !== undefined) ctx.globalAlpha = pt.alpha;
         ctx.fillStyle = pt.color; ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2); ctx.fill(); ctx.restore();
