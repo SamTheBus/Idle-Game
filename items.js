@@ -539,11 +539,11 @@ window.createItemObject = function(chosenType, statLinesCount, stageScale, minSt
     let actualStatLines = isArt ? 3 : (statLinesCount + 1);
 
     for (let i = 0; i < actualStatLines; i++) {
-        if (pool.length === 0) break;
-        let selectedStat = pool.pop();
-        if (selectedStat === "atk") item.bonusAtk += Math.ceil(window.randInt(1, 2) * expScale * rarityMult * prestigeMult);
-        else if (selectedStat === "maxHp") item.bonusMaxHp += Math.ceil(window.randInt(3, 8) * expScale * rarityMult * prestigeMult);
-        else if (selectedStat === "def") item.bonusDef += Math.ceil(window.randInt(1, 2) * expScale * rarityMult * prestigeMult);
+            if (pool.length === 0) break;
+            let selectedStat = pool.pop();
+            if (selectedStat === "atk") item.bonusAtk += Math.ceil(window.randFloat(0.15, 0.35) * expScale * rarityMult * prestigeMult);
+            else if (selectedStat === "maxHp") item.bonusMaxHp += Math.ceil(window.randFloat(1.0, 2.5) * expScale * rarityMult * prestigeMult);
+            else if (selectedStat === "def") item.bonusDef += Math.ceil(window.randFloat(0.15, 0.35) * expScale * rarityMult * prestigeMult);
         else if (selectedStat === "moveSpeed") item.bonusMoveSpeed += Math.ceil(window.randInt(1, 2) * stageScale * rarityMult * prestigeMult);
         else if (selectedStat === "critChance") {
             let rolled = window.randFloat(0.01, 0.025) * Math.sqrt(stageScale) * rarityMult * prestigeMult;
@@ -914,19 +914,17 @@ window.recalculateItemStats = function(item) {
             }
 
             if (item.enchantments) {
-        for (let statKey in item.enchantments) {
-            let count = item.enchantments[statKey];
-            let multiplier = Math.pow(1.25, count);
-            const integerStats = ["atk", "maxHp", "def", "str", "dex", "int"];
-            if (integerStats.includes(statKey)) {
-                item[statKey] = Math.ceil(item[statKey] * multiplier);
-            } else if (statKey === "activeAttackSpeed" || statKey === "idleAttackSpeed") {
-                item[statKey] = Math.floor(item[statKey] * multiplier);
-            } else {
-                item[statKey] = parseFloat((item[statKey] * multiplier).toFixed(4));
-            }
-        }
-    }
+                    for (let statKey in item.enchantments) {
+                        let count = item.enchantments[statKey];
+                        let multiplier = Math.pow(1.25, count);
+                        const integerStats = ["atk", "maxHp", "def", "str", "dex", "int"];
+                        if (integerStats.includes(statKey)) {
+                            item[statKey] = Math.ceil(item[statKey] * multiplier);
+                        } else {
+                            item[statKey] = parseFloat((item[statKey] * multiplier).toFixed(4));
+                        }
+                    }
+                }
 };
 
 window.addRandomStatLineToItem = function(item) {
@@ -964,9 +962,9 @@ window.addRandomStatLineToItem = function(item) {
     let rarityMult = 1 + (item.statsRolled * 0.15);
     let prestigeMult = Math.pow(1.08, window.playerStats.prestigeCount || 0);
 
-    if (selectedStat === "atk") item.bonusAtk += Math.ceil(window.randInt(1, 2) * expScale * rarityMult * prestigeMult);
-    else if (selectedStat === "maxHp") item.bonusMaxHp += Math.ceil(window.randInt(3, 8) * expScale * rarityMult * prestigeMult);
-    else if (selectedStat === "def") item.bonusDef += Math.ceil(window.randInt(1, 2) * expScale * rarityMult * prestigeMult);
+    if (selectedStat === "atk") item.bonusAtk += Math.ceil(window.randFloat(0.15, 0.35) * expScale * rarityMult * prestigeMult);
+        else if (selectedStat === "maxHp") item.bonusMaxHp += Math.ceil(window.randFloat(1.0, 2.5) * expScale * rarityMult * prestigeMult);
+        else if (selectedStat === "def") item.bonusDef += Math.ceil(window.randFloat(0.15, 0.35) * expScale * rarityMult * prestigeMult);
     else if (selectedStat === "moveSpeed") item.bonusMoveSpeed += Math.ceil(window.randInt(1, 2) * stageScale * rarityMult * prestigeMult);
     else if (selectedStat === "critChance") {
         let rolled = window.randFloat(0.01, 0.025) * Math.sqrt(stageScale) * rarityMult * prestigeMult;
@@ -1635,13 +1633,11 @@ window.enchantItem = function() {
     if (typeof window.checkAchievements === "function") window.checkAchievements();
 
     const integerStats = ["atk", "maxHp", "def", "str", "dex", "int"];
-    if (integerStats.includes(selectedStat)) {
-        item[selectedStat] = Math.ceil(item[selectedStat] * 1.25);
-    } else if (selectedStat === "activeAttackSpeed" || selectedStat === "idleAttackSpeed") {
-        item[selectedStat] = Math.floor(item[selectedStat] * 1.25);
-    } else {
-        item[selectedStat] = parseFloat((item[selectedStat] * 1.25).toFixed(4));
-    }
+        if (integerStats.includes(selectedStat)) {
+            item[selectedStat] = Math.ceil(item[selectedStat] * 1.25);
+        } else {
+            item[selectedStat] = parseFloat((item[selectedStat] * 1.25).toFixed(4));
+        }
 
     if (typeof window.pushLog === "function") window.pushLog(`<span style='color:#9b59b6;'>[ENCHANTER]</span> Successfully infused <strong style='color:#9b59b6;'>${window.getStatIcon(selectedStat)} ${selectedStat.toUpperCase()}</strong> by 25% on ${item.name}!`);
     if (typeof window.pushHeaderToast === "function") window.pushHeaderToast(`🔮 Enchanted: +25% ${selectedStat.toUpperCase()}!`, "#9b59b6");

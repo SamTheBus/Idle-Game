@@ -955,12 +955,12 @@ if (statKey === 'atk' && window.playerStats.atkPotionTimer > 0) gearTotal += Mat
         html += `<div class="tt-stat-line" style="color:#f1c40f;">• Crit Multi: +${(totalVal * 1.0).toFixed(1)}%</div>`;
         html += `<div class="tt-stat-line" style="color:#3498db;">• Move Speed: +${(totalVal * 0.25).toFixed(1)}</div>`;
     } else if (statKey === 'int') {
-            html += `<div style="margin: 6px 0; border-top: 1px dashed #444; padding-top: 4px; color: #ffb6c1; font-weight: bold;">Scaling Contributions:</div>`;
-            html += `<div class="tt-stat-line" style="color:#3498db;">• Block Rate: +${(totalVal * 0.2).toFixed(1)}%</div>`;
-            html += `<div class="tt-stat-line" style="color:#e74c3c;">• Parry Rate: +${(totalVal * 0.2).toFixed(1)}%</div>`;
-            html += `<div class="tt-stat-line" style="color:#2ecc71;">• Defense: +Math.max(0, totalVal - 5)% Multiplier</div>`;
-            html += `<div class="tt-stat-line" style="color:#9b59b6;">• Potion Dur: +${(totalVal * 0.1).toFixed(1)}%</div>`;
-        }
+                  html += `<div style="margin: 6px 0; border-top: 1px dashed #444; padding-top: 4px; color: #ffb6c1; font-weight: bold;">Scaling Contributions:</div>`;
+                  html += `<div class="tt-stat-line" style="color:#3498db;">• Block Rate: +${(totalVal * 0.2).toFixed(1)}%</div>`;
+                  html += `<div class="tt-stat-line" style="color:#e74c3c;">• Parry Rate: +${(totalVal * 0.2).toFixed(1)}%</div>`;
+                  html += `<div class="tt-stat-line" style="color:#2ecc71;">• Defense: +${Math.max(0, totalVal - 5)}% Multiplier</div>`;
+                  html += `<div class="tt-stat-line" style="color:#9b59b6;">• Potion Dur: +${(totalVal * 0.1).toFixed(1)}%</div>`;
+              }
 
     html += `</div>`;
     tt.style.borderColor = data.color; tt.innerHTML = html; tt.style.display = "block";
