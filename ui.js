@@ -2871,7 +2871,7 @@ window.updateArchitectRanges = function() {
             }
             window.pushLog(`<span style='color:#e67e22;'>[DEV] God Mode (Invulnerability) ${window.playerStats.godMode ? 'ON' : 'OFF'}</span>`);
         };
-        
+
         // ==========================================================================
         // --- INTERACTIVE DRAGGABLE WINDOW SYSTEM ---
         // ==========================================================================

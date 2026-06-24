@@ -558,25 +558,31 @@
                         </div>
 
                         <h4 style="margin:8px 0 6px 0; color:#3498db; font-size:12px; border-bottom:1px solid #222; padding-bottom:4px; text-align: left;">📊 Detailed Live Stats</h4>
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; line-height:1.45; font-family: monospace;">
-                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'atk')" ontouchstart="window.showStatBreakdown(event, 'atk')" onmouseleave="window.hideTooltip()">⚔️ Atk: <span id="stat-atk" style="font-weight:bold; color:#fff;">10</span></div>
-                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'def')" ontouchstart="window.showStatBreakdown(event, 'def')" onmouseleave="window.hideTooltip()">🛡️ Def: <span id="stat-def" style="font-weight:bold; color:#fff;">0</span></div>
-                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'maxHp')" ontouchstart="window.showStatBreakdown(event, 'maxHp')" onmouseleave="window.hideTooltip()">❤️ HP: <span id="stat-mhp" style="font-weight:bold; color:#fff;">100</span></div>
-                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'moveSpeed')" ontouchstart="window.showStatBreakdown(event, 'moveSpeed')" onmouseleave="window.hideTooltip()">👟 Spd: <span id="stat-mov" style="font-weight:bold; color:#fff;">10</span></div>
-                            <div class="stat-hover" onmouseenter="window.showStatHoverTooltip(event, 'ias')" ontouchstart="window.showStatHoverTooltip(event, 'ias')" onmouseleave="window.hideTooltip()">⏱️ Idle: <span id="stat-ias" style="color:#fff; font-weight:bold;">60f</span></div>
-                            <div class="stat-hover" onmouseenter="window.showStatHoverTooltip(event, 'aas')" ontouchstart="window.showStatHoverTooltip(event, 'aas')" onmouseleave="window.hideTooltip()">⚡ Actv: <span id="stat-aas" style="color:#fff; font-weight:bold;">15f</span></div>
-                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'critChance', true)" ontouchstart="window.showStatBreakdown(event, 'critChance', true)" onmouseleave="window.hideTooltip()">✨ Crit: <span id="stat-crt" style="color:#fff; font-weight:bold;">5%</span></div>
-                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'critDamage', true)" ontouchstart="window.showStatBreakdown(event, 'critDamage', true)" onmouseleave="window.hideTooltip()">💥 CDmg: <span id="stat-crd" style="color:#fff; font-weight:bold;">150%</span></div>
-                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'block', true)" ontouchstart="window.showStatBreakdown(event, 'block', true)" onmouseleave="window.hideTooltip()">🛡️ Blk: <span id="stat-blk" style="color:#fff; font-weight:bold;">0%</span></div>
-                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'parry', true)" ontouchstart="window.showStatBreakdown(event, 'parry', true)" onmouseleave="window.hideTooltip()">⚡ Pry: <span id="stat-pry" style="color:#fff; font-weight:bold;">0%</span></div>
-                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'rareSpawn', true)" ontouchstart="window.showStatBreakdown(event, 'rareSpawn', true)" onmouseleave="window.hideTooltip()">✨ Rare: <span id="stat-rar" style="color:#fff; font-weight:bold;">1%</span></div>
-                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'fairySpawn', true)" ontouchstart="window.showStatBreakdown(event, 'fairySpawn', true)" onmouseleave="window.hideTooltip()">🧚 Fairy: <span id="stat-fai" style="color:#fff; font-weight:bold;">100%</span></div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 4px 6px; line-height:1.45; font-family: monospace;">
+                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'atk')" ontouchstart="window.showStatBreakdown(event, 'atk')" onmouseleave="window.hideTooltip()">⚔️ Attack: <span id="stat-atk" style="font-weight:bold; color:#fff;">10</span></div>
+                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'def')" ontouchstart="window.showStatBreakdown(event, 'def')" onmouseleave="window.hideTooltip()">🛡️ Defense: <span id="stat-def" style="font-weight:bold; color:#fff;">0</span></div>
+                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'maxHp')" ontouchstart="window.showStatBreakdown(event, 'maxHp')" onmouseleave="window.hideTooltip()">❤️ Max HP: <span id="stat-mhp" style="font-weight:bold; color:#fff;">100</span></div>
+                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'moveSpeed')" ontouchstart="window.showStatBreakdown(event, 'moveSpeed')" onmouseleave="window.hideTooltip()">👟 Move Speed: <span id="stat-mov" style="font-weight:bold; color:#fff;">10</span></div>
+                            <div class="stat-hover" onmouseenter="window.showStatHoverTooltip(event, 'ias')" ontouchstart="window.showStatHoverTooltip(event, 'ias')" onmouseleave="window.hideTooltip()">⏱️ Idle Atk Spd: <span id="stat-ias" style="color:#fff; font-weight:bold;">60f</span></div>
+                            <div class="stat-hover" onmouseenter="window.showStatHoverTooltip(event, 'aas')" ontouchstart="window.showStatHoverTooltip(event, 'aas')" onmouseleave="window.hideTooltip()">⚡ Active Atk Spd: <span id="stat-aas" style="color:#fff; font-weight:bold;">15f</span></div>
+                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'critChance', true)" ontouchstart="window.showStatBreakdown(event, 'critChance', true)" onmouseleave="window.hideTooltip()">✨ Crit Chance: <span id="stat-crt" style="color:#fff; font-weight:bold;">5%</span></div>
+                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'critDamage', true)" ontouchstart="window.showStatBreakdown(event, 'critDamage', true)" onmouseleave="window.hideTooltip()">💥 Crit Multi: <span id="stat-crd" style="color:#fff; font-weight:bold;">150%</span></div>
+                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'block', true)" ontouchstart="window.showStatBreakdown(event, 'block', true)" onmouseleave="window.hideTooltip()">🛡️ Block Rate: <span id="stat-blk" style="color:#fff; font-weight:bold;">0%</span></div>
+                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'parry', true)" ontouchstart="window.showStatBreakdown(event, 'parry', true)" onmouseleave="window.hideTooltip()">⚡ Parry Rate: <span id="stat-pry" style="color:#fff; font-weight:bold;">0%</span></div>
+                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'rareSpawn', true)" ontouchstart="window.showStatBreakdown(event, 'rareSpawn', true)" onmouseleave="window.hideTooltip()">✨ Rare Spawn: <span id="stat-rar" style="color:#fff; font-weight:bold;">1%</span></div>
+                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'fairySpawn', true)" ontouchstart="window.showStatBreakdown(event, 'fairySpawn', true)" onmouseleave="window.hideTooltip()">🧚 Fairy Spawn: <span id="stat-fai" style="color:#fff; font-weight:bold;">100%</span></div>
                         </div>
                     </div>
 
                     <div style="margin-top:6px; font-size:10px; border-top:1px dashed #333; padding-top:4px; text-align: left;">
                         <div style="color: #f1c40f; font-weight: bold; margin-bottom: 2px;">🌟 Active Set Synergies</div>
-                        <div id="active-sets-list" style="color: #aaa; line-height:1.2; max-height: 48px; overflow-y: auto;">None</div>
+                        <div id="active-sets-list" style="color: #aaa; line-height:1.2; max-height: 32px; overflow-y: auto; margin-bottom: 4px;">None</div>
+                    </div>
+
+                    <!-- Unified Trophy Bonuses Container -->
+                    <div style="margin-top: 4px; border-top: 1px dashed #333; padding-top: 4px; text-align: left;">
+                        <div style="color: #f1c40f; font-weight: bold; margin-bottom: 2px; font-size: 10px; text-transform: uppercase;">🏆 Trophy Bonuses</div>
+                        <div id="trophy-bonuses-summary" style="font-size: 9px; color: #aaa; background: #0c0f12; padding: 4px 6px; border-radius: 4px; border: 1px solid #222; line-height: 1.35; max-height: 64px; overflow-y: auto;">None</div>
                     </div>
                 </div>
             </div>
