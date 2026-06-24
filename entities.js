@@ -142,9 +142,9 @@ window.spawnDamageEffect = function(amount, type, isCrit) {
     if (!window.mob) return;
 
     const isBoss = (window.mob.type === "boss" || window.mob.type === "dungeon_boss" || window.mob.type === "prestige_boss" || window.mob.type === "rift_guardian" || window.mob.type === "aegis_goliath" || window.mob.type === "chronos_arbitrator" || window.mob.type === "nexus_overseer");
-    if (isBoss && amount >= window.mob.maxHp * 0.90) {
-        const funnyPhrases = ["OUCH!!", "OW!!!", "OWWY!!", "OOF!!!", "MY SPINE!!", "NOT THE FACE!!", "STOP IT!!", "BRUH!!!", "REALLY?!", "HELP!!"];
-        window.mob.funnyText = funnyPhrases[Math.floor(Math.random() * funnyPhrases.length)];
+        if (isBoss && amount >= window.mob.maxHp * 0.60) {
+            const funnyPhrases = ["OUCH!!", "OW!!!", "OWWY!!", "OOF!!!", "MY SPINE!!", "NOT THE FACE!!", "STOP IT!!", "BRUH!!!", "REALLY?!", "HELP!!"];
+            window.mob.funnyText = funnyPhrases[Math.floor(Math.random() * funnyPhrases.length)];
         window.mob.funnyTextTimer = 60;
     }
 
