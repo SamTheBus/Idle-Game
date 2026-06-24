@@ -30,7 +30,8 @@ html, body {
     background-color: var(--bg-main);
     color: var(--text-light);
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-    overflow-x: hidden;
+    overflow-x: clip; /* Replaced hidden with clip to allow position: sticky to function */
+    font-size: 13.5px; /* Upscaled global root size */
 }
 
 body {
@@ -41,6 +42,7 @@ body {
     -webkit-user-select: none;
     user-select: none;
     touch-action: manipulation;
+    font-size: 13.5px;
 }
 
 /* --- GAME PLATFORM FRAME --- */
@@ -66,16 +68,16 @@ body {
 }
 
 .nav-btn {
-    background: linear-gradient(135deg, #243342 0%, #151f2b 100%);
-    color: #e2e8f0;
-    border: 1px solid #34495e;
+    background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+    color: #f1f5f9;
+    border: 1px solid #374151;
     padding: 6px 14px;
-    border-radius: 20px;
+    border-radius: 6px;
     font-size: 11px;
     font-weight: bold;
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    transition: all 0.15s ease;
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -83,13 +85,12 @@ body {
 
 .nav-btn:hover {
     border-color: var(--accent-blue);
-    background: linear-gradient(135deg, #2d4356 0%, #1c2b3d 100%);
-    box-shadow: 0 0 8px rgba(52, 152, 219, 0.45);
-    transform: translateY(-1px);
+    background: linear-gradient(180deg, #374151 0%, #1f2937 100%);
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.25);
 }
 
 .nav-btn:active {
-    transform: translateY(0);
+    transform: scale(0.97);
 }
 
 /* --- INTERACTIVE CANVAS --- */
@@ -107,28 +108,29 @@ canvas {
 .stats-hud {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    padding: 10px;
-    background: #07090c;
-    border-bottom: 2px solid #1a1f26;
+    padding: 8px 12px;
+    background: #090d16;
+    border-bottom: 2px solid #1e293b;
     font-weight: bold;
     font-size: 11px;
-    gap: 8px;
+    gap: 10px;
     text-align: center;
     align-items: center;
 }
 
 .stats-hud > div {
-    background: rgba(255, 255, 255, 0.015);
-    border: 1px solid #1a1e24;
-    padding: 6px 4px;
-    border-radius: 4px;
-    color: #cbd5e1;
-    transition: all 0.2s ease;
+    background: rgba(30, 41, 59, 0.25);
+    border: 1px solid #1e293b;
+    padding: 6px 8px;
+    border-radius: 6px;
+    color: #94a3b8;
+    transition: all 0.15s ease;
 }
 
 .stats-hud > div:hover {
-    background: rgba(255, 255, 255, 0.03);
-    border-color: #2b333d;
+    background: rgba(30, 41, 59, 0.35);
+    border-color: #334155;
+    color: #f1f5f9;
 }
 
 /* --- CONTROLS FOOTER --- */
@@ -155,11 +157,11 @@ canvas {
     background: #333333;
     color: var(--text-dark);
     border: none;
-    padding: 8px 4px;
+    padding: 10px 4px; /* More padding for larger text targets */
     cursor: pointer;
     font-weight: bold;
     border-radius: 4px;
-    font-size: 11px;
+    font-size: 12px; /* Upscaled */
     min-width: 15%;
     transition: background 0.2s, color 0.2s;
     text-transform: uppercase;
@@ -179,6 +181,7 @@ canvas {
     min-height: 250px;
     display: none;
     overscroll-behavior: contain;
+    font-size: 13px; /* Upscaled content base */
 }
 
 .tab-content.active {
@@ -203,6 +206,23 @@ canvas {
     display: grid;
     grid-template-columns: 1fr 1.15fr;
     gap: 12px;
+}
+
+/* --- HERO RIGHT PANEL PROPORTIONAL TYPOGRAPHY --- */
+.stats-panel-right {
+    font-size: 13.5px;
+}
+
+.stats-panel-right .stat-hover {
+    font-size: 12.5px !important; /* Detailed Live Stats */
+}
+
+#active-sets-list {
+    font-size: 11.5px !important; /* Set Synergies */
+}
+
+#trophy-bonuses-summary {
+    font-size: 11.5px !important; /* Nested Trophy Bonuses */
 }
 
 @media (max-width: 600px) {
@@ -255,8 +275,8 @@ canvas {
     border: 1px dashed #444444;
     border-radius: 4px;
     padding: 6px;
-    font-size: 11px;
-    min-height: 52px;
+    font-size: 12.5px; /* Upscaled from 11px */
+    min-height: 56px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -300,7 +320,7 @@ canvas {
     padding: 8px;
     margin-bottom: 6px;
     border-radius: 4px;
-    font-size: 11.5px;
+    font-size: 13px; /* Upscaled from 11.5px */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -312,8 +332,8 @@ canvas {
     background: var(--accent-green);
     color: white;
     border: none;
-    padding: 4px 8px;
-    font-size: 10px;
+    padding: 5px 10px; /* Enhanced touch target size */
+    font-size: 11.5px; /* Upscaled from 10px */
     font-weight: bold;
     border-radius: 3px;
     cursor: pointer;
@@ -407,23 +427,38 @@ canvas {
 }
 
 /* --- ACTION CONTROLS DRAWER --- */
+#control-bar {
+    background: linear-gradient(180deg, #111827 0%, #070a0f 100%);
+    border-bottom: 2px solid #1f2937;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11.5px;
+}
+
 .btn-toggle {
-    background: var(--accent-blue);
-    color: white;
-    border: 2px solid transparent;
-    padding: 6px 10px;
-    border-radius: 4px;
+    background: #1f2937;
+    color: #9ca3af;
+    border: 1px solid #374151;
+    padding: 6px 12px;
+    border-radius: 6px;
     cursor: pointer;
     font-weight: bold;
     font-size: 11px;
-    opacity: 0.6;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
+}
+
+.btn-toggle:hover {
+    border-color: #4b5563;
+    color: #f3f4f6;
 }
 
 .btn-toggle.active {
-    opacity: 1 !important;
-    border-color: #ffffff !important;
-    box-shadow: 0 0 10px rgba(255,255,255,0.2);
+    background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
+    border-color: #3b82f6 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.35);
 }
 
 .sub-tabs { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
@@ -832,6 +867,15 @@ canvas {
 @media (max-width: 600px) {
     body {
         padding: 6px;
+        font-size: 12px; /* Cascades cleanly to mobile */
+    }
+
+    .stats-panel-right .stat-hover {
+        font-size: 11.5px !important; /* Balanced sub-stat sizing on mobile */
+    }
+
+    #active-sets-list, #trophy-bonuses-summary {
+        font-size: 10.5px !important; /* Balanced nested summaries on mobile */
     }
 
     .tooltip-base {
@@ -867,22 +911,22 @@ canvas {
     }
 
     .slots-card {
-        font-size: 9px !important;
-        padding: 4px !important;
-        min-height: 48px !important;
-    }
+            font-size: 10.5px !important; /* Scaled up from 9px for mobile readability */
+            padding: 4px !important;
+            min-height: 50px !important;
+        }
 
-    .slots-card strong {
-        font-size: 8.5px !important;
-        display: block;
-        line-height: 1.1;
-        white-space: normal !important;
-    }
+        .slots-card strong {
+            font-size: 10px !important; /* Scaled up from 8.5px */
+            display: block;
+            line-height: 1.1;
+            white-space: normal !important;
+        }
 
-    .slots-card div {
-        font-size: 7.5px !important;
-        line-height: 1.1;
-    }
+        .slots-card div {
+            font-size: 9px !important; /* Scaled up from 7.5px */
+            line-height: 1.1;
+        }
 
     .live-drop-cols {
         flex-direction: column !important;
@@ -953,8 +997,60 @@ canvas {
     }
 
     .bag-item .btn-action {
-        margin: 0 !important;
-        padding: 6px 12px;
-        font-size: 11px;
+            margin: 0 !important;
+            padding: 6px 12px;
+            font-size: 11px;
+        }
     }
-}
+
+    /* --- STREAMLINED COMMAND HEADER DESIGN --- */
+    .brand-title {
+        font-size: 11px;
+        color: var(--accent-blue);
+        font-weight: 800;
+        align-self: center;
+        letter-spacing: 2.2px;
+        text-transform: uppercase;
+        font-family: monospace;
+        border-left: 2px solid #334155;
+        padding-left: 12px;
+        line-height: 1.2;
+        text-shadow: 0 0 8px rgba(52, 152, 219, 0.35);
+    }
+
+    .instruction-badge {
+        background: rgba(30, 41, 59, 0.25);
+        color: #94a3b8;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 9.5px;
+        font-family: monospace;
+        font-weight: bold;
+        border: 1px solid #1e293b;
+    }
+
+    .hud-stat-card {
+        background: rgba(17, 24, 39, 0.6);
+        border: 1px solid #1e293b;
+        border-radius: 6px;
+        padding: 4px 8px;
+        text-align: center;
+        font-size: 10px;
+        font-weight: bold;
+        color: #94a3b8;
+        box-shadow: inset 0 0 6px rgba(0,0,0,0.4);
+    }
+
+    /* --- DASHBOARD MOBILE RESPONSIVENESS --- */
+    @media (max-width: 600px) {
+        #control-bar {
+            grid-template-columns: 1fr !important;
+            gap: 8px !important;
+        }
+        .stats-hud-inline {
+            order: 2; /* Automatically places stats underneath the command row on mobile */
+        }
+        .brand-title {
+            display: none; /* Auto-hides title overflow on extra-narrow viewport profiles */
+        }
+    }

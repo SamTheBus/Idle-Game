@@ -700,10 +700,10 @@ window.resolvePlayerStats = function(useDraft = false) {
     p.parry += parseFloat(((effectiveInt * 0.12) / (effectiveInt + 150)).toFixed(4));
     p.fairySpawn += parseFloat(((effectiveInt * 1.50) / (effectiveInt + 400)).toFixed(4));
 
-    let flatDef = window.playerStats.baseDef + (alloc.spDef * 4) + (effectiveInt * 1.0) + setCtx.flatDefBonus;
-    let defMultiplier = 1.0 + setCtx.defPctBonus;
+    let flatDef = window.playerStats.baseDef + (alloc.spDef * 4) + aT.def + setCtx.flatDefBonus;
+        let defMultiplier = 1.0 + setCtx.defPctBonus;
 
-    for (let key in window.equippedSlots) {
+        for (let key in window.equippedSlots) {
         let item = window.equippedSlots[key];
         if (item) {
             flatDef += (item.def || 0);

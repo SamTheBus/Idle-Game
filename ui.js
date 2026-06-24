@@ -821,8 +821,7 @@ window.showStatBreakdown = function(e, statKey, isPct = false) {
         });
     }
 
-    if (statKey === 'atk' && window.playerStats.atkPotionTimer > 0) gearTotal += Math.ceil((window.playerStats.baseAtk + alloc.spAtk * 6 + gearTotal + artTotal + achTotal) * 0.10);
-    if (statKey === 'maxHp' && window.playerStats.hpPotionTimer > 0) gearTotal += Math.ceil((window.playerStats.baseMaxHp + alloc.spHp * 45 + gearTotal + artTotal) * 0.10);
+if (statKey === 'atk' && window.playerStats.atkPotionTimer > 0) gearTotal += Math.ceil((window.playerStats.baseAtk + alloc.spAtk * 6 + gearTotal + artTotal + achTotal) * 0.10);    if (statKey === 'maxHp' && window.playerStats.hpPotionTimer > 0) gearTotal += Math.ceil((window.playerStats.baseMaxHp + alloc.spHp * 45 + gearTotal + artTotal) * 0.10);
     if (statKey === 'def' && window.playerStats.defPotionTimer > 0) gearTotal += Math.ceil((window.playerStats.baseDef + alloc.spDef * 4 + gearTotal + artTotal) * 0.10);
     if (statKey === 'moveSpeed' && window.playerStats.hastePotionTimer > 0) gearTotal += 3;
 
@@ -843,7 +842,7 @@ window.showStatBreakdown = function(e, statKey, isPct = false) {
     if (achTotal > 0) html += `<div class="tt-stat-line" style="color:#f1c40f;">• Achievements (Flat): ${formatVal(achTotal)}</div>`;
     if (achPctTotal > 0) html += `<div class="tt-stat-line" style="color:#f1c40f;">• Achievements (Mult): +${Math.round(achPctTotal * 100)}%</div>`;
 
-    let totalVal = data.base + data.lvl + gearTotal + artTotal;
+    let totalVal = data.base + data.lvl + gearTotal + artTotal + achTotal;
     if (statKey === 'atk' && effectiveStr > 0) {
         html += `<div class="tt-stat-line" style="color:#e67e22;">• Strength Scaling (STR): +${Math.floor(totalVal * (effectiveStr * 0.01))}</div>`;
         html += `<div class="tt-stat-line" style="color:#e67e22; font-style:italic;">  (+${effectiveStr}% Multiplier)</div>`;
@@ -3014,14 +3013,154 @@ window.updateArchitectRanges = function() {
                     pos4 = e.touches[0].clientY;
 
                     el.style.top = (el.offsetTop - pos2) + "px";
-                    el.style.left = (el.offsetLeft - pos1) + "px";
-                }
-            }
+                                el.style.left = (el.offsetLeft - pos1) + "px";
+                            }
+                        }
 
-            function closeDragElement() {
-                document.onmouseup = null;
-                document.onmousemove = null;
-                document.ontouchend = null;
-                document.ontouchmove = null;
-            }
-        };
+                        function closeDragElement() {
+                                document.onmouseup = null;
+                                document.onmousemove = null;
+                                document.ontouchend = null;
+                                document.ontouchmove = null;
+                            }
+                        };
+
+                        window.showCurrentRatesModal = function() {
+                            let existingWin = document.getElementById('rates-draggable-window');
+                            if (existingWin) {
+                                existingWin.remove(); return;
+                            }
+
+                            let p = window.playerStats;
+                            let nowStage = p.stage;
+                            let isDungeon = p.isDungeonMode;
+                            let activeDungeon = p.currentDungeon;
+                            let activeFloor = isDungeon ? p.currentDungeonStage[activeDungeon] : 1;
+
+                            let campDepthQ = window.getDepthQualityMultiplier(nowStage);
+                            let campShardChance = 0.005 * (campDepthQ - 1.0);
+                            let campKeyChance = nowStage >= 50 ? 0.0003 * (campDepthQ - 1.0) : 0.0;
+
+                            let matFloor = p.currentDungeonStage['mat'] || 1;
+                            let dDepthQ = window.getDepthQualityMultiplier(matFloor);
+                            let dCoreChance = matFloor >= 15 ? 0.008 * (dDepthQ - 1.0) : 0.0;
+                            let dKeyChance = matFloor >= 35 ? 0.0005 * (dDepthQ - 1.0) : 0.0;
+                            let dShardChance = matFloor >= 60 ? 0.0016 * (dDepthQ - 1.0) : 0.0;
+
+                            let equipFloor = p.currentDungeonStage['equip'] || 1;
+                            let goldFloor = p.currentDungeonStage['gold'] || 1;
+                            let cruciblePeak = p.cruciblePeak || 1;
+
+                            let win = document.createElement('div');
+                            win.id = 'rates-draggable-window';
+                            win.className = 'draggable-window';
+                            win.style.width = '320px';
+                            win.style.left = '40px';
+                            win.style.top = '60px';
+
+                            win.innerHTML = `
+                                <div class="draggable-header" id="rates-win-handle" style="background: linear-gradient(180deg, #181d24 0%, #0d1117 100%);">
+                                    <span>📊 Activity Drop Rates</span>
+                                    <button onclick="document.getElementById('rates-draggable-window').remove(); window.hideTooltip();" style="background:transparent; border:none; color:#e74c3c; font-weight:bold; cursor:pointer; font-size:11px; padding:2px;">[X]</button>
+                                </div>
+                                <div class="draggable-content" style="max-height: 380px;">
+                                    <p style="font-size:10px; color:#aaa; margin: 0 0 10px 0; line-height:1.4;">
+                                        Drag this window anywhere. Rates adapt to your current Campaign/Dungeon progression.
+                                    </p>
+
+                                    <!-- CAMPAIGN -->
+                                    <div style="background:#111; border:1px solid #333; border-radius:4px; padding:8px; margin-bottom:8px;">
+                                        <div style="color:var(--text-gold); font-weight:bold; font-size:11px; margin-bottom:4px; border-bottom:1px solid #222; padding-bottom:3px; display:flex; justify-content:space-between;">
+                                            <span>🗺️ Campaign (Stage ${nowStage})</span>
+                                            <span style="color:#888; font-family:monospace;">Mult: ${campDepthQ.toFixed(2)}x</span>
+                                        </div>
+                                        <div style="font-family:monospace; font-size:10px; display:flex; flex-direction:column; gap:2px;">
+                                            <div style="display:flex; justify-content:space-between;">
+                                                <span>🔮 Shard (Boss):</span>
+                                                <strong style="color:#8e44ad;">${(campShardChance * 100).toFixed(3)}%</strong>
+                                            </div>
+                                            <div style="display:flex; justify-content:space-between;">
+                                                <span>🔑 Key (Boss):</span>
+                                                <strong style="color:${nowStage >= 50 ? '#f1c40f' : '#7f8c8d'};">${nowStage >= 50 ? (campKeyChance * 100).toFixed(3) + "%" : "🔒 Stage 50"}</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- EQUIP DUNGEON -->
+                                    <div style="background:#111; border:1px solid #333; border-radius:4px; padding:8px; margin-bottom:8px;">
+                                        <div style="color:#3498db; font-weight:bold; font-size:11px; margin-bottom:4px; border-bottom:1px solid #222; padding-bottom:3px; display:flex; justify-content:space-between;">
+                                            <span>⚔️ Equip Dungeon (Floor ${equipFloor})</span>
+                                        </div>
+                                        <div style="font-family:monospace; font-size:10px; display:flex; flex-direction:column; gap:2px;">
+                                            <div style="display:flex; justify-content:space-between;">
+                                                <span>🔱 Overlord Sigil (Boss):</span>
+                                                <strong style="color:#1abc9c;">20.000%</strong>
+                                            </div>
+                                            <div style="display:flex; justify-content:space-between;">
+                                                <span>🛡️ High Tier Equip (Boss):</span>
+                                                <strong style="color:#2ecc71;">25.000%</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- GOLD DUNGEON -->
+                                    <div style="background:#111; border:1px solid #333; border-radius:4px; padding:8px; margin-bottom:8px;">
+                                        <div style="color:#f1c40f; font-weight:bold; font-size:11px; margin-bottom:4px; border-bottom:1px solid #222; padding-bottom:3px; display:flex; justify-content:space-between;">
+                                            <span>💰 Gold Mine (Floor ${goldFloor})</span>
+                                        </div>
+                                        <div style="font-family:monospace; font-size:10px; display:flex; flex-direction:column; gap:2px;">
+                                            <div style="display:flex; justify-content:space-between;">
+                                                <span>🟡 Gold Multiplier (Floor):</span>
+                                                <strong style="color:#f1c40f;">x5.00</strong>
+                                            </div>
+                                            <div style="display:flex; justify-content:space-between;">
+                                                <span>👑 Boss Gold Bonus:</span>
+                                                <strong style="color:#f1c40f;">x20.00</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- MATERIAL DUNGEON -->
+                                    <div style="background:#111; border:1px solid #333; border-radius:4px; padding:8px; margin-bottom:8px;">
+                                        <div style="color:#2ecc71; font-weight:bold; font-size:11px; margin-bottom:4px; border-bottom:1px solid #222; padding-bottom:3px; display:flex; justify-content:space-between;">
+                                            <span>🧪 Material Pit (Floor ${matFloor})</span>
+                                            <span style="color:#888; font-family:monospace;">Mult: ${dDepthQ.toFixed(2)}x</span>
+                                        </div>
+                                        <div style="font-family:monospace; font-size:10px; display:flex; flex-direction:column; gap:2px;">
+                                            <div style="display:flex; justify-content:space-between;">
+                                                <span>🔴 Ancient Core (Boss):</span>
+                                                <strong style="color:${matFloor >= 15 ? '#e74c3c' : '#7f8c8d'};">${matFloor >= 15 ? (dCoreChance * 100).toFixed(3) + "%" : "🔒 Floor 15"}</strong>
+                                            </div>
+                                            <div style="display:flex; justify-content:space-between;">
+                                                <span>🔑 Gacha Key (Boss):</span>
+                                                <strong style="color:${matFloor >= 35 ? '#f1c40f' : '#7f8c8d'};">${matFloor >= 35 ? (dKeyChance * 100).toFixed(3) + "%" : "🔒 Floor 35"}</strong>
+                                            </div>
+                                            <div style="display:flex; justify-content:space-between;">
+                                                <span>🔮 Shard (Boss):</span>
+                                                <strong style="color:${matFloor >= 60 ? '#8e44ad' : '#7f8c8d'};">${matFloor >= 60 ? (dShardChance * 100).toFixed(3) + "%" : "🔒 Floor 60"}</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- CRUCIBLE -->
+                                    <div style="background:#111; border:1px solid #333; border-radius:4px; padding:8px;">
+                                        <div style="color:#9b59b6; font-weight:bold; font-size:11px; margin-bottom:4px; border-bottom:1px solid #222; padding-bottom:3px; display:flex; justify-content:space-between;">
+                                            <span>🔮 Crucible (Peak Wave ${cruciblePeak})</span>
+                                        </div>
+                                        <div style="font-family:monospace; font-size:10px; display:flex; flex-direction:column; gap:2px;">
+                                            <div style="display:flex; justify-content:space-between;">
+                                                <span>🌌 Shards Per Wave (Base):</span>
+                                                <strong style="color:#9b59b6;">1.50</strong>
+                                            </div>
+                                            <div style="display:flex; justify-content:space-between;">
+                                                <span>💚 Catalyst Core Checkpoint:</span>
+                                                <strong style="color:#2ecc71;">Every 10 Waves</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+
+                            document.getElementById('game-container').appendChild(win);
+                            window.makeWindowDraggable(win, document.getElementById('rates-win-handle'));
+                        };

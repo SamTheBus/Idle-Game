@@ -53,22 +53,19 @@
 
                     <div style="color: #9b59b6; font-weight: bold; margin-top: 8px; margin-bottom: 8px; font-size: 14px; text-align:center; border-top:1px solid #333; padding-top:5px;">🔮 Wave Survival Crucible</div>
                     <div style="display:flex; justify-content:space-between; font-size:10px; margin-bottom:4px; align-items:center;">
-                        <span style="color:#9b59b6; font-weight:bold;">🏆 Peak Wave:</span>
-                        <span style="color:#aaa;"><span id="crucible-peak-wave">1</span></span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; font-size:10px; margin-bottom:4px; align-items:center;">
                         <span style="color:#9b59b6; font-weight:bold;">🏁 Start Checkpoint:</span>
                         <span style="color:#aaa;">Wave <span id="crucible-checkpoint-wave">1</span></span>
                     </div>
                     <button onclick="window.enterCrucible()" style="width: 100%; background: #9b59b6; color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px;">Enter Astral Crucible</button>
+                    <button onclick="window.showCurrentRatesModal()" style="width: 100%; background: #2c3e50; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 4px; transition: background 0.15s;">📊 View Depth Drop Rates</button>
                 </div>
             </div>
-            
+
             <div style="position: relative;">
                 <button onclick="window.toggleAudioMenu()" class="nav-btn">🔊 Sound ▼</button>
                 <div id="audio-menu" style="display: none; position: absolute; top: 35px; left: 0; background: #151515; border: 1px solid #444; border-radius: 6px; padding: 12px; width: 220px; z-index: 10000; box-shadow: 0 4px 15px rgba(0,0,0,0.9);">
                     <div style="color: #f1c40f; font-weight: bold; margin-bottom: 10px; font-size: 14px; text-align:center; border-bottom:1px solid #333; padding-bottom:5px;">🔊 Sound Control</div>
-                    
+
                     <div style="margin-bottom: 10px;">
                         <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
                             <label for="slider-vol-master" style="color:#aaa;">Master Vol:</label>
@@ -76,7 +73,7 @@
                         </div>
                         <input type="range" id="slider-vol-master" min="0" max="1" step="0.05" value="0.5" oninput="window.changeVolume('master', this.value)" style="width: 100%; background:#333; outline:none; height:4px; border-radius:2px; appearance:none; cursor:pointer;">
                     </div>
-                    
+
                     <div style="margin-bottom: 12px;">
                         <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
                             <label for="slider-vol-sfx" style="color:#aaa;">SFX Vol:</label>
@@ -84,12 +81,13 @@
                         </div>
                         <input type="range" id="slider-vol-sfx" min="0" max="1" step="0.05" value="0.8" oninput="window.changeVolume('sfx', this.value)" style="width: 100%; background:#333; outline:none; height:4px; border-radius:2px; appearance:none; cursor:pointer;">
                     </div>
-                    
+
                     <button id="btn-audio-mute" onclick="window.toggleMute()" style="width: 100%; background: #c0392b; color: white; border: none; padding: 6px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; transition: background 0.2s;">Mute Audio</button>
                 </div>
             </div>
         </div>
-        <div style="font-size: 11px; color: #475569; font-weight: 800; align-self: center; letter-spacing: 2px; text-transform: uppercase; font-family: monospace; border-left: 2px solid #334155; padding-left: 12px; line-height: 1.2;">SAQ: Slaying & Questing</div>
+        <div class="brand-title">SAQ: Slaying & Questing</div>
+        <div class="instruction-badge">Spacebar / Click to Slash!</div>
     </div>
 
     <!-- Interface Tooltips -->
@@ -381,6 +379,7 @@
                 <button onclick="window.devTriggerBuff('frenzy')" class="btn-action" style="background:#e67e22; padding:8px;">🔥 Max Frenzy (10m)</button>
                 <button onclick="window.devTriggerBuff('adrenaline')" class="btn-action" style="background:#f1c40f; color:#000; padding:8px;">⚡ Max Adrenaline (10m)</button>
                 <button onclick="window.devTriggerBuff('potions')" class="btn-action" style="background:#9b59b6; padding:8px;">🧪 All Potions (10m)</button>
+                <button onclick="window.devTriggerBuff('potions')" class="btn-action" style="background:#9b59b6; padding:8px;">🧪 All Potions (10m)</button>
                 <button onclick="window.devHealFull()" class="btn-action" style="background:#2ecc71; padding:8px;">❤️ Fully Heal HP</button>
             </div>
             <div style="display:flex; flex-direction:column; gap:6px;">
@@ -390,86 +389,28 @@
         </div>
     </div>
 
-    <!-- Defeated Card Overlay -->
-    <div id="death-overlay">
-        <div id="death-card">
-            <div id="death-header">DEFEATED</div>
-            <div id="death-divider"></div>
-            <div id="death-quote">"The path to glory is paved with countless falls."</div>
-            
-            <div class="death-section-title">⚔️ Fatal Encounter</div>
-            <div class="death-stats-grid">
-                <div class="death-stat-box" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80px; overflow: hidden; padding: 2px;">
-                    <span class="death-stat-label" style="margin-bottom: 2px;">Nemesis</span>
-                    <canvas id="death-enemy-canvas" width="60" height="60" style="background: rgba(0,0,0,0.5); border: 1px solid #781c1c; border-radius: 4px; display: block;"></canvas>
-                </div>
-                <div class="death-stat-box">
-                    <span class="death-stat-label">Peak Stage</span>
-                    <span class="death-stat-val" id="death-stat-peak">Stage 1</span>
-                </div>
-                <div class="death-stat-box">
-                    <span class="death-stat-label">Retreat Safe</span>
-                    <span class="death-stat-val" id="death-stat-retreat" style="color: #2ecc71;">Stage 1</span>
-                </div>
-            </div>
+    <!-- Consolidated Console Panel (Combines Actions and Stats side-by-side) -->
+    <div id="control-bar" style="display: grid; grid-template-columns: 1.25fr 1.05fr; gap: 10px; background: #0c0e13; border-bottom: 2px solid #1e293b; padding: 6px 12px; align-items: center;">
 
-            <div class="death-section-title">📊 Spoils from this Attempt</div>
-            <div class="death-stats-grid">
-                <div class="death-stat-box">
-                    <span class="death-stat-label">Slain</span>
-                    <span class="death-stat-val" id="death-stat-kills" style="color: #ffffff;">0</span>
-                </div>
-                <div class="death-stat-box">
-                    <span class="death-stat-label">Run Gold</span>
-                    <span class="death-stat-val" id="death-stat-run-gold" style="color: #f1c40f;">+0</span>
-                </div>
-                <div class="death-stat-box">
-                    <span class="death-stat-label">Run XP</span>
-                    <span class="death-stat-val" id="death-stat-run-xp" style="color: #9b59b6;">+0</span>
-                </div>
-            </div>
-
-            <div id="death-tip-container">
-                <strong style="color: #e74c3c; display: block; margin-bottom: 4px;">💡 HOOR'S ADVICE:</strong>
-                <span id="death-tip-text">Optimize your attributes to better match this environment.</span>
-            </div>
-
-            <div id="death-respawn-timer-container" style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; gap: 8px;">
-                <div style="position: relative; width: 44px; height: 44px;">
-                    <svg width="44" height="44" viewBox="0 0 44 44" style="transform: rotate(-90deg);">
-                        <circle cx="22" cy="22" r="18" fill="none" stroke="#2a1212" stroke-width="3"></circle>
-                        <circle id="death-respawn-spinner" cx="22" cy="22" r="18" fill="none" stroke="#e74c3c" stroke-width="3" stroke-dasharray="113.1" stroke-dashoffset="0" style="transition: stroke-dashoffset 0.1s linear;"></circle>
-                    </svg>
-                    <div id="death-respawn-timer-text" style="position: absolute; top: 0; left: 0; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-family: monospace; font-weight: bold; color: #fff;">10</div>
-                </div>
-                <span style="font-size: 11px; color: #dca7a7; font-family: monospace;">Reclaiming automatically in <span id="death-timer-seconds">10</span>s...</span>
-            </div>
-
-            <button id="death-respawn-btn" onclick="window.respawnHero()">Arise & Reclaim</button>
+        <!-- Live Stat Cards (Left Side) -->
+        <div class="stats-hud-inline" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+            <div class="hud-stat-card"><span style="color:#cbd5e1;">💰 Coins:</span> <strong id="hud-coins" style="color:#f1c40f; display:block; font-size:12px; margin-top:2px;">0</strong></div>
+            <div class="hud-stat-card"><span style="color:#cbd5e1;">🗺️ Stage:</span> <strong id="hud-stage" style="color:#3498db; display:block; font-size:12px; margin-top:2px;">1 <span id="hud-progress" style="color:#94a3b8; font-size:9.5px;">(0/5)</span></strong></div>
+            <div class="hud-stat-card"><span style="color:#cbd5e1;">💥 Live DPS:</span> <strong id="hud-dps" style="color:#e74c3c; display:block; font-size:12px; margin-top:2px;">0.0</strong></div>
         </div>
-    </div>
 
-    <!-- Gameplay Action Control Panel -->
-    <div id="control-bar">
-        <div style="color: #aaa;">Spacebar or Click Canvas to Slash!</div>
-        <div style="display: flex; gap: 8px;">
-            <button id="btn-leave-activity" class="btn-toggle" onclick="window.leaveActivity()" style="background: #c0392b; display: none; opacity: 1; border-color: #f1c40f;">🏃 Leave</button>
-            <button id="btn-achievements" class="btn-toggle" onclick="window.toggleAchievements()" style="background: #8e44ad; opacity: 1;">🏆 Trophies</button>
-            <button id="btn-pause" class="btn-toggle" onclick="window.togglePause()" style="background: #34495e;">▶️ Pause</button>
-            <button id="toggle-sticky" class="btn-toggle active" onclick="window.toggleStickyCanvas()">Sticky Cam: ON</button>
-            <button id="toggle-auto" class="btn-toggle active" onclick="window.toggleAuto()">Auto: ON</button>
+        <!-- Action Toggles (Right Side) -->
+        <div style="display: flex; gap: 4px; justify-content: flex-end; flex-wrap: wrap;">
+            <button id="btn-leave-activity" class="btn-toggle" onclick="window.leaveActivity()" style="background: #c0392b; display: none; color: white; border-color: #f1c40f; font-size: 10px; padding: 6px 10px;">🏃 Leave</button>
+            <button id="btn-achievements" class="btn-toggle" onclick="window.toggleAchievements()" style="background: #8e44ad; color: white; font-size: 10px; padding: 6px 10px;">🏆 Trophies</button>
+            <button id="btn-pause" class="btn-toggle" onclick="window.togglePause()" style="background: #34495e; color: white; font-size: 10px; padding: 6px 10px;">▶️ Pause</button>
+            <button id="toggle-sticky" class="btn-toggle active" onclick="window.toggleStickyCanvas()" style="font-size: 10px; padding: 6px 10px;">Sticky: ON</button>
+            <button id="toggle-auto" class="btn-toggle active" onclick="window.toggleAuto()" style="font-size: 10px; padding: 6px 10px;">Auto: ON</button>
         </div>
-    </div>
-
-    <!-- Stats HUD Dashboard overlay -->
-    <div class="stats-hud" style="display: grid; grid-template-columns: repeat(3, 1fr); background: #07090c; border-bottom: 2px solid #1a1f26; padding: 6px; text-align: center; font-size: 11px; font-weight: bold; color: #cbd5e1; gap: 8px;">
-        <div>💰 Coins: <span id="hud-coins" style="color:#f1c40f;">0</span></div>
-        <div>🗺️ Stage: <span id="hud-stage" style="color:#3498db;">1</span> <span id="hud-progress" style="color:#aaa; font-size:9px;">(0/5)</span></div>
-        <div>💥 DPS: <span id="hud-dps" style="color:#e74c3c;">0.0</span></div>
     </div>
 
     <!-- Game World Canvas -->
-    <canvas id="gameCanvas" width="750" height="250"></canvas>
+    <canvas id="gameCanvas" width="750" height="320"></canvas>
 
     <!-- Global Progress Bar (Level & XP always visible on top of every tab) -->
     <div id="global-xp-header" style="background:#151515; padding: 6px 12px; border-bottom: 1px solid #333; font-size: 11px; font-family: monospace;">
@@ -495,16 +436,25 @@
             <div class="hero-tab-layout">
                 <!-- Left Side: Equipment Grid (Click slots to open the draggable Swap Window) -->
                 <div class="paper-doll">
+                    <!-- Row 1: Helmet & Weapon -->
                     <div id="slot-helmet" class="slots-card" onclick="window.openEquipSwapWindow(event, 'helmet')" onmouseenter="window.showSlotTooltip(event, 'helmet')" onmouseleave="window.hideTooltip()" ontouchstart="window.showSlotTooltip(event, 'helmet')"><i>[Empty Helmet]</i></div>
-                    <div id="slot-chest" class="slots-card" onclick="window.openEquipSwapWindow(event, 'chest')" onmouseenter="window.showSlotTooltip(event, 'chest')" onmouseleave="window.hideTooltip()" ontouchstart="window.showSlotTooltip(event, 'chest')"><i>[Empty Chest Armor]</i></div>
                     <div id="slot-weapon" class="slots-card" onclick="window.openEquipSwapWindow(event, 'weapon')" onmouseenter="window.showSlotTooltip(event, 'weapon')" onmouseleave="window.hideTooltip()" ontouchstart="window.showSlotTooltip(event, 'weapon')"><i>[Empty Weapon]</i></div>
+
+                    <!-- Row 2: Chest Armor & Sub-weapon -->
+                    <div id="slot-chest" class="slots-card" onclick="window.openEquipSwapWindow(event, 'chest')" onmouseenter="window.showSlotTooltip(event, 'chest')" onmouseleave="window.hideTooltip()" ontouchstart="window.showSlotTooltip(event, 'chest')"><i>[Empty Chest Armor]</i></div>
                     <div id="slot-subweapon" class="slots-card" onclick="window.openEquipSwapWindow(event, 'subweapon')" onmouseenter="window.showSlotTooltip(event, 'subweapon')" onmouseleave="window.hideTooltip()" ontouchstart="window.showSlotTooltip(event, 'subweapon')"><i>[Empty Sub-weapon]</i></div>
+
+                    <!-- Row 3: Leggings & Overall Suit (Clustered directly below chest for locked-slot proximity) -->
                     <div id="slot-leggings" class="slots-card" onclick="window.openEquipSwapWindow(event, 'leggings')" onmouseenter="window.showSlotTooltip(event, 'leggings')" onmouseleave="window.hideTooltip()" ontouchstart="window.showSlotTooltip(event, 'leggings')"><i>[Empty Leggings]</i></div>
+                    <div id="slot-overall" class="slots-card" onclick="window.openEquipSwapWindow(event, 'overall')" onmouseenter="window.showSlotTooltip(event, 'overall')" onmouseleave="window.hideTooltip()" ontouchstart="window.showSlotTooltip(event, 'overall')"><i>[Empty Overall Suit]</i></div>
+
+                    <!-- Row 4: Boots & Artifact 1 -->
                     <div id="slot-boots" class="slots-card" onclick="window.openEquipSwapWindow(event, 'boots')" onmouseenter="window.showSlotTooltip(event, 'boots')" onmouseleave="window.hideTooltip()" ontouchstart="window.showSlotTooltip(event, 'boots')"><i>[Empty Boots]</i></div>
-                    <div id="slot-overall" class="slots-card" style="grid-column: span 2;" onclick="window.openEquipSwapWindow(event, 'overall')" onmouseenter="window.showSlotTooltip(event, 'overall')" onmouseleave="window.hideTooltip()" ontouchstart="window.showSlotTooltip(event, 'overall')"><i>[Empty Overall Suit]</i></div>
                     <div id="slot-art1" class="slots-card artifact-slot" onclick="window.openEquipSwapWindow(event, 'art1')" onmouseenter="window.showSlotTooltip(event, 'art1')" onmouseleave="window.hideTooltip()" ontouchstart="window.showSlotTooltip(event, 'art1')"><i>[Artifact Slot 1]</i></div>
+
+                    <!-- Row 5: Artifact 2 & Artifact 3 -->
                     <div id="slot-art2" class="slots-card artifact-slot" onclick="window.openEquipSwapWindow(event, 'art2')" onmouseenter="window.showSlotTooltip(event, 'art2')" onmouseleave="window.hideTooltip()" ontouchstart="window.showSlotTooltip(event, 'art2')"><i>[Artifact Slot 2]</i></div>
-                    <div id="slot-art3" class="slots-card artifact-slot" style="grid-column: span 2;" onclick="window.openEquipSwapWindow(event, 'art3')" onmouseenter="window.showSlotTooltip(event, 'art3')" onmouseleave="window.hideTooltip()" ontouchstart="window.showSlotTooltip(event, 'art3')"><i>[Artifact Slot 3]</i></div>
+                    <div id="slot-art3" class="slots-card artifact-slot" onclick="window.openEquipSwapWindow(event, 'art3')" onmouseenter="window.showSlotTooltip(event, 'art3')" onmouseleave="window.hideTooltip()" ontouchstart="window.showSlotTooltip(event, 'art3')"><i>[Artifact Slot 3]</i></div>
                 </div>
 
                 <!-- Right Side: Live Stats Panel & Attribute Matrix -->
@@ -569,6 +519,10 @@
                             <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'critDamage', true)" ontouchstart="window.showStatBreakdown(event, 'critDamage', true)" onmouseleave="window.hideTooltip()">💥 Crit Multi: <span id="stat-crd" style="color:#fff; font-weight:bold;">150%</span></div>
                             <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'block', true)" ontouchstart="window.showStatBreakdown(event, 'block', true)" onmouseleave="window.hideTooltip()">🛡️ Block Rate: <span id="stat-blk" style="color:#fff; font-weight:bold;">0%</span></div>
                             <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'parry', true)" ontouchstart="window.showStatBreakdown(event, 'parry', true)" onmouseleave="window.hideTooltip()">⚡ Parry Rate: <span id="stat-pry" style="color:#fff; font-weight:bold;">0%</span></div>
+                            <div class="stat-hover" onmouseenter="window.showStatHoverTooltip(event, 'idps')" ontouchstart="window.showStatHoverTooltip(event, 'idps')" onmouseleave="window.hideTooltip()">🔄 Idle DPS: <span id="stat-idps" style="font-weight:bold; color: #fff;">0.0</span></div>
+                            <div class="stat-hover" onmouseenter="window.showStatHoverTooltip(event, 'drp')" ontouchstart="window.showStatHoverTooltip(event, 'drp')" onmouseleave="window.hideTooltip()">🍀 Drop Rate: <span id="stat-drp" style="font-weight:bold; color:#fff;">+0%</span></div>
+                            <div class="stat-hover" onmouseenter="window.showStatHoverTooltip(event, 'qly')" ontouchstart="window.showStatHoverTooltip(event, 'qly')" onmouseleave="window.hideTooltip()">💎 Drop Quality: <span id="stat-qly" style="font-weight:bold; color:#fff;">+0%</span></div>
+                            <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'gold', true)" ontouchstart="window.showStatBreakdown(event, 'gold', true)" onmouseleave="window.hideTooltip()">🟡 Gold Multi: <span id="stat-gld" style="font-weight:bold; color:#fff;">x1.0</span></div>
                             <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'rareSpawn', true)" ontouchstart="window.showStatBreakdown(event, 'rareSpawn', true)" onmouseleave="window.hideTooltip()">✨ Rare Spawn: <span id="stat-rar" style="color:#fff; font-weight:bold;">1%</span></div>
                             <div class="stat-hover" onmouseenter="window.showStatBreakdown(event, 'fairySpawn', true)" ontouchstart="window.showStatBreakdown(event, 'fairySpawn', true)" onmouseleave="window.hideTooltip()">🧚 Fairy Spawn: <span id="stat-fai" style="color:#fff; font-weight:bold;">100%</span></div>
                         </div>
@@ -579,10 +533,10 @@
                         <div id="active-sets-list" style="color: #aaa; line-height:1.2; max-height: 32px; overflow-y: auto; margin-bottom: 4px;">None</div>
                     </div>
 
-                    <!-- Unified Trophy Bonuses Container -->
+                    <!-- Unified Trophy Bonuses Container (Dynamically expanding as milestones grow) -->
                     <div style="margin-top: 4px; border-top: 1px dashed #333; padding-top: 4px; text-align: left;">
                         <div style="color: #f1c40f; font-weight: bold; margin-bottom: 2px; font-size: 10px; text-transform: uppercase;">🏆 Trophy Bonuses</div>
-                        <div id="trophy-bonuses-summary" style="font-size: 9px; color: #aaa; background: #0c0f12; padding: 4px 6px; border-radius: 4px; border: 1px solid #222; line-height: 1.35; max-height: 64px; overflow-y: auto;">None</div>
+                        <div id="trophy-bonuses-summary" style="color: #aaa; background: #0c0f12; padding: 4px 6px; border-radius: 4px; border: 1px solid #222; line-height: 1.35;">None</div>
                     </div>
                 </div>
             </div>
@@ -744,6 +698,65 @@
             <button onclick="window.submitConsoleCommand()" class="btn-action" style="background: var(--accent-orange); padding: 6px 12px; font-weight: bold; font-family: monospace; height: 100%;">EXECUTE</button>
         </div>
         <div id="log-box"></div>
+    </div>
+</div>
+
+<!-- Defeated Card Overlay -->
+<div id="death-overlay">
+    <div id="death-card">
+        <div id="death-header">DEFEATED</div>
+        <div id="death-divider"></div>
+        <div id="death-quote">"The path to glory is paved with countless falls."</div>
+
+        <div class="death-section-title">⚔️ Fatal Encounter</div>
+        <div class="death-stats-grid">
+            <div class="death-stat-box" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80px; overflow: hidden; padding: 2px;">
+                <span class="death-stat-label" style="margin-bottom: 2px;">Nemesis</span>
+                <canvas id="death-enemy-canvas" width="60" height="60" style="background: rgba(0,0,0,0.5); border: 1px solid #781c1c; border-radius: 4px; display: block;"></canvas>
+            </div>
+            <div class="death-stat-box">
+                <span class="death-stat-label">Peak Stage</span>
+                <span class="death-stat-val" id="death-stat-peak">Stage 1</span>
+            </div>
+            <div class="death-stat-box">
+                <span class="death-stat-label">Retreat Safe</span>
+                <span class="death-stat-val" id="death-stat-retreat" style="color: #2ecc71;">Stage 1</span>
+            </div>
+        </div>
+
+        <div class="death-section-title">📊 Spoils from this Attempt</div>
+        <div class="death-stats-grid">
+            <div class="death-stat-box">
+                <span class="death-stat-label">Slain</span>
+                <span class="death-stat-val" id="death-stat-kills" style="color: #ffffff;">0</span>
+            </div>
+            <div class="death-stat-box">
+                <span class="death-stat-label">Run Gold</span>
+                <span class="death-stat-val" id="death-stat-run-gold" style="color: #f1c40f;">+0</span>
+            </div>
+            <div class="death-stat-box">
+                <span class="death-stat-label">Run XP</span>
+                <span class="death-stat-val" id="death-stat-run-xp" style="color: #9b59b6;">+0</span>
+            </div>
+        </div>
+
+        <div id="death-tip-container">
+            <strong style="color: #e74c3c; display: block; margin-bottom: 4px;">💡 HOOR'S ADVICE:</strong>
+            <span id="death-tip-text">Optimize your attributes to better match this environment.</span>
+        </div>
+
+        <div id="death-respawn-timer-container" style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; gap: 8px;">
+            <div style="position: relative; width: 44px; height: 44px;">
+                <svg width="44" height="44" viewBox="0 0 44 44" style="transform: rotate(-90deg);">
+                    <circle cx="22" cy="22" r="18" fill="none" stroke="#2a1212" stroke-width="3"></circle>
+                    <circle id="death-respawn-spinner" cx="22" cy="22" r="18" fill="none" stroke="#e74c3c" stroke-width="3" stroke-dasharray="113.1" stroke-dashoffset="0" style="transition: stroke-dashoffset 0.1s linear;"></circle>
+                </svg>
+                <div id="death-respawn-timer-text" style="position: absolute; top: 0; left: 0; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-family: monospace; font-weight: bold; color: #fff;">10</div>
+            </div>
+            <span style="font-size: 11px; color: #dca7a7; font-family: monospace;">Reclaiming automatically in <span id="death-timer-seconds">10</span>s...</span>
+        </div>
+
+        <button id="death-respawn-btn" onclick="window.respawnHero()">Arise & Reclaim</button>
     </div>
 </div>
 

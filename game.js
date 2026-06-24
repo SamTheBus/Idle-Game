@@ -12,6 +12,12 @@ window.saveGame = function() {
     localStorage.setItem('idle_game_v11', JSON.stringify(saveData));
 };
 
+window.getDepthQualityMultiplier = function(depth) {
+    // Asymptotically scales from 1.0 at depth 0, up to a 10.0x maximum ceiling at infinite depth
+    let scaleVal = (depth * 9) / (depth + 300);
+    return 1.0 + scaleVal;
+};
+
 setInterval(() => { window.saveGame(); }, 60000);
 window.addEventListener('beforeunload', window.saveGame);
 
@@ -199,11 +205,15 @@ window.applyOfflineGains = function(offlineMs) {
                             if (rolledBossPot) recordScrapGained(rolledBossPot, 1);
                         }
 
-                        // Gated, highly restricted key and shard parameters in offline progress simulation
-                        if (currentStage >= 600 && Math.random() < 0.01) recordScrapGained("Eridium Shard", 1);
-                        if (currentStage >= 200 && Math.random() < 0.002) recordScrapGained("Gacha Key", 1);
+                       // Soft progression depth-based calculations replacing hard stage gates
+                                               let offlineDepthQ = window.getDepthQualityMultiplier(currentStage);
+                                               let offlineShardChance = 0.0015 * (offlineDepthQ - 1.5);
+                                               let offlineKeyChance = 0.0003 * (offlineDepthQ - 1.0);
 
-                        currentStage++; stagesGained++; stagesAdvancedCount++; window.playerStats.killCount = 0;
+                                               if (offlineDepthQ > 1.5 && Math.random() < offlineShardChance) recordScrapGained("Eridium Shard", 1);
+                                               if (offlineDepthQ > 1.0 && Math.random() < offlineKeyChance) recordScrapGained("Gacha Key", 1);
+
+                                               currentStage++; stagesGained++; stagesAdvancedCount++; window.playerStats.killCount = 0;
                     } else {
             let partialKills = Math.floor(remainingSeconds / cycleTime);
             if (partialKills > 0) {
@@ -1667,25 +1677,28 @@ window.handleMobDeath = function() {
                     if (Math.random() < 0.01) { if (typeof window.rollEquipmentDrop === "function") window.rollEquipmentDrop(false, false, 0, false); }
                 }
             } else if (window.playerStats.currentDungeon === 'mat') {
-                let dStage = window.playerStats.currentDungeonStage['mat'] || 1;
-                if (window.mob.type === "dungeon_boss") {
-                    // Ancient Core: gated behind Floor 150+
-                    if (dStage >= 150 && Math.random() < 0.03) {
-                        if (typeof window.addEtcDrop === "function") window.addEtcDrop("Ancient Core", 1);
-                        if (typeof window.pushToast === "function") window.pushToast("Ancient Core", null, "#9b59b6", true, 1);
-                    }
-                    // Gacha Key: extremely rare, gated behind Floor 350+
-                    if (dStage >= 350 && Math.random() < 0.0025) {
-                        if (typeof window.addEtcDrop === "function") window.addEtcDrop("Gacha Key", 1);
-                        if (typeof window.pushToast === "function") window.pushToast("Gacha Key", null, "#f1c40f", true, 1);
-                    }
-                    // Eridium Shards: gated behind Floor 600+
-                    if (dStage >= 600 && Math.random() < 0.01) {
-                        if (typeof window.addEtcDrop === "function") window.addEtcDrop("Eridium Shard", 1);
-                        if (typeof window.pushToast === "function") window.pushToast("Eridium Shard", null, "#8e44ad", true, 1);
-                    }
+                            let dStage = window.playerStats.currentDungeonStage['mat'] || 1;
+                            if (window.mob.type === "dungeon_boss") {
+                                // Soft progression depth-based calculations replacing hard dungeon floor gates
+                                let dDepthQ = window.getDepthQualityMultiplier(dStage);
+                                let dCoreChance = 0.008 * (dDepthQ - 1.0);
+                                let dKeyChance = 0.0005 * (dDepthQ - 1.0);
+                                let dShardChance = 0.0016 * (dDepthQ - 1.0);
 
-                    // Gated progression scrap drops for Material Cavern Bosses
+                                if (dDepthQ > 1.0 && Math.random() < dCoreChance) {
+                                    if (typeof window.addEtcDrop === "function") window.addEtcDrop("Ancient Core", 1);
+                                    if (typeof window.pushToast === "function") window.pushToast("Ancient Core", null, "#9b59b6", true, 1);
+                                }
+                                if (dDepthQ > 1.0 && Math.random() < dKeyChance) {
+                                    if (typeof window.addEtcDrop === "function") window.addEtcDrop("Gacha Key", 1);
+                                    if (typeof window.pushToast === "function") window.pushToast("Gacha Key", null, "#f1c40f", true, 1);
+                                }
+                                if (dDepthQ > 1.0 && Math.random() < dShardChance) {
+                                    if (typeof window.addEtcDrop === "function") window.addEtcDrop("Eridium Shard", 1);
+                                    if (typeof window.pushToast === "function") window.pushToast("Eridium Shard", null, "#8e44ad", true, 1);
+                                }
+
+                                // Gated progression scrap drops for Material Cavern Bosses
                     if (dStage < 150) {
                         if (typeof window.addEtcDrop === "function") window.addEtcDrop("Rare Scrap", window.randInt(1, 3));
                     } else if (dStage < 350) {
@@ -1755,14 +1768,27 @@ window.handleMobDeath = function() {
                 if (typeof window.pushHeaderToast === "function") window.pushHeaderToast("🛡️ Aegis Hunt Successful!", "#3498db");
             }
             window.playerStats.riftGuardiansSlain = (window.playerStats.riftGuardiansSlain || 0) + 1;
-        } else if (window.mob.type === "boss") {
-            if (Math.random() < 0.01) { if (typeof window.addEtcDrop === "function") window.addEtcDrop("Eridium Shard", 1); if (typeof window.pushToast === "function") window.pushToast("Eridium Shard", null, "#8e44ad", true, 1); }
-            // Gacha Key is extremely rare on normal campaign bosses, gated behind Stage 200+
-            if (window.playerStats.stage >= 200 && Math.random() < 0.002) {
-                if (typeof window.addEtcDrop === "function") window.addEtcDrop("Gacha Key", 1);
-                if (typeof window.pushToast === "function") window.pushToast("Gacha Key", null, "#f1c40f", true, 1);
-            }
-        } else if (!isBoss && !window.playerStats.isDungeonMode) {
+                    } else if (window.mob.type === "boss") {
+                        // Soft-scaling drops for normal Campaign Bosses based on stage progression
+                        let activeStage = window.playerStats.stage;
+                        let currentLvlMult = 1.0 + (activeStage / 300); // Gradual scaling
+
+                        let shardDropChance = 0.005 * currentStageMultiplier(activeStage);
+                        let keyDropChance = activeStage >= 50 ? 0.0003 * currentStageMultiplier(activeStage) : 0.0;
+
+                        function currentStageMultiplier(stage) {
+                            return window.getDepthQualityMultiplier(stage) - 1.0;
+                        }
+
+                        if (Math.random() < shardDropChance) {
+                            if (typeof window.addEtcDrop === "function") window.addEtcDrop("Eridium Shard", 1);
+                            if (typeof window.pushToast === "function") window.pushToast("Eridium Shard", null, "#8e44ad", true, 1);
+                        }
+                        if (keyDropChance > 0 && Math.random() < keyDropChance) {
+                            if (typeof window.addEtcDrop === "function") window.addEtcDrop("Gacha Key", 1);
+                            if (typeof window.pushToast === "function") window.pushToast("Gacha Key", null, "#f1c40f", true, 1);
+                        }
+                    } else if (!isBoss && !window.playerStats.isDungeonMode) {
         if (Math.random() < (window.mob.isRare ? 0.08 : 0.03)) {
             let etcItemName = window.mob.isRare ? "Luminous Soul" : "Monster Soul";
             if (typeof window.addEtcDrop === "function") window.addEtcDrop(etcItemName);
