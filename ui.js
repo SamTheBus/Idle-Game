@@ -2971,10 +2971,10 @@ window.updateArchitectRanges = function() {
         };
 
         // ==========================================================================
-        // --- INTERACTIVE DRAGGABLE WINDOW SYSTEM ---
-        // ==========================================================================
+                // --- INTERACTIVE DRAGGABLE WINDOW SYSTEM ---
+                // ==========================================================================
 
-        window.openEquipSwapWindow = function(e, slotKey) {
+                window.openEquipSwapWindow = function(e, slotKey) {
                     if (e) {
                         e.stopPropagation();
                         e.preventDefault();
@@ -3030,259 +3030,418 @@ window.updateArchitectRanges = function() {
                         win.style.top = topOffset + 'px';
                     }
 
-            let headerTitle = `Swap: ${slotKey.charAt(0).toUpperCase() + slotKey.slice(1)}`;
-            let contentHtml = "";
+                    let headerTitle = `Swap: ${slotKey.charAt(0).toUpperCase() + slotKey.slice(1)}`;
+                    let contentHtml = "";
 
-            if (eligibleItems.length === 0) {
-                contentHtml = `<div style="color:#666; text-align:center; padding: 25px 0; font-size:11px; font-style:italic;">No unequipped ${targetType}s found.</div>`;
-            } else {
-                contentHtml = eligibleItems.map(item => {
-                    let color = window.getTierColor(item.statsRolled);
-                    let rating = item.statsRolled === "UNIQUE" ? "UNIQUE" : `${item.statsRolled}★`;
-                    let comparisonBadge = window.getComparisonDeltaBadge(item);
+                    if (eligibleItems.length === 0) {
+                        contentHtml = `<div style="color:#666; text-align:center; padding: 25px 0; font-size:11px; font-style:italic;">No unequipped ${targetType}s found.</div>`;
+                    } else {
+                        contentHtml = eligibleItems.map(item => {
+                            let color = window.getTierColor(item.statsRolled);
+                            let rating = item.statsRolled === "UNIQUE" ? "UNIQUE" : `${item.statsRolled}★`;
+                            let comparisonBadge = window.getComparisonDeltaBadge(item);
 
-                    return `
-                        <div class="bag-item" style="padding:6px; margin-bottom:5px; background:#181c22; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;"
-                             onmouseenter="window.showInventoryTooltip(event, ${item.id})"
-                             ontouchstart="window.showInventoryTooltip(event, ${item.id})"
-                             onmouseleave="window.hideTooltip()">
-                            <div style="text-align:left; max-width: 170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                                <strong style="color:${color}; font-size:11px;">${item.name}</strong><br>
-                                <span style="font-size:9.5px; color:#aaa;">${rating} | Lv. ${item.stageLevel}</span>${comparisonBadge}
-                            </div>
-                            <button class="btn-action" style="padding:3px 8px; font-size:10px; font-weight:bold; background:var(--accent-green);" onclick="window.executeSwapItem('${slotKey}', ${item.id})">Equip</button>
+                            return `
+                                <div class="bag-item" style="padding:6px; margin-bottom:5px; background:#181c22; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;"
+                                     onmouseenter="window.showInventoryTooltip(event, ${item.id})"
+                                     ontouchstart="window.showInventoryTooltip(event, ${item.id})"
+                                     onmouseleave="window.hideTooltip()">
+                                    <div style="text-align:left; max-width: 170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                        <strong style="color:${color}; font-size:11px;">${item.name}</strong><br>
+                                        <span style="font-size:9.5px; color:#aaa;">${rating} | Lv. ${item.stageLevel}</span>${comparisonBadge}
+                                    </div>
+                                    <button class="btn-action" style="padding:3px 8px; font-size:10px; font-weight:bold; background:var(--accent-green);" onclick="window.executeSwapItem('${slotKey}', ${item.id})">Equip</button>
+                                </div>
+                            `;
+                        }).join("");
+                    }
+
+                    win.innerHTML = `
+                        <div class="draggable-header" id="equip-win-handle" style="background: linear-gradient(180deg, #181d24 0%, #0d1117 100%);">
+                            <span>${headerTitle}</span>
+                            <button onclick="document.getElementById('equip-swap-window').remove(); window.hideTooltip();" style="background:transparent; border:none; color:#e74c3c; font-weight:bold; cursor:pointer; font-size:11px; padding:2px;">[X]</button>
+                        </div>
+                        <div class="draggable-content">
+                            ${contentHtml}
                         </div>
                     `;
-                }).join("");
-            }
 
-            win.innerHTML = `
-                                            <div class="draggable-header" id="rates-win-handle" style="background: linear-gradient(180deg, #181d24 0%, #0d1117 100%);">
-                                                <span>📊 Activity Drop Rates</span>
-                                                <button onclick="document.getElementById('rates-draggable-window').remove(); window.hideTooltip();" style="background:transparent; border:none; color:#e74c3c; font-weight:bold; cursor:pointer; font-size:11px; padding:2px;">[X]</button>
-                                            </div>
-                                            <div class="draggable-content" style="max-height: 380px;">
-                                                <p style="font-size:10px; color:#aaa; margin: 0 0 10px 0; line-height:1.4;">
-                                                    Drag this window anywhere. Rates adapt to your current Campaign/Dungeon progression. Hover locks to view details.
-                                                </p>
+                    document.getElementById('game-container').appendChild(win);
+                    window.makeWindowDraggable(win, document.getElementById('equip-win-handle'));
+                };
 
-                                                <!-- CAMPAIGN -->
-                                                <div style="background:#111; border:1px solid #333; border-radius:4px; padding:8px; margin-bottom:8px;">
-                                                    <div style="color:var(--text-gold); font-weight:bold; font-size:11px; margin-bottom:4px; border-bottom:1px solid #222; padding-bottom:3px; display:flex; justify-content:space-between;">
-                                                        <span>🗺️ Campaign (Stage ${nowStage})</span>
-                                                        <span style="color:#888; font-family:monospace;">Mult: ${campDepthQ.toFixed(2)}x</span>
-                                                    </div>
-                                                    <div style="font-family:monospace; font-size:10px; display:flex; flex-direction:column; gap:2px;">
-                                                        <div style="display:flex; justify-content:space-between;">
-                                                            <span>🔮 Shard (Boss):</span>
-                                                            <strong style="color:#8e44ad;">${(campShardChance * 100).toFixed(3)}%</strong>
-                                                        </div>
-                                                        <div style="display:flex; justify-content:space-between; cursor:help; border-bottom: 1px dotted rgba(255,255,255,0.05);" onmouseenter="window.showRatesLockTooltip(event, 'camp_key')" onmouseleave="window.hideTooltip()" ontouchstart="window.showRatesLockTooltip(event, 'camp_key')">
-                                                            <span>🔑 Key (Boss):</span>
-                                                            <strong style="color:${nowStage >= 50 ? '#f1c40f' : '#7f8c8d'};">${nowStage >= 50 ? (campKeyChance * 100).toFixed(3) + "%" : "🔒 locked (Stage 50)"}</strong>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                window.executeSwapItem = function(slotKey, itemId) {
+                    let isArt = slotKey.startsWith("art");
+                    if (isArt) {
+                        let idx = window.inventory.ARTIFACT.findIndex(i => i.id === itemId);
+                        if (idx !== -1) {
+                            let item = window.inventory.ARTIFACT[idx];
+                            let oldMaxHp = 100;
+                            if (typeof window.resolvePlayerStats === "function") oldMaxHp = window.resolvePlayerStats().maxHp;
 
-                                                <!-- EQUIP DUNGEON -->
-                                                <div style="background:#111; border:1px solid #333; border-radius:4px; padding:8px; margin-bottom:8px;">
-                                                    <div style="color:#3498db; font-weight:bold; font-size:11px; margin-bottom:4px; border-bottom:1px solid #222; padding-bottom:3px; display:flex; justify-content:space-between;">
-                                                        <span>🛡️ Equip Dungeon (Floor ${window.playerStats.currentDungeonStage['equip'] || 1})</span>
-                                                    </div>
-                                                    <div style="font-family:monospace; font-size:10px; display:flex; flex-direction:column; gap:2px;">
-                                                        <div style="display:flex; justify-content:space-between;">
-                                                            <span>🔱 Overlord's Sigil (Boss):</span>
-                                                            <strong style="color:#1abc9c;">5.000%</strong>
-                                                        </div>
-                                                        <div style="display:flex; justify-content:space-between;">
-                                                            <span>🛡️ High Tier Equip (Boss):</span>
-                                                            <strong style="color:#2ecc71;">25.000%</strong>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                            // Swap the items, returning old item to inventory
+                            if (window.equippedSlots[slotKey]) {
+                                let oldItem = window.equippedSlots[slotKey];
+                                delete oldItem.isEquippedSlot;
+                                window.inventory.ARTIFACT.push(oldItem);
+                            }
 
-                                                <!-- GOLD DUNGEON -->
-                                                <div style="background:#111; border:1px solid #333; border-radius:4px; padding:8px; margin-bottom:8px;">
-                                                    <div style="color:#f1c40f; font-weight:bold; font-size:11px; margin-bottom:4px; border-bottom:1px solid #222; padding-bottom:3px; display:flex; justify-content:space-between;">
-                                                        <span>💰 Gold Mine (Floor ${goldFloor})</span>
-                                                    </div>
-                                                    <div style="font-family:monospace; font-size:10px; display:flex; flex-direction:column; gap:2px;">
-                                                        <div style="display:flex; justify-content:space-between;">
-                                                            <span>🟡 Gold Multiplier (Floor):</span>
-                                                            <strong style="color:#f1c40f;">x5.00</strong>
-                                                        </div>
-                                                        <div style="display:flex; justify-content:space-between;">
-                                                            <span>👑 Boss Gold Bonus:</span>
-                                                            <strong style="color:#f1c40f;">x20.00</strong>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                            window.inventory.ARTIFACT.splice(idx, 1);
+                            window.equippedSlots[slotKey] = item;
+                            item.isEquippedSlot = slotKey;
 
-                                                <!-- MATERIAL DUNGEON -->
-                                                <div style="background:#111; border:1px solid #333; border-radius:4px; padding:8px; margin-bottom:8px;">
-                                                    <div style="color:#2ecc71; font-weight:bold; font-size:11px; margin-bottom:4px; border-bottom:1px solid #222; padding-bottom:3px; display:flex; justify-content:space-between;">
-                                                        <span>🧪 Material Pit (Floor ${matFloor})</span>
-                                                        <span style="color:#888; font-family:monospace;">Mult: ${dDepthQ.toFixed(2)}x</span>
-                                                    </div>
-                                                    <div style="font-family:monospace; font-size:10px; display:flex; flex-direction:column; gap:2px;">
-                                                        <div style="display:flex; justify-content:space-between; cursor:help; border-bottom: 1px dotted rgba(255,255,255,0.05);" onmouseenter="window.showRatesLockTooltip(event, 'core')" onmouseleave="window.hideTooltip()" ontouchstart="window.showRatesLockTooltip(event, 'core')">
-                                                            <span>🔴 Ancient Core (Boss):</span>
-                                                            <strong style="color:${matFloor >= 15 ? '#e74c3c' : '#7f8c8d'};">${matFloor >= 15 ? (dCoreChance * 100).toFixed(3) + "%" : "🔒 locked (Floor 15)"}</strong>
-                                                        </div>
-                                                        <div style="display:flex; justify-content:space-between; cursor:help; border-bottom: 1px dotted rgba(255,255,255,0.05);" onmouseenter="window.showRatesLockTooltip(event, 'key')" onmouseleave="window.hideTooltip()" ontouchstart="window.showRatesLockTooltip(event, 'key')">
-                                                            <span>🔑 Gacha Key (Boss):</span>
-                                                            <strong style="color:${matFloor >= 35 ? '#f1c40f' : '#7f8c8d'};">${matFloor >= 35 ? (dKeyChance * 100).toFixed(3) + "%" : "🔒 locked (Floor 35)"}</strong>
-                                                        </div>
-                                                        <div style="display:flex; justify-content:space-between; cursor:help; border-bottom: 1px dotted rgba(255,255,255,0.05);" onmouseenter="window.showRatesLockTooltip(event, 'shard')" onmouseleave="window.hideTooltip()" ontouchstart="window.showRatesLockTooltip(event, 'shard')">
-                                                            <span>🔮 Shard (Boss):</span>
-                                                            <strong style="color:${matFloor >= 60 ? '#8e44ad' : '#7f8c8d'};">${matFloor >= 60 ? (dShardChance * 100).toFixed(3) + "%" : "🔒 locked (Floor 60)"}</strong>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                            if (typeof window.resolvePlayerStats === "function") {
+                                let newMaxHp = window.resolvePlayerStats().maxHp;
+                                window.playerStats.currentHp = Math.max(1, Math.min(newMaxHp, Math.floor((window.playerStats.currentHp / oldMaxHp) * newMaxHp)));
+                            }
+                        }
+                    } else {
+                        window.equipItem(itemId);
+                    }
 
-                                    <!-- CRUCIBLE -->
-                                                <div style="background:#111; border:1px solid #333; border-radius:4px; padding:8px; margin-bottom:8px;">
-                                                    <div style="color:#9b59b6; font-weight:bold; font-size:11px; margin-bottom:4px; border-bottom:1px solid #222; padding-bottom:3px; display:flex; justify-content:space-between;">
-                                                        <span>🔮 Crucible (Peak Wave ${cruciblePeak})</span>
-                                                    </div>
-                                                    <div style="font-family:monospace; font-size:10px; display:flex; flex-direction:column; gap:2px;">
-                                                        <div style="display:flex; justify-content:space-between;">
-                                                            <span>🌌 Shards Per Wave (Base):</span>
-                                                            <strong style="color:#9b59b6;">1.50</strong>
-                                                        </div>
-                                                        <div style="display:flex; justify-content:space-between;">
-                                                            <span>💚 Catalyst Core Checkpoint:</span>
-                                                            <strong style="color:#2ecc71;">Every 10 Waves</strong>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                    let win = document.getElementById('equip-swap-window');
+                    if (win) win.remove();
 
-                                                <!-- SPECIFIC ITEM DROP CODEX -->
-                                                <div style="background:#111; border:1px solid #333; border-radius:4px; padding:8px;">
-                                                    <div style="color:#1abc9c; font-weight:bold; font-size:11px; margin-bottom:6px; border-bottom:1px solid #222; padding-bottom:3px;">
-                                                        <span>📋 Specific Item Drop Codex</span>
-                                                    </div>
-                                                    <div style="font-family:monospace; font-size:9px; display:flex; flex-direction:column; gap:4px; line-height: 1.35;">
-                                                        <div style="border-bottom:1px dashed #222; padding-bottom:3px;">
-                                                            <span style="color:#1abc9c; font-weight:bold;">🔱 Overlord's Sigil:</span><br>
-                                                            <span style="color:#aaa;">Source: Equip Dungeon Boss (Floor 1+)</span><br>
-                                                            <span style="color:#94a3b8;">Chance:</span> <strong style="color:#fff;">5.000%</strong>
-                                                        </div>
-                                                        <div style="border-bottom:1px dashed #222; padding-bottom:3px;">
-                                                            <span style="color:#e74c3c; font-weight:bold;">🔴 Ancient Core:</span><br>
-                                                            <span style="color:#aaa;">Source: Material Pit Boss (Floor 15+)</span><br>
-                                                            <span style="color:#94a3b8;">Chance:</span> <strong style="color:#e74c3c;">${matFloor >= 15 ? (dCoreChance * 100).toFixed(3) + "%" : "🔒 Locked"}</strong>
-                                                        </div>
-                                                        <div style="border-bottom:1px dashed #222; padding-bottom:3px;">
-                                                            <span style="color:#8e44ad; font-weight:bold;">🔮 Eridium Shard:</span><br>
-                                                            <span style="color:#aaa;">Source: Camp. Boss (18+) or Mat Pit (60+)</span><br>
-                                                            <span style="color:#94a3b8;">Campaign Boss Chance:</span> <strong style="color:#8e44ad;">${(campShardChance * 100).toFixed(3)}%</strong><br>
-                                                            <span style="color:#94a3b8;">Dungeon Boss Chance:</span> <strong style="color:#8e44ad;">${matFloor >= 60 ? (dShardChance * 100).toFixed(3) + "%" : "🔒 Locked"}</strong>
-                                                        </div>
-                                                        <div>
-                                                            <span style="color:#f1c40f; font-weight:bold;">🔑 Gacha Key:</span><br>
-                                                            <span style="color:#aaa;">Source: Camp. Boss (50+) or Mat Pit (35+)</span><br>
-                                                            <span style="color:#94a3b8;">Campaign Boss Chance:</span> <strong style="color:#f1c40f;">${nowStage >= 50 ? (campKeyChance * 100).toFixed(3) + "%" : "🔒 Locked"}</strong><br>
-                                                            <span style="color:#94a3b8;">Dungeon Boss Chance:</span> <strong style="color:#f1c40f;">${matFloor >= 35 ? (dKeyChance * 100).toFixed(3) + "%" : "🔒 Locked"}</strong>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                                                            </div>
-                                                                                        `;
+                    if (typeof window.checkAchievements === "function") window.checkAchievements();
+                    if (typeof window.updateUI === "function") window.updateUI();
+                    if (typeof window.renderInventory === "function") window.renderInventory();
+                    if (typeof window.renderForgeTab === "function") window.renderForgeTab();
+                    if (typeof window.saveGame === "function") window.saveGame();
+                };
 
-                                                                                        document.getElementById('game-container').appendChild(win);
-                                                                                        window.makeWindowDraggable(win, document.getElementById('rates-win-handle'));
-                                                                                    };
+                window.showCurrentRatesModal = function() {
+                    let existingWin = document.getElementById('rates-draggable-window');
+                    let savedLeft = null;
+                    let savedTop = null;
+                    if (existingWin) {
+                        savedLeft = existingWin.style.left;
+                        savedTop = existingWin.style.top;
+                        existingWin.remove();
+                    }
 
-                                                window.showRatesLockTooltip = function(e, lockType) {
-                                                    e.stopPropagation();
-                                                    let tt = document.getElementById('game-tooltip');
-                                                    if (!tt) return;
+                    let win = document.createElement('div');
+                    win.id = 'rates-draggable-window';
+                    win.className = 'draggable-window';
 
-                                                    let title = "";
-                                                    let desc = "";
-                                                    let color = "#e74c3c";
+                    if (savedLeft !== null && savedTop !== null) {
+                        win.style.left = savedLeft;
+                        win.style.top = savedTop;
+                    } else {
+                        win.style.left = '100px';
+                        win.style.top = '50px';
+                    }
 
-                                                    if (lockType === 'core') {
-                                                        title = "🔴 Ancient Cores";
-                                                        desc = "Currently locked behind <b>Material Pit Floor 15+</b>.<br><br>Once unlocked, Material Pit Bosses have a base drop chance scaled by your current dungeon depth multiplier.";
-                                                    } else if (lockType === 'key') {
-                                                        title = "🔑 Gacha Keys (Dungeon)";
-                                                        desc = "Currently locked behind <b>Material Pit Floor 35+</b>.<br><br>Allows Gacha Key drops from Material Pit Bosses to roll randomly.";
-                                                    } else if (lockType === 'shard') {
-                                                        title = "🔮 Eridium Shards (Dungeon)";
-                                                        desc = "Currently locked behind <b>Material Pit Floor 60+</b>.<br><br>Awakens Eridium Shard drop capability from Material Pit Bosses.";
-                                                    } else if (lockType === 'camp_key') {
-                                                        title = "🔑 Gacha Keys (Campaign)";
-                                                        desc = "Currently locked behind <b>Campaign Stage 50+</b>.<br><br>Once unlocked, Campaign Bosses have a slim chance to drop Gacha Keys, scaled by stage depth.";
-                                                    } else if (lockType === 'star4') {
-                                                        title = "⭐ 4★ Quality (Legendary)";
-                                                        desc = "Locked behind reaching a minimum of <b>1.5x Drop Quality</b>.<br><br>Increase your Drop Quality via unique Artifacts, Prestige upgrades, or Gold upgrades.";
-                                                    } else if (lockType === 'star5') {
-                                                        title = "⭐ 5★ Quality (Mythic)";
-                                                        desc = "Locked behind reaching a minimum of <b>2.0x Drop Quality</b>.<br><br>Awaken your character's Drop Quality stats to open access to mythic tiers.";
-                                                    }
+                    let nowStage = window.playerStats.stage || 1;
+                    let campDepthQ = window.getDepthQualityMultiplier(nowStage);
+                    let campShardChance = 0.005 * (campDepthQ - 1.0);
+                    let campKeyChance = nowStage >= 50 ? 0.0003 * (campDepthQ - 1.0) : 0.0;
 
-                                                    tt.innerHTML = `<div style="padding: 10px; width: 220px; box-sizing: border-box;">
-                                                                                                            <div class="tt-title" style="color:${color};">${title}</div>
-                                                                                                            <div style="color:#aaa; font-size:11px; white-space:normal; line-height:1.4; margin-top:6px;">${desc}</div>
-                                                                                                        </div>`;
-                                                                                                        tt.style.borderColor = color;
-                                                                                                        tt.style.display = "block";
-                                                                                                        window.positionTooltip(e, tt);
-                                                                                                    };
+                    let goldFloor = window.playerStats.currentDungeonStage['gold'] || 1;
+                    let matFloor = window.playerStats.currentDungeonStage['mat'] || 1;
 
-                                                    window.makeWindowDraggable = function(el, handle) {
-                                                        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-                                                        handle.onmousedown = dragMouseDown;
-                                                        handle.ontouchstart = dragTouchStart;
+                    let dDepthQ = window.getDepthQualityMultiplier(matFloor);
+                    let dCoreChance = 0.008 * (dDepthQ - 1.0);
+                    let dKeyChance = 0.0005 * (dDepthQ - 1.0);
+                    let dShardChance = 0.0016 * (dDepthQ - 1.0);
 
-                                                        function dragMouseDown(e) {
-                                                            e = e || window.event;
-                                                            e.preventDefault();
-                                                            pos3 = e.clientX;
-                                                            pos4 = e.clientY;
-                                                            document.onmouseup = closeDragElement;
-                                                            document.onmousemove = elementDrag;
-                                                        }
+                    let cruciblePeak = window.playerStats.cruciblePeak || 1;
 
-                                                        function dragTouchStart(e) {
-                                                            if (e.touches.length > 0) {
-                                                                pos3 = e.touches[0].clientX;
-                                                                pos4 = e.touches[0].clientY;
-                                                                document.ontouchend = closeDragElement;
-                                                                document.ontouchmove = elementTouchDrag;
-                                                            }
-                                                        }
+                    win.innerHTML = `
+                        <div class="draggable-header" id="rates-win-handle" style="background: linear-gradient(180deg, #181d24 0%, #0d1117 100%);">
+                            <span>📊 Activity Drop Rates</span>
+                            <button onclick="document.getElementById('rates-draggable-window').remove(); window.hideTooltip();" style="background:transparent; border:none; color:#e74c3c; font-weight:bold; cursor:pointer; font-size:11px; padding:2px;">[X]</button>
+                        </div>
+                        <div class="draggable-content" style="max-height: 380px;">
+                            <p style="font-size:10px; color:#aaa; margin: 0 0 10px 0; line-height:1.4;">
+                                Drag this window anywhere. Rates adapt to your current Campaign/Dungeon progression. Hover locks to view details.
+                            </p>
 
-                                                        function elementDrag(e) {
-                                                            e = e || window.event;
-                                                            e.preventDefault();
-                                                            pos1 = pos3 - e.clientX;
-                                                            pos2 = pos4 - e.clientY;
-                                                            pos3 = e.clientX;
-                                                            pos4 = e.clientY;
+                            <!-- CAMPAIGN -->
+                            <div style="background:#111; border:1px solid #333; border-radius:4px; padding:8px; margin-bottom:8px;">
+                                <div style="color:var(--text-gold); font-weight:bold; font-size:11px; margin-bottom:4px; border-bottom:1px solid #222; padding-bottom:3px; display:flex; justify-content:space-between;">
+                                    <span>🗺️ Campaign (Stage ${nowStage})</span>
+                                    <span style="color:#888; font-family:monospace;">Mult: ${campDepthQ.toFixed(2)}x</span>
+                                </div>
+                                <div style="font-family:monospace; font-size:10px; display:flex; flex-direction:column; gap:2px;">
+                                    <div style="display:flex; justify-content:space-between;">
+                                        <span>🔮 Shard (Boss):</span>
+                                        <strong style="color:#8e44ad;">${(campShardChance * 100).toFixed(3)}%</strong>
+                                    </div>
+                                    <div style="display:flex; justify-content:space-between; cursor:help; border-bottom: 1px dotted rgba(255,255,255,0.05);" onmouseenter="window.showRatesLockTooltip(event, 'camp_key')" onmouseleave="window.hideTooltip()" ontouchstart="window.showRatesLockTooltip(event, 'camp_key')">
+                                        <span>🔑 Key (Boss):</span>
+                                        <strong style="color:${nowStage >= 50 ? '#f1c40f' : '#7f8c8d'};">${nowStage >= 50 ? (campKeyChance * 100).toFixed(3) + "%" : "🔒 locked (Stage 50)"}</strong>
+                                    </div>
+                                </div>
+                            </div>
 
-                                                            el.style.top = (el.offsetTop - pos2) + "px";
-                                                            el.style.left = (el.offsetLeft - pos1) + "px";
-                                                        }
+                            <!-- EQUIP DUNGEON -->
+                            <div style="background:#111; border:1px solid #333; border-radius:4px; padding:8px; margin-bottom:8px;">
+                                <div style="color:#3498db; font-weight:bold; font-size:11px; margin-bottom:4px; border-bottom:1px solid #222; padding-bottom:3px; display:flex; justify-content:space-between;">
+                                    <span>🛡️ Equip Dungeon (Floor ${window.playerStats.currentDungeonStage['equip'] || 1})</span>
+                                </div>
+                                <div style="font-family:monospace; font-size:10px; display:flex; flex-direction:column; gap:2px;">
+                                    <div style="display:flex; justify-content:space-between;">
+                                        <span>🔱 Overlord's Sigil (Boss):</span>
+                                        <strong style="color:#1abc9c;">5.000%</strong>
+                                    </div>
+                                    <div style="display:flex; justify-content:space-between;">
+                                        <span>🛡️ High Tier Equip (Boss):</span>
+                                        <strong style="color:#2ecc71;">25.000%</strong>
+                                    </div>
+                                </div>
+                            </div>
 
-                                                        function elementTouchDrag(e) {
-                                                            if (e.touches.length > 0) {
-                                                                pos1 = pos3 - e.touches[0].clientX;
-                                                                pos2 = pos4 - e.touches[0].clientY;
-                                                                pos3 = e.touches[0].clientX;
-                                                                pos4 = e.touches[0].clientY;
+                            <!-- GOLD DUNGEON -->
+                            <div style="background:#111; border:1px solid #333; border-radius:4px; padding:8px; margin-bottom:8px;">
+                                <div style="color:#f1c40f; font-weight:bold; font-size:11px; margin-bottom:4px; border-bottom:1px solid #222; padding-bottom:3px; display:flex; justify-content:space-between;">
+                                    <span>💰 Gold Mine (Floor ${goldFloor})</span>
+                                </div>
+                                <div style="font-family:monospace; font-size:10px; display:flex; flex-direction:column; gap:2px;">
+                                    <div style="display:flex; justify-content:space-between;">
+                                        <span>🟡 Gold Multiplier (Floor):</span>
+                                        <strong style="color:#f1c40f;">x5.00</strong>
+                                    </div>
+                                    <div style="display:flex; justify-content:space-between;">
+                                        <span>👑 Boss Gold Bonus:</span>
+                                        <strong style="color:#f1c40f;">x20.00</strong>
+                                    </div>
+                                </div>
+                            </div>
 
-                                                                el.style.top = (el.offsetTop - pos2) + "px";
-                                                                el.style.left = (el.offsetLeft - pos1) + "px";
-                                                            }
-                                                        }
+                            <!-- MATERIAL DUNGEON -->
+                            <div style="background:#111; border:1px solid #333; border-radius:4px; padding:8px; margin-bottom:8px;">
+                                <div style="color:#2ecc71; font-weight:bold; font-size:11px; margin-bottom:4px; border-bottom:1px solid #222; padding-bottom:3px; display:flex; justify-content:space-between;">
+                                    <span>🧪 Material Pit (Floor ${matFloor})</span>
+                                    <span style="color:#888; font-family:monospace;">Mult: ${dDepthQ.toFixed(2)}x</span>
+                                </div>
+                                <div style="font-family:monospace; font-size:10px; display:flex; flex-direction:column; gap:2px;">
+                                    <div style="display:flex; justify-content:space-between; cursor:help; border-bottom: 1px dotted rgba(255,255,255,0.05);" onmouseenter="window.showRatesLockTooltip(event, 'core')" onmouseleave="window.hideTooltip()" ontouchstart="window.showRatesLockTooltip(event, 'core')">
+                                        <span>🔴 Ancient Core (Boss):</span>
+                                        <strong style="color:${matFloor >= 15 ? '#e74c3c' : '#7f8c8d'};">${matFloor >= 15 ? (dCoreChance * 100).toFixed(3) + "%" : "🔒 locked (Floor 15)"}</strong>
+                                    </div>
+                                    <div style="display:flex; justify-content:space-between; cursor:help; border-bottom: 1px dotted rgba(255,255,255,0.05);" onmouseenter="window.showRatesLockTooltip(event, 'key')" onmouseleave="window.hideTooltip()" ontouchstart="window.showRatesLockTooltip(event, 'key')">
+                                        <span>🔑 Gacha Key (Boss):</span>
+                                        <strong style="color:${matFloor >= 35 ? '#f1c40f' : '#7f8c8d'};">${matFloor >= 35 ? (dKeyChance * 100).toFixed(3) + "%" : "🔒 locked (Floor 35)"}</strong>
+                                    </div>
+                                    <div style="display:flex; justify-content:space-between; cursor:help; border-bottom: 1px dotted rgba(255,255,255,0.05);" onmouseenter="window.showRatesLockTooltip(event, 'shard')" onmouseleave="window.hideTooltip()" ontouchstart="window.showRatesLockTooltip(event, 'shard')">
+                                        <span>🔮 Shard (Boss):</span>
+                                        <strong style="color:${matFloor >= 60 ? '#8e44ad' : '#7f8c8d'};">${matFloor >= 60 ? (dShardChance * 100).toFixed(3) + "%" : "🔒 locked (Floor 60)"}</strong>
+                                    </div>
+                                </div>
+                            </div>
 
-                                                        function closeDragElement() {
-                                                            document.onmouseup = null;
-                                                            document.onmousemove = null;
-                                                            document.ontouchend = null;
-                                                            document.ontouchmove = null;
-                                                        }
-                                                    };
+                            <!-- CRUCIBLE -->
+                            <div style="background:#111; border:1px solid #333; border-radius:4px; padding:8px; margin-bottom:8px;">
+                                <div style="color:#9b59b6; font-weight:bold; font-size:11px; margin-bottom:4px; border-bottom:1px solid #222; padding-bottom:3px; display:flex; justify-content:space-between;">
+                                    <span>🔮 Crucible (Peak Wave ${cruciblePeak})</span>
+                                </div>
+                                <div style="font-family:monospace; font-size:10px; display:flex; flex-direction:column; gap:2px;">
+                                    <div style="display:flex; justify-content:space-between;">
+                                        <span>🌌 Shards Per Wave (Base):</span>
+                                        <strong style="color:#9b59b6;">1.50</strong>
+                                    </div>
+                                    <div style="display:flex; justify-content:space-between;">
+                                        <span>💚 Catalyst Core Checkpoint:</span>
+                                        <strong style="color:#2ecc71;">Every 10 Waves</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SPECIFIC ITEM DROP CODEX -->
+                                                            <div style="background:#111; border:1px solid #333; border-radius:4px; padding:8px;">
+                                                                <div style="color:#1abc9c; font-weight:bold; font-size:11px; margin-bottom:6px; border-bottom:1px solid #222; padding-bottom:3px;">
+                                                                    <span>📋 Specific Item Drop Codex</span>
+                                                                </div>
+                                                                <div style="font-family:monospace; font-size:9px; display:flex; flex-direction:column; gap:4px; line-height: 1.35;">
+                                                                    <div style="border-bottom:1px dashed #222; padding-bottom:3px;">
+                                                                        <span style="color:#1abc9c; font-weight:bold;">🔱 Overlord's Sigil:</span><br>
+                                                                        <span style="color:#aaa;">Source: Equip Dungeon Boss (Floor 1+)</span><br>
+                                                                        <span style="color:#94a3b8;">Chance:</span> <strong style="color:#fff;">5.000%</strong>
+                                                                    </div>
+                                                                    <div style="border-bottom:1px dashed #222; padding-bottom:3px;">
+                                                                                                                <span style="color:#e74c3c; font-weight:bold;">🔴 Ancient Core:</span><br>
+                                                                                                                <span style="color:#aaa;">Source: Camp. Boss, Camp. Rare, or Mat Pit (15+)</span><br>
+
+                                                                                                                <!-- Campaign Boss Chance -->
+                                                                                                                <div style="display:flex; justify-content:space-between; cursor:help;"
+                                                                                                                     onmouseenter="window.showRatesLockTooltip(event, 'camp_core_boss')"
+                                                                                                                     onmouseleave="window.hideTooltip()"
+                                                                                                                     ontouchstart="window.showRatesLockTooltip(event, 'camp_core_boss')">
+                                                                                                                    <span style="color:#94a3b8;">Campaign Boss Chance:</span>
+                                                                                                                    <strong style="color:#e74c3c;">${nowStage >= Math.floor((window.playerStats.lifetimePeakStage || 1) * 0.80) ? "1.000%" : "🔒 Locked (Low Stage)"}</strong>
+                                                                                                                </div>
+
+                                                                                                                <!-- Campaign Rare Chance -->
+                                                                                                                <div style="display:flex; justify-content:space-between; cursor:help;"
+                                                                                                                     onmouseenter="window.showRatesLockTooltip(event, 'camp_core_rare')"
+                                                                                                                     onmouseleave="window.hideTooltip()"
+                                                                                                                     ontouchstart="window.showRatesLockTooltip(event, 'camp_core_rare')">
+                                                                                                                    <span style="color:#94a3b8;">Campaign Rare Chance:</span>
+                                                                                                                    <strong style="color:#e74c3c;">${nowStage >= Math.floor((window.playerStats.lifetimePeakStage || 1) * 0.80) ? "0.500%" : "🔒 Locked (Low Stage)"}</strong>
+                                                                                                                </div>
+
+                                                                                                                <!-- Dungeon Chance -->
+                                                                                                                <div style="display:flex; justify-content:space-between; cursor:help;"
+                                                                                                                     onmouseenter="window.showRatesLockTooltip(event, 'core')"
+                                                                                                                     onmouseleave="window.hideTooltip()"
+                                                                                                                     ontouchstart="window.showRatesLockTooltip(event, 'core')">
+                                                                                                                    <span style="color:#94a3b8;">Dungeon Boss Chance:</span>
+                                                                                                                    <strong style="color:#e74c3c;">${matFloor >= 15 ? (dCoreChance * 100).toFixed(3) + "%" : "🔒 Locked (Floor 15)"}</strong>
+                                                                                                                </div>
+                                                                                                            </div>
+                                                                    <div style="border-bottom:1px dashed #222; padding-bottom:3px;">
+                                                                        <span style="color:#8e44ad; font-weight:bold;">🔮 Eridium Shard:</span><br>
+                                                                        <span style="color:#aaa;">Source: Camp. Boss (18+) or Mat Pit (60+)</span><br>
+
+                                                                        <!-- Campaign Chance Row -->
+                                                                        <div style="display:flex; justify-content:space-between; cursor:help;"
+                                                                             onmouseenter="window.showRatesLockTooltip(event, 'camp_shard')"
+                                                                             onmouseleave="window.hideTooltip()"
+                                                                             ontouchstart="window.showRatesLockTooltip(event, 'camp_shard')">
+                                                                            <span style="color:#94a3b8;">Campaign Boss Chance:</span>
+                                                                            <strong style="color:#8e44ad;">${nowStage >= 18 ? (campShardChance * 100).toFixed(3) + "%" : "🔒 Locked (Stage 18)"}</strong>
+                                                                        </div>
+
+                                                                        <!-- Dungeon Chance Row -->
+                                                                        <div style="display:flex; justify-content:space-between; cursor:help;"
+                                                                             onmouseenter="window.showRatesLockTooltip(event, 'shard')"
+                                                                             onmouseleave="window.hideTooltip()"
+                                                                             ontouchstart="window.showRatesLockTooltip(event, 'shard')">
+                                                                            <span style="color:#94a3b8;">Dungeon Boss Chance:</span>
+                                                                            <strong style="color:#8e44ad;">${matFloor >= 60 ? (dShardChance * 100).toFixed(3) + "%" : "🔒 Locked"}</strong>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div>
+                                                                        <span style="color:#f1c40f; font-weight:bold;">🔑 Gacha Key:</span><br>
+                                                                        <span style="color:#aaa;">Source: Camp. Boss (50+) or Mat Pit (35+)</span><br>
+
+                                                                        <!-- Campaign Chance Row -->
+                                                                        <div style="display:flex; justify-content:space-between; cursor:help;"
+                                                                             onmouseenter="window.showRatesLockTooltip(event, 'camp_key')"
+                                                                             onmouseleave="window.hideTooltip()"
+                                                                             ontouchstart="window.showRatesLockTooltip(event, 'camp_key')">
+                                                                            <span style="color:#94a3b8;">Campaign Boss Chance:</span>
+                                                                            <strong style="color:#f1c40f;">${nowStage >= 50 ? (campKeyChance * 100).toFixed(3) + "%" : "🔒 Locked (Stage 50)"}</strong>
+                                                                        </div>
+
+                                                                        <!-- Dungeon Chance Row -->
+                                                                        <div style="display:flex; justify-content:space-between; cursor:help;"
+                                                                             onmouseenter="window.showRatesLockTooltip(event, 'key')"
+                                                                             onmouseleave="window.hideTooltip()"
+                                                                             ontouchstart="window.showRatesLockTooltip(event, 'key')">
+                                                                            <span style="color:#94a3b8;">Dungeon Boss Chance:</span>
+                                                                            <strong style="color:#f1c40f;">${matFloor >= 35 ? (dKeyChance * 100).toFixed(3) + "%" : "🔒 Locked"}</strong>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                        </div>
+                    `;
+
+                    document.getElementById('game-container').appendChild(win);
+                    window.makeWindowDraggable(win, document.getElementById('rates-win-handle'));
+                };
+
+                window.showRatesLockTooltip = function(e, lockType) {
+                            e.stopPropagation();
+                            let tt = document.getElementById('game-tooltip');
+                            if (!tt) return;
+
+                            let title = "";
+                            let desc = "";
+                            let color = "#e74c3c";
+
+                            if (lockType === 'core') {
+                                            title = "🔴 Ancient Cores (Dungeon)";
+                                            desc = "Currently locked behind <b>Material Pit Floor 15+</b>.<br><br>Once unlocked, Material Pit Bosses have a base drop chance scaled by your current dungeon depth multiplier.";
+                                        } else if (lockType === 'camp_core_boss') {
+                                                        title = "🔴 Ancient Cores (Campaign Boss)";
+                                                        let reqStage = Math.floor((window.playerStats.lifetimePeakStage || 1) * 0.80);
+                                                        desc = `Campaign Bosses have a flat <b>1.00%</b> chance to drop an Ancient Core.<br><br>⚠️ To prevent low-stage speed-grinding, drops are only active when farming at or above 80% of your peak stage (<b>Stage ${reqStage}+</b>).`;
+                                                    } else if (lockType === 'camp_core_rare') {
+                                                        title = "🔴 Ancient Cores (Campaign Rare)";
+                                                        let reqStage = Math.floor((window.playerStats.lifetimePeakStage || 1) * 0.80);
+                                                        desc = `Campaign Rare Spawns have a flat <b>0.50%</b> chance to drop an Ancient Core.<br><br>⚠️ To prevent low-stage speed-grinding, drops are only active when farming at or above 80% of your peak stage (<b>Stage ${reqStage}+</b>).`;
+                                                    } else if (lockType === 'camp_shard') {
+                                title = "🔮 Eridium Shards (Campaign)";
+                                desc = "Currently locked behind <b>Campaign Stage 18+</b>.<br><br>Once you reach Stage 18, Campaign Bosses gain a chance to drop Eridium Shards, scaling with your stage depth quality multiplier.";
+                            } else if (lockType === 'key') {
+                        title = "🔑 Gacha Keys (Dungeon)";
+                        desc = "Currently locked behind <b>Material Pit Floor 35+</b>.<br><br>Allows Gacha Key drops from Material Pit Bosses to roll randomly.";
+                    } else if (lockType === 'shard') {
+                        title = "🔮 Eridium Shards (Dungeon)";
+                        desc = "Currently locked behind <b>Material Pit Floor 60+</b>.<br><br>Awakens Eridium Shard drop capability from Material Pit Bosses.";
+                    } else if (lockType === 'camp_key') {
+                        title = "🔑 Gacha Keys (Campaign)";
+                        desc = "Currently locked behind <b>Campaign Stage 50+</b>.<br><br>Once unlocked, Campaign Bosses have a slim chance to drop Gacha Keys, scaled by stage depth.";
+                    } else if (lockType === 'star4') {
+                        title = "⭐ 4★ Quality (Legendary)";
+                        desc = "Locked behind reaching a minimum of <b>1.5x Drop Quality</b>.<br><br>Increase your Drop Quality via unique Artifacts, Prestige upgrades, or Gold upgrades.";
+                    } else if (lockType === 'star5') {
+                        title = "⭐ 5★ Quality (Mythic)";
+                        desc = "Locked behind reaching a minimum of <b>2.0x Drop Quality</b>.<br><br>Awaken your character's Drop Quality stats to open access to mythic tiers.";
+                    }
+
+                    tt.innerHTML = `<div style="padding: 10px; width: 220px; box-sizing: border-box;">
+                        <div class="tt-title" style="color:${color};">${title}</div>
+                        <div style="color:#aaa; font-size:11px; white-space:normal; line-height:1.4; margin-top:6px;">${desc}</div>
+                    </div>`;
+                    tt.style.borderColor = color;
+                    tt.style.display = "block";
+                    window.positionTooltip(e, tt);
+                };
+
+                window.makeWindowDraggable = function(el, handle) {
+                    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+                    handle.onmousedown = dragMouseDown;
+                    handle.ontouchstart = dragTouchStart;
+
+                    function dragMouseDown(e) {
+                        e = e || window.event;
+                        e.preventDefault();
+                        pos3 = e.clientX;
+                        pos4 = e.clientY;
+                        document.onmouseup = closeDragElement;
+                        document.onmousemove = elementDrag;
+                    }
+
+                    function dragTouchStart(e) {
+                        if (e.touches.length > 0) {
+                            pos3 = e.touches[0].clientX;
+                            pos4 = e.touches[0].clientY;
+                            document.ontouchend = closeDragElement;
+                            document.ontouchmove = elementTouchDrag;
+                        }
+                    }
+
+                    function elementDrag(e) {
+                        e = e || window.event;
+                        e.preventDefault();
+                        pos1 = pos3 - e.clientX;
+                        pos2 = pos4 - e.clientY;
+                        pos3 = e.clientX;
+                        pos4 = e.clientY;
+
+                        el.style.top = (el.offsetTop - pos2) + "px";
+                        el.style.left = (el.offsetLeft - pos1) + "px";
+                    }
+
+                    function elementTouchDrag(e) {
+                        if (e.touches.length > 0) {
+                            pos1 = pos3 - e.touches[0].clientX;
+                            pos2 = pos4 - e.touches[0].clientY;
+                            pos3 = e.touches[0].clientX;
+                            pos4 = e.touches[0].clientY;
+
+                            el.style.top = (el.offsetTop - pos2) + "px";
+                            el.style.left = (el.offsetLeft - pos1) + "px";
+                        }
+                    }
+
+                    function closeDragElement() {
+                        document.onmouseup = null;
+                        document.onmousemove = null;
+                        document.ontouchend = null;
+                        document.ontouchmove = null;
+                    }
+                };

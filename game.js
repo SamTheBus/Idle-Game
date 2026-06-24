@@ -1821,32 +1821,53 @@ window.handleMobDeath = function() {
             }
             window.playerStats.riftGuardiansSlain = (window.playerStats.riftGuardiansSlain || 0) + 1;
                     } else if (window.mob.type === "boss") {
-                        // Soft-scaling drops for normal Campaign Bosses based on stage progression
-                        let activeStage = window.playerStats.stage;
-                        let currentLvlMult = 1.0 + (activeStage / 300); // Gradual scaling
+                                            // Soft-scaling drops for normal Campaign Bosses based on stage progression
+                                            let activeStage = window.playerStats.stage;
+                                            let currentLvlMult = 1.0 + (activeStage / 300); // Gradual scaling
 
-                        let shardDropChance = 0.005 * currentStageMultiplier(activeStage);
-                        let keyDropChance = activeStage >= 50 ? 0.0003 * currentStageMultiplier(activeStage) : 0.0;
+                                            let shardDropChance = 0.005 * currentStageMultiplier(activeStage);
+                                            let keyDropChance = activeStage >= 50 ? 0.0003 * currentStageMultiplier(activeStage) : 0.0;
 
-                        function currentStageMultiplier(stage) {
-                            return window.getDepthQualityMultiplier(stage) - 1.0;
-                        }
+                                            function currentStageMultiplier(stage) {
+                                                return window.getDepthQualityMultiplier(stage) - 1.0;
+                                            }
 
-                        if (Math.random() < shardDropChance) {
-                            if (typeof window.addEtcDrop === "function") window.addEtcDrop("Eridium Shard", 1);
-                            if (typeof window.pushToast === "function") window.pushToast("Eridium Shard", null, "#8e44ad", true, 1);
-                        }
-                        if (keyDropChance > 0 && Math.random() < keyDropChance) {
-                            if (typeof window.addEtcDrop === "function") window.addEtcDrop("Gacha Key", 1);
-                            if (typeof window.pushToast === "function") window.pushToast("Gacha Key", null, "#f1c40f", true, 1);
-                        }
-                    } else if (!isBoss && !window.playerStats.isDungeonMode) {
-        if (Math.random() < (window.mob.isRare ? 0.08 : 0.03)) {
-            let etcItemName = window.mob.isRare ? "Luminous Soul" : "Monster Soul";
-            if (typeof window.addEtcDrop === "function") window.addEtcDrop(etcItemName);
-            window.effects.push({ x: window.mob.x + 10, y: window.mob.y + 10, text: "+1 " + etcItemName, color: window.mob.isRare ? "#f1c40f" : "#bdc3c7", life: 70 });
-        }
-    }
+                                            if (Math.random() < shardDropChance) {
+                                                if (typeof window.addEtcDrop === "function") window.addEtcDrop("Eridium Shard", 1);
+                                                if (typeof window.pushToast === "function") window.pushToast("Eridium Shard", null, "#8e44ad", true, 1);
+                                            }
+                                            if (keyDropChance > 0 && Math.random() < keyDropChance) {
+                                                if (typeof window.addEtcDrop === "function") window.addEtcDrop("Gacha Key", 1);
+                                                if (typeof window.pushToast === "function") window.pushToast("Gacha Key", null, "#f1c40f", true, 1);
+                                            }
+
+                                            // Progression-Locked Campaign Boss Ancient Core drop (Flat 1.0% above 80% peak stage)
+                                            let peakLimit = Math.floor((window.playerStats.lifetimePeakStage || 1) * 0.80);
+                                            if (activeStage >= peakLimit) {
+                                                let coreDropChance = 0.01;
+                                                if (Math.random() < coreDropChance) {
+                                                    if (typeof window.addEtcDrop === "function") window.addEtcDrop("Ancient Core", 1);
+                                                    if (typeof window.pushToast === "function") window.pushToast("Ancient Core", null, "#e74c3c", true, 1);
+                                                }
+                                            }
+                                        } else if (!isBoss && !window.playerStats.isDungeonMode) {
+                                            if (Math.random() < (window.mob.isRare ? 0.08 : 0.03)) {
+                                                let etcItemName = window.mob.isRare ? "Luminous Soul" : "Monster Soul";
+                                                if (typeof window.addEtcDrop === "function") window.addEtcDrop(etcItemName);
+                                                window.effects.push({ x: window.mob.x + 10, y: window.mob.y + 10, text: "+1 " + etcItemName, color: window.mob.isRare ? "#f1c40f" : "#bdc3c7", life: 70 });
+                                            }
+                                            // Progression-Locked Campaign Rare Spawn Ancient Core drop (Flat 0.5% above 80% peak stage)
+                                            if (window.mob && window.mob.isRare) {
+                                                let peakLimit = Math.floor((window.playerStats.lifetimePeakStage || 1) * 0.80);
+                                                if (window.playerStats.stage >= peakLimit) {
+                                                    let rareCoreChance = 0.005;
+                                                    if (Math.random() < rareCoreChance) {
+                                                        if (typeof window.addEtcDrop === "function") window.addEtcDrop("Ancient Core", 1);
+                                                        if (typeof window.pushToast === "function") window.pushToast("Ancient Core", null, "#e74c3c", true, 1);
+                                                    }
+                                                }
+                                            }
+                                        }
 
     window.playerStats.totalLifetimeKills++;
     if (window.playerStats.runKills !== undefined) window.playerStats.runKills++;
