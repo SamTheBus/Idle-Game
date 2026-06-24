@@ -749,50 +749,70 @@
 
         <!-- Market / Gacha / Altar Tab -->
         <div id="tab-market" class="tab-content" onscroll="window.hideTooltip()" ontouchmove="window.hideTooltip()">
-            <div class="market-grid">
-                <div class="market-card" style="border-color: #f1c40f;" onmouseenter="window.showGachaTooltip(event)" onmouseleave="window.hideTooltip()" ontouchstart="window.showGachaTooltip(event)">
-                    <div>
-                        <h3 style="margin-top:0; color:#f1c40f; font-size:14px;">🎰 VENDING MACHINE</h3>
-                        <p style="font-size:11px; color:#aaa; min-height:36px;">Roll a guaranteed random 1-5★ piece of standard gear.</p>
+            <div class="sub-tabs">
+                <button id="market-sub-tab-gacha" class="sub-tab-btn active" onclick="window.switchMarketSubTab('GACHA_ALTAR')">🎰 Gacha & Altar</button>
+                <button id="market-sub-tab-sinks" class="sub-tab-btn" onclick="window.switchMarketSubTab('SINKS')">💰 Sinks</button>
+                <button id="market-sub-tab-alchemy" class="sub-tab-btn" onclick="window.switchMarketSubTab('ALCHEMY')">🧪 Alchemy</button>
+                <button id="market-sub-tab-shop" class="sub-tab-btn" onclick="window.switchMarketSubTab('GOLD_SHOP')">🛒 Gold Shop</button>
+            </div>
+
+            <!-- Gacha & Altar Section (Altar placed above Gacha) -->
+            <div id="market-sec-gacha-altar" class="market-section-content" style="display:block;">
+                <div class="market-grid" style="grid-template-columns: 1fr; gap:12px;">
+                    <!-- Ancient Altar first -->
+                    <div class="market-card" style="border-color: #9b59b6;" onmouseenter="window.showAltarTooltip(event)" onmouseleave="window.hideTooltip()" ontouchstart="window.showAltarTooltip(event)">
+                        <div>
+                            <h3 style="margin-top:0; color:#9b59b6; font-size:14px;">🔮 ANCIENT ALTAR</h3>
+                            <p style="font-size:11px; color:#aaa; min-height:24px;">Sacrifice Cores to open a Reality Rift and hunt legendary Tiered Rift Bosses.</p>
+                        </div>
+                        <div>
+                            <button class="btn-action" style="background:#2c3e50; border: 1px solid #9b59b6; margin-bottom: 8px; width:100%; font-weight:bold;" onclick="document.getElementById('altar-modal').style.display='block'; window.buildAltarModal();">View Artifact Pool</button>
+
+                            <!-- Rift Selection Dropdown -->
+                            <label for="rift-hunt-select" style="display:block; font-size:11px; color:#9b59b6; font-weight:bold; margin-bottom:4px; text-align:left;">SELECT TARGET:</label>
+                            <select id="rift-hunt-select" style="width:100%; background:#111; color:#fff; border:1px solid #9b59b6; padding:6px; border-radius:4px; font-size:11px; font-weight:bold; margin-bottom:10px; cursor:pointer;">
+                                <option value="guardian">🛡️ Aegis Goliath (10 Cores / Lv 30+)</option>
+                                <option value="chronos">⏳ Chronos Arbitrator (10 Cores / Lv 30+)</option>
+                                <option value="nexus">👾 Nexus Overseer (10 Cores / Lv 30+)</option>
+                            </select>
+
+                            <button class="btn-action" style="background:#9b59b6; width:100%; font-weight:bold;" onclick="window.summonUberBossFromSelect()">Open Reality Rift</button>
+                        </div>
                     </div>
-                    <div>
-                        <div style="font-weight:bold; color:#2ecc71; margin-bottom:10px; font-size:13px;">Cost: 1 Gacha Key</div>
-                        <button class="btn-action" style="background:#f1c40f; color:#111; width:100%; font-weight:bold;" onclick="window.buyGachaCrate()">Dispense Gear</button>
-                    </div>
-                </div>
-                <div class="market-card" style="border-color: #9b59b6;" onmouseenter="window.showAltarTooltip(event)" onmouseleave="window.hideTooltip()" ontouchstart="window.showAltarTooltip(event)">
-                    <div>
-                        <h3 style="margin-top:0; color:#9b59b6; font-size:14px;">🔮 ANCIENT ALTAR</h3>
-                        <p style="font-size:11px; color:#aaa; min-height:36px;">Sacrifice Cores to open a Reality Rift and hunt legendary Tiered Rift Bosses.</p>
-                    </div>
-                    <div>
-                        <button class="btn-action" style="background:#2c3e50; border: 1px solid #9b59b6; margin-bottom: 8px; width:100%; font-weight:bold;" onclick="document.getElementById('altar-modal').style.display='block'; window.buildAltarModal();">View Artifact Pool</button>
-                        
-                        <!-- Rift Selection Dropdown -->
-                        <label for="rift-hunt-select" style="display:block; font-size:11px; color:#9b59b6; font-weight:bold; margin-bottom:4px; text-align:left;">SELECT TARGET:</label>
-                        <select id="rift-hunt-select" style="width:100%; background:#111; color:#fff; border:1px solid #9b59b6; padding:6px; border-radius:4px; font-size:11px; font-weight:bold; margin-bottom:10px; cursor:pointer;">
-                            <option value="guardian">🛡️ Aegis Goliath (10 Cores / Lv 30+)</option>
-                            <option value="chronos">⏳ Chronos Arbitrator (10 Cores / Lv 30+)</option>
-                            <option value="nexus">👾 Nexus Overseer (10 Cores / Lv 30+)</option>
-                        </select>
-                        
-                        <button class="btn-action" style="background:#9b59b6; width:100%; font-weight:bold;" onclick="window.summonUberBossFromSelect()">Open Reality Rift</button>
+
+                    <!-- Vending Machine second -->
+                    <div class="market-card" style="border-color: #f1c40f;" onmouseenter="window.showGachaTooltip(event)" onmouseleave="window.hideTooltip()" ontouchstart="window.showGachaTooltip(event)">
+                        <div>
+                            <h3 style="margin-top:0; color:#f1c40f; font-size:14px;">🎰 VENDING MACHINE</h3>
+                            <p style="font-size:11px; color:#aaa; min-height:24px;">Roll a guaranteed random 1-5★ piece of standard gear.</p>
+                        </div>
+                        <div>
+                            <div style="font-weight:bold; color:#2ecc71; margin-bottom:10px; font-size:13px;">Cost: 1 Gacha Key</div>
+                            <button class="btn-action" style="background:#f1c40f; color:#111; width:100%; font-weight:bold;" onclick="window.buyGachaCrate()">Dispense Gear</button>
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <div style="margin-top: 15px; border-top: 2px solid #333; padding-top: 10px;">
-                <h3 style="margin:0 0 8px 0; color:#2ecc71; font-size:14px;">🪙 GOLD QUALITY SINKS</h3>
+
+            <!-- Gold Sinks Section -->
+            <div id="market-sec-sinks" class="market-section-content" style="display:none;">
+                <div style="background:#151515; border:1px solid #333; padding:10px; border-radius:4px; margin-bottom:10px;">
+                    <h3 style="margin:0; color:#2ecc71; font-size:14px;">💰 GOLD QUALITY SINKS</h3>
+                </div>
                 <div id="gold-upgrades-list" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:8px;"></div>
             </div>
 
-            <div style="margin-top: 15px; border-top: 2px solid #333; padding-top: 10px;">
-                <h3 style="margin:0 0 8px 0; color:#9b59b6; font-size:14px;">🔮 MYSTICAL ALCHEMY SHOP</h3>
+            <!-- Mystical Alchemy Section -->
+            <div id="market-sec-alchemy" class="market-section-content" style="display:none;">
+                <div style="background:#151515; border:1px solid #333; padding:10px; border-radius:4px; margin-bottom:10px;">
+                    <h3 style="margin:0; color:#9b59b6; font-size:14px;">🔮 MYSTICAL ALCHEMY SHOP</h3>
+                </div>
                 <div id="mystical-shop-list" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:8px;"></div>
             </div>
 
-            <div style="margin-top: 15px; border-top: 2px solid #333; padding-top: 10px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <!-- Gold Shop Section -->
+            <div id="market-sec-shop" class="market-section-content" style="display:none;">
+                <div style="background:#151515; border:1px solid #333; padding:10px; border-radius:4px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
                     <h3 style="margin:0; color:#f1c40f; font-size:14px;">🛒 GOLD SHOP</h3>
                     <span id="market-timer" style="font-size:11px; color:#aaa;">Refreshes in: 30:00</span>
                 </div>

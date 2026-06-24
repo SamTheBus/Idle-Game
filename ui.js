@@ -999,11 +999,17 @@ window.showStatBreakdown = function(e, statKey, isPct = false) {
                                            }).join("");
                                        };
 
-                                       window.renderPrestigeTab = function() {
-                                           let el = document.getElementById('tab-prestige');
-                                           if (!el) return;
+                                       window.getPrestigeUpgradeCost = function(type, currentLevel) {
+                                                                                  if (type === 'bag') return 10; // Bag upgrade is flat 10 PP
+                                                                                  let cost = currentLevel + 1;
+                                                                                  return cost > 10 ? 10 : cost;  // Caps at 10 PP max
+                                                                              };
 
-                                           let p = window.playerStats;
+                                                                              window.renderPrestigeTab = function() {
+                                                                                  let el = document.getElementById('tab-prestige');
+                                                                                  if (!el) return;
+
+                                                                                  let p = window.playerStats;
                                            if (p.level < 25 && (p.prestigeCount || 0) === 0) {
                                                el.innerHTML = `
                                                    <div style="text-align:center; padding: 40px 15px; background: #151515; border: 2px dashed #8e44ad; border-radius: 6px; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);">
@@ -1021,107 +1027,119 @@ window.showStatBreakdown = function(e, statKey, isPct = false) {
                                            }
 
                                            let upgrades = p.prestigeUpgrades || { bag: 0, gold: 0, exp: 0, drop: 0, atk: 0, fort: 0, fairy: 0 };
-                                           let bagPts = upgrades.bag || 0; let goldPts = upgrades.gold || 0; let expPts = upgrades.exp || 0;
-                                           let dropPts = upgrades.drop || 0; let atkPts = upgrades.atk || 0; let fortPts = upgrades.fort || 0; let fairyPts = upgrades.fairy || 0;
+                                                                                      let bagPts = upgrades.bag || 0; let goldPts = upgrades.gold || 0; let expPts = upgrades.exp || 0;
+                                                                                      let dropPts = upgrades.drop || 0; let atkPts = upgrades.atk || 0; let fortPts = upgrades.fort || 0; let fairyPts = upgrades.fairy || 0;
 
-                                           let dAttr = p.prestigePoints < 1 ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
+                                                                                      let getUpgradeButtonHtml = (type, pts, color) => {
+                                                                                          let cost = window.getPrestigeUpgradeCost(type, pts);
+                                                                                          let disabled = p.prestigePoints < cost ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
+                                                                                          let fontColor = (color === '#f1c40f' || color === '#ffb6c1') ? '#000' : '#fff';
+                                                                                          return `<button class="btn-action" style="margin-top:8px; background:${color}; color:${fontColor}; font-weight:bold;" ${disabled} onclick="window.buyPrestigeUpgrade('${type}')">Upgrade (${cost} PP)</button>`;
+                                                                                      };
 
-                                           let requiredStage = Math.max(25, Math.floor((p.lifetimePeakStage || 1) * 0.85));
-                                           let challengeBtnHtml = "";
-                                           if (p.level < 25) challengeBtnHtml = `<button class="btn-action" style="background:#333; color:#777; border: 1px solid #444; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:not-allowed;" disabled>🔒 Requires Level 25 to Re-Challenge</button>`;
-                                           else if (p.stage < requiredStage) challengeBtnHtml = `<button class="btn-action" style="background:#2c1a1a; color:#e74c3c; border: 1px solid #781c1c; font-weight:bold; font-size:11px; padding:8px 16px; border-radius:4px; cursor:not-allowed;" disabled>🔒 Push to Stage ${requiredStage} (Current: ${p.stage})</button>`;
-                                           else challengeBtnHtml = `<button class="btn-action" style="background:#e74c3c; color:white; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:pointer;" onclick="window.challengeHooktail()">Challenge Prestige Boss</button>`;
+                                                                                      let requiredStage = Math.max(25, Math.floor((p.lifetimePeakStage || 1) * 0.85));
+                                                                                      let challengeBtnHtml = "";
+                                                                                      if (p.level < 25) challengeBtnHtml = `<button class="btn-action" style="background:#333; color:#777; border: 1px solid #444; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:not-allowed;" disabled>🔒 Requires Level 25 to Re-Challenge</button>`;
+                                                                                      else if (p.stage < requiredStage) challengeBtnHtml = `<button class="btn-action" style="background:#2c1a1a; color:#e74c3c; border: 1px solid #781c1c; font-weight:bold; font-size:11px; padding:8px 16px; border-radius:4px; cursor:not-allowed;" disabled>🔒 Push to Stage ${requiredStage} (Current: ${p.stage})</button>`;
+                                                                                      else challengeBtnHtml = `<button class="btn-action" style="background:#e74c3c; color:white; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:pointer;" onclick="window.challengeHooktail()">Challenge Prestige Boss</button>`;
 
-                                           el.innerHTML = `
-                                               <div style="display:flex; flex-direction:column; gap:12px;">
-                                                   <div style="background: linear-gradient(135deg, #1f0505, #050000); border: 2px solid #e74c3c; border-radius: 6px; padding: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
-                                                       <h3 style="margin: 0 0 6px 0; color: #e74c3c; font-size:15px; letter-spacing:1px; text-transform:uppercase; text-shadow: 0 0 10px rgba(231, 76, 60, 0.4);">🔥 CHALLENGE HOOKTAIL</h3>
-                                                       <p style="font-size: 11px; color: #aaa; margin: 0 auto 12px auto; max-width: 440px; line-height: 1.45;">
-                                                           Sacrifice your campaign peaks. Enter the dragon's lair! Defeating **Hooktail** soft-wipes your level and campaign progress, but rewards you with <span style="color:#f1c40f; font-weight:bold;">3 Prestige Points</span> to purchase massive permanent upgrades.
-                                                       </p>
-                                                       ${challengeBtnHtml}
-                                                   </div>
+                                                                                      el.innerHTML = `
+                                                                                          <div style="display:flex; flex-direction:column; gap:12px;">
+                                                                                              <div style="background: linear-gradient(135deg, #1f0505, #050000); border: 2px solid #e74c3c; border-radius: 6px; padding: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+                                                                                                  <h3 style="margin: 0 0 6px 0; color: #e74c3c; font-size:15px; letter-spacing:1px; text-transform:uppercase; text-shadow: 0 0 10px rgba(231, 76, 60, 0.4);">🔥 CHALLENGE HOOKTAIL</h3>
+                                                                                                  <p style="font-size: 11px; color: #aaa; margin: 0 auto 12px auto; max-width: 440px; line-height: 1.45;">
+                                                                                                      Sacrifice your campaign peaks. Enter the dragon's lair! Defeating **Hooktail** soft-wipes your level and campaign progress, but rewards you with <span style="color:#f1c40f; font-weight:bold;">3 Prestige Points</span> to purchase massive permanent upgrades.
+                                                                                                  </p>
+                                                                                                  ${challengeBtnHtml}
+                                                                                              </div>
 
-                                                   <div style="background:#151515; border: 1px solid #333; border-radius:6px; padding:12px;">
-                                                       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding-bottom:8px; margin-bottom:10px;">
-                                                           <h4 style="margin:0; color:#f1c40f; font-size:13px; text-transform:uppercase;">✨ PERMANENT ASCENSION ALTAR</h4>
-                                                           <span style="background:#9b59b6; color:#fff; font-weight:bold; font-size:11px; padding:3px 10px; border-radius:10px; box-shadow: 0 0 8px rgba(155, 89, 182, 0.3);">PP Available: <span id="prestige-points-qty">${p.prestigePoints.toLocaleString()}</span></span>
-                                                       </div>
-                                                       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                                                           <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
-                                                               <div>
-                                                                   <strong style="color:#3498db; font-size:12px;">🎒 Dimensional Satchel</strong>
-                                                                   <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +10 permanent backpack slots to carry more gear.</div>
-                                                                   <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">+${(bagPts * 10).toLocaleString()} slots</span></div>
-                                                               </div>
-                                                               <button class="btn-action" style="margin-top:8px; background:#3498db;" ${dAttr} onclick="window.buyPrestigeUpgrade('bag')">Upgrade (1 PP)</button>
-                                                           </div>
-                                                           <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
-                                                               <div>
-                                                                   <strong style="color:#f1c40f; font-size:12px;">🟡 Midas' Legacy</strong>
-                                                                   <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +25% Global Gold multiplier.</div>
-                                                                   <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">+${(goldPts * 25).toLocaleString()}% Gold</span></div>
-                                                               </div>
-                                                               <button class="btn-action" style="margin-top:8px; background:#f1c40f; color:#000;" ${dAttr} onclick="window.buyPrestigeUpgrade('gold')">Upgrade (1 PP)</button>
-                                                           </div>
-                                                           <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
-                                                               <div>
-                                                                   <strong style="color:#9b59b6; font-size:12px;">🧠 Ancient Wisdom</strong>
-                                                                   <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +10% Global EXP rate to level back up faster.</div>
-                                                                   <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">+${(expPts * 10).toLocaleString()}% EXP</span></div>
-                                                               </div>
-                                                               <button class="btn-action" style="margin-top:8px; background:#9b59b6;" ${dAttr} onclick="window.buyPrestigeUpgrade('exp')">Upgrade (1 PP)</button>
-                                                           </div>
-                                                           <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
-                                                               <div>
-                                                                   <strong style="color:#2ecc71; font-size:12px;">🍀 Cosmic Fortune</strong>
-                                                                   <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +5% Global Drop Rate.</div>
-                                                                   <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">+${(dropPts * 5).toLocaleString()}% Drop</span></div>
-                                                               </div>
-                                                               <button class="btn-action" style="margin-top:8px; background:#2ecc71;" ${dAttr} onclick="window.buyPrestigeUpgrade('drop')">Upgrade (1 PP)</button>
-                                                           </div>
-                                                           <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
-                                                               <div>
-                                                                   <strong style="color:#e74c3c; font-size:12px;">🔱 Gladiator's Might</strong>
-                                                                   <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +12% Compounding Global Attack power.</div>
-                                                                   <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">x${Math.pow(1.12, atkPts).toFixed(2)} Mult</span></div>
-                                                               </div>
-                                                               <button class="btn-action" style="margin-top:8px; background:#e74c3c;" ${dAttr} onclick="window.buyPrestigeUpgrade('atk')">Upgrade (1 PP)</button>
-                                                           </div>
-                                                           <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
-                                                               <div>
-                                                                   <strong style="color:#1abc9c; font-size:12px;">🛡️ Colossal Fortitude</strong>
-                                                                   <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +10% Global HP and +5% Defense (Compounding).</div>
-                                                                   <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">x${Math.pow(1.10, fortPts).toFixed(2)} HP, x${Math.pow(1.05, fortPts).toFixed(2)} Def</span></div>
-                                                               </div>
-                                                               <button class="btn-action" style="margin-top:8px; background:#1abc9c;" ${dAttr} onclick="window.buyPrestigeUpgrade('fort')">Upgrade (1 PP)</button>
-                                                           </div>
-                                                           <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
-                                                               <div>
-                                                                   <strong style="color:#ffb6c1; font-size:12px;">🧚 Aetheric Beacon</strong>
-                                                                   <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +5% Multi-Fairy Spawn chance per level.</div>
-                                                                   <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">+${(fairyPts * 5).toLocaleString()}% Spawn</span></div>
-                                                               </div>
-                                                               <button class="btn-action" style="margin-top:8px; background:#ffb6c1; color:#000;" ${dAttr} onclick="window.buyPrestigeUpgrade('fairy')">Upgrade (1 PP)</button>
-                                                           </div>
-                                                       </div>
-                                                   </div>
-                                               </div>
-                                           `;
-                                       };
+                                                                                              <div style="background:#151515; border: 1px solid #333; border-radius:6px; padding:12px;">
+                                                                                                  <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding-bottom:8px; margin-bottom:10px;">
+                                                                                                      <h4 style="margin:0; color:#f1c40f; font-size:13px; text-transform:uppercase;">✨ PERMANENT ASCENSION ALTAR</h4>
+                                                                                                      <span style="background:#9b59b6; color:#fff; font-weight:bold; font-size:11px; padding:3px 10px; border-radius:10px; box-shadow: 0 0 8px rgba(155, 89, 182, 0.3);">PP Available: <span id="prestige-points-qty">${p.prestigePoints.toLocaleString()}</span></span>
+                                                                                                  </div>
+                                                                                                  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                                                                                                      <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
+                                                                                                          <div>
+                                                                                                              <strong style="color:#3498db; font-size:12px;">🎒 Dimensional Satchel</strong>
+                                                                                                              <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +10 permanent backpack slots to carry more gear.</div>
+                                                                                                              <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">+${(bagPts * 10).toLocaleString()} slots</span></div>
+                                                                                                          </div>
+                                                                                                          ${getUpgradeButtonHtml('bag', bagPts, '#3498db')}
+                                                                                                      </div>
+                                                                                                      <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
+                                                                                                          <div>
+                                                                                                              <strong style="color:#f1c40f; font-size:12px;">🟡 Midas' Legacy</strong>
+                                                                                                              <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +25% Global Gold multiplier.</div>
+                                                                                                              <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">+${(goldPts * 25).toLocaleString()}% Gold</span></div>
+                                                                                                          </div>
+                                                                                                          ${getUpgradeButtonHtml('gold', goldPts, '#f1c40f')}
+                                                                                                      </div>
+                                                                                                      <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
+                                                                                                          <div>
+                                                                                                              <strong style="color:#9b59b6; font-size:12px;">🧠 Ancient Wisdom</strong>
+                                                                                                              <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +10% Global EXP rate to level back up faster.</div>
+                                                                                                              <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">+${(expPts * 10).toLocaleString()}% EXP</span></div>
+                                                                                                          </div>
+                                                                                                          ${getUpgradeButtonHtml('exp', expPts, '#9b59b6')}
+                                                                                                      </div>
+                                                                                                      <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
+                                                                                                          <div>
+                                                                                                              <strong style="color:#2ecc71; font-size:12px;">🍀 Cosmic Fortune</strong>
+                                                                                                              <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +5% Global Drop Rate.</div>
+                                                                                                              <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">+${(dropPts * 5).toLocaleString()}% Drop</span></div>
+                                                                                                          </div>
+                                                                                                          ${getUpgradeButtonHtml('drop', dropPts, '#2ecc71')}
+                                                                                                      </div>
+                                                                                                      <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
+                                                                                                          <div>
+                                                                                                              <strong style="color:#e74c3c; font-size:12px;">🔱 Gladiator's Might</strong>
+                                                                                                              <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +12% Compounding Global Attack power.</div>
+                                                                                                              <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">x${Math.pow(1.12, atkPts).toFixed(2)} Mult</span></div>
+                                                                                                          </div>
+                                                                                                          ${getUpgradeButtonHtml('atk', atkPts, '#e74c3c')}
+                                                                                                      </div>
+                                                                                                      <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
+                                                                                                          <div>
+                                                                                                              <strong style="color:#1abc9c; font-size:12px;">🛡️ Colossal Fortitude</strong>
+                                                                                                              <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +10% Global HP and +5% Defense (Compounding).</div>
+                                                                                                              <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">x${Math.pow(1.10, fortPts).toFixed(2)} HP, x${Math.pow(1.05, fortPts).toFixed(2)} Def</span></div>
+                                                                                                          </div>
+                                                                                                          ${getUpgradeButtonHtml('fort', fortPts, '#1abc9c')}
+                                                                                                      </div>
+                                                                                                      <div style="background:#111; border:1px solid #333; border-radius:4px; padding:10px; display:flex; flex-direction:column; justify-content:space-between;">
+                                                                                                          <div>
+                                                                                                              <strong style="color:#ffb6c1; font-size:12px;">🧚 Aetheric Beacon</strong>
+                                                                                                              <div style="font-size:10px; color:#aaa; margin:3px 0 6px 0;">Adds +5% Multi-Fairy Spawn chance per level.</div>
+                                                                                                              <div style="font-size:11px; font-weight:bold; color:#fff;">Current: <span style="color:#2ecc71;">+${(fairyPts * 5).toLocaleString()}% Spawn</span></div>
+                                                                                                          </div>
+                                                                                                          ${getUpgradeButtonHtml('fairy', fairyPts, '#ffb6c1')}
+                                                                                                      </div>
+                                                                                                  </div>
+                                                                                              </div>
+                                                                                          </div>
+                                                                                      `;
+                                                                                  };
 
                                        window.buyPrestigeUpgrade = function(type) {
-                                           if (window.playerStats.prestigePoints < 1) return;
-                                           window.playerStats.prestigePoints--;
-                                           window.playerStats.prestigeUpgrades[type] = (window.playerStats.prestigeUpgrades[type] || 0) + 1;
+                                                                                  let currentLevel = window.playerStats.prestigeUpgrades[type] || 0;
+                                                                                  let cost = window.getPrestigeUpgradeCost(type, currentLevel);
 
-                                           window.pushHeaderToast("🎉 Permanent Upgrade Acquired!", "#9b59b6");
+                                                                                  if (window.playerStats.prestigePoints < cost) {
+                                                                                      if (typeof window.pushHeaderToast === "function") window.pushHeaderToast("❌ Insufficient Prestige Points!", "#e74c3c");
+                                                                                      return;
+                                                                                  }
 
-                                           let p = window.resolvePlayerStats();
-                                           window.playerStats.currentHp = Math.min(window.playerStats.currentHp, p.maxHp);
+                                                                                  window.playerStats.prestigePoints -= cost;
+                                                                                  window.playerStats.prestigeUpgrades[type] = currentLevel + 1;
 
-                                           window.updateUI(); window.renderPrestigeTab(); window.renderInventory(); window.saveGame();
-                                       };
+                                                                                  if (typeof window.pushHeaderToast === "function") window.pushHeaderToast("🎉 Permanent Upgrade Acquired!", "#9b59b6");
+
+                                                                                  let p = window.resolvePlayerStats();
+                                                                                  window.playerStats.currentHp = Math.min(window.playerStats.currentHp, p.maxHp);
+
+                                                                                  window.updateUI(); window.renderPrestigeTab(); window.renderInventory(); window.saveGame();
+                                                                              };
 
                                        window.challengeHooktail = function() {
                                            if (window.playerStats.level < 25) { window.pushHeaderToast("Requires Level 25!", "#e74c3c"); return; }
@@ -1826,96 +1844,84 @@ window.generateItemCardHtml = function(item, compareItem = null, isEquipped = fa
     }
 
     // --- DIABLO 4 STYLE BASE STATS SECTION ---
-    if (item.id !== "dummy" && item.type !== "artifact") {
-        let tempers = item.temperLevel || 0;
-        let multiplier = 1 + (tempers * 0.04);
-        let baseStats = [];
+        if (item.id !== "dummy" && item.type !== "artifact") {
+            let baseStats = [];
 
-        if (item.baseAtk > 0) {
-            let baseAtkVal = Math.round(item.baseAtk * multiplier);
-            baseStats.push({ label: "Weapon Damage", val: baseAtkVal, icon: "⚔️" });
-        }
-        if (item.baseDef > 0) {
-            let baseDefVal = Math.round(item.baseDef * multiplier);
-            baseStats.push({ label: "Armor", val: baseDefVal, icon: "🛡️" });
-        }
-        if (item.baseMaxHp > 0) {
-            let baseMaxHpVal = Math.round(item.baseMaxHp * multiplier);
-            baseStats.push({ label: "Max Life", val: baseMaxHpVal, icon: "❤️" });
-        }
-        if (item.baseMoveSpeed > 0) {
-            let baseMoveSpeedVal = Math.round(item.baseMoveSpeed * multiplier);
-            baseStats.push({ label: "Speed", val: baseMoveSpeedVal, icon: "👟" });
-        }
-        if (item.baseBlock > 0) {
-            let baseBlockVal = Math.round(item.baseBlock * multiplier * 100);
-            baseStats.push({ label: "Block Rate", val: baseBlockVal + "%", icon: "🛡️" });
-        }
-        if (item.baseParry > 0) {
-            let baseParryVal = Math.round(item.baseParry * multiplier * 100);
-            baseStats.push({ label: "Parry Rate", val: baseParryVal + "%", icon: "⚡" });
-        }
-        if (item.baseInt > 0) {
-            let baseIntVal = Math.round(item.baseInt * multiplier);
-            baseStats.push({ label: "Intelligence", val: baseIntVal, icon: "🧠" });
+            if (item.baseAtk > 0) {
+                baseStats.push({ label: "Weapon Damage", val: Math.round(item.baseAtk), icon: "⚔️" });
+            }
+            if (item.baseDef > 0) {
+                baseStats.push({ label: "Armor", val: Math.round(item.baseDef), icon: "🛡️" });
+            }
+            if (item.baseMaxHp > 0) {
+                baseStats.push({ label: "Max Life", val: Math.round(item.baseMaxHp), icon: "❤️" });
+            }
+            if (item.baseMoveSpeed > 0) {
+                baseStats.push({ label: "Speed", val: Math.round(item.baseMoveSpeed), icon: "👟" });
+            }
+            if (item.baseBlock > 0) {
+                baseStats.push({ label: "Block Rate", val: Math.round(item.baseBlock * 100) + "%", icon: "🛡️" });
+            }
+            if (item.baseParry > 0) {
+                baseStats.push({ label: "Parry Rate", val: Math.round(item.baseParry * 100) + "%", icon: "⚡" });
+            }
+            if (item.baseInt > 0) {
+                baseStats.push({ label: "Intelligence", val: Math.round(item.baseInt), icon: "🧠" });
+            }
+
+            if (baseStats.length > 0) {
+                html += `<div style="background: rgba(255, 255, 255, 0.02); border: 1px solid #222; border-radius: 4px; padding: 6px; margin: 8px 0; text-align: center;">`;
+                html += `<div style="font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; font-weight: bold;">Base Stats</div>`;
+                baseStats.forEach(b => {
+                    html += `<div style="font-size: 13px; font-weight: bold; color: #f5f6fa; margin: 1px 0;">${b.icon} ${b.val} ${b.label}</div>`;
+                });
+                html += `</div>`;
+            }
         }
 
-        if (baseStats.length > 0) {
-            html += `<div style="background: rgba(255, 255, 255, 0.02); border: 1px solid #222; border-radius: 4px; padding: 6px; margin: 8px 0; text-align: center;">`;
-            html += `<div style="font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; font-weight: bold;">Base Stats</div>`;
-            baseStats.forEach(b => {
-                html += `<div style="font-size: 13px; font-weight: bold; color: #f5f6fa; margin: 1px 0;">${b.icon} ${b.val} ${b.label}</div>`;
-            });
-            html += `</div>`;
+        if (item.id !== "dummy" && item.type === "artifact") {
+            html += `<div class="tt-stat-line" style="color:#d2b4de; margin-bottom: 6px; white-space:normal;">• Effect: ${item.desc}</div>`;
+            html += `<div class="tt-trait">${item.breakdown}</div>`;
+            html += `<div style="font-weight:bold; color:#aaa; margin-top:8px; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Bonus Parameters:</div>`;
+        } else if (item.id !== "dummy") {
+            if (isUnique && item.desc) {
+                html += `<div class="tt-stat-line" style="color:#ffeaa7; margin-bottom: 10px; white-space:normal; line-height:1.4; padding:6px; border:1px dashed #1abc9c; background:rgba(0,0,0,0.4); border-radius:4px;"><strong>• Unique Effect:</strong> ${item.desc}</div>`;
+            }
+            if (item.totalEnchants > 0) {
+                html += `<div style="color:#9b59b6; font-size:10px; font-weight:bold; margin-bottom:6px; letter-spacing:0.5px; border: 1px dashed #9b59b6; padding: 3px; border-radius: 3px; background: rgba(155, 89, 182, 0.05); text-align: center;">🔮 MYSTICAL ENCHANTS: ${item.totalEnchants} ACTIVE</div>`;
+            }
+            html += `<div style="font-weight:bold; color:#aaa; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Affixes:</div>`;
         }
-    }
 
-    if (item.id !== "dummy" && item.type === "artifact") {
-        html += `<div class="tt-stat-line" style="color:#d2b4de; margin-bottom: 6px; white-space:normal;">• Effect: ${item.desc}</div>`;
-        html += `<div class="tt-trait">${item.breakdown}</div>`;
-        html += `<div style="font-weight:bold; color:#aaa; margin-top:8px; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Bonus Parameters:</div>`;
-    } else if (item.id !== "dummy") {
-        if (isUnique && item.desc) {
-            html += `<div class="tt-stat-line" style="color:#ffeaa7; margin-bottom: 10px; white-space:normal; line-height:1.4; padding:6px; border:1px dashed #1abc9c; background:rgba(0,0,0,0.4); border-radius:4px;"><strong>• Unique Effect:</strong> ${item.desc}</div>`;
-        }
-        if (item.totalEnchants > 0) {
-            html += `<div style="color:#9b59b6; font-size:10px; font-weight:bold; margin-bottom:6px; letter-spacing:0.5px; border: 1px dashed #9b59b6; padding: 3px; border-radius: 3px; background: rgba(155, 89, 182, 0.05); text-align: center;">🔮 MYSTICAL ENCHANTS: ${item.totalEnchants} ACTIVE</div>`;
-        }
-        html += `<div style="font-weight:bold; color:#aaa; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Affixes:</div>`;
-    }
+        // --- DIABLO 4 STYLE EXPLICIT AFFIXES SECTION ---
+        if (item.id !== "dummy") {
+            let affixes = [];
 
-    // --- DIABLO 4 STYLE EXPLICIT AFFIXES SECTION ---
-    if (item.id !== "dummy") {
-        let affixes = [];
-        let tempers = item.temperLevel || 0;
-        let multiplier = 1 + (tempers * 0.04);
+            const statsKeys = [
+                { key: "atk", icon: "⚔️", label: "Attack", baseKey: "baseAtk" },
+                { key: "maxHp", icon: "❤️", label: "Max HP", baseKey: "baseMaxHp" },
+                { key: "def", icon: "🛡️", label: "Defense", baseKey: "baseDef" },
+                { key: "moveSpeed", icon: "👟", label: "Move Speed", baseKey: "baseMoveSpeed" },
+                { key: "str", icon: "💪", label: "STR", baseKey: "baseStr" },
+                { key: "dex", icon: "🎯", label: "DEX", baseKey: "baseDex" },
+                { key: "int", icon: "🧠", label: "INT", baseKey: "baseInt" },
+                { key: "critChance", icon: "✨", label: "Crit Chance", isPct: true },
+                { key: "critDamage", icon: "💥", label: "Crit Multi", isPct: true },
+                { key: "block", icon: "🛡️", label: "Block Rate", isPct: true, baseKey: "baseBlock" },
+                { key: "parry", icon: "⚡", label: "Parry Rate", isPct: true, baseKey: "baseParry" },
+                { key: "activeAttackSpeed", icon: "⚡", label: "Active Atk Spd", isPct: true, baseKey: "baseActiveSpeed" },
+                { key: "idleAttackSpeed", icon: "⏱️", label: "Idle Atk Spd", isPct: true, baseKey: "baseIdleSpeed" },
+                { key: "dropRate", icon: "🍀", label: "Drop Rate", isPct: true },
+                { key: "quality", icon: "💎", label: "Drop Quality", isPct: true },
+                { key: "goldMulti", icon: "🟡", label: "Gold Multi", isPct: true },
+                { key: "rareSpawn", icon: "✨", label: "Rare Spawn", isPct: true, isDoublePct: true },
+                { key: "fairySpawn", icon: "🧚", label: "Fairy Spawn", isPct: true }
+            ];
 
-        const statsKeys = [
-            { key: "atk", icon: "⚔️", label: "Attack", baseKey: "baseAtk" },
-            { key: "maxHp", icon: "❤️", label: "Max HP", baseKey: "baseMaxHp" },
-            { key: "def", icon: "🛡️", label: "Defense", baseKey: "baseDef" },
-            { key: "moveSpeed", icon: "👟", label: "Move Speed", baseKey: "baseMoveSpeed" },
-            { key: "str", icon: "💪", label: "STR", baseKey: "baseStr" },
-            { key: "dex", icon: "🎯", label: "DEX", baseKey: "baseDex" },
-            { key: "int", icon: "🧠", label: "INT", baseKey: "baseInt" },
-            { key: "critChance", icon: "✨", label: "Crit Chance", isPct: true },
-            { key: "critDamage", icon: "💥", label: "Crit Multi", isPct: true },
-            { key: "block", icon: "🛡️", label: "Block Rate", isPct: true, baseKey: "baseBlock" },
-            { key: "parry", icon: "⚡", label: "Parry Rate", isPct: true, baseKey: "baseParry" },
-            { key: "activeAttackSpeed", icon: "⚡", label: "Active Atk Spd", isPct: true, baseKey: "baseActiveSpeed" },
-            { key: "idleAttackSpeed", icon: "⏱️", label: "Idle Atk Spd", isPct: true, baseKey: "baseIdleSpeed" },
-            { key: "dropRate", icon: "🍀", label: "Drop Rate", isPct: true },
-            { key: "quality", icon: "💎", label: "Drop Quality", isPct: true },
-            { key: "goldMulti", icon: "🟡", label: "Gold Multi", isPct: true },
-            { key: "rareSpawn", icon: "✨", label: "Rare Spawn", isPct: true, isDoublePct: true },
-            { key: "fairySpawn", icon: "🧚", label: "Fairy Spawn", isPct: true }
-        ];
-
-        statsKeys.forEach(s => {
-            let totalVal = item[s.key] || 0;
-            let baseVal = (item.type !== "artifact" && s.baseKey) ? (item[s.baseKey] || 0) : 0;
-            let baseScaled = s.isPct ? (baseVal * multiplier) : Math.round(baseVal * multiplier);
-            let affixVal = totalVal - baseScaled;
+            statsKeys.forEach(s => {
+                let totalVal = item[s.key] || 0;
+                let baseVal = (item.type !== "artifact" && s.baseKey) ? (item[s.baseKey] || 0) : 0;
+                let affixVal = totalVal - baseVal;
 
             if (affixVal > 0.0001 || (s.key === "activeAttackSpeed" || s.key === "idleAttackSpeed") && affixVal > 0) {
                 let displayVal = "";
@@ -2207,10 +2213,13 @@ window.switchTab = function(tabId) {
         if (typeof window.renderForgeTab === "function") window.renderForgeTab();
     }
     if (tabId === 'market') {
-        if (typeof window.refreshMarketShopIfNeeded === "function") window.refreshMarketShopIfNeeded();
-        if (typeof window.renderMysticalShop === "function") window.renderMysticalShop();
-        if (typeof window.renderGoldUpgrades === "function") window.renderGoldUpgrades();
-    }
+            if (typeof window.refreshMarketShopIfNeeded === "function") window.refreshMarketShopIfNeeded();
+            if (typeof window.renderMysticalShop === "function") window.renderMysticalShop();
+            if (typeof window.renderGoldUpgrades === "function") window.renderGoldUpgrades();
+            if (!document.querySelector('#tab-market .sub-tab-btn.active')) {
+                window.switchMarketSubTab('GACHA_ALTAR');
+            }
+        }
     if (tabId === 'prestige') {
         if (typeof window.renderPrestigeTab === "function") window.renderPrestigeTab();
     }
@@ -2219,7 +2228,7 @@ window.switchTab = function(tabId) {
 
 window.switchSubTab = function(subTabId) {
     window.state.currentSubTab = subTabId;
-    document.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.sub-tabs:not(#tab-market .sub-tabs) .sub-tab-btn').forEach(btn => btn.classList.remove('active'));
     let activeBtn = document.getElementById('sub-tab-' + subTabId.toLowerCase());
     if (activeBtn) activeBtn.classList.add('active');
 
@@ -2228,6 +2237,21 @@ window.switchSubTab = function(subTabId) {
     document.getElementById('bag-etc').style.display = subTabId === 'ETC' ? 'block' : 'none';
     document.getElementById('bag-use').style.display = subTabId === 'USE' ? 'block' : 'none';
     window.updateUI();
+};
+
+window.switchMarketSubTab = function(subTabId) {
+    document.querySelectorAll('#tab-market .sub-tabs .sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.market-section-content').forEach(sec => sec.style.display = 'none');
+
+    let btnSuffix = subTabId === 'GACHA_ALTAR' ? 'gacha' : (subTabId === 'SINKS' ? 'sinks' : (subTabId === 'ALCHEMY' ? 'alchemy' : 'shop'));
+    let activeBtn = document.getElementById('market-sub-tab-' + btnSuffix);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    let secSuffix = subTabId === 'GACHA_ALTAR' ? 'gacha-altar' : (subTabId === 'SINKS' ? 'sinks' : (subTabId === 'ALCHEMY' ? 'alchemy' : 'shop'));
+    let activeSec = document.getElementById('market-sec-' + secSuffix);
+    if (activeSec) activeSec.style.display = 'block';
+
+    if (typeof window.hideTooltip === "function") window.hideTooltip();
 };
 
 // --- LOG SYSTEM BOX ---

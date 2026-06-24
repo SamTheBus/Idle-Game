@@ -138,11 +138,11 @@ window.applyOfflineGains = function(offlineMs) {
 
             let killsNeededForStage = 5 - window.playerStats.killCount;
 
-            // Dynamically scale growth rates to form an escalating plateau soft wall
-            let growthRate = 1.06 + (currentStage * 0.00015);
-            let expScale = Math.pow(growthRate, currentStage);
+                        // Smooth out post-wall base acceleration to prevent runaway super-exponential cliffs
+                        let growthRate = 1.06 + ((currentStage * 0.04) / (currentStage + 200));
+                        let expScale = Math.pow(growthRate, currentStage);
 
-            let mobHp = 15 * expScale;
+                        let mobHp = 15 * expScale;
             let bossHp = 60 * expScale;
             let mobDef = Math.floor(1.2 * expScale);
             let bossDef = Math.floor(6.0 * expScale);
@@ -1057,18 +1057,18 @@ function update() {
                 });
             }
             if (window.playerStats.prestigeApproachTimer === 0) {
-                let scaleVal = window.playerStats.prestigeCount || 0;
+                            let scaleVal = window.playerStats.prestigeCount || 0;
 
-                // Tuned Hooktail curves to coordinate with new active defense mitigation mechanics
-                let hp = 20000 * Math.pow(1.62, scaleVal);
-                let dmg = 450 * Math.pow(1.25, scaleVal);
-                let def = 40 + 35 * scaleVal;
+                            // Rebalanced Hooktail curves to make Ascension a formidable, high-stakes endgame check
+                            let hp = 120000 * Math.pow(1.62, scaleVal);
+                            let dmg = 1800 * Math.pow(1.25, scaleVal);
+                            let def = 150 + 75 * scaleVal;
 
-                window.mob = {
-                    x: canvas.width - 230, y: 65, w: 180, h: 160, type: "prestige_boss", isRare: false,
-                    hp: Math.floor(hp), maxHp: Math.floor(hp), damage: Math.floor(dmg), def: Math.floor(def),
-                    flashTimer: 0, isStopped: false, attackCooldown: 75, attackTimer: 75
-                };
+                            window.mob = {
+                                x: canvas.width - 230, y: 65, w: 180, h: 160, type: "prestige_boss", isRare: false,
+                                hp: Math.floor(hp), maxHp: Math.floor(hp), damage: Math.floor(dmg), def: Math.floor(def),
+                                flashTimer: 0, isStopped: false, attackCooldown: 75, attackTimer: 75
+                            };
                 window.pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[ASCENSION] HOOKTAIL APPEARS! Slay her to Ascend!</span>`);
             }
             window.logicClock++; return;
@@ -1861,15 +1861,16 @@ window.processEnemySpawn = function() {    // 2. BACKGROUND SCENERY & VEGETATION
             let growthRate = 1.08 + (dStage * 0.00025);
             scale = Math.pow(growthRate, dStage);
         } else {
-            let activeStage = window.playerStats.stage;
-            if (window.playerStats.isUberBoss) {
-                let runPeak = Math.max(window.playerStats.stage, window.playerStats.maxStage || 1);
-                let allTime90 = Math.floor((window.playerStats.lifetimePeakStage || 1) * 0.90);
-                activeStage = Math.max(runPeak, allTime90);
-            }
-            let growthRate = 1.06 + (activeStage * 0.00015);
-            scale = Math.pow(growthRate, activeStage);
-        }
+                    let activeStage = window.playerStats.stage;
+                    if (window.playerStats.isUberBoss) {
+                        let runPeak = Math.max(window.playerStats.stage, window.playerStats.maxStage || 1);
+                        let allTime90 = Math.floor((window.playerStats.lifetimePeakStage || 1) * 0.90);
+                        activeStage = Math.max(runPeak, allTime90);
+                    }
+                    // Smooth out post-wall base acceleration to prevent runaway super-exponential cliffs
+                    let growthRate = 1.06 + ((activeStage * 0.04) / (activeStage + 200));
+                    scale = Math.pow(growthRate, activeStage);
+                }
 
     if (window.playerStats.isDungeonMode) {
         let hpScale = window.playerStats.currentDungeon === 'gold' ? 1.5 : 1;

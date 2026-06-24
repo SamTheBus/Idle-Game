@@ -13,13 +13,13 @@ window.penBoss = 2.4;
 
 window.getStageTier = function() {
     let st = window.playerStats.stage;
-    if (st <= 50) return 0;  // Forest
-    if (st <= 100) return 1; // Peaks/Ruins
-    if (st <= 150) return 2; // Inferno
-    if (st <= 200) return 3; // Swamp
-    if (st <= 300) return 4; // Void
-    if (st <= 400) return 5; // Temporal Sanctorum
-    return 6;                // Cyberspace Nexus
+    if (st <= 100) return 0; // Forest (Stages 1-100)
+    if (st <= 200) return 1; // Peaks/Ruins (Stages 101-200)
+    if (st <= 300) return 2; // Inferno (Stages 201-300)
+    if (st <= 400) return 3; // Swamp (Stages 301-400)
+    if (st <= 500) return 4; // Void (Stages 401-500)
+    if (st <= 600) return 5; // Temporal Sanctorum (Stages 501-600)
+    return 6;                // Cyberspace Nexus (Stages 601+)
 };
 
 // --- VISUAL EFFECT & PARTICLE SPAWNERS ---

@@ -39,6 +39,79 @@ window.getSetRerollGoldCost = function(item) {
     return Math.floor(100 * itemLvlMultiplier * Math.pow(1.5, item.statsRolled) * prestigeMultiplier);
 };
 
+// Generates highly detailed comparison layouts for Temper and Tier Up forge previews
+window.getForgeDiffLines = function(item, previewItem) {
+    let diffLines = "";
+
+    // 1. Render Base parameters comparative
+    let baseStatsToCompare = [
+        { key: "baseAtk", icon: "⚔️", label: "Base Weapon Damage" },
+        { key: "baseDef", icon: "🛡️", label: "Base Armor" },
+        { key: "baseMaxHp", icon: "❤️", label: "Base Max Life" },
+        { key: "baseInt", icon: "🧠", label: "Base Intelligence" }
+    ];
+    baseStatsToCompare.forEach(s => {
+        let curVal = item[s.key] || 0;
+        let newVal = previewItem[s.key] || 0;
+        let diff = newVal - curVal;
+        if (diff > 0.001) {
+            diffLines += `
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; background:rgba(26,188,156,0.06); padding:6px 8px; border-radius:3px; margin-bottom:4px; border:1px solid #1abc9c;">
+                    <span style="color:#1abc9c; font-weight:bold;">${s.icon} ${s.label}</span>
+                    <span style="font-family:monospace;">
+                        <span style="color:#7f8c8d;">${Math.round(curVal)}</span> ➔
+                        <strong style="color:#fff;">${Math.round(newVal)}</strong>
+                        <span style="color:#2ecc71; font-weight:bold; margin-left:4px;">(+${Math.round(diff)})</span>
+                    </span>
+                </div>
+            `;
+        }
+    });
+
+    // 2. Render combined total / affix parameters comparative
+    let statsToCompare = [
+        { key: "atk", icon: "⚔️", label: "Attack Total", isPct: false },
+        { key: "maxHp", icon: "❤️", label: "Max HP Total", isPct: false },
+        { key: "def", icon: "🛡️", label: "Defense Total", isPct: false },
+        { key: "moveSpeed", icon: "👟", label: "Move Speed", isPct: false },
+        { key: "str", icon: "💪", label: "STR", isPct: false },
+        { key: "dex", icon: "🎯", label: "DEX", isPct: false },
+        { key: "int", icon: "🧠", label: "INT", isPct: false },
+        { key: "critChance", icon: "✨", label: "Crit Chance", isPct: true },
+        { key: "critDamage", icon: "💥", label: "Crit Multi", isPct: true },
+        { key: "block", icon: "🛡️", label: "Block Rate", isPct: true },
+        { key: "parry", icon: "⚡", label: "Parry Rate", isPct: true },
+        { key: "dropRate", icon: "🍀", label: "Drop Rate", isPct: true },
+        { key: "quality", icon: "💎", label: "Drop Quality", isPct: true },
+        { key: "goldMulti", icon: "🟡", label: "Gold Multi", isPct: true },
+        { key: "rareSpawn", icon: "✨", label: "Rare Spawn", isPct: true, isDoublePct: true },
+        { key: "fairySpawn", icon: "🧚", label: "Fairy Spawn", isPct: true }
+    ];
+    statsToCompare.forEach(s => {
+        let curVal = item[s.key] || 0;
+        let newVal = previewItem[s.key] || 0;
+        let diff = newVal - curVal;
+        if (Math.abs(diff) > 0.0001) {
+            let curValStr = s.isPct ? (s.isDoublePct ? (curVal * 100).toFixed(2) + "%" : Math.round(curVal * 100) + "%") : Math.round(curVal).toLocaleString();
+            let newValStr = s.isPct ? (s.isDoublePct ? (newVal * 100).toFixed(2) + "%" : Math.round(newVal * 100) + "%") : Math.round(newVal).toLocaleString();
+            let diffStr = s.isPct ? (s.isDoublePct ? (diff * 100).toFixed(2) + "%" : Math.round(diff * 100) + "%") : Math.round(diff).toLocaleString();
+
+            diffLines += `
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; background:rgba(0,0,0,0.4); padding:6px 8px; border-radius:3px; margin-bottom:4px; border:1px solid #333;">
+                    <span style="color:#aaa;">${s.icon} ${s.label}</span>
+                    <span style="font-family:monospace;">
+                        <span style="color:#7f8c8d;">${curValStr}</span> ➔
+                        <strong style="color:#fff;">${newValStr}</strong>
+                        <span style="color:#2ecc71; font-weight:bold; margin-left:4px;">(+${diffStr})</span>
+                    </span>
+                </div>
+            `;
+        }
+    });
+
+    return diffLines;
+};
+
 // Renders the entire Blacksmith and Enchanter selection pane with custom comparison values
 window.renderForgeTab = function() {
     let listEl = document.getElementById('forge-list');
@@ -103,33 +176,45 @@ window.renderForgeTab = function() {
     let html = `<div style="font-weight:bold; font-size:13px; color:${titleColor}; border-bottom:1px solid #333; padding-bottom:4px; margin-bottom:10px;">${item.name}${temperTag}</div>`;
 
     let previewHtml = "";
-    let previewItem = JSON.parse(JSON.stringify(item));
+        let previewItem = JSON.parse(JSON.stringify(item));
 
-    if (window.forgeMode === 'temper') {
-        let maxT = window.getMaxTemper(item.statsRolled, item.type);
-        if (item.temperLevel >= maxT) {
-            html += `<div style="color:#e74c3c; font-weight:bold; text-align:center; padding: 20px 0;">MAXIMUM TEMPER LIMIT REACHED</div>`;
-        } else {
-            let costGold = window.getTemperGoldCost(item);
-            let scrapReqAmount = window.getRequiredScrapAmountForTemper(item.temperLevel + 1, item.type === "artifact");
-            let scrapReq = window.getRequiredScrapForTemper(item.temperLevel + 1, item.type === "artifact");
-            let playerScrap = window.inventory.ETC[scrapReq] || 0;
-            let failChance = item.temperLevel * 5;
-            let goldColor = window.playerStats.coins >= costGold ? "#f1c40f" : "#e74c3c";
-            let scrapColor = playerScrap >= scrapReqAmount ? "#bdc3c7" : "#e74c3c";
+        if (window.forgeMode === 'temper') {
+            let maxT = window.getMaxTemper(item.statsRolled, item.type);
+            if (item.temperLevel >= maxT) {
+                html += `<div style="color:#e74c3c; font-weight:bold; text-align:center; padding: 20px 0;">MAXIMUM TEMPER LIMIT REACHED</div>`;
+            } else {
+                let costGold = window.getTemperGoldCost(item);
+                let scrapReqAmount = window.getRequiredScrapAmountForTemper(item.temperLevel + 1, item.type === "artifact");
+                let scrapReq = window.getRequiredScrapForTemper(item.temperLevel + 1, item.type === "artifact");
+                let playerScrap = window.inventory.ETC[scrapReq] || 0;
+                let failChance = item.temperLevel * 5;
+                let goldColor = window.playerStats.coins >= costGold ? "#f1c40f" : "#e74c3c";
+                let scrapColor = playerScrap >= scrapReqAmount ? "#bdc3c7" : "#e74c3c";
 
-            previewItem.temperLevel++;
-            window.recalculateItemStats(previewItem);
+                previewItem.temperLevel++;
+                window.recalculateItemStats(previewItem);
 
-            html += `<div style="font-size:11px; margin-bottom:10px; color:#aaa;">Temper Cap: <span style="color:#fff;">${item.temperLevel} / ${maxT}</span></div>`;
-            let pct = (item.temperLevel / maxT) * 100;
-            html += `<div class="forge-progress-bg"><div class="forge-progress-fill" style="width:${pct}%"></div></div>`;
-            html += `<div style="font-size:11px; color:${goldColor}; margin-bottom:3px;">• ${window.formatNumber(costGold)} Gold Required</div>`;
-            html += `<div style="font-size:11px; color:${scrapColor}; margin-bottom:10px;">• ${scrapReqAmount.toLocaleString()}x ${scrapReq} (Owned: ${playerScrap.toLocaleString()})</div>`;
-            html += `<div style="font-size:11px; color:#e74c3c; font-weight:bold; margin-bottom:15px;">⚠️ ${failChance}% Chance to Fail</div>`;
-            html += `<button class="forge-anvil-button" style="width:100%;" ${(window.playerStats.coins >= costGold) && (playerScrap >= scrapReqAmount) ? '' : 'disabled'} onclick="window.temperItem()">Harness Heat</button>`;
-        }
-    } else if (window.forgeMode === 'reforge') {
+                // Fetch correctly generated item property comparative differences
+                let diffLines = window.getForgeDiffLines(item, previewItem);
+
+                html += `<div style="font-size:11px; margin-bottom:10px; color:#aaa;">Temper Cap: <span style="color:#fff;">${item.temperLevel} / ${maxT}</span></div>`;
+                let pct = (item.temperLevel / maxT) * 100;
+                html += `<div class="forge-progress-bg"><div class="forge-progress-fill" style="width:${pct}%"></div></div>`;
+                html += `<div style="font-size:11px; color:${goldColor}; margin-bottom:3px;">• ${window.formatNumber(costGold)} Gold Required</div>`;
+                html += `<div style="font-size:11px; color:${scrapColor}; margin-bottom:10px;">• ${scrapReqAmount.toLocaleString()}x ${scrapReq} (Owned: ${playerScrap.toLocaleString()})</div>`;
+                html += `<div style="font-size:11px; color:#e74c3c; font-weight:bold; margin-bottom:15px;">⚠️ ${failChance}% Chance to Fail</div>`;
+                html += `<button class="forge-anvil-button" style="width:100%;" ${(window.playerStats.coins >= costGold) && (playerScrap >= scrapReqAmount) ? '' : 'disabled'} onclick="window.temperItem()">Harness Heat</button>`;
+
+                previewHtml = `
+                    <div style="margin-top:15px; padding:12px; background:#111; border:1px solid #3498db; border-radius:6px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+                        <div style="color:#3498db; font-weight:bold; font-size:11.5px; margin-bottom:8px; border-bottom:1px solid #222; padding-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">📈 Tempering Preview ([+${item.temperLevel}] ➔ [+${previewItem.temperLevel}])</div>
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            ${diffLines || '<div style="color:#7f8c8d; font-style:italic; text-align:center; padding:10px;">No stat modifications.</div>'}
+                        </div>
+                    </div>
+                `;
+            }
+        } else if (window.forgeMode === 'reforge') {
         let bonusKeys = ["bonusAtk", "bonusMaxHp", "bonusDef", "bonusMoveSpeed", "bonusCritChance", "bonusCritDamage", "bonusBlock", "bonusParry", "bonusActiveSpeed", "bonusIdleSpeed", "bonusStr", "bonusDex", "bonusInt"];
         let activeBonuses = bonusKeys.filter(k => item[k] !== 0);
 
@@ -181,26 +266,43 @@ window.renderForgeTab = function() {
             }
         }
     } else if (window.forgeMode === 'tier') {
-        if (item.statsRolled >= 5) {
-            html += `<div style="color:#e74c3c; font-weight:bold; text-align:center; padding: 20px 0;">MAXIMUM RARITY REACHED</div>`;
-        } else {
-            let currentStars = item.statsRolled;
-            let costGold = (currentStars + 1) * 2500;
-            let scrapReqAmount = currentStars + 1;
-            let playerScrap = window.inventory.ETC["Eridium Shard"] || 0;
+            if (item.statsRolled >= 5) {
+                html += `<div style="color:#e74c3c; font-weight:bold; text-align:center; padding: 20px 0;">MAXIMUM RARITY REACHED</div>`;
+            } else {
+                let currentStars = item.statsRolled;
+                let costGold = (currentStars + 1) * 2500;
+                let scrapReqAmount = currentStars + 1;
+                let playerScrap = window.inventory.ETC["Eridium Shard"] || 0;
 
-            let goldColor = window.playerStats.coins >= costGold ? "#f1c40f" : "#e74c3c";
-            let scrapColor = playerScrap >= scrapReqAmount ? "#8e44ad" : "#e74c3c";
+                let goldColor = window.playerStats.coins >= costGold ? "#f1c40f" : "#e74c3c";
+                let scrapColor = playerScrap >= scrapReqAmount ? "#8e44ad" : "#e74c3c";
 
-            previewItem.statsRolled++;
+                previewItem.statsRolled++;
+                window.scaleItemBonusStats(previewItem, currentStars, previewItem.statsRolled);
+                window.recalculateItemStats(previewItem);
 
-            html += `<div style="font-size:11px; margin-bottom:15px; color:#aaa;">Rarity Transition: <span style="color:#fff;">${currentStars}★</span> ➔ <span style="color:#f1c40f;">${currentStars+1}★</span></div>`;
-            html += `<div style="font-size:11px; color:${goldColor}; margin-bottom:3px;">• ${window.formatNumber(costGold)} Gold Required</div>`;
-            html += `<div style="font-size:11px; color:${scrapColor}; margin-bottom:10px;">• ${scrapReqAmount.toLocaleString()}x Eridium Shard (Owned: ${playerScrap.toLocaleString()})</div>`;
-            html += `<div style="font-size:11px; color:#2ecc71; font-weight:bold; margin-bottom:15px;">✨ 100% Awakening Guaranteed</div>`;
-            html += `<button class="forge-anvil-button" style="width:100%; border-color:#e67e22;" ${(window.playerStats.coins >= costGold) && (playerScrap >= scrapReqAmount) ? '' : 'disabled'} onclick="window.temperItem()">Awaken Rarity</button>`;
-        }
-    } else if (window.forgeMode === 'enchant') {
+                // Fetch correctly generated item property comparative differences for Tier Up
+                let diffLines = window.getForgeDiffLines(item, previewItem);
+
+                html += `<div style="font-size:11px; margin-bottom:15px; color:#aaa;">Rarity Transition: <span style="color:#fff;">${currentStars}★</span> ➔ <span style="color:#f1c40f;">${currentStars+1}★</span></div>`;
+                html += `<div style="font-size:11px; color:${goldColor}; margin-bottom:3px;">• ${window.formatNumber(costGold)} Gold Required</div>`;
+                html += `<div style="font-size:11px; color:${scrapColor}; margin-bottom:10px;">• ${scrapReqAmount.toLocaleString()}x Eridium Shard (Owned: ${playerScrap.toLocaleString()})</div>`;
+                html += `<div style="font-size:11px; color:#2ecc71; font-weight:bold; margin-bottom:15px;">✨ 100% Awakening Guaranteed</div>`;
+                html += `<button class="forge-anvil-button" style="width:100%; border-color:#e67e22;" ${(window.playerStats.coins >= costGold) && (playerScrap >= scrapReqAmount) ? '' : 'disabled'} onclick="window.temperItem()">Awaken Rarity</button>`;
+
+                previewHtml = `
+                    <div style="margin-top:15px; padding:12px; background:#111; border:1px solid #e67e22; border-radius:6px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+                        <div style="color:#e67e22; font-weight:bold; font-size:11.5px; margin-bottom:8px; border-bottom:1px solid #222; padding-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">⭐ Awakening Preview (${currentStars}★ ➔ ${previewItem.statsRolled}★)</div>
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            ${diffLines || '<div style="color:#7f8c8d; font-style:italic; text-align:center; padding:10px;">No stat modifications.</div>'}
+                            <div style="margin-top:8px; padding:8px; background:rgba(230,126,34,0.1); border:1px dashed #e67e22; border-radius:4px; font-size:10px; color:#ccc; text-align:center;">
+                                * This awakening will permanently increase base parameters by 10% and immediately unlock <b>one new random affix modifier</b>!
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        } else if (window.forgeMode === 'enchant') {
         let maxEnchants = window.getMaxEnchants(item);
         let currentEnchants = item.totalEnchants || 0;
         let maxT = window.getMaxTemper(item.statsRolled, item.type);
@@ -237,83 +339,57 @@ window.renderForgeTab = function() {
                 html += `<button class="forge-anvil-button" style="width:100%; border-color:#e74c3c; background: linear-gradient(135deg, #c0392b, #111);" ${window.playerStats.coins >= resetGoldCost ? '' : 'disabled'} onclick="window.resetItemEnchants()">Purge Enchantments</button>`;
             }
         } else if (window.forgeMode === 'set') {
-            let costGold = window.getSetRerollGoldCost(item);
-            let soulCost = 25 + (item.statsRolled * 25);
-            let ownedSouls = window.inventory.ETC["Monster Soul"] || 0;
+                let costGold = window.getSetRerollGoldCost(item);
+                let soulCost = 25 + (item.statsRolled * 25);
+                let ownedSouls = window.inventory.ETC["Monster Soul"] || 0;
 
-            let goldColor = window.playerStats.coins >= costGold ? "#f1c40f" : "#e74c3c";
-            let soulsColor = ownedSouls >= soulCost ? "#bdc3c7" : "#e74c3c";
+                let goldColor = window.playerStats.coins >= costGold ? "#f1c40f" : "#e74c3c";
+                let soulsColor = ownedSouls >= soulCost ? "#bdc3c7" : "#e74c3c";
 
-            html += `<div style="font-size:11px; margin-bottom:10px; color:#aaa;">Current Set Resonance: <span style="color:#2ecc71; font-weight:bold;">${item.setName || "None"}</span></div>`;
-            html += `<div style="font-size:11px; color:${goldColor}; margin-bottom:3px;">• ${window.formatNumber(costGold)} Gold Required</div>`;
-            html += `<div style="font-size:11px; color:${soulsColor}; margin-bottom:10px;">• ${soulCost}x Monster Soul (Owned: ${ownedSouls.toLocaleString()})</div>`;
-            html += `<div style="font-size:11px; color:#2ecc71; font-weight:bold; margin-bottom:15px;">✨ Randomly rolls a different Set bonus!</div>`;
-            html += `<button class="forge-anvil-button" style="width:100%; border-color:#2ecc71; background: linear-gradient(135deg, #1b2a1e, #111);" ${(window.playerStats.coins >= costGold) && (ownedSouls >= soulCost) ? '' : 'disabled'} onclick="window.rerollItemSet()">Re-Resonate Set</button>`;
-        }
+                html += `<div style="font-size:11px; margin-bottom:10px; color:#aaa;">Current Set Resonance: <span style="color:#2ecc71; font-weight:bold;">${item.setName || "None"}</span></div>`;
+                html += `<div style="font-size:11px; color:${goldColor}; margin-bottom:3px;">• ${window.formatNumber(costGold)} Gold Required</div>`;
+                html += `<div style="font-size:11px; color:${soulsColor}; margin-bottom:10px;">• ${soulCost}x Monster Soul (Owned: ${ownedSouls.toLocaleString()})</div>`;
+                html += `<div style="font-size:11px; color:#2ecc71; font-weight:bold; margin-bottom:15px;">✨ Randomly rolls a different Set bonus!</div>`;
+                html += `<button class="forge-anvil-button" style="width:100%; border-color:#2ecc71; background: linear-gradient(135deg, #1b2a1e, #111);" ${(window.playerStats.coins >= costGold) && (ownedSouls >= soulCost) ? '' : 'disabled'} onclick="window.rerollItemSet()">Re-Resonate Set</button>`;
 
-        if (window.forgeMode === 'tier' && item.statsRolled < 5) {
-        previewHtml = `<div style="margin-top:15px; padding:10px; background:#111; border:1px dashed #f1c40f; border-radius:4px; font-size:11px; color:#ccc; text-align:center;">
-            * Star Tier UP preserves current modifiers, increases base multipliers, and unlocks <b>1 completely new random attribute parameter</b>!
-        </div>`;
-    } else if (window.forgeMode === 'enchant' && item.temperLevel >= window.getMaxTemper(item.statsRolled, item.type) && item.totalEnchants < window.getMaxEnchants(item) && window.getMaxEnchants(item) > 0) {
-        previewHtml = `<div style="margin-top:15px; padding:10px; background:#111; border:1px dashed #9b59b6; border-radius:4px; font-size:11px; color:#ccc; text-align:center;">
-            * Enchanting will permanently snapshot pre-enchant stats, then select 1 parameter at random to scale by <b>+25%</b>.
-        </div>`;
-    } else if (window.forgeMode === 'temper' && item.temperLevel < window.getMaxTemper(item.statsRolled, item.type)) {
-        let statsToCompare = [
-            { key: "atk", icon: "⚔️", label: "Attack", isPct: false },
-            { key: "maxHp", icon: "❤️", label: "Max HP", isPct: false },
-            { key: "def", icon: "🛡️", label: "Defense", isPct: false },
-            { key: "moveSpeed", icon: "👟", label: "Move Speed", isPct: false },
-            { key: "str", icon: "💪", label: "STR", isPct: false },
-            { key: "dex", icon: "🎯", label: "DEX", isPct: false },
-            { key: "int", icon: "🧠", label: "INT", isPct: false },
-            { key: "critChance", icon: "✨", label: "Crit Chance", isPct: true },
-            { key: "critDamage", icon: "💥", label: "Crit Multi", isPct: true },
-            { key: "block", icon: "🛡️", label: "Block Rate", isPct: true },
-            { key: "parry", icon: "⚡", label: "Parry Rate", isPct: true },
-            { key: "dropRate", icon: "🍀", label: "Drop Rate", isPct: true },
-            { key: "quality", icon: "💎", label: "Drop Quality", isPct: true },
-            { key: "goldMulti", icon: "🟡", label: "Gold Multi", isPct: true },
-            { key: "rareSpawn", icon: "✨", label: "Rare Spawn", isPct: true, isDoublePct: true },
-            { key: "fairySpawn", icon: "🧚", label: "Fairy Spawn", isPct: true }
-        ];
-
-        let diffLines = "";
-        statsToCompare.forEach(s => {
-            let curVal = item[s.key] || 0;
-            let newVal = previewItem[s.key] || 0;
-            let diff = newVal - curVal;
-            if (Math.abs(diff) > 0.0001) {
-                let curValStr = s.isPct ? (s.isDoublePct ? (curVal * 100).toFixed(2) + "%" : Math.round(curVal * 100) + "%") : Math.round(curVal).toLocaleString();
-                let newValStr = s.isPct ? (s.isDoublePct ? (newVal * 100).toFixed(2) + "%" : Math.round(newVal * 100) + "%") : Math.round(newVal).toLocaleString();
-                let diffStr = s.isPct ? (s.isDoublePct ? (diff * 100).toFixed(2) + "%" : Math.round(diff * 100) + "%") : Math.round(diff).toLocaleString();
-
-                diffLines += `
-                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; background:rgba(0,0,0,0.4); padding:6px 8px; border-radius:3px; margin-bottom:4px; border:1px solid #333;">
-                        <span style="color:#aaa;">${s.icon} ${s.label}</span>
-                        <span style="font-family:monospace;">
-                            <span style="color:#7f8c8d;">+${curValStr}</span> ➔
-                            <strong style="color:#fff;">+${newValStr}</strong>
-                            <span style="color:#2ecc71; font-weight:bold; margin-left:4px;">(+${diffStr})</span>
-                        </span>
+                previewHtml = `
+                    <div style="margin-top:15px; padding:12px; background:#111; border:1px dashed #2ecc71; border-radius:6px;">
+                        <div style="color:#2ecc71; font-weight:bold; font-size:11px; margin-bottom:6px; text-transform:uppercase;">✨ Set re-resonance Pool:</div>
+                        <p style="font-size:10px; color:#aaa; margin-bottom:8px; line-height:1.4;">
+                            Your item will abandon its current set affiliation and attune to one of these legendary set matrices at random:
+                        </p>
+                        <div style="font-size:9.5px; color:#fff; display:grid; grid-template-columns: 1fr 1fr; gap:4px; font-family:monospace; background:rgba(0,0,0,0.3); padding:8px; border-radius:4px;">
+                            <div>🛡️ Vanguard (+Atk)</div>
+                            <div>💖 Colossus (+HP)</div>
+                            <div>🛡️ Bastion (+Def)</div>
+                            <div>👟 Windrunner (+Spd)</div>
+                            <div>✨ Wraith (+Crit%)</div>
+                            <div>💥 Reaver (+CritDmg)</div>
+                            <div>🧱 Dreadnought (+Block)</div>
+                            <div>⚡ Duellist (+Parry)</div>
+                            <div>🧠 Scholar (+INT)</div>
+                            <div>💪 Berserker (+STR)</div>
+                            <div>🎯 Scout (+DEX)</div>
+                            <div>🍀 Fortune (+Gold/Drop)</div>
+                            <div>🔮 Mystic (+Qly/INT)</div>
+                            <div>🧪 Alchemist (+HP/Atk)</div>
+                            <div>👑 Midas' Legacy (+Gold)</div>
+                            <div>🧪 Biohazard (Poison)</div>
+                            <div>⚔️ Warlord (Shatter)</div>
+                            <div>🌌 Void-Touched (Frenzy)</div>
+                        </div>
                     </div>
                 `;
             }
-        });
 
-        previewHtml = `
-            <div style="margin-top:15px; padding:12px; background:#111; border:1px solid #3498db; border-radius:6px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
-                <div style="color:#3498db; font-weight:bold; font-size:11.5px; margin-bottom:8px; border-bottom:1px solid #222; padding-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">📈 Tempering Preview ([+${item.temperLevel}] ➔ [+${previewItem.temperLevel}])</div>
-                <div style="display:flex; flex-direction:column;">
-                    ${diffLines || '<div style="color:#7f8c8d; font-style:italic; text-align:center; padding:10px;">No stat modifications.</div>'}
-                </div>
-            </div>
-        `;
-    }
+            if (window.forgeMode === 'enchant' && item.temperLevel >= window.getMaxTemper(item.statsRolled, item.type) && item.totalEnchants < window.getMaxEnchants(item) && window.getMaxEnchants(item) > 0) {
+                previewHtml = `<div style="margin-top:15px; padding:10px; background:#111; border:1px dashed #9b59b6; border-radius:4px; font-size:11px; color:#ccc; text-align:center;">
+                    * Enchanting will permanently snapshot pre-enchant stats, then select 1 parameter at random to scale by <b>+25%</b>.
+                </div>`;
+            }
 
-    detailEl.innerHTML = html + previewHtml;
-};
+            detailEl.innerHTML = html + previewHtml;
+        };
 
 // --- UNIQUE STYLE SYSTEM ---
 
@@ -722,27 +798,31 @@ window.recalculateItemStats = function(item) {
 
     // Dynamic base scaling transitions for standard slot configurations
     if (item.type !== "artifact" && item.statsRolled !== "UNIQUE") {
+        let stars = item.statsRolled || 0;
+        let baseRarityMult = 1.0 + (stars * 0.10); // Base stats scale up by 10% per star rarity tier!
+
         if (item.type === "weapon" && !item.isUniqueStaff && !item.isUniqueSword && !item.isUniqueSingularity && !item.isUniqueMaelstrom) {
-            item.baseAtk = Math.ceil(1.5 * expScale * prestigeMult);
+            item.baseAtk = Math.ceil(1.5 * expScale * prestigeMult * baseRarityMult);
         } else if (item.type === "chest" || item.type === "overall") {
-            item.baseDef = Math.ceil(2.0 * expScale * prestigeMult);
-            item.baseMaxHp = Math.ceil(10.0 * expScale * prestigeMult);
+            let overallMult = item.type === "overall" ? 1.8 : 1.0;
+            item.baseDef = Math.ceil(2.0 * expScale * prestigeMult * baseRarityMult * overallMult);
+            item.baseMaxHp = Math.ceil(10.0 * expScale * prestigeMult * baseRarityMult * overallMult);
         } else if (item.type === "helmet" && !item.isUniqueTempest) {
-            item.baseDef = Math.ceil(1.0 * expScale * prestigeMult);
-            item.baseMaxHp = Math.ceil(5.0 * expScale * prestigeMult);
+            item.baseDef = Math.ceil(1.0 * expScale * prestigeMult * baseRarityMult);
+            item.baseMaxHp = Math.ceil(5.0 * expScale * prestigeMult * baseRarityMult);
         } else if (item.type === "leggings") {
-            item.baseDef = Math.ceil(1.0 * expScale * prestigeMult);
-            item.baseMaxHp = Math.ceil(5.0 * expScale * prestigeMult);
+            item.baseDef = Math.ceil(1.0 * expScale * prestigeMult * baseRarityMult);
+            item.baseMaxHp = Math.ceil(5.0 * expScale * prestigeMult * baseRarityMult);
         } else if (item.type === "boots" && !item.isUniqueWarpCore) {
-            item.baseDef = Math.ceil(0.5 * expScale * prestigeMult);
+            item.baseDef = Math.ceil(0.5 * expScale * prestigeMult * baseRarityMult);
             item.baseMoveSpeed = Math.ceil(1.0 * (item.stageLevel || 1) * prestigeMult);
         } else if (item.type === "subweapon" && !item.isUniqueAegis && !item.isUniqueWatch && !item.isUniqueChronicle) {
             if (item.subType === "shield") {
-                item.baseDef = Math.ceil(1.5 * expScale * prestigeMult);
+                item.baseDef = Math.ceil(1.5 * expScale * prestigeMult * baseRarityMult);
             } else if (item.subType === "dagger") {
-                item.baseAtk = Math.ceil(0.8 * expScale * prestigeMult);
+                item.baseAtk = Math.ceil(0.8 * expScale * prestigeMult * baseRarityMult);
             } else if (item.subType === "tome") {
-                item.baseInt = Math.ceil(1.5 * (item.stageLevel || 1) * prestigeMult);
+                item.baseInt = Math.ceil(1.5 * (item.stageLevel || 1) * prestigeMult * baseRarityMult);
             }
         }
     } else if (item.type === "artifact") {
@@ -764,51 +844,69 @@ window.recalculateItemStats = function(item) {
         }
     }
 
-    item.atk = (item.baseAtk || 0) + item.bonusAtk;
-    item.maxHp = (item.baseMaxHp || 0) + item.bonusMaxHp;
-    item.def = (item.baseDef || 0) + item.bonusDef;
-    item.moveSpeed = (item.baseMoveSpeed || 0) + item.bonusMoveSpeed;
-    item.critChance = (item.baseCritChance || 0) + item.bonusCritChance;
-    item.critDamage = (item.baseCritDamage || 0) + item.bonusCritDamage;
-    item.block = (item.baseBlock || 0) + item.bonusBlock;
-    item.parry = (item.baseParry || 0) + item.bonusParry;
-    item.activeAttackSpeed = (item.baseActiveSpeed || 0) + item.bonusActiveSpeed;
-    item.idleAttackSpeed = (item.baseIdleSpeed || 0) + item.bonusIdleSpeed;
-    item.str = (item.baseStr || 0) + item.bonusStr;
-    item.dex = (item.baseDex || 0) + item.bonusDex;
-    item.int = (item.baseInt || 0) + item.bonusInt;
-
+    // Scale base properties directly inside calculations to ensure tooltip consistency
     let tempers = item.temperLevel || 0;
-    if (tempers > 0) {
-        let isArt = item.type === "artifact";
-        if (isArt) {
-            item.atk += tempers * 5; item.maxHp += tempers * 30; item.def += tempers * 3;
-            item.str += tempers; item.dex += tempers; item.int += tempers;
-        } else {
-            let multiplier = 1 + (tempers * 0.04);
-            if (item.atk > 0 || item.type === "weapon") item.atk = Math.round(item.atk * multiplier);
-            if (item.maxHp > 0) item.maxHp = Math.round(item.maxHp * multiplier);
-            if (item.def > 0) item.def = Math.round(item.def * multiplier);
-            if (item.str > 0) item.str = Math.round(item.str * multiplier);
-            if (item.dex > 0) item.dex = Math.round(item.dex * multiplier);
-            if (item.int > 0) item.int = Math.round(item.int * multiplier);
-        }
-
-        if (item.moveSpeed > 0) item.moveSpeed += tempers;
-        if (item.critChance > 0) item.critChance = parseFloat((item.critChance + tempers * 0.005).toFixed(4));
-        if (item.critDamage > 0) item.critDamage = parseFloat((item.critDamage + tempers * 0.015).toFixed(4));
-        if (item.block > 0) item.block = parseFloat((item.block + tempers * 0.005).toFixed(4));
-        if (item.parry > 0) item.parry = parseFloat((item.parry + tempers * 0.005).toFixed(4));
-        if (item.dropRate > 0) item.dropRate = parseFloat((item.dropRate + tempers * 0.01).toFixed(4));
-        if (item.quality > 0) item.quality = parseFloat((item.quality + tempers * 0.005).toFixed(4));
-        if (item.goldMulti > 0) item.goldMulti = parseFloat((item.goldMulti + tempers * 0.01).toFixed(4));
-        if (item.rareSpawn > 0) item.rareSpawn = parseFloat((item.rareSpawn + tempers * 0.001).toFixed(4));
-        if (item.fairySpawn > 0) item.fairySpawn = parseFloat((item.fairySpawn + tempers * 0.01).toFixed(4));
-        if (item.activeAttackSpeed > 0) item.activeAttackSpeed = parseFloat((item.bonusActiveSpeed * (1 + tempers * 0.04)).toFixed(4));
-        if (item.idleAttackSpeed > 0) item.idleAttackSpeed = parseFloat((item.bonusIdleSpeed * (1 + tempers * 0.04)).toFixed(4));
+    if (tempers > 0 && item.type !== "artifact") {
+        let multiplier = 1 + (tempers * 0.04);
+        if (item.baseAtk > 0) item.baseAtk = Math.round(item.baseAtk * multiplier);
+        if (item.baseDef > 0) item.baseDef = Math.round(item.baseDef * multiplier);
+        if (item.baseMaxHp > 0) item.baseMaxHp = Math.round(item.baseMaxHp * multiplier);
+        if (item.baseInt > 0) item.baseInt = Math.round(item.baseInt * multiplier);
     }
 
-    if (item.enchantments) {
+    // Sum combined totals first using the base unscaled values
+                item.atk = (item.baseAtk || 0) + item.bonusAtk;
+                item.maxHp = (item.baseMaxHp || 0) + item.bonusMaxHp;
+                item.def = (item.baseDef || 0) + item.bonusDef;
+                item.moveSpeed = (item.baseMoveSpeed || 0) + item.bonusMoveSpeed;
+                item.critChance = (item.baseCritChance || 0) + item.bonusCritChance;
+                item.critDamage = (item.baseCritDamage || 0) + item.bonusCritDamage;
+                item.block = (item.baseBlock || 0) + item.bonusBlock;
+                item.parry = (item.baseParry || 0) + item.bonusParry;
+                item.activeAttackSpeed = (item.baseActiveSpeed || 0) + item.bonusActiveSpeed;
+                item.idleAttackSpeed = (item.baseIdleSpeed || 0) + item.bonusIdleSpeed;
+                item.str = (item.baseStr || 0) + item.bonusStr;
+                item.dex = (item.baseDex || 0) + item.bonusDex;
+                item.int = (item.baseInt || 0) + item.bonusInt;
+
+                if (tempers > 0) {
+                    let isArt = item.type === "artifact";
+                    if (isArt) {
+                        item.atk += tempers * 5; item.maxHp += tempers * 30; item.def += tempers * 3;
+                        item.str += tempers; item.dex += tempers; item.int += tempers;
+                    } else {
+                        let multiplier = 1 + (tempers * 0.04);
+
+                        // Scale internal base parameter properties once to avoid double-scaling
+                        if (item.baseAtk > 0) item.baseAtk = Math.round(item.baseAtk * multiplier);
+                        if (item.baseDef > 0) item.baseDef = Math.round(item.baseDef * multiplier);
+                        if (item.baseMaxHp > 0) item.baseMaxHp = Math.round(item.baseMaxHp * multiplier);
+                        if (item.baseInt > 0) item.baseInt = Math.round(item.baseInt * multiplier);
+
+                        // Scale combined totals once (including bonus components)
+                        if (item.atk > 0 || item.type === "weapon") item.atk = Math.round(item.atk * multiplier);
+                        if (item.maxHp > 0) item.maxHp = Math.round(item.maxHp * multiplier);
+                        if (item.def > 0) item.def = Math.round(item.def * multiplier);
+                        if (item.str > 0) item.str = Math.round(item.str * multiplier);
+                        if (item.dex > 0) item.dex = Math.round(item.dex * multiplier);
+                        if (item.int > 0) item.int = Math.round(item.int * multiplier);
+                    }
+
+        if (item.moveSpeed > 0) item.moveSpeed += tempers;
+                if (item.critChance > 0) item.critChance = parseFloat((item.critChance + tempers * 0.005).toFixed(4));
+                if (item.critDamage > 0) item.critDamage = parseFloat((item.critDamage + tempers * 0.015).toFixed(4));
+                if (item.block > 0) item.block = parseFloat((item.block + tempers * 0.005).toFixed(4));
+                if (item.parry > 0) item.parry = parseFloat((item.parry + tempers * 0.005).toFixed(4));
+                if (item.dropRate > 0) item.dropRate = parseFloat((item.dropRate + tempers * 0.01).toFixed(4));
+                if (item.quality > 0) item.quality = parseFloat((item.quality + tempers * 0.005).toFixed(4));
+                if (item.goldMulti > 0) item.goldMulti = parseFloat((item.goldMulti + tempers * 0.01).toFixed(4));
+                if (item.rareSpawn > 0) item.rareSpawn = parseFloat((item.rareSpawn + tempers * 0.001).toFixed(4));
+                if (item.fairySpawn > 0) item.fairySpawn = parseFloat((item.fairySpawn + tempers * 0.01).toFixed(4));
+                if (item.activeAttackSpeed > 0) item.activeAttackSpeed = parseFloat((item.bonusActiveSpeed * (1 + tempers * 0.04)).toFixed(4));
+                if (item.idleAttackSpeed > 0) item.idleAttackSpeed = parseFloat((item.bonusIdleSpeed * (1 + tempers * 0.04)).toFixed(4));
+            }
+
+            if (item.enchantments) {
         for (let statKey in item.enchantments) {
             let count = item.enchantments[statKey];
             let multiplier = Math.pow(1.25, count);
@@ -1148,22 +1246,9 @@ window.checkAutoSalvage = function(item, silent = false) {
 // --- FORGE ENGINE ACTIONS & CRAFTING MATH ---
 
 window.getMaxTemper = function(stars, type = "") {
-    let base = 3;
-    if (stars === "UNIQUE") base = 5;
-    else if (stars === 5) base = 15;
-    else if (stars === 4) base = 12;
-    else if (stars === 3) base = 9;
-    else if (stars === 2) base = 7;
-    else if (stars === 1) base = 5;
-
-    if (type === "overall") {
-        if (stars === 5) return base + 5;
-        if (stars === 4) return base + 4;
-        if (stars === 3) return base + 3;
-        if (stars === 2) return base + 2;
-        if (stars === 1) return base + 2;
-        return base + 1;
-    }
+    if (stars === "UNIQUE") return 5;
+    // Strict design restriction: maximum temper matches the stars rating tier exactly
+    let base = stars;
     return base;
 };
 
