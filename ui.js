@@ -9,6 +9,337 @@ window.activeStatTooltip = null;
 window.draftHoldTimeout = null;
 window.didFastDump = false;
 
+// --- RIFT CONSOLE DATA & ENGINE ---
+window.riftSlideIndex = 0;
+window.riftSelectedLevel = 1;
+
+window.riftBossesMetadata = [
+    {
+        type: "guardian",
+        name: "Aegis Goliath",
+        title: "The Iron Sentinel",
+        avatar: "🛡️",
+        desc: "Hyper-dense Event Horizon armor plates. Spikes reflect incoming raw kinetic impacts.",
+        strategy: "Focus on unmitigated damage like Bleed or Rupture to bypass his massive defense pool.",
+        artifacts: [
+            { name: "Aegis Core", trait: "defense" },
+            { name: "Phoenix Ankh", trait: "second_wind" },
+            { name: "Golem's Core", trait: "golem_stance" },
+            { name: "Titan's Shield Grip", trait: "titan_grip" }
+        ],
+        hpMult: 10.0, dmgMult: 10.0, defMult: 8.0, speed: 100
+    },
+    {
+        type: "chronos",
+        name: "Chronos Arbitrator",
+        title: "The Timeless God",
+        avatar: "⏳",
+        desc: "Manipulates local clock speed, triggering time dilations that reduce player attack frequencies.",
+        strategy: "Equip high Active/Idle Speed gear or utilize Haste Potions to resist time-dilation effects.",
+        artifacts: [
+            { name: "Chrono Hourglass", trait: "extend_buffs" },
+            { name: "Sloth's Blessing", trait: "idle_spd" },
+            { name: "Windwalker Boots", trait: "move_speed" },
+            { name: "Philosopher's Anchor", trait: "gold_hoard" }
+        ],
+        hpMult: 10.0, dmgMult: 10.0, defMult: 8.0, speed: 90
+    },
+    {
+        type: "nexus",
+        name: "Nexus Overseer",
+        title: "The Glitch Singularity",
+        avatar: "👾",
+        desc: "Infects the reality stream with glitch code, randomly shunting player multipliers and copying active buffs.",
+        strategy: "Build consistent, flat attribute setups. Avoid relying on a single stacked stat line.",
+        artifacts: [
+            { name: "Berserker Stone", trait: "frenzy" },
+            { name: "Gilded Scarab", trait: "magic_find" },
+            { name: "Phantom Blade", trait: "echo_strike" },
+            { name: "Void Core", trait: "void_pull" },
+            { name: "Cauldron of Eternity", trait: "cauldron_eternity" }
+        ],
+        hpMult: 10.0, dmgMult: 10.0, defMult: 8.0, speed: 80
+    }
+];
+
+window.getArtifactIcon = function(trait) {
+    const icons = {
+        frenzy: "🔥", vampirism: "🩸", gold_hoard: "🟡", magic_find: "🍀", move_speed: "👟",
+        defense: "🛡️", parry_strike: "⚔️", echo_strike: "👻", idle_spd: "⏱️", active_spd: "⚡",
+        dodge_buff: "👟", extend_buffs: "⏳", bag_space: "🎒", second_wind: "🏥",
+        golem_stance: "🧱", fairy_wealth: "🧚", void_pull: "🌌", titan_grip: "🦾",
+        alchemist_alembic: "🧪", philosopher_catalyst: "🧪", cauldron_eternity: "🍵"
+    };
+    return icons[trait] || "🔮";
+};
+
+window.openRiftConsole = function() {
+    let modal = document.getElementById('rift-console-modal');
+    if (!modal) return;
+
+    let selectEl = document.getElementById('rift-hunt-select');
+    let initialType = selectEl ? selectEl.value : 'guardian';
+    let initialIndex = window.riftBossesMetadata.findIndex(b => b.type === initialType);
+    if (initialIndex === -1) initialIndex = 0;
+
+    window.riftSlideIndex = initialIndex;
+    window.riftSelectedLevel = window.playerStats.activeRift ? (window.playerStats.activeRiftLevel || 1) : 1;
+
+    window.renderRiftConsole();
+    modal.style.display = 'block';
+    window.setPauseState(true);
+};
+
+window.renderRiftConsole = function() {
+    let modal = document.getElementById('rift-console-modal');
+    if (!modal) return;
+
+    let isRiftActive = !!window.playerStats.activeRift;
+    let activeLvl = window.playerStats.activeRiftLevel || 1;
+    let selectedLvl = window.riftSelectedLevel;
+    let maxLvl = (window.playerStats.highestRiftLevel || 0) + 5;
+    let coresOwned = window.inventory.ETC["Ancient Core"] || 0;
+
+    let targetBoss = window.playerStats.activeRift;
+        if (isRiftActive && targetBoss) {
+            let activeIndex = window.riftBossesMetadata.findIndex(item => item.type === targetBoss);
+            if (activeIndex !== -1) window.riftSlideIndex = activeIndex;
+        } else {
+            let selectedType = window.riftBossesMetadata[window.altarSlideIndex || 0].type;
+            let foundIdx = window.riftBossesMetadata.findIndex(item => item.type === selectedType);
+            if (foundIdx !== -1) window.riftSlideIndex = foundIdx;
+        }
+
+    let headerTitle = isRiftActive
+        ? `🌌 Reality Rift: Active Hunt`
+        : `🔮 Rift Altar: Prepare Hunt`;
+
+    let levelSelectorHtml = "";
+    if (isRiftActive) {
+        levelSelectorHtml = `
+            <div style="background:rgba(231,76,60,0.1); border:1px dashed #e74c3c; border-radius:6px; padding:10px; margin-bottom:12px; text-align:center;">
+                <strong style="color:#e74c3c; font-size:11.5px;">⚠️ RIFT ACTIVE (LEVEL ${activeLvl})</strong><br>
+                <span style="font-size:10px; color:#aaa;">The Rift is locked. Slay or Collapse it to adjust level.</span>
+            </div>
+        `;
+    } else {
+        levelSelectorHtml = `
+            <div style="background:rgba(155, 89, 182, 0.1); border:1px solid #4a154b; border-radius:6px; padding:10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <strong style="color:#df9ffb; font-size:11.5px; display:block;">CHOOSE RIFT TIER / LEVEL:</strong>
+                    <span style="font-size:10px; color:#aaa;">Max Unlocked: Level ${maxLvl}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <button class="btn-action" style="padding:4px 10px; background:#4a154b;" onclick="window.changeRiftLevel(-1)">-</button>
+                    <strong style="font-size:14px; font-family:monospace; min-width:30px; text-align:center; color:#fff;" id="rift-console-level-val">${selectedLvl}</strong>
+                    <button class="btn-action" style="padding:4px 10px; background:#4a154b;" onclick="window.changeRiftLevel(1)">+</button>
+                </div>
+            </div>
+        `;
+    }
+
+    let slidesHtml = window.riftBossesMetadata.map((boss, idx) => {
+        let lvl = isRiftActive ? activeLvl : selectedLvl;
+        let equivalentStage = 50 + lvl * 10;
+        let gRate = 1.045 + ((equivalentStage * 0.04) / (equivalentStage + 200));
+        let rScale = Math.pow(gRate, equivalentStage);
+
+        let hpVal = Math.floor(boss.hpMult * (60 * rScale));
+        let dmgVal = Math.floor(20 * rScale * boss.dmgMult);
+        let defVal = Math.floor(boss.defMult * rScale);
+
+        let lootHtml = boss.artifacts.map(art => {
+            let artDetails = window.ARTIFACT_POOL.find(a => a.name === art.name);
+            let trait = artDetails ? artDetails.trait : art.trait;
+            return `
+                <div class="rift-loot-icon" onmouseenter="window.showDummyArtifact(event, '${trait}')" ontouchstart="window.showDummyArtifact(event, '${trait}')" onmouseleave="window.hideTooltip()">
+                    <span>${window.getArtifactIcon(trait)}</span>
+                </div>
+            `;
+        }).join("");
+
+        return `
+            <div class="rift-slide">
+                <div style="text-align:center;">
+                    <div style="font-size:45px; margin: 4px 0;">${boss.avatar}</div>
+                    <div class="rift-boss-badge">${boss.name}</div>
+                    <div style="font-style:italic; font-size:10.5px; color:#aaa; margin-bottom:8px;">"${boss.title}"</div>
+                </div>
+                <div style="font-size:11px; color:#ddd; line-height:1.4; text-align:center; padding: 0 10px; margin-bottom:10px; min-height:34px; white-space:normal;">
+                    ${boss.desc}
+                </div>
+                <div class="rift-stats-display">
+                    <div class="rift-stat-box"><span>❤️ Life</span><strong>${window.formatNumber(hpVal)}</strong></div>
+                    <div class="rift-stat-box"><span>⚔️ Attack</span><strong>${window.formatNumber(dmgVal)}</strong></div>
+                    <div class="rift-stat-box"><span>🛡️ Armor</span><strong>${window.formatNumber(defVal)}</strong></div>
+                </div>
+                <div style="background:rgba(0,0,0,0.45); border:1px dashed #4a154b; padding:8px 10px; border-radius:4px; font-size:10px; line-height:1.4; text-align:left; margin-bottom:10px; white-space:normal;">
+                    <strong style="color:#e74c3c;">💡 STRATEGY:</strong> ${boss.strategy}
+                </div>
+                <div>
+                    <div style="font-size:9.5px; font-weight:bold; color:#ff007f; text-transform:uppercase; text-align:center; margin-bottom:4px; letter-spacing:0.5px;">💎 Potential Artifact Drops</div>
+                    <div class="rift-loot-preview">${lootHtml}</div>
+                </div>
+            </div>
+        `;
+    }).join("");
+
+    let dotsHtml = window.riftBossesMetadata.map((b, idx) => `
+        <div class="rift-dot ${idx === window.riftSlideIndex ? 'active' : ''}" onclick="window.setRiftSlide(${idx})"></div>
+    `).join("");
+
+    let actionBtnHtml = "";
+    if (isRiftActive) {
+        actionBtnHtml = `
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <button class="btn-action un" style="font-weight:bold; padding:12px; font-size:11.5px;" onclick="window.executeAbandonRiftConsole()">⚠️ Collapse Rift</button>
+                <button class="btn-action" style="background:#e74c3c; font-weight:bold; padding:12px; font-size:11.5px;" onclick="window.executeRiftSummon(true)">⚔️ Re-enter Fight</button>
+            </div>
+        `;
+    } else {
+        let canAfford = coresOwned >= 1;
+        let costColor = canAfford ? "#2ecc71" : "#e74c3c";
+        actionBtnHtml = `
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; justify-content:space-between; font-size:11px; color:#aaa; font-family:monospace; padding:0 4px;">
+                    <span>Cores Owned: <strong style="color:${coresOwned >= 1 ? '#2ecc71' : '#e74c3c'};">${coresOwned} / 1</strong></span>
+                    <span>Summon Cost: <strong style="color:#ff007f;">1 Core</strong></span>
+                </div>
+                <button class="btn-action" style="background:#9b59b6; width:100%; font-weight:bold; padding:12px; font-size:11.5px; letter-spacing:0.5px;" ${canAfford ? '' : 'disabled style="opacity:0.5; cursor:not-allowed;"'} onclick="window.executeRiftSummon()">🔮 COMMENCE SUMMONING</button>
+            </div>
+        `;
+    }
+
+    modal.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:10px;">
+            <h3 style="margin:0; color:#9b59b6; font-size:14px; display:flex; align-items:center; gap:6px;">🔮 ${headerTitle}</h3>
+            <button onclick="document.getElementById('rift-console-modal').style.display='none'; window.setPauseState(false); window.hideTooltip();" style="background:#e74c3c; color:white; border:none; border-radius:4px; padding:6px 12px; font-weight:bold; cursor:pointer; font-size:11px;">Close</button>
+        </div>
+
+        ${levelSelectorHtml}
+
+        <div class="rift-carousel-container">
+                    ${isRiftActive ? '' : `
+                        <button class="carousel-arrow prev" onclick="window.changeRiftSlide(-1)">◀</button>
+                        <button class="carousel-arrow next" onclick="window.changeRiftSlide(1)">▶</button>
+                    `}
+                    <div class="rift-carousel-track" id="rift-carousel-track" style="transform: translate3d(-${window.riftSlideIndex * 33.333}%, 0, 0);">
+                        ${slidesHtml}
+                    </div>
+                </div>
+
+        ${isRiftActive ? '' : `<div class="rift-dots">${dotsHtml}</div>`}
+
+        <div style="margin-top: 15px;">
+            ${actionBtnHtml}
+        </div>
+    `;
+
+    // Swipe handler setup
+    let track = document.getElementById('rift-carousel-track');
+    if (track && !isRiftActive) {
+        let startX = 0, currentX = 0, isDragging = false;
+        track.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            isDragging = true;
+        }, { passive: true });
+        track.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            currentX = e.touches[0].clientX;
+        }, { passive: true });
+        track.addEventListener('touchend', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            let diffX = startX - currentX;
+            if (Math.abs(diffX) > 40) {
+                if (diffX > 0) window.changeRiftSlide(1);
+                else window.changeRiftSlide(-1);
+            }
+        });
+    }
+};
+
+window.changeRiftLevel = function(direction) {
+    let maxLvl = (window.playerStats.highestRiftLevel || 0) + 5;
+    let newLvl = window.riftSelectedLevel + direction;
+    if (newLvl < 1) newLvl = 1;
+    if (newLvl > maxLvl) newLvl = maxLvl;
+    window.riftSelectedLevel = newLvl;
+    window.renderRiftConsole();
+};
+
+window.changeRiftSlide = function(direction) {
+    if (window.playerStats.activeRift) return;
+    let newIndex = window.riftSlideIndex + direction;
+    if (newIndex < 0) newIndex = window.riftBossesMetadata.length - 1;
+    if (newIndex >= window.riftBossesMetadata.length) newIndex = 0;
+    window.riftSlideIndex = newIndex;
+    window.renderRiftConsole();
+};
+
+window.setRiftSlide = function(idx) {
+    if (window.playerStats.activeRift) return;
+    window.riftSlideIndex = idx;
+    window.renderRiftConsole();
+};
+
+window.executeRiftSummon = function(isReentry = false) {
+    let cores = window.inventory.ETC["Ancient Core"] || 0;
+    let boss = window.riftBossesMetadata[window.riftSlideIndex];
+    let lvl = isReentry ? (window.playerStats.activeRiftLevel || 1) : window.riftSelectedLevel;
+
+    if (!isReentry) {
+        if (cores < 1) return;
+        window.inventory.ETC["Ancient Core"]--;
+        if (window.inventory.ETC["Ancient Core"] === 0) delete window.inventory.ETC["Ancient Core"];
+        window.playerStats.activeRift = boss.type;
+        window.playerStats.activeRiftLevel = lvl;
+    }
+
+    let actualBossType = isReentry ? window.playerStats.activeRift : boss.type;
+
+    window.playerStats.isBossMode = true;
+    window.playerStats.isUberBoss = true;
+    window.playerStats.currentUberBoss = actualBossType;
+    window.playerStats.killCount = 0;
+    window.playerStats.targetsRequired = 1;
+    window.mob = null;
+
+    let p = window.resolvePlayerStats();
+    window.playerStats.currentHp = p.maxHp;
+
+    if (isReentry) {
+        window.pushLog(`<span style='color:#9b59b6; font-weight:bold;'>[RIFT SUMMON] Re-entering Level ${lvl} Rift for ${boss.name}!</span>`);
+    } else {
+        window.pushLog(`<span style='color:#9b59b6; font-weight:bold;'>[RIFT SUMMON] The Altar consumes 1 Ancient Core! A Level ${lvl} Rift for ${boss.name} forms...</span>`);
+    }
+
+    document.getElementById('rift-console-modal').style.display = 'none';
+    window.setPauseState(false);
+    window.updateUI();
+    window.saveGame();
+};
+
+window.executeAbandonRiftConsole = function() {
+    window.showCustomConfirm(
+        "Abandon Reality Rift",
+        "Are you sure you want to collapse the active Rift? The spent Ancient Core will be lost permanently.",
+        "Collapse Rift", "Keep Attempting", "#e74c3c",
+        function() {
+            window.playerStats.activeRift = null;
+            window.playerStats.activeRiftLevel = 1;
+            window.playerStats.isUberBoss = false;
+            window.playerStats.isBossMode = false;
+            window.mob = null;
+            window.pushLog("<span style='color:#e74c3c;'>[RIFT] The Reality Rift collapsed.</span>");
+            document.getElementById('rift-console-modal').style.display = 'none';
+            window.setPauseState(false);
+            window.updateUI();
+            window.saveGame();
+        }
+    );
+};
+
 // Helper to safely update text nodes
 window.setText = function(id, text) {
     let el = document.getElementById(id);
@@ -238,13 +569,39 @@ window.updateUI = function() {
 
     setText('live-qty-keys', `${(window.inventory.ETC["Gacha Key"] || 0).toLocaleString()} (E:${window.playerStats.equipKeys} G:${window.playerStats.goldKeys} M:${window.playerStats.matKeys})`);
 
-    let soulsTotal = (window.inventory.ETC["Monster Soul"] || 0);
-    setText('live-qty-souls', `${(soulsTotal + (window.inventory.ETC["Luminous Soul"] || 0)).toLocaleString()} (Locked Cores: ${(window.inventory.ETC["Catalyst Core"] || 0).toLocaleString()})`);
+        let soulsTotal = (window.inventory.ETC["Monster Soul"] || 0);
+        setText('live-qty-souls', `${(soulsTotal + (window.inventory.ETC["Luminous Soul"] || 0)).toLocaleString()} (Locked Cores: ${(window.inventory.ETC["Catalyst Core"] || 0).toLocaleString()})`);
 
-    let scrapsSum = (window.inventory.ETC["Mythic Scrap"] || 0) + (window.inventory.ETC["Legendary Scrap"] || 0) + (window.inventory.ETC["Epic Scrap"] || 0) + (window.inventory.ETC["Magic Scrap"] || 0) + (window.inventory.ETC["Rare Scrap"] || 0);
-    setText('live-qty-scraps', scrapsSum.toLocaleString());
+        let scrapsSum = (window.inventory.ETC["Mythic Scrap"] || 0) + (window.inventory.ETC["Legendary Scrap"] || 0) + (window.inventory.ETC["Epic Scrap"] || 0) + (window.inventory.ETC["Magic Scrap"] || 0) + (window.inventory.ETC["Rare Scrap"] || 0);
+                    setText('live-qty-scraps', scrapsSum.toLocaleString());
 
-    // Buff trackers HUD
+                    // Update Altar UI Card dynamically if active
+                                let altarSec = document.getElementById('market-sec-altar');
+                                if (altarSec && altarSec.style.display !== 'none') {
+                                    window.renderAltarTab();
+                                }
+
+                                // Update Vending Subtab variables if active
+                                            let gachaSec = document.getElementById('market-sec-gacha');
+                                            if (gachaSec && gachaSec.style.display !== 'none') {
+                                                window.setText('vending-lvl-display', window.playerStats.vendingQLevel || 0);
+                                                window.setText('vending-keys-counter', window.inventory.ETC["Gacha Key"] || 0);
+                                                window.updateGachaRecentList();
+                                                window.renderGachaShowcaseMarquee();
+
+                                                // Update live vending rates board
+                                                                                                let luckMultiplier = p.qly + ((window.playerStats.vendingQLevel || 0) * 0.01);
+                                                                                                let chance5 = (0.02 * luckMultiplier);
+                                                                                                let chance4 = (0.16 * luckMultiplier);
+
+                                                                                                window.setText('vending-rate-5', (chance5).toFixed(2) + "%");
+                                                                                                window.setText('vending-rate-4', (chance4).toFixed(2) + "%");
+                                                window.setText('vending-rate-3', (0.80 * luckMultiplier - (chance5 + chance4)).toFixed(2) + "%");
+                                                window.setText('vending-rate-2', (3.20 * luckMultiplier).toFixed(2) + "%");
+                                                window.setText('vending-rate-1', (11.00 * luckMultiplier).toFixed(2) + "%");
+                                            }
+
+            // Buff trackers HUD
     let activeBuffs = [];
     if (window.playerStats.frenzyTimer > 0) activeBuffs.push("🔥 Frenzy");
     if (window.playerStats.adrenalineTimer > 0) activeBuffs.push("⚡ Adrenaline");
@@ -1509,21 +1866,21 @@ window.showStatBreakdown = function(e, statKey, isPct = false) {
                                        };
 
                                        window.showAltarTooltip = function(e) {
-                                           e.stopPropagation();
-                                           let cores = window.inventory.ETC["Ancient Core"] || 0; let level = window.playerStats.level || 1;
-                                           let tt = document.getElementById('game-tooltip');
-                                           tt.innerHTML = `<div style="padding: 10px; width: 240px; box-sizing: border-box;">
-                                               <div class="tt-title" style="color:#9b59b6;">🔮 Ancient Altar Summoning</div>
-                                               <div class="tt-subtitle">Reality Rift Activation requirements</div>
-                                               <div class="tt-stat-line" style="color:#bdc3c7;">• Required Cores: <span style="color:#f1c40f; font-weight:bold;">10 Cores</span></div>
-                                               <div class="tt-stat-line" style="color:#bdc3c7;">• Required Level: <span style="color:#2ecc71; font-weight:bold;">Lv 30+</span></div>
-                                               <div style="margin-top:8px; border-top: 1px dashed #444; padding-top:6px; font-family:monospace; font-size:10px;">
-                                                   <div class="tt-stat-line" style="color:#fff;">Your Cores: <strong style="color:${cores >= 10 ? '#2ecc71' : '#e74c3c'};">${cores} / 10</strong></div>
-                                                   <div class="tt-stat-line" style="color:#fff;">Your Level: <strong style="color:${level >= 30 ? '#2ecc71' : '#e74c3c'};">Lv ${level} / 30</strong></div>
-                                               </div>
-                                           </div>`;
-                                           tt.style.borderColor = "#9b59b6"; tt.style.display = "block"; window.positionTooltip(e, tt);
-                                       };
+                                                   e.stopPropagation();
+                                                   let cores = window.inventory.ETC["Ancient Core"] || 0; let level = window.playerStats.level || 1;
+                                                   let tt = document.getElementById('game-tooltip');
+                                                   tt.innerHTML = `<div style="padding: 10px; width: 240px; box-sizing: border-box;">
+                                                       <div class="tt-title" style="color:#9b59b6;">🔮 Ancient Altar Summoning</div>
+                                                       <div class="tt-subtitle">Reality Rift Activation requirements</div>
+                                                       <div class="tt-stat-line" style="color:#bdc3c7;">• Required Cores: <span style="color:#f1c40f; font-weight:bold;">1 Core</span></div>
+                                                       <div class="tt-stat-line" style="color:#bdc3c7;">• Required Level: <span style="color:#2ecc71; font-weight:bold;">Lv 30+</span></div>
+                                                       <div style="margin-top:8px; border-top: 1px dashed #444; padding-top:6px; font-family:monospace; font-size:10px;">
+                                                           <div class="tt-stat-line" style="color:#fff;">Your Cores: <strong style="color:${cores >= 1 ? '#2ecc71' : '#e74c3c'};">${cores} / 1</strong></div>
+                                                           <div class="tt-stat-line" style="color:#fff;">Your Level: <strong style="color:${level >= 30 ? '#2ecc71' : '#e74c3c'};">Lv ${level} / 30</strong></div>
+                                                       </div>
+                                                   </div>`;
+                                                   tt.style.borderColor = "#9b59b6"; tt.style.display = "block"; window.positionTooltip(e, tt);
+                                               };
 
                                        window.showGachaTooltip = function(e) {
                                            e.stopPropagation(); let p = window.resolvePlayerStats();
@@ -1883,7 +2240,9 @@ window.positionTooltip = function(e, tt) {
 
 window.showInventoryTooltip = function(e, itemId) {
     e.stopPropagation();
-    let item = window.inventory.EQUIP.find(i => i.id === itemId) || (window.inventory.ARTIFACT && window.inventory.ARTIFACT.find(i => i.id === itemId));
+    let item = window.inventory.EQUIP.find(i => i.id === itemId) ||
+               (window.inventory.ARTIFACT && window.inventory.ARTIFACT.find(i => i.id === itemId)) ||
+               window.frozenItemDb[itemId];
     if (!item) return;
     let tt = document.getElementById('game-tooltip'); tt.innerHTML = window.buildGeneralTooltipHtml(item, true);
     tt.style.borderColor = window.getTierColor(item.statsRolled); tt.style.display = "block";
@@ -2032,21 +2391,29 @@ window.generateItemCardHtml = function(item, compareItem = null, isEquipped = fa
             }
         }
 
-        if (item.id !== "dummy" && item.type === "artifact") {
-            html += `<div class="tt-stat-line" style="color:#d2b4de; margin-bottom: 6px; white-space:normal;">• Effect: ${item.desc}</div>`;
-            html += `<div class="tt-trait">${item.breakdown}</div>`;
-            html += `<div style="font-weight:bold; color:#aaa; margin-top:8px; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Bonus Parameters:</div>`;
-        } else if (item.id !== "dummy") {
-            if (isUnique && item.desc) {
-                html += `<div class="tt-stat-line" style="color:#ffeaa7; margin-bottom: 10px; white-space:normal; line-height:1.4; padding:6px; border:1px dashed #1abc9c; background:rgba(0,0,0,0.4); border-radius:4px;"><strong>• Unique Effect:</strong> ${item.desc}</div>`;
-            }
-            if (item.totalEnchants > 0) {
-                html += `<div style="color:#9b59b6; font-size:10px; font-weight:bold; margin-bottom:6px; letter-spacing:0.5px; border: 1px dashed #9b59b6; padding: 3px; border-radius: 3px; background: rgba(155, 89, 182, 0.05); text-align: center;">🔮 MYSTICAL ENCHANTS: ${item.totalEnchants} ACTIVE</div>`;
-            }
-            html += `<div style="font-weight:bold; color:#aaa; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Affixes:</div>`;
-        }
+        if (item.type === "artifact") {
+                            html += `<div class="tt-stat-line" style="color:#d2b4de; margin-bottom: 6px; white-space:normal;">• Effect: ${item.desc}</div>`;
+                            html += `<div class="tt-trait">${item.breakdown}</div>`;
 
-        // --- DIABLO 4 STYLE EXPLICIT AFFIXES SECTION ---
+                            // Display potential extra rolls for Unique Artifacts
+                            html += `<div style="margin-top:10px; border-top:1.5px dashed #1abc9c; padding-top:6px;">`;
+                            html += `<div style="font-weight:bold; color:#1abc9c; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">🎰 Potential Extra Affixes (Rolls 3):</div>`;
+                            html += `<div style="font-size:9.5px; color:#aaa; line-height:1.45; white-space:normal; font-family:monospace;">`;
+                            html += `Can roll 3 extra random affixes: Drop Rate, Drop Quality, Gold Multiplier, Rare Spawn, Fairy Spawn, Strength, Dexterity, or Intelligence.`;
+                            html += `</div></div>`;
+
+                            html += `<div style="font-weight:bold; color:#aaa; margin-top:8px; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Bonus Parameters:</div>`;
+                        } else {
+                            if (isUnique && item.desc) {
+                                html += `<div class="tt-stat-line" style="color:#ffeaa7; margin-bottom: 10px; white-space:normal; line-height:1.4; padding:6px; border:1px dashed #1abc9c; background:rgba(0,0,0,0.4); border-radius:4px;"><strong>• Unique Effect:</strong> ${item.desc}</div>`;
+                            }
+                            if (item.totalEnchants > 0) {
+                                html += `<div style="color:#9b59b6; font-size:10px; font-weight:bold; margin-bottom:6px; letter-spacing:0.5px; border: 1px dashed #9b59b6; padding: 3px; border-radius: 3px; background: rgba(155, 89, 182, 0.05); text-align: center;">🔮 MYSTICAL ENCHANTS: ${item.totalEnchants} ACTIVE</div>`;
+                            }
+                            html += `<div style="font-weight:bold; color:#aaa; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Affixes:</div>`;
+                        }
+
+        // --- EXPLICIT AFFIXES SECTION ---
         if (item.id !== "dummy") {
             let affixes = [];
 
@@ -2164,19 +2531,19 @@ window.generateItemCardHtml = function(item, compareItem = null, isEquipped = fa
     }
 
     if (uniqueStyle) {
-        if (uniqueStyle.lore) {
-            html += `<div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #555; color: #ffb6c1; font-size: 9.5px; line-height: 1.35; font-style: italic; white-space: normal;"><i>${uniqueStyle.lore}</i></div>`;
-        }
-        html = `<div style="background: ${uniqueStyle.bg}; border: 2px solid ${uniqueStyle.border}; box-shadow: inset 0 0 20px ${uniqueStyle.shadow}, 0 0 15px ${uniqueStyle.glow}; padding: 12px; margin: -10px; border-radius: 4px; box-sizing: border-box; min-width: 250px;">
-            ${runicBadge}
-            ${html}
-        </div>`;
-    }
+                    if (uniqueStyle.lore) {
+                        html += `<div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #555; color: #ffb6c1; font-size: 9.5px; line-height: 1.35; font-style: italic; white-space: normal;"><i>${uniqueStyle.lore}</i></div>`;
+                    }
+                    html = `<div style="background: ${uniqueStyle.bg}; border: 2px solid ${uniqueStyle.border}; box-shadow: inset 0 0 20px ${uniqueStyle.shadow}, 0 0 15px ${uniqueStyle.glow}; padding: 12px; margin: -10px; border-radius: 4px; box-sizing: border-box; min-width: 250px;">
+                        ${runicBadge}
+                        ${html}
+                    </div>`;
+                }
 
-    return html;
-};
+                return html;
+            };
 
-function tierStrDisplay(item) {
+            function tierStrDisplay(item) {
     return item.statsRolled === "UNIQUE" ? "UNIQUE" : `${item.statsRolled}★ ${window.getTierName(item.statsRolled)}`;
 }
 
@@ -2369,13 +2736,18 @@ window.switchTab = function(tabId) {
         if (typeof window.renderForgeTab === "function") window.renderForgeTab();
     }
     if (tabId === 'market') {
-            if (typeof window.refreshMarketShopIfNeeded === "function") window.refreshMarketShopIfNeeded();
-            if (typeof window.renderMysticalShop === "function") window.renderMysticalShop();
-            if (typeof window.renderGoldUpgrades === "function") window.renderGoldUpgrades();
-            if (!document.querySelector('#tab-market .sub-tab-btn.active')) {
-                window.switchMarketSubTab('GACHA_ALTAR');
+                if (typeof window.refreshMarketShopIfNeeded === "function") window.refreshMarketShopIfNeeded();
+                if (typeof window.renderMysticalShop === "function") window.renderMysticalShop();
+                if (typeof window.renderGoldUpgrades === "function") window.renderGoldUpgrades();
+                if (!document.querySelector('#tab-market .sub-tab-btn.active')) {
+                    window.switchMarketSubTab('ALTAR');
+                } else {
+                    let activeBtn = document.querySelector('#tab-market .sub-tab-btn.active');
+                    if (activeBtn && activeBtn.id === 'market-sub-tab-altar') {
+                        window.renderAltarTab();
+                    }
+                }
             }
-        }
     if (tabId === 'prestige') {
         if (typeof window.renderPrestigeTab === "function") window.renderPrestigeTab();
     }
@@ -2399,13 +2771,20 @@ window.switchMarketSubTab = function(subTabId) {
     document.querySelectorAll('#tab-market .sub-tabs .sub-tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.market-section-content').forEach(sec => sec.style.display = 'none');
 
-    let btnSuffix = subTabId === 'GACHA_ALTAR' ? 'gacha' : (subTabId === 'SINKS' ? 'sinks' : (subTabId === 'ALCHEMY' ? 'alchemy' : 'shop'));
+    let btnSuffix = subTabId === 'ALTAR' ? 'altar' : (subTabId === 'GACHA' ? 'gacha' : (subTabId === 'SINKS' ? 'sinks' : (subTabId === 'ALCHEMY' ? 'alchemy' : 'shop')));
     let activeBtn = document.getElementById('market-sub-tab-' + btnSuffix);
     if (activeBtn) activeBtn.classList.add('active');
 
-    let secSuffix = subTabId === 'GACHA_ALTAR' ? 'gacha-altar' : (subTabId === 'SINKS' ? 'sinks' : (subTabId === 'ALCHEMY' ? 'alchemy' : 'shop'));
+    let secSuffix = subTabId === 'ALTAR' ? 'altar' : (subTabId === 'GACHA' ? 'gacha' : (subTabId === 'SINKS' ? 'sinks' : (subTabId === 'ALCHEMY' ? 'alchemy' : 'shop')));
     let activeSec = document.getElementById('market-sec-' + secSuffix);
     if (activeSec) activeSec.style.display = 'block';
+
+    if (subTabId === 'ALTAR') {
+        window.renderAltarTab();
+    } else if (subTabId === 'GACHA') {
+        window.updateGachaRecentList();
+        window.renderGachaShowcaseMarquee();
+    }
 
     if (typeof window.hideTooltip === "function") window.hideTooltip();
 };
@@ -3500,3 +3879,618 @@ window.updateArchitectRanges = function() {
                         document.ontouchmove = null;
                     }
                 };
+
+                // --- ALTAR NATIVE CAROUSEL RENDER ENGINE ---
+                window.altarSlideIndex = 0;
+
+                window.renderAltarTab = function() {
+                    let sec = document.getElementById('market-sec-altar');
+                    if (!sec) return;
+
+                    let isRiftActive = !!window.playerStats.activeRift;
+                    let activeLvl = window.playerStats.activeRiftLevel || 1;
+                    let selectedLvl = window.riftSelectedLevel;
+                    let maxLvl = (window.playerStats.highestRiftLevel || 0) + 5;
+                    let coresOwned = window.inventory.ETC["Ancient Core"] || 0;
+
+                    let lvlSelectorHtml = "";
+                    if (isRiftActive) {
+                        lvlSelectorHtml = `
+                            <div style="background:rgba(231,76,60,0.1); border:1px dashed #e74c3c; border-radius:6px; padding:10px; margin-bottom:12px; text-align:center;">
+                                <strong style="color:#e74c3c; font-size:11.5px;">⚠️ RIFT ACTIVE (LEVEL ${activeLvl})</strong><br>
+                                <span style="font-size:10px; color:#aaa;">The Rift is locked. Slay or Collapse it to adjust level.</span>
+                            </div>
+                        `;
+                    } else {
+                        lvlSelectorHtml = `
+                            <div style="background:rgba(155, 89, 182, 0.1); border:1px solid #4a154b; border-radius:6px; padding:10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <strong style="color:#df9ffb; font-size:11.5px; display:block;">CHOOSE RIFT TIER / LEVEL:</strong>
+                                    <span style="font-size:10px; color:#aaa;">Max Unlocked: Level ${maxLvl}</span>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <button class="btn-action" style="padding:4px 10px; background:#4a154b;" onclick="window.changeAltarRiftLevel(-1)">-</button>
+                                    <strong style="font-size:14px; font-family:monospace; min-width:30px; text-align:center; color:#fff;">${selectedLvl}</strong>
+                                    <button class="btn-action" style="padding:4px 10px; background:#4a154b;" onclick="window.changeAltarRiftLevel(1)">+</button>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    let slidesHtml = window.riftBossesMetadata.map((boss, idx) => {
+                        let lvl = isRiftActive ? activeLvl : selectedLvl;
+                        let equivalentStage = 50 + lvl * 10;
+                        let gRate = 1.045 + ((equivalentStage * 0.04) / (equivalentStage + 200));
+                        let rScale = Math.pow(gRate, equivalentStage);
+
+                        let hpVal = Math.floor(boss.hpMult * (60 * rScale));
+                        let dmgVal = Math.floor(20 * rScale * boss.dmgMult);
+                        let defVal = Math.floor(boss.defMult * rScale);
+
+                        let lootHtml = boss.artifacts.map(art => {
+                            let artDetails = window.ARTIFACT_POOL.find(a => a.name === art.name);
+                            let trait = artDetails ? artDetails.trait : art.trait;
+                            return `
+                                <div class="rift-loot-icon" onmouseenter="window.showDummyArtifact(event, '${trait}')" ontouchstart="window.showDummyArtifact(event, '${trait}')" onmouseleave="window.hideTooltip()">
+                                    <span>${window.getArtifactIcon(trait)}</span>
+                                </div>
+                            `;
+                        }).join("");
+
+                        return `
+                            <div class="rift-slide">
+                                <div style="text-align:center;">
+                                    <div style="font-size:45px; margin: 4px 0;">${boss.avatar}</div>
+                                    <div class="rift-boss-badge" style="border-color:#9b59b6; background:rgba(155, 89, 182, 0.15); color:#df9ffb;">${boss.name}</div>
+                                    <div style="font-style:italic; font-size:10.5px; color:#aaa; margin-bottom:8px;">"${boss.title}"</div>
+                                </div>
+                                <div style="font-size:11px; color:#ddd; line-height:1.4; text-align:center; padding: 0 10px; margin-bottom:10px; min-height:34px; white-space:normal;">
+                                    ${boss.desc}
+                                </div>
+                                <div class="rift-stats-display">
+                                    <div class="rift-stat-box" style="background:rgba(15, 7, 25, 0.6); border:1px solid #4a154b;"><span>❤️ Life</span><strong>${window.formatNumber(hpVal)}</strong></div>
+                                    <div class="rift-stat-box" style="background:rgba(15, 7, 25, 0.6); border:1px solid #4a154b;"><span>⚔️ Attack</span><strong>${window.formatNumber(dmgVal)}</strong></div>
+                                    <div class="rift-stat-box" style="background:rgba(15, 7, 25, 0.6); border:1px solid #4a154b;"><span>🛡️ Armor</span><strong>${window.formatNumber(defVal)}</strong></div>
+                                </div>
+                                <div style="background:rgba(0,0,0,0.45); border:1px dashed #4a154b; padding:8px 10px; border-radius:4px; font-size:10px; line-height:1.4; text-align:left; margin-bottom:10px; white-space:normal;">
+                                    <strong style="color:#e74c3c;">💡 STRATEGY:</strong> ${boss.strategy}
+                                </div>
+                                <div>
+                                    <div style="font-size:9.5px; font-weight:bold; color:#ff007f; text-transform:uppercase; text-align:center; margin-bottom:4px; letter-spacing:0.5px;">💎 Potential Artifact Drops</div>
+                                    <div class="rift-loot-preview">${lootHtml}</div>
+                                </div>
+                            </div>
+                        `;
+                    }).join("");
+
+                    let dotsHtml = window.riftBossesMetadata.map((b, idx) => `
+                        <div class="rift-dot ${idx === window.altarSlideIndex ? 'active' : ''}" onclick="window.setAltarSlide(${idx})"></div>
+                    `).join("");
+
+                    let actionBtnHtml = "";
+                    if (isRiftActive) {
+                        let activeBossMeta = window.riftBossesMetadata.find(b => b.type === window.playerStats.activeRift) || window.riftBossesMetadata[0];
+                        actionBtnHtml = `
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                                <button class="btn-action un" style="font-weight:bold; padding:12px; font-size:11.5px;" onclick="window.executeAbandonRiftConsole()">⚠️ Collapse Rift</button>
+                                <button class="btn-action" style="background:#e74c3c; font-weight:bold; padding:12px; font-size:11.5px;" onclick="window.executeAltarSummon(true)">⚔️ Re-enter Fight</button>
+                            </div>
+                        `;
+                    } else {
+                        let canAfford = coresOwned >= 1;
+                        let costColor = canAfford ? "#2ecc71" : "#e74c3c";
+                        actionBtnHtml = `
+                            <div style="display:flex; flex-direction:column; gap:8px;">
+                                <div style="display:flex; justify-content:space-between; font-size:11px; color:#aaa; font-family:monospace; padding:0 4px;">
+                                    <span>Cores Owned: <strong style="color:${coresOwned >= 1 ? '#2ecc71' : '#e74c3c'};">${coresOwned} / 1</strong></span>
+                                    <span>Summon Cost: <strong style="color:#ff007f;">1 Core</strong></span>
+                                </div>
+                                <button class="btn-action" style="background:#9b59b6; width:100%; font-weight:bold; padding:12px; font-size:11.5px; letter-spacing:0.5px;" ${canAfford ? '' : 'disabled style="opacity:0.5; cursor:not-allowed;"'} onclick="window.executeAltarSummon()">🔮 COMMENCE SUMMONING</button>
+                            </div>
+                        `;
+                    }
+
+                    let highestRiftText = `🏆 Highest Rift Cleared: Level ${window.playerStats.highestRiftLevel || 0}`;
+
+                    sec.innerHTML = `
+                        <div class="market-card" style="border-color: #9b59b6; background: #0d0615; text-align: left; padding: 15px; border-radius: 8px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding-bottom:8px; margin-bottom:10px;">
+                                <h3 style="margin:0; color:#9b59b6; font-size:14px; display:flex; align-items:center; gap:6px;">🔮 ANCIENT ALTAR</h3>
+                                <button class="btn-action" style="background:#2c3e50; border: 1px solid #9b59b6; font-weight:bold; font-size:10px;" onclick="document.getElementById('altar-modal').style.display='block'; window.buildAltarModal();">View Artifact Pool</button>
+                            </div>
+
+                            ${lvlSelectorHtml}
+
+                            <div class="rift-carousel-container" style="margin-top: 10px; margin-bottom: 10px;">
+                                            ${isRiftActive ? '' : `
+                                                <button class="carousel-arrow prev" onclick="window.changeAltarSlide(-1)">◀</button>
+                                                <button class="carousel-arrow next" onclick="window.changeAltarSlide(1)">▶</button>
+                                            `}
+                                            <div class="rift-carousel-track" id="altar-carousel-track" style="transform: translate3d(-${window.altarSlideIndex * 33.333}%, 0, 0); width: 300%;">
+                                                ${slidesHtml}
+                                            </div>
+                                        </div>
+
+                            ${isRiftActive ? '' : `<div class="rift-dots" style="margin-bottom: 10px;">${dotsHtml}</div>`}
+
+                            <span id="highest-rift-cleared-text" style="display:block; font-size:10.5px; color:#f1c40f; font-weight:bold; text-align:center; margin-bottom:12px;">${highestRiftText}</span>
+
+                            <div style="margin-top: 15px;">
+                                ${actionBtnHtml}
+                            </div>
+                        </div>
+                    `;
+
+                    // Configure Touch Drag Swipe handlers for the newly isolated Altar sub-tab
+                    let track = document.getElementById('altar-carousel-track');
+                    if (track && !isRiftActive) {
+                        let startX = 0, currentX = 0, isDragging = false;
+                        track.addEventListener('touchstart', (e) => {
+                            startX = e.touches[0].clientX;
+                            isDragging = true;
+                        }, { passive: true });
+                        track.addEventListener('touchmove', (e) => {
+                            if (!isDragging) return;
+                            currentX = e.touches[0].clientX;
+                        }, { passive: true });
+                        track.addEventListener('touchend', (e) => {
+                            if (!isDragging) return;
+                            isDragging = false;
+                            let diffX = startX - currentX;
+                            if (Math.abs(diffX) > 40) {
+                                if (diffX > 0) window.changeAltarSlide(1);
+                                else window.changeAltarSlide(-1);
+                            }
+                        });
+                    }
+                };
+
+                window.changeAltarRiftLevel = function(direction) {
+                    let maxLvl = (window.playerStats.highestRiftLevel || 0) + 5;
+                    let newLvl = window.riftSelectedLevel + direction;
+                    if (newLvl < 1) newLvl = 1;
+                    if (newLvl > maxLvl) newLvl = maxLvl;
+                    window.riftSelectedLevel = newLvl;
+                    window.renderAltarTab();
+                };
+
+                window.changeAltarSlide = function(direction) {
+                    if (window.playerStats.activeRift) return;
+                    let newIndex = window.altarSlideIndex + direction;
+                    if (newIndex < 0) newIndex = window.riftBossesMetadata.length - 1;
+                    if (newIndex >= window.riftBossesMetadata.length) newIndex = 0;
+                    window.altarSlideIndex = newIndex;
+                    window.renderAltarTab();
+                };
+
+                window.setAltarSlide = function(idx) {
+                    if (window.playerStats.activeRift) return;
+                    window.altarSlideIndex = idx;
+                    window.renderAltarTab();
+                };
+
+                window.executeAltarSummon = function(isReentry = false) {
+                    let cores = window.inventory.ETC["Ancient Core"] || 0;
+                    let boss = window.riftBossesMetadata[window.altarSlideIndex];
+                    let lvl = isReentry ? (window.playerStats.activeRiftLevel || 1) : window.riftSelectedLevel;
+
+                    if (!isReentry) {
+                        if (cores < 1) return;
+                        window.inventory.ETC["Ancient Core"]--;
+                        if (window.inventory.ETC["Ancient Core"] === 0) delete window.inventory.ETC["Ancient Core"];
+                        window.playerStats.activeRift = boss.type;
+                        window.playerStats.activeRiftLevel = lvl;
+                    }
+
+                    let actualBossType = isReentry ? window.playerStats.activeRift : boss.type;
+
+                    window.playerStats.isBossMode = true;
+                    window.playerStats.isUberBoss = true;
+                    window.playerStats.currentUberBoss = actualBossType;
+                    window.playerStats.killCount = 0;
+                    window.playerStats.targetsRequired = 1;
+                    window.mob = null;
+
+                    let p = window.resolvePlayerStats();
+                    window.playerStats.currentHp = p.maxHp;
+
+                    if (isReentry) {
+                        window.pushLog(`<span style='color:#9b59b6; font-weight:bold;'>[RIFT SUMMON] Re-entering Level ${lvl} Rift for ${boss.name}!</span>`);
+                    } else {
+                        window.pushLog(`<span style='color:#9b59b6; font-weight:bold;'>[RIFT SUMMON] The Altar consumes 1 Ancient Core! A Level ${lvl} Rift for ${boss.name} forms...</span>`);
+                    }
+
+                    window.setPauseState(false);
+                    window.updateUI();
+                    window.renderAltarTab();
+                    window.saveGame();
+                };
+
+                // --- INTERACTIVE RETRO GACHA CONTROLLER ---
+                window.gachaActiveState = "idle";
+
+                window.openGachaModal = function() {
+                    let overlay = document.getElementById('gacha-modal-overlay');
+                    if (overlay) overlay.remove();
+
+                    window.hideTooltip();
+                    window.setPauseState(true);
+
+                    overlay = document.createElement('div');
+                    overlay.id = 'gacha-modal-overlay';
+                    document.body.appendChild(overlay);
+
+                    window.gachaActiveState = "idle";
+                    window.renderGachaModal();
+                };
+
+                window.renderGachaModal = function() {
+                    let overlay = document.getElementById('gacha-modal-overlay');
+                    if (!overlay) return;
+
+                    let keysOwned = window.inventory.ETC["Gacha Key"] || 0;
+                    let ballsColors = ["#e74c3c", "#f1c40f", "#3498db", "#9b59b6", "#2ecc71", "#e67e22"];
+
+                    // Generate a realistic pile of colorful capsule balls
+                                        let ballsHtml = "";
+                                        for (let i = 0; i < 22; i++) {
+                                            // Safe horizontal and vertical start ranges inside the bottom pile
+                                            let left = 20 + Math.random() * 240;
+                                            let bottom = 5 + Math.random() * 35;
+                                            let rot = Math.random() * 360;
+                                            let col = ballsColors[Math.floor(Math.random() * ballsColors.length)];
+
+                                            // Calculate physical target bounds so balls are contained strictly inside the globe
+                                            let targetX1 = 20 + Math.random() * 240;
+                                            let targetY1 = 15 + Math.random() * 90;
+
+                                            let targetX2 = 20 + Math.random() * 240;
+                                            let targetY2 = 15 + Math.random() * 90;
+
+                                            let targetX3 = 20 + Math.random() * 240;
+                                            let targetY3 = 15 + Math.random() * 90;
+
+                                            let targetX4 = 20 + Math.random() * 240;
+                                            let targetY4 = 15 + Math.random() * 90;
+
+                                            // Translate destination coords into CSS offsets relative to each ball's start position
+                                            let tx1 = targetX1 - left;
+                                            let ty1 = -(targetY1 - bottom);
+
+                                            let tx2 = targetX2 - left;
+                                            let ty2 = -(targetY2 - bottom);
+
+                                            let tx3 = targetX3 - left;
+                                            let ty3 = -(targetY3 - bottom);
+
+                                            let tx4 = targetX4 - left;
+                                            let ty4 = -(targetY4 - bottom);
+
+                                            // Introduce random offsets and speed rates to desynchronize the physics tumble pattern
+                                            let animDelay = -(Math.random() * 1.5).toFixed(2);
+                                            let animDuration = (0.75 + Math.random() * 0.65).toFixed(2);
+
+                                            ballsHtml += `
+                                                                        <div class="gacha-ball-pile ball-bouncing" style="
+                                                                            left: ${left}px; bottom: ${bottom}px;
+                                                                            transform: rotate(${rot}deg);
+                                                                            background: linear-gradient(180deg, ${col} 50%, #ffffff 50%);
+                                                                            --tx1: ${tx1}px; --ty1: ${ty1}px;
+                                                                            --tx2: ${tx2}px; --ty2: ${ty2}px;
+                                                                            --tx3: ${tx3}px; --ty3: ${ty3}px;
+                                                                            --tx4: ${tx4}px; --ty4: ${ty4}px;
+                                                                            animation-delay: ${animDelay}s;
+                                                                            animation-duration: ${animDuration}s;
+                                                                            animation-play-state: paused; /* Keep balls resting exactly where they lie */
+                                                                        "></div>
+                                                                    `;
+                                        }
+
+                    overlay.innerHTML = `
+                                            <div class="gacha-cabinet gacha-cabinet-enter" onanimationend="this.classList.remove('gacha-cabinet-enter')">
+                                                <div style="display:flex; justify-content:space-between; align-items:center; width:100%; border-bottom:1px solid #e74c3c; padding-bottom:6px; margin-bottom:10px;">
+                                <h3 style="margin:0; color:#f1c40f; font-size:14px; letter-spacing:1px; display:flex; align-items:center; gap:6px;">🎰 ARCADE GACHAPON</h3>
+                                <button onclick="document.getElementById('gacha-modal-overlay').remove(); window.setPauseState(false); window.hideTooltip();" style="background:#222; border:1px solid #444; color:#aaa; font-weight:bold; cursor:pointer; font-size:10px; padding:3px 8px; border-radius:4px;">Close</button>
+                            </div>
+
+                            <!-- Capsule Globe -->
+                            <div class="gacha-globe" id="gacha-globe-element">
+                                ${ballsHtml}
+                            </div>
+
+                            <!-- CONTROL PANEL & CRANK -->
+                            <div class="gacha-control-panel">
+                                <div style="font-size:10px; color:#aaa; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px; font-family:monospace;">
+                                    🔑 Gacha Keys: <strong style="color:#2ecc71; font-size:12px;" id="gacha-key-count-lbl">${keysOwned}</strong>
+                                </div>
+
+                                <div class="gacha-crank-handle" id="gacha-crank-element" onclick="window.crankGachaMachine()">
+                                    <div class="gacha-crank-cross"></div>
+                                    <div class="gacha-crank-cross vertical"></div>
+                                </div>
+
+                                <div style="font-size:9.5px; color:#f1c40f; margin-top:8px; text-align:center; font-weight:bold;">
+                                    CLICK CRANK TO SPIN!
+                                </div>
+                            </div>
+
+                            <!-- CHUTE SLOT -->
+                            <div class="gacha-chute" id="gacha-chute-element">
+                                <!-- Dispensed capsule drops here -->
+                            </div>
+
+                            <div id="gacha-reward-overlay" style="display:none; margin-top:10px; width:100%;"></div>
+                        </div>
+                    `;
+                };
+
+                window.crankGachaMachine = function() {
+                                    if (window.gachaActiveState === "spinning" || window.gachaActiveState === "dispensed") return;
+
+                                    let crank = document.getElementById('gacha-crank-element');
+                                    let globe = document.getElementById('gacha-globe-element');
+                                    let chute = document.getElementById('gacha-chute-element');
+                                    let cabinet = document.querySelector('.gacha-cabinet');
+
+                                    // 1. Evaluate Gacha roll result first to coordinate the mechanical response
+                                    let res = window.rollGachaCrateItem();
+                                    if (res.error) {
+                                        // Play jammed locking mechanical feedback sound
+                                        window.SoundManager.play('block');
+
+                                        // Trigger the partial "jammed struggle" wiggle on the dial
+                                        if (crank) {
+                                            crank.classList.add('crank-jammed-animate');
+                                            setTimeout(() => {
+                                                if (crank) crank.classList.remove('crank-jammed-animate');
+                                            }, 600);
+                                        }
+
+                                        // Shake the entire retro cabinet container
+                                                                                if (cabinet) {
+                                                                                    cabinet.classList.add('cabinet-rattle');
+                                                                                    setTimeout(() => { if (cabinet) cabinet.classList.remove('cabinet-rattle'); }, 450);
+                                                                                }
+
+                                        window.pushHeaderToast("❌ " + res.error, "#e74c3c");
+                                        return;
+                                    }
+
+                                    // 2. Success flow: Lock machine state and trigger full 360 spin
+                                    let rolledItem = res.item;
+                                    window.gachaActiveState = "spinning";
+
+                                    if (crank) {
+                                        crank.classList.add('crank-animate');
+                                    }
+
+                                    if (globe) {
+                                                                            Array.from(globe.querySelectorAll('.gacha-ball-pile')).forEach(ball => {
+                                                                                ball.style.animationPlayState = 'running'; /* Resume organic swirl */
+                                                                            });
+                                                                        }
+
+                                    window.SoundManager.play('swing');
+
+                                    setTimeout(() => {
+                                                                            if (crank) crank.classList.remove('crank-animate');
+                                                                            if (globe) {
+                                                                                Array.from(globe.querySelectorAll('.gacha-ball-pile')).forEach(ball => {
+                                                                                    ball.style.animationPlayState = 'paused'; /* Freeze balls on their current active spot */
+                                                                                });
+                                                                            }
+
+                                        window.gachaActiveState = "dispensed";
+                                        let color = window.getTierColor(rolledItem.statsRolled);
+
+                                        // Render capsule drop
+                                        if (chute) {
+                                            chute.innerHTML = `
+                                                <div class="dispensed-capsule capsule-glow" style="
+                                                    background: linear-gradient(180deg, ${color} 50%, #ffffff 50%);
+                                                    border: 1.5px solid #000;
+                                                    color: ${color};
+                                                " onclick="window.revealGachaReward(${JSON.stringify(rolledItem).replace(/"/g, '&quot;')})"></div>
+                                            `;
+                                            window.SoundManager.play('block');
+                                        }
+                                    }, 1000);
+                                };
+
+                window.revealGachaReward = function(item) {
+                    let chute = document.getElementById('gacha-chute-element');
+                    let rewardOverlay = document.getElementById('gacha-reward-overlay');
+                    if (!rewardOverlay) return;
+
+                    if (chute) chute.innerHTML = ""; // Clear dispensed ball
+
+                    window.gachaActiveState = "idle";
+                    window.SoundManager.play('revive');
+
+                    let color = window.getTierColor(item.statsRolled);
+
+                    // Explode particles!
+                    if (window.spawnPurchaseCelebration) {
+                        window.spawnPurchaseCelebration('gacha', color, item.statsRolled);
+                    }
+
+                    // Direct items.js notifications
+                    window.pushLog(`<strong style='color:#f1c40f;'>[GACHA]</strong> Dispensed: <span style='color:${color};'>${item.name}</span>`, item.id);
+                    window.pushToast(item.name, item.statsRolled, color);
+
+                    let itemCardHtml = window.generateItemCardHtml(item, null, false);
+
+                    rewardOverlay.innerHTML = `
+                        <div style="background:#111; border:2px solid ${color}; border-radius:6px; padding:10px; margin-top:10px; animation: toastFadeIn 0.3s ease-out; position:relative;">
+                            <div style="max-height:220px; overflow-y:auto; overscroll-behavior:contain; margin-bottom:10px;">
+                                ${itemCardHtml}
+                            </div>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                                <button class="btn-action" style="background:#555; font-size:10px; padding:6px;" onclick="document.getElementById('gacha-modal-overlay').remove(); window.setPauseState(false); window.hideTooltip();">Claim & Exit</button>
+                                <button class="btn-action" style="background:#2ecc71; font-size:10px; padding:6px;" onclick="window.renderGachaModal()">Spin Again</button>
+                            </div>
+                        </div>
+                    `;
+                    rewardOverlay.style.display = "block";
+
+                    window.updateUI();
+                    window.renderInventory();
+                    if (typeof window.renderForgeTab === "function") window.renderForgeTab();
+                };
+
+                // --- DYNAMIC RECENT LOGS & SHOWCASE SYSTEM ---
+                window.gachaShowcaseItems = [];
+
+                window.initGachaShowcase = function() {
+                                    if (window.gachaShowcaseItems.length > 0) return;
+
+                                    let stageScale = Math.floor(((window.playerStats.lifetimePeakStage || 1) - 1) / 10) + 1;
+                                    if (stageScale < 6) stageScale = 6; // High levels to showcase cool stat-lines
+
+                                    let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+
+                                    for (let i = 0; i < 12; i++) {
+                                        let rVal = Math.random();
+                                        let item;
+
+                                        if (rVal < 0.35) {
+                                            // 35% chance to showcase a random Unique Relic or Weapon
+                                            let subR = Math.random();
+                                            if (subR < 0.40) {
+                                                // Artifact Relic
+                                                item = window.createItemObject("artifact", 3, stageScale, 0);
+                                            } else {
+                                                // Uber Unique Weapon/Armor/Sub-weapon
+                                                let uniqueTypes = ["weapon", "subweapon", "boots", "helmet"];
+                                                let chosenType = uniqueTypes[Math.floor(Math.random() * uniqueTypes.length)];
+                                                item = window.createItemObject(chosenType, 5, stageScale, 5);
+
+                                                if (chosenType === "weapon") {
+                                                    let weapons = ["staff", "sword", "singularity", "maelstrom"];
+                                                    let selected = weapons[Math.floor(Math.random() * weapons.length)];
+                                                    if (selected === "staff") {
+                                                        item.isUniqueStaff = true; item.noun = "Phoenix Staff"; item.setName = null;
+                                                        item.name = `🔥 Phoenix Ignition Staff (Lv. ${stageScale})`;
+                                                        item.desc = "Launches penetrating fireballs that deal 25% Attack damage (3s Cooldown).";
+                                                    } else if (selected === "sword") {
+                                                        item.isUniqueSword = true; item.noun = "Sanguine Reaver"; item.setName = null;
+                                                        item.name = `🩸 Crimson Sanguine Reaver (Lv. ${stageScale})`;
+                                                        item.desc = "Strikes apply stacking Bleed (Max 5). Strikes at max stacks triggers Rupture, siphoning 10% Max HP.";
+                                                    } else if (selected === "singularity") {
+                                                        item.isUniqueSingularity = true; item.noun = "Singularity Greatsword"; item.setName = null;
+                                                        item.name = `🌌 Void-Sovereign Greatsword (Lv. ${stageScale})`;
+                                                        item.desc = "Glows for 7s every 30s. Tap during window to enter 5s Storing state, then detonates spatial collapse.";
+                                                    } else {
+                                                        item.isUniqueMaelstrom = true; item.noun = "Maelstrom Glaive"; item.setName = null;
+                                                        item.name = `🌪️ Maelstrom Gale-Glaive (Lv. ${stageScale})`;
+                                                        item.desc = "Overkill damage cleaves on next spawn. Critical strikes have 25% chance to project piercing gales.";
+                                                    }
+                                                } else if (chosenType === "subweapon") {
+                                                    let subs = ["aegis", "watch", "chronicle"];
+                                                    let selected = subs[Math.floor(Math.random() * subs.length)];
+                                                    if (selected === "aegis") {
+                                                        item.subType = "shield"; item.isUniqueAegis = true; item.noun = "Void-Warped Aegis"; item.setName = null;
+                                                        item.name = `🛡️ Void-Warped Bulwark (Lv. ${stageScale})`;
+                                                        item.desc = "Blocks trigger gravity blasts scaling with Defense. Can be absorbed into Singularity vortex.";
+                                                    } else if (selected === "watch") {
+                                                        item.subType = "tome"; item.isUniqueWatch = true; item.noun = "Chronos Pocket-Watch"; item.setName = null;
+                                                        item.name = `⏳ Chronos Dial-Watch (Lv. ${stageScale})`;
+                                                        item.desc = "Triggers 4s Temporal Fracture every 20s. Accelerates attack speeds by 15% and slows enemies by 25%.";
+                                                    } else {
+                                                        item.subType = "tome"; item.isUniqueChronicle = true; item.noun = "Chronicle of the Ascended"; item.setName = null;
+                                                        item.name = `📖 Chronicle of past Lives (Lv. ${stageScale})`;
+                                                        item.desc = "Boosts XP gain by +200% and bypasses level locks while below 75% peak level.";
+                                                    }
+                                                } else if (chosenType === "boots") {
+                                                    item.isUniqueWarpCore = true; item.noun = "Warp-Core Greaves"; item.setName = null;
+                                                    item.name = `⚡ Warp-Core Greaves (Lv. ${stageScale})`;
+                                                    item.desc = "While below 85% Peak Stage: +150% sprint speed, and kills count as 2.";
+                                                } else {
+                                                    item.isUniqueTempest = true; item.noun = "Crown of Tempests"; item.setName = null;
+                                                    item.name = `👑 Crown of crackling Tempests (Lv. ${stageScale})`;
+                                                    item.desc = "Taking damage has 15% chance to call thunderbolt dealing 150% Attack power and stuns.";
+                                                }
+                                            }
+                                        } else if (rVal < 0.65) {
+                                            // 30% chance for a 5★ Mythic Item
+                                            let chosenType = types[Math.floor(Math.random() * types.length)];
+                                            item = window.createItemObject(chosenType, 5, stageScale, 5);
+                                        } else {
+                                            // 35% chance for a 4★ Legendary Item
+                                            let chosenType = types[Math.floor(Math.random() * types.length)];
+                                            item = window.createItemObject(chosenType, 4, stageScale, 4);
+                                        }
+
+                                        item.id = 999000 + i;
+                                        window.recalculateItemStats(item);
+                                        window.frozenItemDb[item.id] = item;
+                                        window.gachaShowcaseItems.push(item);
+                                    }
+                                };
+
+                                window.renderGachaShowcaseMarquee = function(forceRefresh = false) {
+                                    let track = document.getElementById('gacha-showcase-marquee');
+                                    if (!track) return;
+
+                                    let now = Date.now();
+                                    if (!window.lastGachaShowcaseRotationTime) {
+                                        window.lastGachaShowcaseRotationTime = now;
+                                    }
+
+                                    // Rotate batch every 75 seconds (matching the marquee crawl)
+                                    let shouldRotate = (now - window.lastGachaShowcaseRotationTime >= 75000);
+
+                                    if (window.gachaShowcaseItems.length === 0 || shouldRotate || forceRefresh) {
+                                        // Purge previous showcase IDs from frozenItemDb to prevent memory leakage
+                                        if (window.gachaShowcaseItems.length > 0) {
+                                            window.gachaShowcaseItems.forEach(item => {
+                                                delete window.frozenItemDb[item.id];
+                                            });
+                                            window.gachaShowcaseItems = [];
+                                        }
+
+                                        window.initGachaShowcase(); // Spawns a fresh batch of 12 items on IDs 999000-999011
+                                        window.lastGachaShowcaseRotationTime = now;
+
+                                        // Only write to DOM when items are actually regenerated (prevents stutter/flicker)
+                                        let combinedItems = [...window.gachaShowcaseItems, ...window.gachaShowcaseItems];
+                                        track.innerHTML = combinedItems.map(item => {
+                                            let col = window.getTierColor(item.statsRolled);
+                                            let shortName = item.name.replace(/⭐ UNIQUE |(Common|Rare|Magic|Epic|Legendary|Mythic) /g, '');
+                                            return `
+                                                <span style="color:${col}; font-weight:bold; font-size:10px; cursor:help; text-decoration: underline; text-decoration-style: dotted; margin: 0 4px;"
+                                                      onmouseenter="window.showInventoryTooltip(event, ${item.id})"
+                                                      ontouchstart="window.showInventoryTooltip(event, ${item.id})"
+                                                      onmouseleave="window.hideTooltip()">
+                                                    ${shortName}
+                                                </span>
+                                            `;
+                                        }).join("");
+                                    }
+                                };
+
+                window.updateGachaRecentList = function() {
+                    let listEl = document.getElementById('gacha-recent-list');
+                    if (!listEl) return;
+
+                    window.playerStats.gachaHistory = window.playerStats.gachaHistory || [];
+                    if (window.playerStats.gachaHistory.length === 0) {
+                        listEl.innerHTML = `<div style="color:#666; text-align:center; padding-top:40px; font-size:10px; font-style:italic; line-height: 1.4; white-space:normal;">No recent pulls.<br>Crank the handle inside the dispensary!</div>`;
+                        return;
+                    }
+
+                    listEl.innerHTML = window.playerStats.gachaHistory.map(item => {
+                                let col = window.getTierColor(item.statsRolled);
+                                let starDisplay = item.statsRolled === "UNIQUE" ? "★" : `${item.statsRolled}★`;
+                                let shortName = item.name.replace(/⭐ UNIQUE |(Common|Rare|Magic|Epic|Legendary|Mythic) /g, '');
+                                return `
+                                    <div style="background:#07030b; border: 1px solid #222; border-left: 3.5px solid ${col}; border-radius:3px; padding:4px 8px; display:flex; justify-content:space-between; align-items:center; cursor:help; font-family:sans-serif;"
+                                         onmouseenter="window.showInventoryTooltip(event, ${item.id})"
+                                         ontouchstart="window.showInventoryTooltip(event, ${item.id})"
+                                         onmouseleave="window.hideTooltip()">
+                                        <span style="color:${col}; font-weight:bold; font-size:10.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:110px;">${shortName}</span>
+                                        <span style="color:#888; font-size:9.5px; font-family:monospace;">${starDisplay}</span>
+                                    </div>
+                                `;
+                            }).join("");
+                        };

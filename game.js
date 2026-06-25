@@ -475,8 +475,15 @@ window.loadGame = function() {
             if (window.playerStats.elixirsConsumed === undefined) window.playerStats.elixirsConsumed = 0;
             if (window.playerStats.itemsSalvaged === undefined) window.playerStats.itemsSalvaged = 0;
             if (window.playerStats.volumeMaster === undefined) window.playerStats.volumeMaster = 0.5;
-            if (window.playerStats.volumeSFX === undefined) window.playerStats.volumeSFX = 0.8;
-            if (window.playerStats.mute === undefined) window.playerStats.mute = false;
+                        if (window.playerStats.volumeSFX === undefined) window.playerStats.volumeSFX = 0.8;
+                        if (window.playerStats.mute === undefined) window.playerStats.mute = false;
+
+                        // Re-index Gacha history rolls inside memory database
+                        if (window.playerStats.gachaHistory) {
+                            window.playerStats.gachaHistory.forEach(item => {
+                                if (item) window.frozenItemDb[item.id] = item;
+                            });
+                        }
 
             if (window.playerStats.prestigePoints === undefined) window.playerStats.prestigePoints = 0;
             if (window.playerStats.prestigeUpgrades === undefined) {
@@ -487,9 +494,12 @@ window.loadGame = function() {
                 window.playerStats.prestigeUpgrades.fairy = window.playerStats.prestigeUpgrades.fairy || 0;
             }
             if (window.playerStats.prestigeCount === undefined) window.playerStats.prestigeCount = 0;
-            if (window.playerStats.lifetimePeakStage === undefined) window.playerStats.lifetimePeakStage = window.playerStats.maxStage || 1;
+                        if (window.playerStats.lifetimePeakStage === undefined) window.playerStats.lifetimePeakStage = window.playerStats.maxStage || 1;
+                        if (window.playerStats.highestRiftLevel === undefined) window.playerStats.highestRiftLevel = 0;
+                        if (window.playerStats.activeRift === undefined) window.playerStats.activeRift = null;
+                        if (window.playerStats.activeRiftLevel === undefined) window.playerStats.activeRiftLevel = 1;
 
-            window.playerStats.isPrestigeBossMode = false;
+                        window.playerStats.isPrestigeBossMode = false;
             window.playerStats.prestigeApproachTimer = 0;
 
             if (window.playerStats.vendingQLevel === undefined) window.playerStats.vendingQLevel = 0;
@@ -1834,8 +1844,14 @@ window.handleMobDeath = function() {
         }
 
         if (window.playerStats.isUberBoss) {
-            let bossType = window.playerStats.currentUberBoss || 'guardian';
-            if (bossType === 'chronos') {
+                    let bossType = window.playerStats.currentUberBoss || 'guardian';
+                    let riftLvl = window.playerStats.activeRiftLevel || 1;
+
+                    window.playerStats.highestRiftLevel = Math.max(window.playerStats.highestRiftLevel || 0, riftLvl);
+                    window.playerStats.activeRift = null;
+                    window.playerStats.activeRiftLevel = 1;
+
+                    if (bossType === 'chronos') {
                 if (Math.random() < 0.10) { if (typeof window.addEtcDrop === "function") window.addEtcDrop("Gacha Key", 1); }
                 if (Math.random() < 0.10) { if (typeof window.addEtcDrop === "function") window.addEtcDrop("Eridium Shard", 1); }
                 if (Math.random() < 0.15) { if (typeof window.addEtcDrop === "function") window.addEtcDrop("Legendary Scrap", 1); }
@@ -2038,13 +2054,18 @@ window.processEnemySpawn = function() {    // 2. BACKGROUND SCENERY & VEGETATION
                 let mType = "aegis_goliath"; let logText = "**Aegis Goliath, The Iron Sentinel** has materialized from the cracked Aether!";
 
                 if (bossType === 'chronos') { speedMult = 90; mType = "chronos_arbitrator"; logText = "**Chronos Arbitrator** has stepped from the temporal flow!"; }
-                else if (bossType === 'nexus') { speedMult = 80; mType = "nexus_overseer"; logText = "**Nexus Overseer** has infected the reality stream!"; }
+                                else if (bossType === 'nexus') { speedMult = 80; mType = "nexus_overseer"; logText = "**Nexus Overseer** has infected the reality stream!"; }
 
-                let hp = Math.floor(hpMult * (60 * scale)); let dmg = Math.floor(20 * scale * dmgMult);
-                window.mob = {
-                    x: 750, y: 115, w: 60, h: 100, type: mType, isRare: false,
-                    hp: hp, maxHp: hp, damage: dmg, def: Math.floor(8.0 * scale), flashTimer: 0, isStopped: false, attackCooldown: speedMult, attackTimer: speedMult
-                };
+                                let riftLvl = window.playerStats.activeRiftLevel || 1;
+                                let equivalentStage = 50 + riftLvl * 10;
+                                let riftGrowthRate = 1.045 + ((equivalentStage * 0.04) / (equivalentStage + 200));
+                                let riftScale = Math.pow(riftGrowthRate, equivalentStage);
+
+                                let hp = Math.floor(hpMult * (60 * riftScale)); let dmg = Math.floor(20 * riftScale * dmgMult);
+                                window.mob = {
+                                    x: 750, y: 115, w: 60, h: 100, type: mType, isRare: false,
+                                    hp: hp, maxHp: hp, damage: dmg, def: Math.floor(8.0 * riftScale), flashTimer: 0, isStopped: false, attackCooldown: speedMult, attackTimer: speedMult
+                                };
                 window.pushLog(`<span style='color:#9b59b6; font-weight:bold;'>[RIFT HUNT]</span> ${logText}`);
             } else {
                 let baseBossHp = 60 * scale;
@@ -2332,10 +2353,13 @@ window.triggerFairyLoot = function(targetFairy) {
     else statLinesCount = 0;
 
     let activeStage = window.playerStats.stage;
-    if (window.playerStats.isDungeonMode && window.playerStats.currentDungeon) {
-        activeStage = window.playerStats.currentDungeonStage[window.playerStats.currentDungeon] || 1;
-    }
-    let stageScale = Math.floor((activeStage - 1) / 10) + 1;
+        if (window.playerStats.isDungeonMode && window.playerStats.currentDungeon) {
+            activeStage = window.playerStats.currentDungeonStage[window.playerStats.currentDungeon] || 1;
+        } else if (window.playerStats.isUberBoss) {
+            let riftLvl = window.playerStats.activeRiftLevel || 1;
+            activeStage = 50 + riftLvl * 10;
+        }
+        let stageScale = Math.floor((activeStage - 1) / 10) + 1;
     let newItem = window.createItemObject(chosenType, statLinesCount, stageScale, 0);
 
     if (window.checkAutoSalvage(newItem, false)) {

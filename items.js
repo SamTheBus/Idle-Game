@@ -179,19 +179,20 @@ window.renderForgeTab = function() {
         let previewItem = JSON.parse(JSON.stringify(item));
 
         if (window.forgeMode === 'temper') {
-            let maxT = window.getMaxTemper(item.statsRolled, item.type);
-            if (item.temperLevel >= maxT) {
-                html += `<div style="color:#e74c3c; font-weight:bold; text-align:center; padding: 20px 0;">MAXIMUM TEMPER LIMIT REACHED</div>`;
-            } else {
-                let costGold = window.getTemperGoldCost(item);
-                let scrapReqAmount = window.getRequiredScrapAmountForTemper(item);
-                let scrapReq = window.getRequiredScrapForTemper(item);
-                let failChance = item.temperLevel * 5;
-                let goldColor = window.playerStats.coins >= costGold ? "#f1c40f" : "#e74c3c";
-                let scrapColor = playerScrap >= scrapReqAmount ? "#bdc3c7" : "#e74c3c";
+                    let maxT = window.getMaxTemper(window.forgeSelectedItem.statsRolled, window.forgeSelectedItem.type);
+                    if (item.temperLevel >= maxT) {
+                        html += `<div style="color:#e74c3c; font-weight:bold; text-align:center; padding: 20px 0;">MAXIMUM TEMPER LIMIT REACHED</div>`;
+                    } else {
+                        let costGold = window.getTemperGoldCost(item);
+                        let scrapReqAmount = window.getRequiredScrapAmountForTemper(item);
+                        let scrapReq = window.getRequiredScrapForTemper(item);
+                        let failChance = item.temperLevel * 5;
+                        let playerScrap = window.inventory.ETC[scrapReq] || 0;
+                        let goldColor = window.playerStats.coins >= costGold ? "#f1c40f" : "#e74c3c";
+                        let scrapColor = playerScrap >= scrapReqAmount ? "#bdc3c7" : "#e74c3c";
 
-                previewItem.temperLevel++;
-                window.recalculateItemStats(previewItem);
+                        previewItem.temperLevel++;
+                        window.recalculateItemStats(previewItem);
 
                 // Fetch correctly generated item property comparative differences
                 let diffLines = window.getForgeDiffLines(item, previewItem);
@@ -1847,27 +1848,95 @@ window.reforgeItemStat = function() {
     // ==========================================================================
 
     window.buyGachaCrate = function() {
-        let keys = window.inventory.ETC["Gacha Key"] || 0;
-        if (keys < 1) {
-            window.pushHeaderToast("❌ Insufficient Gacha Keys!", "#e74c3c");
-            return;
-        }
-        window.inventory.ETC["Gacha Key"]--;
-        if (window.inventory.ETC["Gacha Key"] === 0) delete window.inventory.ETC["Gacha Key"];
+            window.openGachaModal();
+        };
 
-        window.rollGachaDrop();
-        window.SoundManager.play('spell');
-        window.updateUI();
-    };
+        window.rollGachaCrateItem = function() {
+            let p = window.resolvePlayerStats();
+            let maxBag = window.getMaxBagSlots();
+
+            let keys = window.inventory.ETC["Gacha Key"] || 0;
+            if (keys < 1) {
+                return { error: "Insufficient Gacha Keys!" };
+            }
+
+            let allowArtifact = (Math.random() < 0.0005);
+            let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+            let chosenType = allowArtifact ? "artifact" : types[Math.floor(Math.random() * types.length)];
+
+            if (chosenType === "artifact") {
+                if (window.inventory.ARTIFACT.length >= maxBag) { return { error: "Artifact Sack Full!" }; }
+            } else {
+                if (window.inventory.EQUIP.length >= maxBag) { return { error: "Inventory Full!" }; }
+            }
+
+            // Deduct key & save state
+            window.inventory.ETC["Gacha Key"]--;
+            if (window.inventory.ETC["Gacha Key"] === 0) delete window.inventory.ETC["Gacha Key"];
+
+            let statLinesCount = 1;
+            let luckMultiplier = p.qly + ((window.playerStats.vendingQLevel || 0) * 0.01);
+            let roll = Math.random() * 100;
+
+            if (roll < (0.02 * luckMultiplier)) statLinesCount = 5;
+            else if (roll < (0.18 * luckMultiplier)) statLinesCount = 4;
+            else if (roll < (0.80 * luckMultiplier)) statLinesCount = 3;
+            else if (roll < (4.00 * luckMultiplier)) statLinesCount = 2;
+            else statLinesCount = 1;
+
+            let peakRunStage = Math.max(window.playerStats.stage, window.playerStats.maxStage || 1);
+            let stageScale = Math.floor((peakRunStage - 1) / 10) + 1;
+
+            let newItem = window.createItemObject(chosenType, statLinesCount, stageScale, 0);
+
+                    if (newItem.type === "artifact") {
+                        window.inventory.ARTIFACT.push(newItem);
+                    } else {
+                        window.inventory.EQUIP.push(newItem);
+                    }
+
+                    // Store inside active pull history log
+                    window.playerStats.gachaHistory = window.playerStats.gachaHistory || [];
+                    window.playerStats.gachaHistory.unshift(newItem);
+                    if (window.playerStats.gachaHistory.length > 5) {
+                        window.playerStats.gachaHistory.pop();
+                    }
+                    window.frozenItemDb[newItem.id] = JSON.parse(JSON.stringify(newItem));
+
+                    window.checkAchievements();
+                    window.saveGame();
+                    return { item: newItem };
+                };
 
     window.summonUberBossFromSelect = function() {
         if (window.playerStats.isDungeonMode || window.playerStats.isCrucibleMode || window.playerStats.isPrestigeBossMode) {
             window.pushHeaderToast("❌ Cannot summon: already in another activity!", "#e74c3c");
             return;
         }
+
+        if (window.playerStats.activeRift) {
+            let bossType = window.playerStats.activeRift;
+            let riftLvl = window.playerStats.activeRiftLevel || 1;
+
+            window.playerStats.isBossMode = true;
+            window.playerStats.isUberBoss = true;
+            window.playerStats.currentUberBoss = bossType;
+            window.playerStats.killCount = 0;
+            window.playerStats.targetsRequired = 1;
+            window.mob = null;
+
+            let p = window.resolvePlayerStats();
+            window.playerStats.currentHp = p.maxHp;
+
+            window.pushLog(`<span style='color:#9b59b6; font-weight:bold;'>[RIFT SUMMON] Re-entering Level ${riftLvl} Rift for ${bossType === 'guardian' ? 'Aegis Goliath' : (bossType === 'chronos' ? 'Chronos Arbitrator' : 'Nexus Overseer')}!</span>`);
+            window.updateUI();
+            window.saveGame();
+            return;
+        }
+
         let cores = window.inventory.ETC["Ancient Core"] || 0;
-        if (cores < 10) {
-            window.pushHeaderToast("❌ Requires 10 Ancient Cores!", "#e74c3c");
+        if (cores < 1) {
+            window.pushHeaderToast("❌ Requires 1 Ancient Core!", "#e74c3c");
             return;
         }
         if (window.playerStats.level < 30) {
@@ -1878,13 +1947,26 @@ window.reforgeItemStat = function() {
         let selectEl = document.getElementById('rift-hunt-select');
         let bossType = selectEl ? selectEl.value : 'guardian';
 
+        let lvlInput = document.getElementById('rift-level-select');
+        let selectedLvl = parseInt(lvlInput ? lvlInput.value : 1, 10);
+        if (isNaN(selectedLvl) || selectedLvl < 1) selectedLvl = 1;
+
+        let maxLvl = (window.playerStats.highestRiftLevel || 0) + 5;
+        if (selectedLvl > maxLvl) {
+            window.pushHeaderToast(`❌ Level ${selectedLvl} is locked! Max available: Level ${maxLvl}`, "#e74c3c");
+            return;
+        }
+
         window.showCustomConfirm(
             "Activate Altar of Rifts",
-            `Sacrifice 10 Ancient Cores to tear open a Reality Rift and face the Uber Boss?`,
+            `Sacrifice 1 Ancient Core to open a Level ${selectedLvl} Reality Rift?`,
             "Open Rift", "Cancel", "#9b59b6",
             function() {
-                window.inventory.ETC["Ancient Core"] -= 10;
+                window.inventory.ETC["Ancient Core"] -= 1;
                 if (window.inventory.ETC["Ancient Core"] === 0) delete window.inventory.ETC["Ancient Core"];
+
+                window.playerStats.activeRift = bossType;
+                window.playerStats.activeRiftLevel = selectedLvl;
 
                 window.playerStats.isBossMode = true;
                 window.playerStats.isUberBoss = true;
@@ -1896,10 +1978,27 @@ window.reforgeItemStat = function() {
                 let p = window.resolvePlayerStats();
                 window.playerStats.currentHp = p.maxHp;
 
-                window.pushLog(`<span style='color:#9b59b6; font-weight:bold;'>[RIFT SUMMON] The Altar consumes your cores! A rift forms...</span>`);
-                let menu = document.getElementById('dungeon-menu');
-                if (menu) menu.style.display = 'none';
+                window.pushLog(`<span style='color:#9b59b6; font-weight:bold;'>[RIFT SUMMON] The Altar consumes your Core! A Level ${selectedLvl} Rift forms...</span>`);
+                window.updateUI();
+                window.saveGame();
+            }
+        );
+    };
 
+    window.abandonRift = function() {
+        if (!window.playerStats.activeRift) return;
+
+        window.showCustomConfirm(
+            "Abandon Reality Rift",
+            "Are you sure you want to collapse the active Rift? The spent Ancient Core will be lost permanently.",
+            "Collapse Rift", "Keep Attempting", "#e74c3c",
+            function() {
+                window.playerStats.activeRift = null;
+                window.playerStats.activeRiftLevel = 1;
+                window.playerStats.isUberBoss = false;
+                window.playerStats.isBossMode = false;
+                window.mob = null;
+                window.pushLog("<span style='color:#e74c3c;'>[RIFT] The Reality Rift collapsed.</span>");
                 window.updateUI();
                 window.saveGame();
             }
