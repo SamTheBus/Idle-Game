@@ -3759,41 +3759,44 @@ window.renderInventory = function () {
   let maxBag = window.getMaxBagSlots();
 
   // 1. Equip Sack
-  let eqBox = document.getElementById("bag-equip");
-  if (eqBox) {
-    if (window.inventory.EQUIP.length === 0) {
-      eqBox.innerHTML =
-        "<div style='color:#666;text-align:center;padding-top:40px;'>No equipment in sack.</div>";
-    } else {
-      eqBox.innerHTML = window.inventory.EQUIP.map((item) => {
-        let nameColor = window.getTierColor(item.statsRolled);
-        let tierStr =
-          item.statsRolled === "UNIQUE"
-            ? "UNIQUE"
-            : `${item.statsRolled}★ ${window.getTierName(item.statsRolled)}`;
-        let temperTag =
-          item.temperLevel > 0
-            ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>`
-            : "";
-        let lockTag = item.locked ? " 🔒" : "";
-        let lockBg = item.locked ? "#e74c3c" : "#7f8c8d";
-        let lockIcon = item.locked ? "🔒" : "🔓";
-        let typeText = item.type.toUpperCase();
-        if (item.type === "subweapon" && item.subType) {
-          typeText = `${item.type.toUpperCase()} (${item.subType.toUpperCase()})`;
-        }
-        let comparisonBadge = window.getComparisonDeltaBadge(item);
-        let reqLvl = Math.max(
-          1,
-          ((item.stageLevel || 1) - 1) * 5 -
-            (window.playerStats.prestigeCount || 0) * 2,
-        );
-        let lockWarning = "";
-        let disabledAttr = "";
-        if (window.playerStats.level < reqLvl) {
-          lockWarning = ` <span style="color:#e74c3c; font-weight:bold; font-size:10px;">[Req. Lv ${reqLvl}]</span>`;
-          disabledAttr = "disabled style='opacity:0.5; cursor:not-allowed;'";
-        }
+    let eqBox = document.getElementById("bag-equip");
+    if (eqBox) {
+      if (window.inventory.EQUIP.length === 0) {
+        eqBox.innerHTML =
+          "<div style='color:#666;text-align:center;padding-top:40px;'>No equipment in sack.</div>";
+      } else {
+        eqBox.innerHTML = window.inventory.EQUIP.map((item) => {
+          let nameColor = window.getTierColor(item.statsRolled);
+          let tierStr =
+            item.statsRolled === "UNIQUE"
+              ? "UNIQUE"
+              : `${item.statsRolled}★ ${window.getTierName(item.statsRolled)}`;
+          let temperTag =
+            item.temperLevel > 0
+              ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>`
+              : "";
+          let lockTag = item.locked ? " 🔒" : "";
+          let lockBg = item.locked ? "#e74c3c" : "#7f8c8d";
+          let lockIcon = item.locked ? "🔒" : "🔓";
+          let typeText = item.type.toUpperCase();
+          if (item.type === "subweapon" && item.subType) {
+            typeText = `${item.type.toUpperCase()} (${item.subType.toUpperCase()})`;
+          }
+          let comparisonBadge = window.getComparisonDeltaBadge(item);
+          let reqLvl = 1;
+          if ((item.stageLevel || 1) >= 3) {
+            reqLvl = Math.max(
+              1,
+              ((item.stageLevel || 1) - 2) * 5 -
+                (window.playerStats.prestigeCount || 0) * 5,
+            );
+          }
+          let lockWarning = "";
+          let disabledAttr = "";
+          if (window.playerStats.level < reqLvl) {
+            lockWarning = ` <span style="color:#e74c3c; font-weight:bold; font-size:10px;">[Req. Lv ${reqLvl}]</span>`;
+            disabledAttr = "disabled style='opacity:0.5; cursor:not-allowed;'";
+          }
         let details = `<span style="font-size:10px;color:#aaa;">Slot: ${typeText} | <span style="color:${nameColor};font-weight:bold;">${tierStr}</span></span>${lockWarning}`;
         let uniqueStyle = window.getUniqueItemStyle(item);
         let uniqueStyleStr = uniqueStyle
@@ -3833,28 +3836,31 @@ window.renderInventory = function () {
   }
 
   // 2. Artifact Sack
-  let artBox = document.getElementById("bag-art");
-  if (artBox) {
-    if (window.inventory.ARTIFACT.length === 0) {
-      artBox.innerHTML =
-        "<div style='color:#666;text-align:center;padding-top:40px;'>No artifacts in sack.</div>";
-    } else {
-      artBox.innerHTML = window.inventory.ARTIFACT.map((item) => {
-        let nameColor = window.getTierColor(item.statsRolled);
-        let lockTag = item.locked ? " 🔒" : "";
-        let lockBg = item.locked ? "#e74c3c" : "#7f8c8d";
-        let lockIcon = item.locked ? "🔒" : "🔓";
-        let reqLvl = Math.max(
-          1,
-          ((item.stageLevel || 1) - 1) * 5 -
-            (window.playerStats.prestigeCount || 0) * 2,
-        );
-        let lockWarning = "";
-        let disabledAttr = "";
-        if (window.playerStats.level < reqLvl) {
-          lockWarning = ` <span style="color:#e74c3c; font-weight:bold; font-size:10px;">[Req. Lv ${reqLvl}]</span>`;
-          disabledAttr = "disabled style='opacity:0.5; cursor:not-allowed;'";
-        }
+    let artBox = document.getElementById("bag-art");
+    if (artBox) {
+      if (window.inventory.ARTIFACT.length === 0) {
+        artBox.innerHTML =
+          "<div style='color:#666;text-align:center;padding-top:40px;'>No artifacts in sack.</div>";
+      } else {
+        artBox.innerHTML = window.inventory.ARTIFACT.map((item) => {
+          let nameColor = window.getTierColor(item.statsRolled);
+          let lockTag = item.locked ? " 🔒" : "";
+          let lockBg = item.locked ? "#e74c3c" : "#7f8c8d";
+          let lockIcon = item.locked ? "🔒" : "🔓";
+          let reqLvl = 1;
+          if ((item.stageLevel || 1) >= 3) {
+            reqLvl = Math.max(
+              1,
+              ((item.stageLevel || 1) - 2) * 5 -
+                (window.playerStats.prestigeCount || 0) * 5,
+            );
+          }
+          let lockWarning = "";
+          let disabledAttr = "";
+          if (window.playerStats.level < reqLvl) {
+            lockWarning = ` <span style="color:#e74c3c; font-weight:bold; font-size:10px;">[Req. Lv ${reqLvl}]</span>`;
+            disabledAttr = "disabled style='opacity:0.5; cursor:not-allowed;'";
+          }
         let details = `<span style="font-size:10px;color:#d2b4de;font-weight:bold;">Trait: ${item.desc}</span>${lockWarning}`;
         let iconBox = `<div style="margin-right:8px; display:inline-flex; align-items:center;">${window.getArtifactIconHtml(item.trait, 28)}</div>`;
 
@@ -4258,23 +4264,26 @@ window.generateItemCardHtml = function (
 
   let tierColor = window.getTierColor(item.statsRolled);
   let titleColor = item.type === "artifact" ? "#1abc9c" : tierColor;
-  let labelDisplay = item.type.toUpperCase();
-  if (item.type === "subweapon" && item.subType) {
-    labelDisplay = `SUBWEAPON (${item.subType.toUpperCase()})`;
-  }
-  let reqLvl = Math.max(
-    1,
-    ((item.stageLevel || 1) - 1) * 5 -
-      (window.playerStats.prestigeCount || 0) * 2,
-  );
-  let subtitle =
-    item.type === "artifact"
-      ? "Unique Boss Trophy Slot"
-      : `${labelDisplay} | <span style="color:${tierColor}; font-weight:bold;">${tierStrDisplay(item)}</span>`;
-  if (reqLvl > 1) {
-    let reqColor = window.playerStats.level >= reqLvl ? "#2ecc71" : "#e74c3c";
-    subtitle += `<br><span style="color:${reqColor}; font-weight:bold;">Required Level: ${reqLvl}</span>`;
-  }
+    let labelDisplay = item.type.toUpperCase();
+    if (item.type === "subweapon" && item.subType) {
+      labelDisplay = `SUBWEAPON (${item.subType.toUpperCase()})`;
+    }
+    let reqLvl = 1;
+    if ((item.stageLevel || 1) >= 3) {
+      reqLvl = Math.max(
+        1,
+        ((item.stageLevel || 1) - 2) * 5 -
+          (window.playerStats.prestigeCount || 0) * 5,
+      );
+    }
+    let subtitle =
+      item.type === "artifact"
+        ? "Unique Boss Trophy Slot"
+        : `${labelDisplay} | <span style="color:${tierColor}; font-weight:bold;">${tierStrDisplay(item)}</span>`;
+    if (reqLvl > 1) {
+      let reqColor = window.playerStats.level >= reqLvl ? "#2ecc71" : "#e74c3c";
+      subtitle += `<br><span style="color:${reqColor}; font-weight:bold;">Required Level: ${reqLvl}</span>`;
+    }
   let temperTag =
     item.temperLevel > 0
       ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>`

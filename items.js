@@ -1763,11 +1763,14 @@ window.equipItem = function (id) {
     ? window.inventory.ARTIFACT[index]
     : window.inventory.EQUIP[index];
 
-  let reqLvl = Math.max(
-    1,
-    ((item.stageLevel || 1) - 1) * 5 -
-      (window.playerStats.prestigeCount || 0) * 2,
-  );
+  let reqLvl = 1;
+  if ((item.stageLevel || 1) >= 3) {
+    reqLvl = Math.max(
+      1,
+      ((item.stageLevel || 1) - 2) * 5 -
+        (window.playerStats.prestigeCount || 0) * 5,
+    );
+  }
   if (
     window.playerStats.level < reqLvl &&
     !window.playerStats.bypassGearLockActive
