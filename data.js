@@ -90,7 +90,10 @@ window.etcDex = {
         "Supernal Armored Elixir": { desc: "Increases Defense by +35% for 5 minutes (scales with INT).", color: "#1f3a52" },
         "Haste Elixir": { desc: "Increases movement speed and attack recovery (reduces delay frames) by +10% for 5 minutes (scales with INT).", color: "#f1c40f" },
         "Greater Haste Elixir": { desc: "Increases movement speed and attack recovery (reduces delay frames) by +20% for 5 minutes (scales with INT).", color: "#f39c12" },
-        "Supernal Haste Elixir": { desc: "Increases movement speed and attack recovery (reduces delay frames) by +35% for 5 minutes (scales with INT).", color: "#d35400" }
+        "Supernal Haste Elixir": { desc: "Increases movement speed and attack recovery (reduces delay frames) by +35% for 5 minutes (scales with INT).", color: "#d35400" },
+        "Double XP Potion": { desc: "Doubles all acquired experience gains (+100% EXP) for 5 minutes (scales with INT).", color: "#a855f7" },
+        "Double Drop Potion": { desc: "Doubles current drop rate multiplier (+100%) for 5 minutes (scales with INT).", color: "#22c55e" },
+        "Drop Quality Potion": { desc: "Boosts item drop quality checks by +25% for 5 minutes (scales with INT).", color: "#3b82f6" }
     };
 
     window.ARTIFACT_POOL = [
@@ -793,6 +796,14 @@ window.resolvePlayerStats = function(useDraft = false) {
             activeSpeedPct += 0.10 * tier * potStrengthMultiplier; idleSpeedPct += 0.10 * tier * potStrengthMultiplier;
         }
 
+        // Additive Double Drop and Drop Quality checks
+        if (window.playerStats.dropPotionTimer > 0) {
+            p.drop += 1.0 * potStrengthMultiplier;
+        }
+        if (window.playerStats.qlyPotionTimer > 0) {
+            p.qly += 0.50 * potStrengthMultiplier;
+        }
+
     if (window.checkArtifactTrait("move_speed")) p.moveSpeed += 10;
     if (window.checkArtifactTrait("gold_hoard")) p.gold += 0.50;
     if (window.checkArtifactTrait("idle_spd")) idleSpeedPct += 0.35;
@@ -831,19 +842,35 @@ window.resolvePlayerStats = function(useDraft = false) {
     } else { window.playerStats.bypassGearLockActive = false; }
 
     let prestigeGoldBonus = (window.playerStats.prestigeUpgrades?.gold || 0) * 0.25; p.gold += prestigeGoldBonus;
-    let prestigeDropBonus = (window.playerStats.prestigeUpgrades?.drop || 0) * 0.05; p.drop += prestigeDropBonus;
-    let prestigeFairyBonus = (window.playerStats.prestigeUpgrades?.fairy || 0) * 0.05; p.fairySpawn += prestigeFairyBonus;
+        let prestigeDropBonus = (window.playerStats.prestigeUpgrades?.drop || 0) * 0.05; p.drop += prestigeDropBonus;
+        let prestigeFairyBonus = (window.playerStats.prestigeUpgrades?.fairy || 0) * 0.05; p.fairySpawn += prestigeFairyBonus;
 
-    let activeStage = window.playerStats.stage;
-    if (window.playerStats.isDungeonMode && window.playerStats.currentDungeon) {
-        activeStage = window.playerStats.currentDungeonStage[window.playerStats.currentDungeon] || 1;
-    }
-    p.qly += Math.floor(activeStage / 10) * 0.015;
-    p.qly += (window.playerStats.globalQLevel || 0) * 0.015;
+        // Apply permanent Mission Shop Upgrades
+            let missionGoldBonus = (window.playerStats.missionUpgrades?.gold || 0) * 0.05; p.gold += missionGoldBonus;
 
-    let prestigeAtkMult = Math.pow(1.12, window.playerStats.prestigeUpgrades?.atk || 0); p.atk = Math.floor(p.atk * prestigeAtkMult);
-    let prestigeHpMult = Math.pow(1.10, window.playerStats.prestigeUpgrades?.fort || 0); let prestigeDefMult = Math.pow(1.05, window.playerStats.prestigeUpgrades?.fort || 0);
-    p.maxHp = Math.floor(p.maxHp * prestigeHpMult); p.def = Math.floor(p.def * prestigeDefMult);
+            if (window.playerStats.dropPotionTimer > 0) {
+                p.drop += (window.playerStats.dropPotionStrength || 1.0);
+            }
+            if (window.playerStats.qlyPotionTimer > 0) {
+                p.qly += (window.playerStats.qlyPotionStrength || 0.50);
+            }
+
+            let activeStage = window.playerStats.stage;
+        if (window.playerStats.isDungeonMode && window.playerStats.currentDungeon) {
+            activeStage = window.playerStats.currentDungeonStage[window.playerStats.currentDungeon] || 1;
+        } else if (window.playerStats.isUberBoss) {
+            let riftLvl = window.playerStats.activeRiftLevel || 1;
+            activeStage = 50 + riftLvl * 10;
+        }
+        let stageScale = Math.floor((activeStage - 1) / 10) + 1;
+
+        let prestigeAtkMult = Math.pow(1.12, window.playerStats.prestigeUpgrades?.atk || 0); p.atk = Math.floor(p.atk * prestigeAtkMult);
+        let prestigeHpMult = Math.pow(1.10, window.playerStats.prestigeUpgrades?.fort || 0); let prestigeDefMult = Math.pow(1.05, window.playerStats.prestigeUpgrades?.fort || 0);
+
+        // Apply Mission Shop Attack and Health multipliers
+        let missionAtkMult = 1.0 + (window.playerStats.missionUpgrades?.atk || 0) * 0.02; p.atk = Math.floor(p.atk * missionAtkMult);
+        let missionHpMult = 1.0 + (window.playerStats.missionUpgrades?.hp || 0) * 0.03;
+        p.maxHp = Math.floor(p.maxHp * prestigeHpMult * missionHpMult); p.def = Math.floor(p.def * prestigeDefMult);
 
     if (isNaN(p.idleAttackSpeed) || p.idleAttackSpeed <= 0 || !isFinite(p.idleAttackSpeed)) p.idleAttackSpeed = 60;
     if (isNaN(p.activeAttackSpeed) || p.activeAttackSpeed <= 0 || !isFinite(p.activeAttackSpeed)) p.activeAttackSpeed = 15;
@@ -857,6 +884,9 @@ window.playerStats = {
     level: 1, xp: 0, xpReq: 250, sp: 0,
     spAllocations: { spHp: 0, spAtk: 0, spDef: 0, spCrit: 0, spCritDmg: 0, spBlock: 0, spParry: 0, spSpd: 0, spStr: 0, spDex: 0, spInt: 0 },
     vendingQLevel: 0, shopQLevel: 0, globalQLevel: 0,
+    missionTokens: 0,
+    missionUpgrades: { gold: 0, atk: 0, hp: 0 },
+    vendingPity: 0,
     stickyCanvas: true,
     baseStr: 5, baseDex: 5, baseInt: 5,
     baseAtk: 10, baseMaxHp: 100, baseDef: 0, baseMoveSpeed: 10,
@@ -870,11 +900,14 @@ window.playerStats = {
     isDungeonMode: false, currentDungeon: null, dungeonWave: 1,
     equipKeys: 3, goldKeys: 3, matKeys: 3, nextEquipKeyTime: 0, nextGoldKeyTime: 0, nextMatKeyTime: 0,
     shopRefreshTime: 0, shopItems: [],
-    atkPotionTimer: 0, atkPotionStrength: 0.10,
-    hpPotionTimer: 0, hpPotionStrength: 0.10,
-    defPotionTimer: 0, defPotionStrength: 0.10,
-    hastePotionTimer: 0, hastePotionStrength: 1,
-    autoSalvageThreshold: -1,
+        atkPotionTimer: 0, atkPotionStrength: 0.10,
+        hpPotionTimer: 0, hpPotionStrength: 0.10,
+        defPotionTimer: 0, defPotionStrength: 0.10,
+        hastePotionTimer: 0, hastePotionStrength: 1,
+        xpPotionTimer: 0, xpPotionStrength: 1.0,
+        dropPotionTimer: 0, dropPotionStrength: 1.0,
+        qlyPotionTimer: 0, qlyPotionStrength: 0.50,
+        autoSalvageThreshold: -1,
     volumeMaster: 0.5, volumeSFX: 0.8, mute: false,
     fairiesClicked: 0, deathCount: 0,
     dungeonPeaks: { equip: 1, gold: 1, mat: 1 },
@@ -912,9 +945,177 @@ window.playerStats = {
     hasTriggeredTimeCapsule: false,
     hasTriggeredAethericRecharge: false,
     hasClickedThisBattle: false,
-    damageTakenThisBattle: 0,
-    ankhTriggeredThisBattle: false
-};
+        damageTakenThisBattle: 0,
+        ankhTriggeredThisBattle: false,
+        dailyMissions: [],
+        weeklyMissions: [],
+        lastDailyResetTime: 0,
+        lastWeeklyResetTime: 0,
+        dailyRewardClaimed: false,
+        weeklyRewardClaimed: false
+    };
+
+    // --- PROCEDURAL MISSION & QUEST SYSTEM ---
+
+    window.generateDailyMissions = function() {
+            let pool = [
+                { type: "kills", label: "Slay monsters", targetBase: 300, mult: 10, unit: "monsters", treat: "Monster Soul", treatQty: 80 },
+                { type: "rares", label: "Slay rare spawns", targetBase: 5, mult: 1, unit: "rares", treat: "Luminous Soul", treatQty: 3 },
+                { type: "gold", label: "Collect Gold", targetBase: 2500, stageScale: true, unit: "Gold", treat: "Rare Scrap", treatQty: 15 },
+                { type: "fairies", label: "Catch wild fairies", targetBase: 8, mult: 1, unit: "fairies", treat: "Luminous Soul", treatQty: 3 },
+                { type: "tempers", label: "Successfully temper gear", targetBase: 1, mult: 1, unit: "tempers", treat: "Magic Scrap", treatQty: 8 },
+                { type: "reforges", label: "Reforge gear modifiers", targetBase: 2, mult: 1, unit: "reforges", treat: "Catalyst Core", treatQty: 1 },
+                { type: "dungeons", label: "Clear Dungeon floors", targetBase: 5, mult: 1, unit: "floors", treat: "Epic Scrap", treatQty: 6 }
+            ];
+
+        pool.sort(() => Math.random() - 0.5);
+        let selected = pool.slice(0, 6);
+
+        let stage = window.playerStats.stage || 1;
+        window.playerStats.dailyMissions = selected.map((m, idx) => {
+            let target = m.targetBase;
+            if (m.stageScale) {
+                target = Math.ceil(m.targetBase * Math.pow(1.045, stage));
+            }
+            return {
+                id: `daily_${idx + 1}`,
+                type: m.type,
+                desc: `${m.label} (${target.toLocaleString()} ${m.unit})`,
+                current: 0,
+                target: target,
+                treat: m.treat,
+                treatQty: m.treatQty,
+                completed: false,
+                claimed: false
+            };
+        });
+    };
+
+    window.generateWeeklyMissions = function() {
+        let pool = [
+            { type: "rifts", label: "Slay Rift Guardians", targetBase: 3, unit: "guardians", treat: "Gacha Key", treatQty: 1 },
+            { type: "dungeons", label: "Ascend Dungeon floors", targetBase: 15, unit: "floors", treat: "Eridium Shard", treatQty: 5 },
+            { type: "gold", label: "Amass extreme wealth", targetBase: 15000, stageScale: true, unit: "Gold", treat: "Legendary Scrap", treatQty: 5 },
+            { type: "kills", label: "Execute massive purges", targetBase: 1500, unit: "enemies", treat: "Mythic Scrap", treatQty: 2 },
+            { type: "tempers", label: "Master blacksmithing", targetBase: 15, unit: "tempers", treat: "Catalyst Core", treatQty: 3 }
+        ];
+
+        pool.sort(() => Math.random() - 0.5);
+        let selected = pool.slice(0, 3);
+
+        let peakStage = window.playerStats.lifetimePeakStage || window.playerStats.stage || 1;
+        window.playerStats.weeklyMissions = selected.map((m, idx) => {
+            let target = m.targetBase;
+            if (m.stageScale) {
+                target = Math.ceil(m.targetBase * Math.pow(1.045, peakStage));
+            }
+            // User request: 3 potions per potion-themed weekly rewards
+            let treatName = m.treat;
+            let treatQty = m.treatQty;
+            if (idx === 0) {
+                treatName = "Gacha Key";
+                treatQty = 1;
+                m.potionAward = "Supernal Attack Elixir";
+            } else if (idx === 1) {
+                treatName = "Prestige Point";
+                treatQty = 1;
+                m.potionAward = "Supernal Vitality Elixir";
+            } else {
+                treatName = "Epic Gear Piece"; // Resolved as random high-tier equip
+                treatQty = 1;
+                m.potionAward = "Supernal Armored Elixir";
+            }
+
+            return {
+                id: `weekly_${idx + 1}`,
+                type: m.type,
+                desc: `${m.label} (${target.toLocaleString()} ${m.unit})`,
+                current: 0,
+                target: target,
+                treat: treatName,
+                treatQty: treatQty,
+                potionAward: m.potionAward,
+                completed: false,
+                claimed: false
+            };
+        });
+    };
+
+    window.checkAndResetMissions = function() {
+            let now = Date.now();
+
+            // Fully Timezone-Aware PST/PDT Date Resolution
+            let ptString = new Date(now).toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
+            let ptDate = new Date(ptString);
+            let currentDayStr = ptDate.toLocaleDateString("en-US"); // e.g. "6/25/2026"
+
+            // Check Daily reset against absolute Pacific date string
+            if (!window.playerStats.lastDailyResetDayStr || window.playerStats.lastDailyResetDayStr !== currentDayStr) {
+                window.generateDailyMissions();
+                window.playerStats.lastDailyResetDayStr = currentDayStr;
+                window.playerStats.lastDailyResetTime = now;
+                window.playerStats.dailyRewardClaimed = false;
+                if (typeof window.pushLog === "function") window.pushLog("<span style='color:#2ecc71; font-weight:bold;'>📅 [SYSTEM] Daily Board refreshed! Reset at 12:00 AM PST/PDT. Complete all 6 for a grand treat.</span>");
+            }
+
+            // Check Weekly reset (Monday 12:00 AM PST/PDT)
+            let dayOfWeek = ptDate.getDay(); // 0 is Sunday, 1 is Monday...
+            let daysSinceMonday = (dayOfWeek + 6) % 7; // Days elapsed since last Monday
+            let lastMondayDate = new Date(ptDate);
+            lastMondayDate.setDate(ptDate.getDate() - daysSinceMonday);
+            let lastMondayStr = lastMondayDate.toLocaleDateString("en-US");
+
+            if (window.playerStats.prestigeCount > 0) {
+                if (!window.playerStats.lastWeeklyResetMondayStr || window.playerStats.lastWeeklyResetMondayStr !== lastMondayStr) {
+                    window.generateWeeklyMissions();
+                    window.playerStats.lastWeeklyResetMondayStr = lastMondayStr;
+                    window.playerStats.lastWeeklyResetTime = now;
+                    window.playerStats.weeklyRewardClaimed = false;
+                    if (typeof window.pushLog === "function") window.pushLog("<span style='color:#9b59b6; font-weight:bold;'>📅 [SYSTEM] Weekly Board refreshed! Reset Monday at 12:00 AM PST/PDT. Slay Rift targets and complete objectives.</span>");
+                }
+            } else {
+                window.playerStats.weeklyMissions = [];
+            }
+        };
+
+    window.progressMission = function(type, amount) {
+        if (window.isGamePaused) return;
+        let updated = false;
+
+        if (window.playerStats.dailyMissions) {
+            window.playerStats.dailyMissions.forEach(m => {
+                if (m.type === type && !m.completed) {
+                    m.current = Math.min(m.target, m.current + amount);
+                    if (m.current >= m.target) {
+                        m.completed = true;
+                        if (typeof window.pushHeaderToast === "function") {
+                            window.pushHeaderToast(`📅 Daily Done: ${m.desc}!`, "#2ecc71");
+                        }
+                    }
+                    updated = true;
+                }
+            });
+        }
+
+        if (window.playerStats.prestigeCount > 0 && window.playerStats.weeklyMissions) {
+            window.playerStats.weeklyMissions.forEach(m => {
+                if (m.type === type && !m.completed) {
+                    m.current = Math.min(m.target, m.current + amount);
+                    if (m.current >= m.target) {
+                        m.completed = true;
+                        if (typeof window.pushHeaderToast === "function") {
+                            window.pushHeaderToast(`📆 Weekly Done: ${m.desc}!`, "#9b59b6");
+                        }
+                    }
+                    updated = true;
+                }
+            });
+        }
+
+        if (updated) {
+            if (typeof window.updateUI === "function") window.updateUI();
+        }
+    };
 
 window.equippedSlots = { weapon: null, subweapon: null, helmet: null, chest: null, leggings: null, overall: null, boots: null, art1: null, art2: null, art3: null };
 window.inventory = { EQUIP: [], ARTIFACT: [], ETC: {}, USE: {} };

@@ -46,7 +46,11 @@ window.hardResetGame = function() {
 window.gainXp = function(amount, silent = false) {
     let expBonusMult = 1.0 + ((window.playerStats.prestigeUpgrades?.exp || 0) * 0.10);
 
-    if (window.equippedSlots.subweapon && window.equippedSlots.subweapon.isUniqueChronicle && !window.playerStats.isDungeonMode && !window.playerStats.isCrucibleMode) {
+        if (window.playerStats.xpPotionTimer > 0) {
+            expBonusMult += (window.playerStats.xpPotionStrength || 1.0);
+        }
+
+        if (window.equippedSlots.subweapon && window.equippedSlots.subweapon.isUniqueChronicle && !window.playerStats.isDungeonMode && !window.playerStats.isCrucibleMode) {
         let historicalPeakLvl = window.playerStats.historicalPeakLvl || window.playerStats.level;
         if (window.playerStats.level < Math.floor(historicalPeakLvl * 0.75)) {
             expBonusMult += 2.0;
@@ -60,6 +64,21 @@ window.gainXp = function(amount, silent = false) {
             }
         });
     }
+
+    // Account for Double XP Elixirs
+    if (window.playerStats.xpPotionTimer > 0) {
+        let potStrengthMultiplier = 1.0;
+        if (window.playerStats.unlockedAchievements && window.AchievementsData) {
+            window.playerStats.unlockedAchievements.forEach(id => {
+                let ach = window.AchievementsData.find(a => a.id === id);
+                if (ach && ach.stats && ach.stats.potStrengthPct) potStrengthMultiplier += ach.stats.potStrengthPct;
+            });
+        }
+        if (window.checkArtifactTrait("alchemist_alembic")) potStrengthMultiplier += 0.30;
+
+        expBonusMult += 1.0 * potStrengthMultiplier;
+    }
+
     amount = Math.ceil(amount * expBonusMult);
 
     window.playerStats.xp += amount;
@@ -463,9 +482,19 @@ window.loadGame = function() {
                 }
             }
             if (window.playerStats.atkPotionTimer === undefined) window.playerStats.atkPotionTimer = 0;
-            if (window.playerStats.hpPotionTimer === undefined) window.playerStats.hpPotionTimer = 0;
-            if (window.playerStats.defPotionTimer === undefined) window.playerStats.defPotionTimer = 0;
-            if (window.playerStats.hastePotionTimer === undefined) window.playerStats.hastePotionTimer = 0;
+                        if (window.playerStats.hpPotionTimer === undefined) window.playerStats.hpPotionTimer = 0;
+                        if (window.playerStats.defPotionTimer === undefined) window.playerStats.defPotionTimer = 0;
+                        if (window.playerStats.hastePotionTimer === undefined) window.playerStats.hastePotionTimer = 0;
+                        if (window.playerStats.atkPotionStrength === undefined) window.playerStats.atkPotionStrength = 0.10;
+                        if (window.playerStats.hpPotionStrength === undefined) window.playerStats.hpPotionStrength = 0.10;
+                        if (window.playerStats.defPotionStrength === undefined) window.playerStats.defPotionStrength = 0.10;
+                        if (window.playerStats.hastePotionStrength === undefined) window.playerStats.hastePotionStrength = 1;
+                        if (window.playerStats.xpPotionTimer === undefined) window.playerStats.xpPotionTimer = 0;
+                        if (window.playerStats.xpPotionStrength === undefined) window.playerStats.xpPotionStrength = 1.0;
+                        if (window.playerStats.dropPotionTimer === undefined) window.playerStats.dropPotionTimer = 0;
+                        if (window.playerStats.dropPotionStrength === undefined) window.playerStats.dropPotionStrength = 1.0;
+                        if (window.playerStats.qlyPotionTimer === undefined) window.playerStats.qlyPotionTimer = 0;
+                        if (window.playerStats.qlyPotionStrength === undefined) window.playerStats.qlyPotionStrength = 0.50;
 
             if (window.playerStats.unlockedAchievements === undefined) window.playerStats.unlockedAchievements = [];
             if (window.playerStats.totalGoldEarned === undefined) window.playerStats.totalGoldEarned = window.playerStats.coins || 0;
@@ -486,13 +515,15 @@ window.loadGame = function() {
                         }
 
             if (window.playerStats.prestigePoints === undefined) window.playerStats.prestigePoints = 0;
-            if (window.playerStats.prestigeUpgrades === undefined) {
-                window.playerStats.prestigeUpgrades = { bag: 0, gold: 0, exp: 0, drop: 0, atk: 0, fort: 0, fairy: 0 };
-            } else {
-                window.playerStats.prestigeUpgrades.atk = window.playerStats.prestigeUpgrades.atk || 0;
-                window.playerStats.prestigeUpgrades.fort = window.playerStats.prestigeUpgrades.fort || 0;
-                window.playerStats.prestigeUpgrades.fairy = window.playerStats.prestigeUpgrades.fairy || 0;
-            }
+                        if (window.playerStats.prestigeUpgrades === undefined) {
+                            window.playerStats.prestigeUpgrades = { bag: 0, gold: 0, exp: 0, drop: 0, atk: 0, fort: 0, fairy: 0 };
+                        } else {
+                            window.playerStats.prestigeUpgrades.atk = window.playerStats.prestigeUpgrades.atk || 0;
+                            window.playerStats.prestigeUpgrades.fort = window.playerStats.prestigeUpgrades.fort || 0;
+                            window.playerStats.prestigeUpgrades.fairy = window.playerStats.prestigeUpgrades.fairy || 0;
+                        }
+                        if (window.playerStats.missionTokens === undefined) window.playerStats.missionTokens = 0;
+                        if (window.playerStats.missionUpgrades === undefined) window.playerStats.missionUpgrades = { gold: 0, atk: 0, hp: 0 };
             if (window.playerStats.prestigeCount === undefined) window.playerStats.prestigeCount = 0;
                         if (window.playerStats.lifetimePeakStage === undefined) window.playerStats.lifetimePeakStage = window.playerStats.maxStage || 1;
                         if (window.playerStats.highestRiftLevel === undefined) window.playerStats.highestRiftLevel = 0;
@@ -503,8 +534,9 @@ window.loadGame = function() {
             window.playerStats.prestigeApproachTimer = 0;
 
             if (window.playerStats.vendingQLevel === undefined) window.playerStats.vendingQLevel = 0;
-            if (window.playerStats.shopQLevel === undefined) window.playerStats.shopQLevel = 0;
-            if (window.playerStats.globalQLevel === undefined) window.playerStats.globalQLevel = 0;
+                        if (window.playerStats.vendingPity === undefined) window.playerStats.vendingPity = 0;
+                        if (window.playerStats.shopQLevel === undefined) window.playerStats.shopQLevel = 0;
+                        if (window.playerStats.globalQLevel === undefined) window.playerStats.globalQLevel = 0;
             if (window.playerStats.fairiesClicked === undefined) window.playerStats.fairiesClicked = 0;
             if (window.playerStats.deathCount === undefined) window.playerStats.deathCount = 0;
             if (window.playerStats.stickyCanvas === undefined) window.playerStats.stickyCanvas = true;
@@ -521,10 +553,18 @@ window.loadGame = function() {
             if (window.playerStats.activityTimer === undefined) window.playerStats.activityTimer = 0;
 
             window.playerStats.fairyClicksWindow = window.playerStats.fairyClicksWindow || [];
-                        window.playerStats.canvasClicksWindow = window.playerStats.canvasClicksWindow || [];
-                        window.playerStats.recentHeals = window.playerStats.recentHeals || []; // Safe back-compatibility initialization
+                                    window.playerStats.canvasClicksWindow = window.playerStats.canvasClicksWindow || [];
+                                    window.playerStats.recentHeals = window.playerStats.recentHeals || []; // Safe back-compatibility initialization
 
-                        if (window.inventory.ETC["Iron Scrap"]) { if(typeof window.addEtcDrop === "function") window.addEtcDrop("Monster Soul", window.inventory.ETC["Iron Scrap"]); delete window.inventory.ETC["Iron Scrap"]; }
+                                    if (window.playerStats.dailyMissions === undefined) window.playerStats.dailyMissions = [];
+                                    if (window.playerStats.weeklyMissions === undefined) window.playerStats.weeklyMissions = [];
+                                    if (window.playerStats.lastDailyResetTime === undefined) window.playerStats.lastDailyResetTime = 0;
+                                    if (window.playerStats.lastWeeklyResetTime === undefined) window.playerStats.lastWeeklyResetTime = 0;
+                                    if (window.playerStats.dailyRewardClaimed === undefined) window.playerStats.dailyRewardClaimed = false;
+                                    if (window.playerStats.weeklyRewardClaimed === undefined) window.playerStats.weeklyRewardClaimed = false;
+                                    if (typeof window.checkAndResetMissions === "function") window.checkAndResetMissions();
+
+                                    if (window.inventory.ETC["Iron Scrap"]) { if(typeof window.addEtcDrop === "function") window.addEtcDrop("Monster Soul", window.inventory.ETC["Iron Scrap"]); delete window.inventory.ETC["Iron Scrap"]; }
             if (window.inventory.ETC["Sticky Gel"]) { if(typeof window.addEtcDrop === "function") window.addEtcDrop("Monster Soul", window.inventory.ETC["Sticky Gel"]); delete window.inventory.ETC["Sticky Gel"]; }
 
             let box = document.getElementById('log-box');
@@ -565,6 +605,24 @@ window.loadGame = function() {
     if (typeof window.refreshMarketShopIfNeeded === "function") window.refreshMarketShopIfNeeded();
 };
 
+window.adjustCanvasDimensions = function() {
+    let cvs = window.canvas || document.getElementById('gameCanvas');
+    if (!cvs) return;
+    const isLandscapeMobile = window.innerHeight <= 550 && window.innerWidth > window.innerHeight;
+    const isMobile = window.innerWidth <= 600;
+
+    if (isLandscapeMobile) {
+        cvs.width = 480;
+        cvs.height = 280;
+    } else if (isMobile) {
+        cvs.width = 420;
+        cvs.height = 320;
+    } else {
+        cvs.width = 750;
+        cvs.height = 320;
+    }
+};
+
 window.onload = function() {
     canvas = document.getElementById('gameCanvas');
     if (!canvas) return;
@@ -574,15 +632,15 @@ window.onload = function() {
     window.canvas = canvas;
     window.ctx = ctx;
 
-    // Set correct responsive canvas size
-    const isMobile = window.innerWidth <= 600;
-    if (isMobile) {
-        canvas.width = 420;
-        canvas.height = 320;
-    } else {
-        canvas.width = 750;
-        canvas.height = 320;
-    }
+    window.adjustCanvasDimensions();
+    window.addEventListener('resize', () => {
+        window.adjustCanvasDimensions();
+        if (typeof window.updateUI === "function") window.updateUI();
+    });
+    window.addEventListener('orientationchange', () => {
+        window.adjustCanvasDimensions();
+        if (typeof window.updateUI === "function") window.updateUI();
+    });
 
     window.loadGame();
         window.updateStickyCanvasStyle();
@@ -978,12 +1036,18 @@ function update() {
     }
 
     if (window.playerStats.frenzyTimer > 0) window.playerStats.frenzyTimer--;
-    if (window.playerStats.adrenalineTimer > 0) window.playerStats.adrenalineTimer--;
-    if (window.playerStats.tempestCooldown > 0) window.playerStats.tempestCooldown--;
-    if (window.playerStats.atkPotionTimer > 0) window.playerStats.atkPotionTimer--;
-    if (window.playerStats.hpPotionTimer > 0) window.playerStats.hpPotionTimer--;
-    if (window.playerStats.defPotionTimer > 0) window.playerStats.defPotionTimer--;
-    if (window.playerStats.hastePotionTimer > 0) window.playerStats.hastePotionTimer--;
+        if (window.playerStats.adrenalineTimer > 0) window.playerStats.adrenalineTimer--;
+        if (window.playerStats.tempestCooldown > 0) window.playerStats.tempestCooldown--;
+        if (window.playerStats.atkPotionTimer > 0) window.playerStats.atkPotionTimer--;
+        if (window.playerStats.hpPotionTimer > 0) window.playerStats.hpPotionTimer--;
+        if (window.playerStats.defPotionTimer > 0) window.playerStats.defPotionTimer--;
+        if (window.playerStats.hastePotionTimer > 0) window.playerStats.hastePotionTimer--;
+        if (window.playerStats.xpPotionTimer > 0) window.playerStats.xpPotionTimer--;
+        if (window.playerStats.dropPotionTimer > 0) window.playerStats.dropPotionTimer--;
+        if (window.playerStats.qlyPotionTimer > 0) window.playerStats.qlyPotionTimer--;
+        if (window.playerStats.xpPotionTimer > 0) window.playerStats.xpPotionTimer--;
+        if (window.playerStats.dropPotionTimer > 0) window.playerStats.dropPotionTimer--;
+        if (window.playerStats.qlyPotionTimer > 0) window.playerStats.qlyPotionTimer--;
 
     if (window.hero.attackTimer > 0) {
         window.hero.attackTimer--;
@@ -992,12 +1056,15 @@ function update() {
     }
 
     window.playerStats.sessionPlaytime = (window.playerStats.sessionPlaytime || 0) + (1000 / 60);
-    if (window.playerStats.isDungeonMode || window.playerStats.isCrucibleMode) {
-        window.playerStats.activityTimer = (window.playerStats.activityTimer || 0) + (1000 / 60);
-        if (window.playerStats.activityTimer >= 600000) window.playerStats.hasTriggeredAethericRecharge = true;
-    } else { window.playerStats.activityTimer = 0; }
+        if (window.playerStats.isDungeonMode || window.playerStats.isCrucibleMode) {
+            window.playerStats.activityTimer = (window.playerStats.activityTimer || 0) + (1000 / 60);
+            if (window.playerStats.activityTimer >= 600000) window.playerStats.hasTriggeredAethericRecharge = true;
+        } else { window.playerStats.activityTimer = 0; }
 
-    window.logicClock++;
+        window.logicClock++;
+        if (window.logicClock % 60 === 0) {
+            if (typeof window.checkAndResetMissions === "function") window.checkAndResetMissions();
+        }
 
     if (window.equippedSlots.weapon && window.equippedSlots.weapon.isUniqueSingularity) {
         if (window.playerStats.singularityTimer === undefined) window.playerStats.singularityTimer = 1800;
@@ -1732,11 +1799,12 @@ window.handleMobDeath = function() {
     if (window.mob.isRare) baseCoin *= 4;
 
     let coinYield = Math.ceil(baseCoin * p.gold);
-    window.playerStats.coins += coinYield;
-    window.playerStats.totalGoldEarned = (window.playerStats.totalGoldEarned || 0) + coinYield;
+        window.playerStats.coins += coinYield;
+        window.playerStats.totalGoldEarned = (window.playerStats.totalGoldEarned || 0) + coinYield;
+        if (typeof window.progressMission === "function") window.progressMission('gold', coinYield);
 
-    // Peak single gold drop check
-    window.playerStats.peakSingleGoldDrop = Math.max(window.playerStats.peakSingleGoldDrop || 0, coinYield);
+        // Peak single gold drop check
+        window.playerStats.peakSingleGoldDrop = Math.max(window.playerStats.peakSingleGoldDrop || 0, coinYield);
 
     if (window.playerStats.runGold !== undefined) {
         window.playerStats.runGold += coinYield;
@@ -1851,27 +1919,52 @@ window.handleMobDeath = function() {
                     window.playerStats.activeRift = null;
                     window.playerStats.activeRiftLevel = 1;
 
-                    if (bossType === 'chronos') {
-                if (Math.random() < 0.10) { if (typeof window.addEtcDrop === "function") window.addEtcDrop("Gacha Key", 1); }
-                if (Math.random() < 0.10) { if (typeof window.addEtcDrop === "function") window.addEtcDrop("Eridium Shard", 1); }
-                if (Math.random() < 0.15) { if (typeof window.addEtcDrop === "function") window.addEtcDrop("Legendary Scrap", 1); }
-                if (typeof window.pushLog === "function") window.pushLog("<span style='color:#f1c40f; font-weight:bold;'>[VICTORY] Chronos Arbitrator defeated! Salvaged temporal components.</span>");
-                if (typeof window.pushHeaderToast === "function") window.pushHeaderToast("⏳ Chronos Hunt Successful!", "#f1c40f");
-            } else if (bossType === 'nexus') {
-                if (Math.random() < 0.10) { if (typeof window.addEtcDrop === "function") window.addEtcDrop("Gacha Key", 1); }
-                if (Math.random() < 0.05) { if (typeof window.addEtcDrop === "function") window.addEtcDrop("Catalyst Core", 1); }
-                if (Math.random() < 0.15) { if (typeof window.addEtcDrop === "function") window.addEtcDrop("Mythic Scrap", 1); }
-                if (typeof window.pushLog === "function") window.pushLog("<span style='color:#ff007f; font-weight:bold;'>[VICTORY] Nexus Overseer purged! Harvested raw components.</span>");
-                if (typeof window.pushHeaderToast === "function") window.pushHeaderToast("👾 Nexus Purge Successful!", "#ff007f");
-            } else {
-                if (Math.random() < 0.10) { if (typeof window.addEtcDrop === "function") window.addEtcDrop("Gacha Key", 1); }
-                if (Math.random() < 0.10) { if (typeof window.addEtcDrop === "function") window.addEtcDrop("Eridium Shard", 1); }
-                if (Math.random() < 0.15) { if (typeof window.addEtcDrop === "function") window.addEtcDrop("Legendary Scrap", 1); }
-                if (typeof window.pushLog === "function") window.pushLog("<span style='color:#3498db; font-weight:bold;'>[VICTORY] Aegis Goliath defeated! Obtained protective plates.</span>");
-                if (typeof window.pushHeaderToast === "function") window.pushHeaderToast("🛡️ Aegis Hunt Successful!", "#3498db");
-            }
-            window.playerStats.riftGuardiansSlain = (window.playerStats.riftGuardiansSlain || 0) + 1;
-                    } else if (window.mob.type === "boss") {
+                    // Highly Scaled & Rewarding Loot Matrix for challenging higher Level Reality Rifts
+                    let keysEarned = 1 + Math.floor(riftLvl / 10);
+                    let shardsEarned = 1 + Math.floor(riftLvl / 3);
+
+                    let coreEarned = Math.floor(riftLvl / 5);
+                    if (Math.random() < (riftLvl % 5) * 0.20) coreEarned++;
+
+                    let essenceEarned = Math.floor(riftLvl / 6);
+                    if (Math.random() < (riftLvl % 6) * 0.15) essenceEarned++;
+
+                    let mythicScrapsEarned = Math.floor(riftLvl / 3);
+                    let legendaryScrapsEarned = Math.floor(riftLvl / 2);
+
+                    if (typeof window.addEtcDrop === "function") {
+                        if (keysEarned > 0) window.addEtcDrop("Gacha Key", keysEarned);
+                        if (shardsEarned > 0) window.addEtcDrop("Eridium Shard", shardsEarned);
+                        if (coreEarned > 0) window.addEtcDrop("Catalyst Core", coreEarned);
+                        if (essenceEarned > 0) window.addEtcDrop("Astral Essence", essenceEarned);
+                        if (mythicScrapsEarned > 0) window.addEtcDrop("Mythic Scrap", mythicScrapsEarned);
+                        if (legendaryScrapsEarned > 0) window.addEtcDrop("Legendary Scrap", legendaryScrapsEarned);
+                    }
+
+                    // Pushing high Rift Tiers guarantees high-rarity loot
+                    let minStars = Math.min(5, Math.floor(riftLvl / 4));
+                    if (typeof window.rollEquipmentDrop === "function") {
+                        window.rollEquipmentDrop(true, false, minStars, false);
+                    }
+
+                    let nameLabel = bossType === 'chronos' ? 'Chronos Arbitrator' : (bossType === 'nexus' ? 'Nexus Overseer' : 'Aegis Goliath');
+                    let colorLabel = bossType === 'chronos' ? '#f1c40f' : (bossType === 'nexus' ? '#ff007f' : '#3498db');
+                    let iconLabel = bossType === 'chronos' ? '⏳' : (bossType === 'nexus' ? '👾' : '🛡️');
+
+                    let reportText = `${keysEarned}x Key, ${shardsEarned}x Eridium Shard`;
+                    if (coreEarned > 0) reportText += `, ${coreEarned}x Catalyst Core`;
+                    if (essenceEarned > 0) reportText += `, ${essenceEarned}x Astral Essence`;
+
+                    if (typeof window.pushLog === "function") {
+                        window.pushLog(`<span style='color:${colorLabel}; font-weight:bold;'>[VICTORY] Slayed Level ${riftLvl} ${nameLabel}! Salvaged temporal matrix components: ${reportText}.</span>`);
+                    }
+                    if (typeof window.pushHeaderToast === "function") {
+                        window.pushHeaderToast(`${iconLabel} Level ${riftLvl} Hunt Successful!`, colorLabel);
+                    }
+
+                    window.playerStats.riftGuardiansSlain = (window.playerStats.riftGuardiansSlain || 0) + 1;
+                    if (typeof window.progressMission === "function") window.progressMission('rifts', 1);
+                } else if (window.mob.type === "boss") {
                                             // Soft-scaling drops for normal Campaign Bosses based on stage progression
                                             let activeStage = window.playerStats.stage;
                                             let currentLvlMult = 1.0 + (activeStage / 300); // Gradual scaling
@@ -1921,10 +2014,19 @@ window.handleMobDeath = function() {
                                         }
 
     window.playerStats.totalLifetimeKills++;
-    if (window.playerStats.runKills !== undefined) window.playerStats.runKills++;
+        if (window.playerStats.runKills !== undefined) window.playerStats.runKills++;
 
-    // Handle Prestige Boss death checks and skip normal campaign rewards
-    if (window.mob && window.mob.type === "prestige_boss") {
+        if (window.mob && window.mob.type !== "prestige_boss") {
+            if (typeof window.progressMission === "function") {
+                window.progressMission('kills', 1);
+                if (window.mob.isRare) {
+                    window.progressMission('rares', 1);
+                }
+            }
+        }
+
+        // Handle Prestige Boss death checks and skip normal campaign rewards
+        if (window.mob && window.mob.type === "prestige_boss") {
         if (typeof window.triggerPrestigeAscension === "function") window.triggerPrestigeAscension();
         return;
     }
@@ -1941,17 +2043,19 @@ window.handleMobDeath = function() {
     }
 
     if (window.playerStats.isDungeonMode) {
-        if (window.mob.type === "dungeon_boss") {
-            let dType = window.playerStats.currentDungeon;
-            window.playerStats.currentDungeonStage[dType]++;
-            let nextStg = window.playerStats.currentDungeonStage[dType];
-            window.playerStats.dungeonPeaks[dType] = Math.max(window.playerStats.dungeonPeaks[dType] || 1, nextStg);
-            window.playerStats.killCount = 0;
+            if (window.mob.type === "dungeon_boss") {
+                let dType = window.playerStats.currentDungeon;
+                window.playerStats.currentDungeonStage[dType]++;
+                let nextStg = window.playerStats.currentDungeonStage[dType];
+                window.playerStats.dungeonPeaks[dType] = Math.max(window.playerStats.dungeonPeaks[dType] || 1, nextStg);
+                window.playerStats.killCount = 0;
 
-            if (typeof window.pushLog === "function") window.pushLog(`<span style='color:#2ecc71; font-weight:bold;'>[DUNGEON STAGE CLEAR] Advanced to Dungeon Stage ${nextStg}!</span>`);
-        } else {
-            window.playerStats.killCount++;
-        }
+                if (typeof window.progressMission === "function") window.progressMission('dungeons', 1);
+
+                if (typeof window.pushLog === "function") window.pushLog(`<span style='color:#2ecc71; font-weight:bold;'>[DUNGEON STAGE CLEAR] Advanced to Dungeon Stage ${nextStg}!</span>`);
+            } else {
+                window.playerStats.killCount++;
+            }
     } else if (isBoss) {
         if (!window.playerStats.isUberBoss) {
             let oldMax = window.playerStats.maxStage;
@@ -2288,11 +2392,21 @@ window.useItem = function(itemName) {
         window.playerStats.defPotionTimer = finalDuration; window.playerStats.defPotionStrength = itemName.includes("Supernal") ? 0.35 : (itemName.includes("Greater") ? 0.20 : 0.10);
         consumeUseItem(itemName); window.pushLog(`<span style='color:#3498db; font-weight:bold;'>[USE] Consumed ${itemName}! Defense boosted for ${Math.floor(finalDuration/60)}s.</span>`);
     } else if (itemName.includes("Haste Elixir")) {
-        window.playerStats.hastePotionTimer = finalDuration; window.playerStats.hastePotionStrength = itemName.includes("Supernal") ? 3 : (itemName.includes("Greater") ? 2 : 1);
-        consumeUseItem(itemName); window.pushLog(`<span style='color:#f1c40f; font-weight:bold;'>[USE] Consumed ${itemName}! Speed boosted for ${Math.floor(finalDuration/60)}s.</span>`);
-    }
+            window.playerStats.hastePotionTimer = finalDuration; window.playerStats.hastePotionStrength = itemName.includes("Supernal") ? 3 : (itemName.includes("Greater") ? 2 : 1);
+            consumeUseItem(itemName); window.pushLog(`<span style='color:#f1c40f; font-weight:bold;'>[USE] Consumed ${itemName}! Speed boosted for ${Math.floor(finalDuration/60)}s.</span>`);
+        } else if (itemName.includes("XP Elixir")) {
+            window.playerStats.xpPotionTimer = finalDuration; window.playerStats.xpPotionStrength = itemName.includes("Supernal") ? 1.0 : (itemName.includes("Greater") ? 0.50 : 0.25);
+            consumeUseItem(itemName); window.pushLog(`<span style='color:#9b59b6; font-weight:bold;'>[USE] Consumed ${itemName}! EXP gain rates boosted for ${Math.floor(finalDuration/60)}s.</span>`);
+        } else if (itemName.includes("Drop Elixir")) {
+            window.playerStats.dropPotionTimer = finalDuration; window.playerStats.dropPotionStrength = itemName.includes("Supernal") ? 1.0 : (itemName.includes("Greater") ? 0.50 : 0.25);
+            consumeUseItem(itemName); window.pushLog(`<span style='color:#2ecc71; font-weight:bold;'>[USE] Consumed ${itemName}! Drop rate boosted for ${Math.floor(finalDuration/60)}s.</span>`);
+        } else if (itemName.includes("Quality Elixir")) {
+            window.playerStats.qlyPotionTimer = finalDuration; window.playerStats.qlyPotionStrength = itemName.includes("Supernal") ? 0.50 : (itemName.includes("Greater") ? 0.25 : 0.12);
+            consumeUseItem(itemName); window.pushLog(`<span style='color:#e84393; font-weight:bold;'>[USE] Consumed ${itemName}! Drop Quality boosted for ${Math.floor(finalDuration/60)}s.</span>`);
+        }
 
-    let pAfter = window.resolvePlayerStats();
+        let pAfter = window.resolvePlayerStats();
+        window.playerStats.currentHp = Math.max(1, Math.min(pAfter.maxHp, Math.floor((window.playerStats.currentHp / pBefore.maxHp) * pAfter.maxHp)));
     window.playerStats.currentHp = Math.max(1, Math.min(pAfter.maxHp, Math.floor((window.playerStats.currentHp / pBefore.maxHp) * pAfter.maxHp)));
     setTimeout(() => { window.updateUI(); window.renderInventory(); window.saveGame(); }, 50);
 };
@@ -2318,8 +2432,9 @@ window.triggerFairyLoot = function(targetFairy) {
     window.activeFairies = window.activeFairies.filter(f => f.id !== targetFairy.id);
     window.SoundManager.play('fairy');
     window.playerStats.fairiesClicked = (window.playerStats.fairiesClicked || 0) + 1;
+        if (typeof window.progressMission === "function") window.progressMission('fairies', 1);
 
-    for (let i = 0; i < 15; i++) {
+        for (let i = 0; i < 15; i++) {
         window.particles.push({
             x: spawnX, y: spawnY, vx: window.randFloat(-4, 4), vy: window.randFloat(-6, -1),
             radius: window.randFloat(2, 4), color: targetFairy.color || "#f1c40f", alpha: 1, life: window.randInt(25, 45)
@@ -2334,12 +2449,13 @@ window.triggerFairyLoot = function(targetFairy) {
         }
 
     if (Math.random() < 0.20) {
-        let goldYield = Math.floor((100 + (window.playerStats.stage * 35)) * p.gold);
-        window.playerStats.coins += goldYield;
-        if (window.playerStats.runGold !== undefined) window.playerStats.runGold += goldYield; else window.playerStats.runGold = goldYield;
-        window.effects.push({ x: spawnX, y: spawnY - 10, text: `+${goldYield} Gold!`, color: "#f1c40f", life: 80 });
-        return;
-    }
+            let goldYield = Math.floor((100 + (window.playerStats.stage * 35)) * p.gold);
+            window.playerStats.coins += goldYield;
+            if (window.playerStats.runGold !== undefined) window.playerStats.runGold += goldYield; else window.playerStats.runGold = goldYield;
+            if (typeof window.progressMission === "function") window.progressMission('gold', goldYield);
+            window.effects.push({ x: spawnX, y: spawnY - 10, text: `+${goldYield} Gold!`, color: "#f1c40f", life: 80 });
+            return;
+        }
 
     let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
     let chosenType = types[Math.floor(Math.random() * types.length)];

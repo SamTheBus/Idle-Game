@@ -20,7 +20,7 @@
                 <button onclick="window.toggleDungeonMenu()" class="nav-btn">🏰 Activities ▼</button>
                 <div id="dungeon-menu" style="display: none; position: absolute; top: 35px; left: 0; background: #151515; border: 1px solid #444; border-radius: 6px; padding: 12px; width: 260px; z-index: 10000; box-shadow: 0 4px 15px rgba(0,0,0,0.9);">
                     <div style="color: #f1c40f; font-weight: bold; margin-bottom: 8px; font-size: 14px; text-align:center; border-bottom:1px solid #333; padding-bottom:5px;">🏰 Infinite Dungeons</div>
-                    
+
                     <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; align-items:center;">
                         <span style="color:#3498db; font-weight:bold;">⚔️ Equip: <span id="dk-equip">3</span>/3</span>
                         <span id="dt-equip" style="color:#aaa;">(Full)</span>
@@ -30,7 +30,7 @@
                         <span>🏁 Checkpoint: Stage <span id="dc-equip">1</span></span>
                     </div>
                     <button onclick="window.enterDungeon('equip')" style="width: 100%; background: #3498db; color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; margin-bottom:12px;">Enter Equipment Dungeon</button>
-                    
+
                     <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; align-items:center;">
                         <span style="color:#f1c40f; font-weight:bold;">💰 Gold: <span id="dk-gold">3</span>/3</span>
                         <span id="dt-gold" style="color:#aaa;">(Full)</span>
@@ -40,7 +40,7 @@
                         <span>🏁 Checkpoint: Stage <span id="dc-gold">1</span></span>
                     </div>
                     <button onclick="window.enterDungeon('gold')" style="width: 100%; background: #f1c40f; color: #111; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; margin-bottom:12px;">Enter Gold Mine Caverns</button>
-                    
+
                     <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px; align-items:center;">
                         <span style="color:#2ecc71; font-weight:bold;">📦 Mats: <span id="dk-mat">3</span>/3</span>
                         <span id="dt-mat" style="color:#aaa;">(Full)</span>
@@ -61,33 +61,11 @@
                 </div>
             </div>
 
-            <div style="position: relative;">
-                <button onclick="window.toggleAudioMenu()" class="nav-btn">🔊 Sound ▼</button>
-                <div id="audio-menu" style="display: none; position: absolute; top: 35px; left: 0; background: #151515; border: 1px solid #444; border-radius: 6px; padding: 12px; width: 220px; z-index: 10000; box-shadow: 0 4px 15px rgba(0,0,0,0.9);">
-                    <div style="color: #f1c40f; font-weight: bold; margin-bottom: 10px; font-size: 14px; text-align:center; border-bottom:1px solid #333; padding-bottom:5px;">🔊 Sound Control</div>
-
-                    <div style="margin-bottom: 10px;">
-                        <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
-                            <label for="slider-vol-master" style="color:#aaa;">Master Vol:</label>
-                            <span id="vol-master-label" style="color:#3498db; font-weight:bold;">50%</span>
-                        </div>
-                        <input type="range" id="slider-vol-master" min="0" max="1" step="0.05" value="0.5" oninput="window.changeVolume('master', this.value)" style="width: 100%; background:#333; outline:none; height:4px; border-radius:2px; appearance:none; cursor:pointer;">
-                    </div>
-
-                    <div style="margin-bottom: 12px;">
-                        <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
-                            <label for="slider-vol-sfx" style="color:#aaa;">SFX Vol:</label>
-                            <span id="vol-sfx-label" style="color:#2ecc71; font-weight:bold;">80%</span>
-                        </div>
-                        <input type="range" id="slider-vol-sfx" min="0" max="1" step="0.05" value="0.8" oninput="window.changeVolume('sfx', this.value)" style="width: 100%; background:#333; outline:none; height:4px; border-radius:2px; appearance:none; cursor:pointer;">
-                    </div>
-
-                    <button id="btn-audio-mute" onclick="window.toggleMute()" style="width: 100%; background: #c0392b; color: white; border: none; padding: 6px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; transition: background 0.2s;">Mute Audio</button>
-                </div>
-            </div>
+            <!-- Elevated Glowing Top Panel Action Toggles -->
+            <button id="btn-missions-top" class="nav-btn" onclick="window.toggleMissions()" style="background: linear-gradient(135deg, #10b981, #059669); border-color: #34d399; box-shadow: 0 0 10px rgba(16, 185, 129, 0.45); font-weight: bold;">📅 Missions</button>
+            <button id="btn-achievements-top" class="nav-btn" onclick="window.toggleAchievements()" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-color: #a78bfa; box-shadow: 0 0 10px rgba(139, 92, 246, 0.45); font-weight: bold;">🏆 Trophies</button>
         </div>
         <div class="brand-title">SAQ: Slaying & Questing</div>
-        <div class="instruction-badge">Spacebar / Click to Slash!</div>
     </div>
 
     <!-- Interface Tooltips -->
@@ -422,7 +400,32 @@
         <!-- Action Toggles (Right Side) -->
         <div style="display: flex; gap: 4px; justify-content: flex-end; flex-wrap: wrap;">
             <button id="btn-leave-activity" class="btn-toggle" onclick="window.leaveActivity()" style="background: #c0392b; display: none; color: white; border-color: #f1c40f; font-size: 10px; padding: 6px 10px;">🏃 Leave</button>
-            <button id="btn-achievements" class="btn-toggle" onclick="window.toggleAchievements()" style="background: #8e44ad; color: white; font-size: 10px; padding: 6px 10px;">🏆 Trophies</button>
+
+            <div style="position: relative;">
+                <button onclick="window.toggleAudioMenu()" class="btn-toggle" style="background: #1e293b; color: white; font-size: 10px; padding: 6px 10px;">🔊 Sound ▼</button>
+                <div id="audio-menu" style="display: none; position: absolute; bottom: 35px; right: 0; background: #151515; border: 1px solid #444; border-radius: 6px; padding: 12px; width: 220px; z-index: 10000; box-shadow: 0 -4px 15px rgba(0,0,0,0.9);">
+                    <div style="color: #f1c40f; font-weight: bold; margin-bottom: 10px; font-size: 14px; text-align:center; border-bottom:1px solid #333; padding-bottom:5px;">🔊 Sound Control</div>
+
+                    <div style="margin-bottom: 10px;">
+                        <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
+                            <label for="slider-vol-master" style="color:#aaa;">Master Vol:</label>
+                            <span id="vol-master-label" style="color:#3498db; font-weight:bold;">50%</span>
+                        </div>
+                        <input type="range" id="slider-vol-master" min="0" max="1" step="0.05" value="0.5" oninput="window.changeVolume('master', this.value)" style="width: 100%; background:#333; outline:none; height:4px; border-radius:2px; appearance:none; cursor:pointer;">
+                    </div>
+
+                    <div style="margin-bottom: 12px;">
+                        <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
+                            <label for="slider-vol-sfx" style="color:#aaa;">SFX Vol:</label>
+                            <span id="vol-sfx-label" style="color:#2ecc71; font-weight:bold;">80%</span>
+                        </div>
+                        <input type="range" id="slider-vol-sfx" min="0" max="1" step="0.05" value="0.8" oninput="window.changeVolume('sfx', this.value)" style="width: 100%; background:#333; outline:none; height:4px; border-radius:2px; appearance:none; cursor:pointer;">
+                    </div>
+
+                    <button id="btn-audio-mute" onclick="window.toggleMute()" style="width: 100%; background: #c0392b; color: white; border: none; padding: 6px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; transition: background 0.2s;">Mute Audio</button>
+                </div>
+            </div>
+
             <button id="btn-pause" class="btn-toggle" onclick="window.togglePause()" style="background: #34495e; color: white; font-size: 10px; padding: 6px 10px;">▶️ Pause</button>
             <button id="toggle-sticky" class="btn-toggle active" onclick="window.toggleStickyCanvas()" style="font-size: 10px; padding: 6px 10px;">Sticky: ON</button>
             <button id="toggle-auto" class="btn-toggle active" onclick="window.toggleAuto()" style="font-size: 10px; padding: 6px 10px;">Auto: ON</button>

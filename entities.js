@@ -2977,14 +2977,17 @@ window.draw = function() {
 
     // 10. BUFF ICONS & DPS HUD
     let pStats = window.resolvePlayerStats(); let activeBuffsList = [];
-    let potDurationMax = 18000 * (1 + pStats.int * 0.001); let normalBuffMax = window.checkArtifactTrait("extend_buffs") ? 900 : 600;
+        let potDurationMax = 18000 * (1 + pStats.int * 0.001); let normalBuffMax = window.checkArtifactTrait("extend_buffs") ? 900 : 600;
 
-    if (window.playerStats.frenzyTimer > 0) activeBuffsList.push({ icon: "🔥", timer: window.playerStats.frenzyTimer, max: normalBuffMax, color: "#e67e22" });
-    if (window.playerStats.adrenalineTimer > 0) activeBuffsList.push({ icon: "⚡", timer: window.playerStats.adrenalineTimer, max: normalBuffMax, color: "#f1c40f" });
-    if (window.playerStats.atkPotionTimer > 0) activeBuffsList.push({ icon: "⚔️", timer: window.playerStats.atkPotionTimer, max: potDurationMax, color: "#2ecc71" });
-    if (window.playerStats.hpPotionTimer > 0) activeBuffsList.push({ icon: "❤️", timer: window.playerStats.hpPotionTimer, max: potDurationMax, color: "#e74c3c" });
-    if (window.playerStats.defPotionTimer > 0) activeBuffsList.push({ icon: "🛡️", timer: window.playerStats.defPotionTimer, max: potDurationMax, color: "#3498db" });
-    if (window.playerStats.hastePotionTimer > 0) activeBuffsList.push({ icon: "👟", timer: window.playerStats.hastePotionTimer, max: potDurationMax, color: "#f1c40f" });
+        if (window.playerStats.frenzyTimer > 0) activeBuffsList.push({ icon: "🔥", timer: window.playerStats.frenzyTimer, max: normalBuffMax, color: "#e67e22" });
+        if (window.playerStats.adrenalineTimer > 0) activeBuffsList.push({ icon: "⚡", timer: window.playerStats.adrenalineTimer, max: normalBuffMax, color: "#f1c40f" });
+        if (window.playerStats.atkPotionTimer > 0) activeBuffsList.push({ icon: "⚔️", timer: window.playerStats.atkPotionTimer, max: potDurationMax, color: "#2ecc71" });
+        if (window.playerStats.hpPotionTimer > 0) activeBuffsList.push({ icon: "❤️", timer: window.playerStats.hpPotionTimer, max: potDurationMax, color: "#e74c3c" });
+        if (window.playerStats.defPotionTimer > 0) activeBuffsList.push({ icon: "🛡️", timer: window.playerStats.defPotionTimer, max: potDurationMax, color: "#3498db" });
+        if (window.playerStats.hastePotionTimer > 0) activeBuffsList.push({ icon: "👟", timer: window.playerStats.hastePotionTimer, max: potDurationMax, color: "#f1c40f" });
+        if (window.playerStats.xpPotionTimer > 0) activeBuffsList.push({ icon: "🧠", timer: window.playerStats.xpPotionTimer, max: potDurationMax, color: "#a855f7" });
+        if (window.playerStats.dropPotionTimer > 0) activeBuffsList.push({ icon: "🍀", timer: window.playerStats.dropPotionTimer, max: potDurationMax, color: "#22c55e" });
+        if (window.playerStats.qlyPotionTimer > 0) activeBuffsList.push({ icon: "💎", timer: window.playerStats.qlyPotionTimer, max: potDurationMax, color: "#ec4899" });
 
     if (window.equippedSlots.weapon && window.equippedSlots.weapon.isUniqueSingularity) {
         if (window.playerStats.singularityState === "dormant") activeBuffsList.push({ icon: "🌌", timer: window.playerStats.singularityTimer || 1800, max: 1800, color: "#5b2c6f" });

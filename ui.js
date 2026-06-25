@@ -589,17 +589,24 @@ window.updateUI = function() {
                                                 window.updateGachaRecentList();
                                                 window.renderGachaShowcaseMarquee();
 
-                                                // Update live vending rates board
-                                                                                                let luckMultiplier = p.qly + ((window.playerStats.vendingQLevel || 0) * 0.01);
-                                                                                                let chance5 = (0.02 * luckMultiplier);
-                                                                                                let chance4 = (0.16 * luckMultiplier);
+                                                // Update live vending rates board (Decoupled from active equip Qly)
+                                                                                                                                                let luckMultiplier = 1.0 + ((window.playerStats.vendingQLevel || 0) * 0.025);
+                                                                                                                                                let chance5 = (0.02 * luckMultiplier);
+                                                                                                                                                let chance4 = (0.16 * luckMultiplier);
 
-                                                                                                window.setText('vending-rate-5', (chance5).toFixed(2) + "%");
-                                                                                                window.setText('vending-rate-4', (chance4).toFixed(2) + "%");
-                                                window.setText('vending-rate-3', (0.80 * luckMultiplier - (chance5 + chance4)).toFixed(2) + "%");
-                                                window.setText('vending-rate-2', (3.20 * luckMultiplier).toFixed(2) + "%");
-                                                window.setText('vending-rate-1', (11.00 * luckMultiplier).toFixed(2) + "%");
-                                            }
+                                                                                                                                                window.setText('vending-rate-5', (chance5).toFixed(2) + "%");
+                                                                                                                                                window.setText('vending-rate-4', (chance4).toFixed(2) + "%");
+                                                                                                window.setText('vending-rate-3', (0.80 * luckMultiplier - (chance5 + chance4)).toFixed(2) + "%");
+                                                                                                window.setText('vending-rate-2', (3.20 * luckMultiplier).toFixed(2) + "%");
+                                                                                                window.setText('vending-rate-1', (11.00 * luckMultiplier).toFixed(2) + "%");
+                                                                                            }
+
+                                                                                            // Refresh Gacha Pity Elements if present
+                                                                                            let pityProgress = window.playerStats.vendingPity || 0;
+                                                                                            let pityTextBadge = document.getElementById('vending-pity-text');
+                                                                                            let pityBarFill = document.getElementById('vending-pity-fill');
+                                                                                            if (pityTextBadge) pityTextBadge.innerText = `Pity progress: ${pityProgress} / 20`;
+                                                                                            if (pityBarFill) pityBarFill.style.width = `${(pityProgress / 20) * 100}%`;
 
             // Buff trackers HUD
     let activeBuffs = [];
@@ -1334,12 +1341,13 @@ window.showStatBreakdown = function(e, statKey, isPct = false) {
         html += `<div class="tt-stat-line" style="color:#3498db;">• Dexterity Scaling (DEX): +${(effectiveDex * 0.25).toFixed(1)}</div>`;
     }
     if (statKey === 'critChance' && effectiveDex > 0) {
-        let scaleVal = ((effectiveDex * 0.30) / (effectiveDex + 250));
-        html += `<div class="tt-stat-line" style="color:#3498db;">• Dexterity Scaling (DEX): +${Math.floor(scaleVal * 100)}%</div>`;
-    }
-    if (statKey === 'critDamage' && effectiveDex > 0) {
-        html += `<div class="tt-stat-line" style="color:#3498db;">• Dexterity Scaling (DEX): +${Math.floor(effectiveDex * 1)}%</div>`;
-    }
+            let scaleVal = ((effectiveDex * 0.30) / (effectiveDex + 250));
+            html += `<div class="tt-stat-line" style="color:#3498db;">• Dexterity Scaling (DEX): +${Math.floor(scaleVal * 100)}%</div>`;
+        }
+        if (statKey === 'critDamage' && effectiveDex > 0) {
+            let scaleVal = effectiveDex * 0.003;
+            html += `<div class="tt-stat-line" style="color:#3498db;">• Dexterity Scaling (DEX): +${Math.floor(scaleVal * 100)}%</div>`;
+        }
     if (statKey === 'block' && effectiveInt > 0) {
         let scaleVal = ((effectiveInt * 0.12) / (effectiveInt + 150));
         html += `<div class="tt-stat-line" style="color:#9b59b6;">• Intelligence Scaling (INT): +${Math.floor(scaleVal * 100)}%</div>`;
@@ -1501,21 +1509,22 @@ window.showStatBreakdown = function(e, statKey, isPct = false) {
                                            }
 
                                            let upgrades = p.prestigeUpgrades || { bag: 0, gold: 0, exp: 0, drop: 0, atk: 0, fort: 0, fairy: 0 };
-                                                                                      let bagPts = upgrades.bag || 0; let goldPts = upgrades.gold || 0; let expPts = upgrades.exp || 0;
-                                                                                      let dropPts = upgrades.drop || 0; let atkPts = upgrades.atk || 0; let fortPts = upgrades.fort || 0; let fairyPts = upgrades.fairy || 0;
+                                                                                                                                 let bagPts = upgrades.bag || 0; let goldPts = upgrades.gold || 0; let expPts = upgrades.exp || 0;
+                                                                                                                                 let dropPts = upgrades.drop || 0; let atkPts = upgrades.atk || 0; let fortPts = upgrades.fort || 0; let fairyPts = upgrades.fairy || 0;
 
-                                                                                      let getUpgradeButtonHtml = (type, pts, color) => {
-                                                                                          let cost = window.getPrestigeUpgradeCost(type, pts);
-                                                                                          let disabled = p.prestigePoints < cost ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
-                                                                                          let fontColor = (color === '#f1c40f' || color === '#ffb6c1') ? '#000' : '#fff';
-                                                                                          return `<button class="btn-action" style="margin-top:8px; background:${color}; color:${fontColor}; font-weight:bold;" ${disabled} onclick="window.buyPrestigeUpgrade('${type}')">Upgrade (${cost} PP)</button>`;
-                                                                                      };
+                                                                                                                                 let getUpgradeButtonHtml = (type, pts, color) => {
+                                                                                                                                     let cost = window.getPrestigeUpgradeCost(type, pts);
+                                                                                                                                     let disabled = p.prestigePoints < cost ? "disabled style='opacity:0.5; cursor:not-allowed;'" : "";
+                                                                                                                                     let fontColor = (color === '#f1c40f' || color === '#ffb6c1') ? '#000' : '#fff';
+                                                                                                                                     return `<button class="btn-action" style="margin-top:8px; background:${color}; color:${fontColor}; font-weight:bold;" ${disabled} onclick="window.buyPrestigeUpgrade('${type}')">Upgrade (${cost} PP)</button>`;
+                                                                                                                                 };
 
-                                                                                      let requiredStage = Math.max(80, Math.floor((p.lifetimePeakStage || 1) * 0.85));
-                                                                                                                                                                            let challengeBtnHtml = "";
-                                                                                                                                                                            if (p.level < 25) challengeBtnHtml = `<button class="btn-action" style="background:#333; color:#777; border: 1px solid #444; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:not-allowed;" disabled>🔒 Requires Level 25 to Re-Challenge</button>`;
-                                                                                                                                                                            else if (p.stage < requiredStage) challengeBtnHtml = `<button class="btn-action" style="background:#2c1a1a; color:#e74c3c; border: 1px solid #781c1c; font-weight:bold; font-size:11px; padding:8px 16px; border-radius:4px; cursor:not-allowed;" disabled>🔒 Push to Stage ${requiredStage} (Current: ${p.stage})</button>`;
-                                                                                                                                                                            else challengeBtnHtml = `<button class="btn-action" style="background:#e74c3c; color:white; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:pointer;" onclick="window.challengeHooktail()">Challenge Prestige Boss</button>`;
+                                                                                                                                 // Stage 80 on first run, Stage 1 onwards (decoupled from peak stage as requested)
+                                                                                                                                 let requiredStage = (p.prestigeCount === 0) ? 80 : 1;
+                                                                                                                                                                                                                       let challengeBtnHtml = "";
+                                                                                                                                                                                                                       if (p.level < 25) challengeBtnHtml = `<button class="btn-action" style="background:#333; color:#777; border: 1px solid #444; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:not-allowed;" disabled>🔒 Requires Level 25 to Re-Challenge</button>`;
+                                                                                                                                                                                                                       else if (p.stage < requiredStage) challengeBtnHtml = `<button class="btn-action" style="background:#2c1a1a; color:#e74c3c; border: 1px solid #781c1c; font-weight:bold; font-size:11px; padding:8px 16px; border-radius:4px; cursor:not-allowed;" disabled>🔒 Push to Stage ${requiredStage} (Current: ${p.stage})</button>`;
+                                                                                                                                                                                                                       else challengeBtnHtml = `<button class="btn-action" style="background:#e74c3c; color:white; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:pointer;" onclick="window.challengeHooktail()">Challenge Prestige Boss</button>`;
 
                                                                                       el.innerHTML = `
                                                                                           <div style="display:flex; flex-direction:column; gap:12px;">
@@ -1616,10 +1625,11 @@ window.showStatBreakdown = function(e, statKey, isPct = false) {
                                                                               };
 
                                        window.challengeHooktail = function() {
-                                                                                  if (window.playerStats.level < 25) { window.pushHeaderToast("Requires Level 25!", "#e74c3c"); return; }
+                                                                                                                         if (window.playerStats.level < 25) { window.pushHeaderToast("Requires Level 25!", "#e74c3c"); return; }
 
-                                                                                  let requiredStage = Math.max(80, Math.floor((window.playerStats.lifetimePeakStage || 1) * 0.85));
-                                                                                  if (window.playerStats.stage < requiredStage) { window.pushHeaderToast(`Requires Campaign Stage ${requiredStage} to challenge Hooktail!`, "#e74c3c"); return; }
+                                                                                                                         // Hooktail Stage requirements
+                                                                                                                         let requiredStage = (window.playerStats.prestigeCount === 0) ? 80 : 1;
+                                                                                                                         if (window.playerStats.stage < requiredStage) { window.pushHeaderToast(`Requires Campaign Stage ${requiredStage} to challenge Hooktail!`, "#e74c3c"); return; }
 
                                            if (window.playerStats.isDungeonMode || window.playerStats.isCrucibleMode || window.playerStats.isPrestigeBossMode) {
                                                window.pushHeaderToast("Cannot challenge while in another activity!", "#e74c3c"); return;
@@ -1641,97 +1651,88 @@ window.showStatBreakdown = function(e, statKey, isPct = false) {
                                        };
 
                                        window.triggerPrestigeAscension = function() {
-                                           window.isGamePaused = true;
-                                           window.playerStats.historicalPeakLvl = Math.max(window.playerStats.historicalPeakLvl || 1, window.playerStats.level);
+                                                                                  window.isGamePaused = true;
+                                                                                  window.playerStats.historicalPeakLvl = Math.max(window.playerStats.historicalPeakLvl || 1, window.playerStats.level);
 
-                                           let stageScale = Math.floor((window.playerStats.stage - 1) / 10) + 1;
-                                           let mythicItem;
+                                                                                  // Rebalance: Award Catalyst Cores, Eridium Shards, and crafting materials instead of gear items
+                                                                                  let awardedCores = window.randInt(3, 5);
+                                                                                  let awardedShards = window.randInt(8, 15);
+                                                                                  let awardedEpic = window.randInt(10, 15);
+                                                                                  let awardedLeg = window.randInt(5, 10);
+                                                                                  let awardedMythic = window.randInt(2, 5);
 
-                                           if (Math.random() < 0.10) {
-                                               mythicItem = window.createItemObject("weapon", 5, stageScale, 5);
-                                               if (!mythicItem.isUniqueStaff && !mythicItem.isUniqueSword) {
-                                                   if (Math.random() < 0.5) {
-                                                       mythicItem.isUniqueStaff = true; mythicItem.noun = "Phoenix Staff"; mythicItem.setName = null;
-                                                       mythicItem.name = `🔥 Phoenix Ignition Staff (Lv. ${stageScale})`;
-                                                       mythicItem.desc = "Launches penetrating fireballs that deal 25% Attack damage (3s Cooldown).";
-                                                   } else {
-                                                       mythicItem.isUniqueSword = true; mythicItem.noun = "Sanguine Reaver"; mythicItem.setName = null;
-                                                       mythicItem.name = `🩸 Crimson Sanguine Reaver (Lv. ${stageScale})`;
-                                                       mythicItem.desc = "Strikes apply stacking Bleed (Max 5). Strikes at max stacks triggers Rupture, dealing 300% weapon damage and siphoning 10% Max HP.";
-                                                   }
-                                               }
-                                           } else {
-                                               let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
-                                               let chosenType = types[Math.floor(Math.random() * types.length)];
-                                               mythicItem = window.createItemObject(chosenType, 5, stageScale, 5);
-                                           }
+                                                                                  if (typeof window.addEtcDrop === "function") {
+                                                                                      window.addEtcDrop("Catalyst Core", awardedCores);
+                                                                                      window.addEtcDrop("Eridium Shard", awardedShards);
+                                                                                      window.addEtcDrop("Epic Scrap", awardedEpic);
+                                                                                      window.addEtcDrop("Legendary Scrap", awardedLeg);
+                                                                                      window.addEtcDrop("Mythic Scrap", awardedMythic);
+                                                                                  }
 
-                                           let prestigeArtifact = window.createItemObject("artifact", 3, stageScale, 0);
+                                                                                  let basePoints = 3; let bonusPoints = Math.floor(window.playerStats.prestigeCount / 4);
+                                                                                  let totalAwarded = Math.min(10, basePoints + bonusPoints);
+                                                                                  window.playerStats.prestigePoints += totalAwarded; window.playerStats.prestigeCount++;
 
-                                           mythicItem.locked = true; prestigeArtifact.locked = true;
-                                           window.inventory.EQUIP.push(mythicItem); window.inventory.ARTIFACT.push(prestigeArtifact);
+                                                                                  let nowTime = Date.now();
+                                                                                  if (window.playerStats.lastAscensionTime && (nowTime - window.playerStats.lastAscensionTime <= 900000)) window.playerStats.hasTriggeredSpeedrun = true;
+                                                                                  window.playerStats.lastAscensionTime = nowTime;
+                                                                                  window.playerStats.lifetimePeakStage = Math.max(window.playerStats.lifetimePeakStage || 1, window.playerStats.maxStage || 1);
 
-                                           let basePoints = 3; let bonusPoints = Math.floor(window.playerStats.prestigeCount / 4);
-                                           let totalAwarded = Math.min(10, basePoints + bonusPoints);
-                                           window.playerStats.prestigePoints += totalAwarded; window.playerStats.prestigeCount++;
+                                                                                  for (let slot in window.equippedSlots) {
+                                                                                      if (window.equippedSlots[slot]) {
+                                                                                          let item = window.equippedSlots[slot]; delete item.isEquippedSlot;
+                                                                                          if (item.type === "artifact") window.inventory.ARTIFACT.push(item); else window.inventory.EQUIP.push(item);
+                                                                                          window.equippedSlots[slot] = null;
+                                                                                      }
+                                                                                  }
 
-                                           let nowTime = Date.now();
-                                           if (window.playerStats.lastAscensionTime && (nowTime - window.playerStats.lastAscensionTime <= 900000)) window.playerStats.hasTriggeredSpeedrun = true;
-                                           window.playerStats.lastAscensionTime = nowTime;
-                                           window.playerStats.lifetimePeakStage = Math.max(window.playerStats.lifetimePeakStage || 1, window.playerStats.maxStage || 1);
+                                                                                  window.playerStats.level = 1; window.playerStats.xp = 0; window.playerStats.xpReq = 100;
+                                                                                  window.playerStats.stage = 1; window.playerStats.maxStage = 1;
+                                                                                  window.playerStats.crucibleWave = 1; window.playerStats.crucibleStartWave = 1;
+                                                                                  window.playerStats.isPrestigeBossMode = false; window.playerStats.prestigeApproachTimer = 0;
+                                                                                  window.mob = null; window.hero.x = 40;
 
-                                           for (let slot in window.equippedSlots) {
-                                               if (window.equippedSlots[slot]) {
-                                                   let item = window.equippedSlots[slot]; delete item.isEquippedSlot;
-                                                   if (item.type === "artifact") window.inventory.ARTIFACT.push(item); else window.inventory.EQUIP.push(item);
-                                                   window.equippedSlots[slot] = null;
-                                               }
-                                           }
+                                                                                  let p = window.resolvePlayerStats(); window.playerStats.currentHp = p.maxHp;
 
-                                           window.playerStats.level = 1; window.playerStats.xp = 0; window.playerStats.xpReq = 100;
-                                           window.playerStats.stage = 1; window.playerStats.maxStage = 1;
-                                           window.playerStats.crucibleWave = 1; window.playerStats.crucibleStartWave = 1;
-                                           window.playerStats.isPrestigeBossMode = false; window.playerStats.prestigeApproachTimer = 0;
-                                           window.mob = null; window.hero.x = 40;
+                                                                                  let modal = document.createElement('div');
+                                                                                  modal.style.position = 'fixed'; modal.style.top = '0'; modal.style.left = '0';
+                                                                                  modal.style.width = '100%'; modal.style.height = '100%'; modal.style.backgroundColor = 'rgba(0,0,0,0.92)';
+                                                                                  modal.style.display = 'flex'; modal.style.justifyContent = 'center'; modal.style.alignItems = 'center';
+                                                                                  modal.style.zIndex = '35000'; modal.style.padding = '15px';
 
-                                           let p = window.resolvePlayerStats(); window.playerStats.currentHp = p.maxHp;
+                                                                                  modal.innerHTML = `
+                                                                                      <div style="background:#151515; border: 3px solid #e74c3c; border-radius: 8px; width:100%; max-width:440px; display:flex; flex-direction:column; box-shadow: 0 10px 40px rgba(0,0,0,0.95); text-align:center; padding:20px; animation: toastFadeIn 0.3s;">
+                                                                                          <h2 style="margin:0 0 10px 0; color:#e74c3c; letter-spacing:3px; text-transform:uppercase; font-size:22px;">🐉 ASCENSION ACHIEVED!</h2>
+                                                                                          <div style="height:2px; background:linear-gradient(90deg, transparent, #e74c3c, transparent); margin-bottom:15px;"></div>
+                                                                                          <p style="font-size:12px; color:#ddd; line-height:1.5; margin-bottom:20px;">
+                                                                                              You have slain **Hooktail** and shattered your mortal limits! Your soul ascends into a higher plane of legend.
+                                                                                          </p>
+                                                                                          <div style="background:#0b0f12; border:1px solid #e74c3c; border-radius:6px; padding:15px; margin-bottom:20px;">
+                                                                                              <div style="font-size:11px; color:#aaa; margin-bottom:4px;">REWARDS EARNED:</div>
+                                                                                              <div style="font-size:20px; color:#f1c40f; font-weight:bold; margin-bottom:6px;">✨ +${totalAwarded} Prestige Points</div>
+                                                                                              <div style="font-size:11px; color:#2ecc71; font-weight:bold; margin-bottom:4px; text-align:left; padding-left:15px;">🔋 Catalyst Cores: +${awardedCores}</div>
+                                                                                              <div style="font-size:11px; color:#8e44ad; font-weight:bold; margin-bottom:4px; text-align:left; padding-left:15px;">🔮 Eridium Shards: +${awardedShards}</div>
+                                                                                              <div style="font-size:11px; color:#e67e22; font-weight:bold; margin-bottom:4px; text-align:left; padding-left:15px;">🟧 Epic Scraps: +${awardedEpic}</div>
+                                                                                              <div style="font-size:11px; color:#f1c40f; font-weight:bold; margin-bottom:4px; text-align:left; padding-left:15px;">🟨 Legendary Scraps: +${awardedLeg}</div>
+                                                                                              <div style="font-size:11px; color:#e74c3c; font-weight:bold; margin-bottom:8px; text-align:left; padding-left:15px;">🟥 Mythic Scraps: +${awardedMythic}</div>
+                                                                                              <div style="font-size:11px; color:#9b59b6; font-weight:bold; border-top: 1px solid #333; padding-top:6px; margin-top:6px;">Total Ascensions: ${window.playerStats.prestigeCount}</div>
+                                                                                          </div>
+                                                                                          <p style="font-size:11px; color:#7f8c8d; line-height:1.4; margin-bottom:20px;">
+                                                                                              Your raw levels and campaign stage are reset. However, spent Attribute Matrix points, materials, and achievements are **completely preserved**!
+                                                                                          </p>
+                                                                                          <button id="btn-prestige-ascend-confirm" style="background:linear-gradient(135deg, #e74c3c, #c0392b); color:white; border:1px solid #f1c40f; font-weight:bold; font-size:13px; text-transform:uppercase; letter-spacing:1px; padding:12px 24px; border-radius:4px; cursor:pointer; width:100%; box-shadow:0 4px 10px rgba(0,0,0,0.4);">Arise as an Ascended Hero</button>
+                                                                                      </div>
+                                                                                  `;
+                                                                                  document.body.appendChild(modal);
 
-                                           let modal = document.createElement('div');
-                                           modal.style.position = 'fixed'; modal.style.top = '0'; modal.style.left = '0';
-                                           modal.style.width = '100%'; modal.style.height = '100%'; modal.style.backgroundColor = 'rgba(0,0,0,0.92)';
-                                           modal.style.display = 'flex'; modal.style.justifyContent = 'center'; modal.style.alignItems = 'center';
-                                           modal.style.zIndex = '35000'; modal.style.padding = '15px';
+                                                                                  document.getElementById('btn-prestige-ascend-confirm').onclick = function() {
+                                                                                                                                                                        modal.remove(); window.isGamePaused = false;
+                                                                                                                                                                        window.checkAchievements(); window.updateUI(); window.renderPrestigeTab(); window.renderInventory(); window.saveGame();
+                                                                                                                                                                        window.pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[ASCENSION] Your legacy begins anew! Received upgrade materials and spent Attribute Matrix points are completely preserved. Sacks have expanded to hold your rewards.</span>`);
+                                                                                                                                                                    };
+                                                                                                                                                                };
 
-                                           modal.innerHTML = `
-                                               <div style="background:#151515; border: 3px solid #e74c3c; border-radius: 8px; width:100%; max-width:440px; display:flex; flex-direction:column; box-shadow: 0 10px 40px rgba(0,0,0,0.95); text-align:center; padding:20px; animation: toastFadeIn 0.3s;">
-                                                   <h2 style="margin:0 0 10px 0; color:#e74c3c; letter-spacing:3px; text-transform:uppercase; font-size:22px;">🐉 ASCENSION ACHIEVED!</h2>
-                                                   <div style="height:2px; background:linear-gradient(90deg, transparent, #e74c3c, transparent); margin-bottom:15px;"></div>
-                                                   <p style="font-size:12px; color:#ddd; line-height:1.5; margin-bottom:20px;">
-                                                       You have slain **Hooktail** and shattered your mortal limits! Your soul ascends into a higher plane of legend.
-                                                   </p>
-                                                   <div style="background:#0b0f12; border:1px solid #e74c3c; border-radius:6px; padding:15px; margin-bottom:20px;">
-                                                       <div style="font-size:11px; color:#aaa; margin-bottom:4px;">REWARDS EARNED:</div>
-                                                       <div style="font-size:20px; color:#f1c40f; font-weight:bold; margin-bottom:6px;">✨ +${totalAwarded} Prestige Points</div>
-                                                       <div style="font-size:11.5px; color:#e74c3c; font-weight:bold; margin-bottom:4px;">🎁 Souvenir: 5★ Mythic ${mythicItem.name}</div>
-                                                       <div style="font-size:11.5px; color:#1abc9c; font-weight:bold; margin-bottom:8px;">🔮 Artifact: ${prestigeArtifact.name}</div>
-                                                       <div style="font-size:11px; color:#9b59b6; font-weight:bold;">Total Ascensions: ${window.playerStats.prestigeCount}</div>
-                                                   </div>
-                                                   <p style="font-size:11px; color:#7f8c8d; line-height:1.4; margin-bottom:20px;">
-                                                       Your raw levels and campaign stage are reset. However, spent Attribute Matrix points, materials, and achievements are **completely preserved**!
-                                                   </p>
-                                                   <button id="btn-prestige-ascend-confirm" style="background:linear-gradient(135deg, #e74c3c, #c0392b); color:white; border:1px solid #f1c40f; font-weight:bold; font-size:13px; text-transform:uppercase; letter-spacing:1px; padding:12px 24px; border-radius:4px; cursor:pointer; width:100%; box-shadow:0 4px 10px rgba(0,0,0,0.4);">Arise as an Ascended Hero</button>
-                                               </div>
-                                           `;
-                                           document.body.appendChild(modal);
-
-                                           document.getElementById('btn-prestige-ascend-confirm').onclick = function() {
-                                               modal.remove(); window.isGamePaused = false;
-                                               window.checkAchievements(); window.updateUI(); window.renderPrestigeTab(); window.renderInventory(); window.saveGame();
-                                               window.pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[ASCENSION] Your legacy begins anew! Discovered pristine ${mythicItem.name} and ${prestigeArtifact.name}! Sacks have expanded to hold your rewards.</span>`);
-                                           };
-                                       };
-
-                                       window.showMarketTooltip = function(e, index) {
+                                                                                                                         window.showMarketTooltip = function(e, index) {
                                            let item = window.playerStats.shopItems[index]; if (!item || item.purchased) return;
                                            let tt = document.getElementById('game-tooltip');
                                            let baseHtml = window.buildGeneralTooltipHtml(item, true);
@@ -1883,12 +1884,12 @@ window.showStatBreakdown = function(e, statKey, isPct = false) {
                                                };
 
                                        window.showGachaTooltip = function(e) {
-                                           e.stopPropagation(); let p = window.resolvePlayerStats();
-                                           let qly = p.qly + ((window.playerStats.vendingQLevel || 0) * 0.01);
-                                           let mythic = (0.5 * qly); let leg = (2.0 * qly) - mythic; let epic = (10.0 * qly) - (2.0 * qly); let magic = (30.0 * qly) - (10.0 * qly); let rare = 100 - (30.0 * qly);
-                                           let keysHeld = window.inventory.ETC["Gacha Key"] || 0;
+                                                                                                                         e.stopPropagation(); let p = window.resolvePlayerStats();
+                                                                                                                         let qly = 1.0 + ((window.playerStats.vendingQLevel || 0) * 0.025);
+                                                                                                                         let mythic = (0.5 * qly); let leg = (2.0 * qly) - mythic; let epic = (10.0 * qly) - (2.0 * qly); let magic = (30.0 * qly) - (10.0 * qly); let rare = 100 - (30.0 * qly);
+                                                                                  let keysHeld = window.inventory.ETC["Gacha Key"] || 0;
 
-                                           let tt = document.getElementById('game-tooltip');
+                                                                                  let tt = document.getElementById('game-tooltip');
                                            tt.innerHTML = `<div style="padding: 10px; width: 250px; box-sizing: border-box;">
                                                <div class="tt-title" style="color:#f1c40f;">🎰 Vending Machine Rates</div>
                                                <div class="tt-subtitle">Gacha Rarity Distribution</div>
@@ -2118,83 +2119,114 @@ window.renderInventory = function() {
     }
 
     // 3. Materials Sacks
-    const getEtcIconHtml = (key) => {
-        let bg = "rgba(170, 170, 170, 0.12)";
-        let border = "#444";
-        let icon = "📦";
+        const getEtcIconHtml = (key) => {
+            let bg = "rgba(170, 170, 170, 0.12)";
+            let border = "#444";
+            let icon = "📦";
 
-        if (key === "Eridium Shard") { bg = "rgba(155, 89, 182, 0.25)"; border = "#9b59b6"; icon = "🔮"; }
-        else if (key === "Gacha Key") { bg = "rgba(241, 196, 15, 0.25)"; border = "#f1c40f"; icon = "🔑"; }
-        else if (key === "Ancient Core") { bg = "rgba(231, 76, 60, 0.25)"; border = "#e74c3c"; icon = "🔴"; }
-        else if (key === "Overlord's Sigil") { bg = "rgba(26, 188, 156, 0.25)"; border = "#1abc9c"; icon = "🔱"; }
-        else if (key === "Astral Essence") { bg = "rgba(142, 68, 173, 0.25)"; border = "#8e44ad"; icon = "🌌"; }
-        else if (key === "Mythic Scrap") { bg = "rgba(231, 76, 60, 0.25)"; border = "#e74c3c"; icon = "🟥"; }
-        else if (key === "Legendary Scrap") { bg = "rgba(241, 196, 15, 0.25)"; border = "#f1c40f"; icon = "🟨"; }
-        else if (key === "Epic Scrap") { bg = "rgba(230, 126, 34, 0.25)"; border = "#e67e22"; icon = "🟧"; }
-        else if (key === "Magic Scrap") { bg = "rgba(155, 89, 182, 0.25)"; border = "#9b59b6"; icon = "🟪"; }
-        else if (key === "Rare Scrap") { bg = "rgba(52, 152, 219, 0.25)"; border = "#3498db"; icon = "🟦"; }
-        else if (key === "Luminous Soul") { bg = "rgba(255, 182, 193, 0.25)"; border = "#ffb6c1"; icon = "💖"; }
-        else if (key === "Monster Soul") { bg = "rgba(170, 170, 170, 0.25)"; border = "#888"; icon = "💀"; }
-        else if (key === "Catalyst Core") { bg = "rgba(46, 204, 113, 0.25)"; border = "#2ecc71"; icon = "💚"; }
+            if (key === "Eridium Shard") { bg = "rgba(155, 89, 182, 0.25)"; border = "#9b59b6"; icon = "🔮"; }
+            else if (key === "Gacha Key") { bg = "rgba(241, 196, 15, 0.25)"; border = "#f1c40f"; icon = "🔑"; }
+            else if (key === "Ancient Core") { bg = "rgba(231, 76, 60, 0.25)"; border = "#e74c3c"; icon = "🔴"; }
+            else if (key === "Overlord's Sigil") { bg = "rgba(26, 188, 15, 0.25)"; border = "#1abc9c"; icon = "🔱"; }
+            else if (key === "Astral Essence") { bg = "rgba(142, 68, 173, 0.25)"; border = "#8e44ad"; icon = "🌌"; }
+            else if (key === "Mythic Scrap") { bg = "rgba(231, 76, 60, 0.25)"; border = "#e74c3c"; icon = "🟥"; }
+            else if (key === "Legendary Scrap") { bg = "rgba(241, 196, 15, 0.25)"; border = "#f1c40f"; icon = "🟨"; }
+            else if (key === "Epic Scrap") { bg = "rgba(230, 126, 34, 0.25)"; border = "#e67e22"; icon = "🟧"; }
+            else if (key === "Magic Scrap") { bg = "rgba(155, 89, 182, 0.25)"; border = "#9b59b6"; icon = "🟪"; }
+            else if (key === "Rare Scrap") { bg = "rgba(52, 152, 219, 0.25)"; border = "#3498db"; icon = "🟦"; }
+            else if (key === "Luminous Soul") { bg = "rgba(255, 182, 193, 0.25)"; border = "#ffb6c1"; icon = "💖"; }
+            else if (key === "Monster Soul") { bg = "rgba(170, 170, 170, 0.25)"; border = "#888"; icon = "💀"; }
+            else if (key === "Catalyst Core") { bg = "rgba(46, 204, 113, 0.25)"; border = "#2ecc71"; icon = "💚"; }
 
-        return `<span style="background: ${bg}; border: 1px solid ${border}; border-radius: 4px; padding: 4px; margin-right: 12px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.6);">${icon}</span>`;
-    };
+            return `<span style="background: ${bg}; border: 1px solid ${border}; border-radius: 4px; padding: 4px; margin-right: 12px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.6);">${icon}</span>`;
+        };
 
-    const getUseIconHtml = (key) => {
-        let bg = "rgba(170, 170, 170, 0.12)";
-        let border = "#444";
-        let icon = "🍶";
+        const getUseIconHtml = (key) => {
+            let bg = "rgba(170, 170, 170, 0.12)";
+            let border = "#444";
+            let icon = "🍶";
 
-        if (key === "SP Reset Scroll") { bg = "rgba(155, 89, 182, 0.25)"; border = "#9b59b6"; icon = "📜"; }
-        else if (key === "PP Reset Scroll") { bg = "rgba(230, 126, 34, 0.25)"; border = "#e67e22"; icon = "📜"; }
-        else if (key.includes("Attack")) { bg = "rgba(46, 204, 113, 0.25)"; border = "#2ecc71"; icon = "🧪"; }
-        else if (key.includes("Vitality")) { bg = "rgba(231, 76, 60, 0.25)"; border = "#e74c3c"; icon = "🧪"; }
-        else if (key.includes("Armored")) { bg = "rgba(52, 152, 219, 0.25)"; border = "#3498db"; icon = "🧪"; }
-        else if (key.includes("Haste")) { bg = "rgba(241, 196, 15, 0.25)"; border = "#f1c40f"; icon = "🧪"; }
+            if (key === "SP Reset Scroll") { bg = "rgba(155, 89, 182, 0.25)"; border = "#9b59b6"; icon = "📜"; }
+            else if (key === "PP Reset Scroll") { bg = "rgba(230, 126, 34, 0.25)"; border = "#e67e22"; icon = "📜"; }
+            else if (key.includes("Attack")) { bg = "rgba(46, 204, 113, 0.25)"; border = "#2ecc71"; icon = "🧪"; }
+            else if (key.includes("Vitality")) { bg = "rgba(231, 76, 60, 0.25)"; border = "#e74c3c"; icon = "🧪"; }
+            else if (key.includes("Armored")) { bg = "rgba(52, 152, 219, 0.25)"; border = "#3498db"; icon = "🧪"; }
+            else if (key.includes("Haste")) { bg = "rgba(241, 196, 15, 0.25)"; border = "#f1c40f"; icon = "🧪"; }
 
-        return `<span style="background: ${bg}; border: 1px solid ${border}; border-radius: 4px; padding: 4px; margin-right: 12px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.6);">${icon}</span>`;
-    };
+            return `<span style="background: ${bg}; border: 1px solid ${border}; border-radius: 4px; padding: 4px; margin-right: 12px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.6);">${icon}</span>`;
+        };
 
-    let etcBox = document.getElementById('bag-etc');
-    let etcKeys = Object.keys(window.inventory.ETC).filter(k => window.inventory.ETC[k] > 0);
-    if (etcKeys.length === 0) { etcBox.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No materials collected.</div>"; }
-    else {
-        etcBox.innerHTML = etcKeys.map(key => {
-            let escapedKey = key.replace(/'/g, "\\'");
-            return `
-            <div class="bag-item" style="cursor:help; display:flex; align-items:center; justify-content:space-between; padding:6px 12px;" onmouseenter="window.showEtcTooltip(event, '${escapedKey}')" ontouchstart="window.showEtcTooltip(event, '${escapedKey}')" onmouseleave="window.hideTooltip()">
-                <div style="display:flex; align-items:center;">
-                    ${getEtcIconHtml(key)}
-                    <span>${key}</span>
-                </div>
-                <strong>x${window.inventory.ETC[key]}</strong>
-            </div>
-            `;
-        }).join("");
-    }
+        const ETC_SORT_ORDER = [
+            "Ancient Core", "Gacha Key", "Eridium Shard", "Astral Essence", "Catalyst Core",
+            "Overlord's Sigil", "Luminous Soul", "Monster Soul", "Mythic Scrap",
+            "Legendary Scrap", "Epic Scrap", "Magic Scrap", "Rare Scrap"
+        ];
 
-    // 4. Usable Potions Sack
-    let useBox = document.getElementById('bag-use');
-    if (useBox) {
-        let useKeys = Object.keys(window.inventory.USE || {}).filter(k => window.inventory.USE[k] > 0);
-        if (useKeys.length === 0) { useBox.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No usable items. Purchase potions/scrolls at the Market!</div>"; }
+        const USE_SORT_ORDER = [
+            "SP Reset Scroll", "PP Reset Scroll",
+            "Supernal Attack Elixir", "Greater Attack Elixir", "Attack Elixir",
+            "Supernal Vitality Elixir", "Greater Vitality Elixir", "Vitality Elixir",
+            "Supernal Armored Elixir", "Greater Armored Elixir", "Armored Elixir",
+            "Supernal Haste Elixir", "Greater Haste Elixir", "Haste Elixir"
+        ];
+
+        let etcBox = document.getElementById('bag-etc');
+        let etcKeys = Object.keys(window.inventory.ETC).filter(k => window.inventory.ETC[k] > 0);
+        if (etcKeys.length === 0) { etcBox.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No materials collected.</div>"; }
         else {
-            useBox.innerHTML = useKeys.map(key => {
-                let count = window.inventory.USE[key];
+            // Apply priority structured ordering to materials
+            etcKeys.sort((a, b) => {
+                let idxA = ETC_SORT_ORDER.indexOf(a);
+                let idxB = ETC_SORT_ORDER.indexOf(b);
+                if (idxA === -1) idxA = 999;
+                if (idxB === -1) idxB = 999;
+                return idxA - idxB;
+            });
+
+            etcBox.innerHTML = `<div class="material-grid">` + etcKeys.map(key => {
+                let escapedKey = key.replace(/'/g, "\\'");
                 return `
-                    <div class="bag-item" style="display:flex; align-items:center; justify-content:space-between; padding:6px 12px;">
-                        <div style="display:flex; align-items:center; flex:1; cursor:help; text-align:left;" onmouseenter="window.showUseTooltip(event, '${key}')" ontouchstart="window.showUseTooltip(event, '${key}')" onmouseleave="window.hideTooltip()">
-                            ${getUseIconHtml(key)}
-                            <div><strong>${key}</strong><br><span style="font-size:10px; color:#aaa;">Qty: ${count}</span></div>
-                        </div>
-                        <div style="position:relative; z-index:10; white-space:nowrap; margin-left: 10px;">
-                            <button class="btn-action" style="background:#2ecc71;" onclick="window.useItem('${key}')">Consume</button>
-                        </div>
-                    </div>
+                <div class="material-badge" onmouseenter="window.showEtcTooltip(event, '${escapedKey}')" ontouchstart="window.showEtcTooltip(event, '${escapedKey}')" onmouseleave="window.hideTooltip()">
+                    ${getEtcIconHtml(key)}
+                    <span style="font-size:11px; font-weight:bold; color:#f1f5f9; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:85px;">${key}</span>
+                    <span class="material-count">x${window.inventory.ETC[key]}</span>
+                </div>
                 `;
-            }).join("");
+            }).join("") + `</div>`;
         }
-    }
+
+        // 4. Usable Potions Sack
+        let useBox = document.getElementById('bag-use');
+        if (useBox) {
+            let useKeys = Object.keys(window.inventory.USE || {}).filter(k => window.inventory.USE[k] > 0);
+            if (useKeys.length === 0) { useBox.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No usable items. Purchase potions/scrolls at the Market!</div>"; }
+            else {
+                // Apply priority structured ordering to usable potions
+                useKeys.sort((a, b) => {
+                    let idxA = USE_SORT_ORDER.indexOf(a);
+                    let idxB = USE_SORT_ORDER.indexOf(b);
+                    if (idxA === -1) idxA = 999;
+                    if (idxB === -1) idxB = 999;
+                    return idxA - idxB;
+                });
+
+                useBox.innerHTML = `<div class="consumable-grid">` + useKeys.map(key => {
+                    let count = window.inventory.USE[key];
+                    return `
+                        <div class="consumable-badge" onmouseenter="window.showUseTooltip(event, '${key}')" ontouchstart="window.showUseTooltip(event, '${key}')" onmouseleave="window.hideTooltip()">
+                            <div style="display:flex; align-items:center; width:100%; gap:4px;">
+                                ${getUseIconHtml(key)}
+                                <div style="text-align:left; min-width:0; flex:1;">
+                                    <strong style="font-size:11px; color:#fff; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${key}</strong>
+                                    <span style="font-size:10px; color:#94a3b8;">Qty: ${count}</span>
+                                </div>
+                            </div>
+                            <button class="btn-action" style="background:#2ecc71; width:100%; padding:4px 0; font-size:10.5px; font-weight:bold; border-radius:4px; margin-top:2px;" onclick="window.useItem('${key}')">Consume</button>
+                        </div>
+                    `;
+                }).join("") + `</div>`;
+            }
+        }
 };
 
 window.hideTooltip = function() {
@@ -2212,25 +2244,48 @@ window.positionTooltip = function(e, tt) {
 
     let ttWidth = tt.offsetWidth;
     let ttHeight = tt.offsetHeight;
+    let padding = 10;
 
-    // Initialize placement 15px down and right of the cursor (relative to the viewport)
-    let vx = clientX + 15;
-    let vy = clientY + 15;
+    let vx, vy;
 
-    // Shift to the left of the cursor if spilling past the visible right edge of the viewport
-    if (vx + ttWidth > window.innerWidth) {
-        vx = clientX - ttWidth - 15;
+    const isLandscapeMobile = window.innerHeight <= 550 && window.innerWidth > window.innerHeight;
+
+    if (window.innerWidth <= 600 || isLandscapeMobile) {
+        // Mobile-centric responsive layout centering tooltips to prevent any layout cutting-off
+        vx = (window.innerWidth - ttWidth) / 2;
+        vy = clientY + 18;
+
+        // Ensure vertical viewport bounds containment
+        if (vy + ttHeight > window.innerHeight) {
+            vy = clientY - ttHeight - 18;
+        }
+        if (vy < padding) {
+            vy = padding;
+        }
+
+        // Dynamically constrain max-height once more to make it scrollable if larger than screen
+        let spaceAvailable = window.innerHeight - (2 * padding);
+        if (ttHeight > spaceAvailable) {
+            tt.style.maxHeight = spaceAvailable + "px";
+            tt.style.overflowY = "auto";
+            vy = padding;
+        }
+    } else {
+        // Desktop coordinate mapping
+        vx = clientX + 15;
+        vy = clientY + 15;
+
+        if (vx + ttWidth > window.innerWidth) {
+            vx = clientX - ttWidth - 15;
+        }
+        if (vy + ttHeight > window.innerHeight) {
+            vy = clientY - ttHeight - 15;
+        }
+
+        if (vx < 5) vx = 5;
+        if (vy < 5) vy = 5;
     }
-    // Shift above the cursor if spilling past the visible bottom edge of the viewport
-    if (vy + ttHeight > window.innerHeight) {
-        vy = clientY - ttHeight - 15;
-    }
 
-    // Clamp values so they never go negative past top or left edges of the screen
-    if (vx < 5) vx = 5;
-    if (vy < 5) vy = 5;
-
-    // Convert viewport-relative coordinates to game-container absolute styles
     let x = vx - container.left;
     let y = vy - container.top;
 
@@ -4125,104 +4180,108 @@ window.updateArchitectRanges = function() {
                 };
 
                 window.renderGachaModal = function() {
-                    let overlay = document.getElementById('gacha-modal-overlay');
-                    if (!overlay) return;
+                                    let overlay = document.getElementById('gacha-modal-overlay');
+                                    if (!overlay) return;
 
-                    let keysOwned = window.inventory.ETC["Gacha Key"] || 0;
-                    let ballsColors = ["#e74c3c", "#f1c40f", "#3498db", "#9b59b6", "#2ecc71", "#e67e22"];
+                                    let keysOwned = window.inventory.ETC["Gacha Key"] || 0;
+                                    let pityProgress = window.playerStats.vendingPity || 0;
+                                    let ballsColors = ["#e74c3c", "#f1c40f", "#3498db", "#9b59b6", "#2ecc71", "#e67e22"];
 
-                    // Generate a realistic pile of colorful capsule balls
-                                        let ballsHtml = "";
-                                        for (let i = 0; i < 22; i++) {
-                                            // Safe horizontal and vertical start ranges inside the bottom pile
-                                            let left = 20 + Math.random() * 240;
-                                            let bottom = 5 + Math.random() * 35;
-                                            let rot = Math.random() * 360;
-                                            let col = ballsColors[Math.floor(Math.random() * ballsColors.length)];
+                                    // Generate a realistic pile of colorful capsule balls with 6 keyframe targets for centrifugal swirl
+                                    let ballsHtml = "";
+                                    for (let i = 0; i < 22; i++) {
+                                        let left = 20 + Math.random() * 240;
+                                        let bottom = 5 + Math.random() * 30;
+                                        let rot = Math.random() * 360;
+                                        let col = ballsColors[Math.floor(Math.random() * ballsColors.length)];
 
-                                            // Calculate physical target bounds so balls are contained strictly inside the globe
-                                            let targetX1 = 20 + Math.random() * 240;
-                                            let targetY1 = 15 + Math.random() * 90;
+                                        // Generate 6 random steps representing physical collision coordinates inside the sphere
+                                        let tx1 = (Math.random() * 240 + 20) - left;
+                                        let ty1 = -((Math.random() * 80 + 40) - bottom);
 
-                                            let targetX2 = 20 + Math.random() * 240;
-                                            let targetY2 = 15 + Math.random() * 90;
+                                        let tx2 = (Math.random() * 240 + 20) - left;
+                                        let ty2 = -((Math.random() * 110 + 20) - bottom);
 
-                                            let targetX3 = 20 + Math.random() * 240;
-                                            let targetY3 = 15 + Math.random() * 90;
+                                        let tx3 = (Math.random() * 240 + 20) - left;
+                                        let ty3 = -((Math.random() * 80 + 40) - bottom);
 
-                                            let targetX4 = 20 + Math.random() * 240;
-                                            let targetY4 = 15 + Math.random() * 90;
+                                        let tx4 = (Math.random() * 240 + 20) - left;
+                                        let ty4 = -((Math.random() * 110 + 20) - bottom);
 
-                                            // Translate destination coords into CSS offsets relative to each ball's start position
-                                            let tx1 = targetX1 - left;
-                                            let ty1 = -(targetY1 - bottom);
+                                        let tx5 = (Math.random() * 240 + 20) - left;
+                                        let ty5 = -((Math.random() * 60 + 5) - bottom);
 
-                                            let tx2 = targetX2 - left;
-                                            let ty2 = -(targetY2 - bottom);
+                                        let tx6 = (Math.random() * 240 + 20) - left;
+                                        let ty6 = -((Math.random() * 20 + 0) - bottom);
 
-                                            let tx3 = targetX3 - left;
-                                            let ty3 = -(targetY3 - bottom);
+                                        let animDelay = -(Math.random() * 0.8).toFixed(2);
+                                        let animDuration = (0.7 + Math.random() * 0.4).toFixed(2);
 
-                                            let tx4 = targetX4 - left;
-                                            let ty4 = -(targetY4 - bottom);
+                                        ballsHtml += `
+                                            <div class="gacha-ball-pile" style="
+                                                left: ${left}px; bottom: ${bottom}px;
+                                                transform: rotate(${rot}deg);
+                                                background: linear-gradient(180deg, ${col} 50%, #ffffff 50%);
+                                                --tx1: ${tx1}px; --ty1: ${ty1}px;
+                                                --tx2: ${tx2}px; --ty2: ${ty2}px;
+                                                --tx3: ${tx3}px; --ty3: ${ty3}px;
+                                                --tx4: ${tx4}px; --ty4: ${ty4}px;
+                                                --tx5: ${tx5}px; --ty5: ${ty5}px;
+                                                --tx6: ${tx6}px; --ty6: ${ty6}px;
+                                                animation-delay: ${animDelay}s;
+                                                animation-duration: ${animDuration}s;
+                                            "></div>
+                                        `;
+                                    }
 
-                                            // Introduce random offsets and speed rates to desynchronize the physics tumble pattern
-                                            let animDelay = -(Math.random() * 1.5).toFixed(2);
-                                            let animDuration = (0.75 + Math.random() * 0.65).toFixed(2);
+                                    overlay.innerHTML = `
+                                        <div class="gacha-cabinet gacha-cabinet-enter" onanimationend="this.classList.remove('gacha-cabinet-enter')">
+                                            <div style="display:flex; justify-content:space-between; align-items:center; width:100%; border-bottom:1px solid #f1c40f; padding-bottom:6px; margin-bottom:10px;">
+                                                <h3 style="margin:0; color:#f1c40f; font-size:13px; letter-spacing:1px; display:flex; align-items:center; gap:6px;">🎰 ARCADE GACHAPON</h3>
+                                                <button onclick="document.getElementById('gacha-modal-overlay').remove(); window.setPauseState(false); window.hideTooltip();" style="background:#222; border:1px solid #444; color:#aaa; font-weight:bold; cursor:pointer; font-size:10px; padding:3px 8px; border-radius:4px;">Close</button>
+                                            </div>
 
-                                            ballsHtml += `
-                                                                        <div class="gacha-ball-pile ball-bouncing" style="
-                                                                            left: ${left}px; bottom: ${bottom}px;
-                                                                            transform: rotate(${rot}deg);
-                                                                            background: linear-gradient(180deg, ${col} 50%, #ffffff 50%);
-                                                                            --tx1: ${tx1}px; --ty1: ${ty1}px;
-                                                                            --tx2: ${tx2}px; --ty2: ${ty2}px;
-                                                                            --tx3: ${tx3}px; --ty3: ${ty3}px;
-                                                                            --tx4: ${tx4}px; --ty4: ${ty4}px;
-                                                                            animation-delay: ${animDelay}s;
-                                                                            animation-duration: ${animDuration}s;
-                                                                            animation-play-state: paused; /* Keep balls resting exactly where they lie */
-                                                                        "></div>
-                                                                    `;
-                                        }
+                                            <!-- Capsule Globe -->
+                                            <div class="gacha-globe" id="gacha-globe-element">
+                                                ${ballsHtml}
+                                            </div>
 
-                    overlay.innerHTML = `
-                                            <div class="gacha-cabinet gacha-cabinet-enter" onanimationend="this.classList.remove('gacha-cabinet-enter')">
-                                                <div style="display:flex; justify-content:space-between; align-items:center; width:100%; border-bottom:1px solid #e74c3c; padding-bottom:6px; margin-bottom:10px;">
-                                <h3 style="margin:0; color:#f1c40f; font-size:14px; letter-spacing:1px; display:flex; align-items:center; gap:6px;">🎰 ARCADE GACHAPON</h3>
-                                <button onclick="document.getElementById('gacha-modal-overlay').remove(); window.setPauseState(false); window.hideTooltip();" style="background:#222; border:1px solid #444; color:#aaa; font-weight:bold; cursor:pointer; font-size:10px; padding:3px 8px; border-radius:4px;">Close</button>
-                            </div>
+                                            <!-- PITY TRACKER PROGRESS -->
+                                            <div style="width: 100%; margin: 8px 0; background:rgba(0,0,0,0.5); border:1px solid #333; padding:8px; border-radius:6px; text-align:center;">
+                                                <div style="display:flex; justify-content:space-between; font-size:10px; color:#cbd5e1; font-weight:bold; margin-bottom:4px; font-family:monospace;">
+                                                    <span id="vending-pity-text">Pity progress: ${pityProgress} / 20</span>
+                                                    <span style="color:#e74c3c;">Guaranteed 5★ on 20</span>
+                                                </div>
+                                                <div style="width:100%; height:6px; background:#222; border-radius:3px; overflow:hidden; border:1px solid #444;">
+                                                    <div id="vending-pity-fill" style="width:${(pityProgress/20)*100}%; height:100%; background:linear-gradient(90deg, #ff007f, #e74c3c); transition:width 0.3s ease;"></div>
+                                                </div>
+                                            </div>
 
-                            <!-- Capsule Globe -->
-                            <div class="gacha-globe" id="gacha-globe-element">
-                                ${ballsHtml}
-                            </div>
+                                            <!-- CONTROL PANEL & CRANK -->
+                                            <div class="gacha-control-panel">
+                                                <div style="font-size:10px; color:#aaa; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px; font-family:monospace;">
+                                                    🔑 Gacha Keys: <strong style="color:#2ecc71; font-size:12px;" id="gacha-key-count-lbl">${keysOwned}</strong>
+                                                </div>
 
-                            <!-- CONTROL PANEL & CRANK -->
-                            <div class="gacha-control-panel">
-                                <div style="font-size:10px; color:#aaa; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px; font-family:monospace;">
-                                    🔑 Gacha Keys: <strong style="color:#2ecc71; font-size:12px;" id="gacha-key-count-lbl">${keysOwned}</strong>
-                                </div>
+                                                <div class="gacha-crank-handle" id="gacha-crank-element" onclick="window.crankGachaMachine()">
+                                                    <div class="gacha-crank-cross"></div>
+                                                    <div class="gacha-crank-cross vertical"></div>
+                                                </div>
 
-                                <div class="gacha-crank-handle" id="gacha-crank-element" onclick="window.crankGachaMachine()">
-                                    <div class="gacha-crank-cross"></div>
-                                    <div class="gacha-crank-cross vertical"></div>
-                                </div>
+                                                <div style="font-size:9.5px; color:#f1c40f; margin-top:8px; text-align:center; font-weight:bold;">
+                                                    CLICK CRANK TO SPIN!
+                                                </div>
+                                            </div>
 
-                                <div style="font-size:9.5px; color:#f1c40f; margin-top:8px; text-align:center; font-weight:bold;">
-                                    CLICK CRANK TO SPIN!
-                                </div>
-                            </div>
+                                            <!-- CHUTE SLOT -->
+                                            <div class="gacha-chute" id="gacha-chute-element">
+                                                <!-- Dispensed capsule drops here -->
+                                            </div>
 
-                            <!-- CHUTE SLOT -->
-                            <div class="gacha-chute" id="gacha-chute-element">
-                                <!-- Dispensed capsule drops here -->
-                            </div>
-
-                            <div id="gacha-reward-overlay" style="display:none; margin-top:10px; width:100%;"></div>
-                        </div>
-                    `;
-                };
+                                            <div id="gacha-reward-overlay" style="display:none; margin-top:10px; width:100%;"></div>
+                                        </div>
+                                    `;
+                                };
 
                 window.crankGachaMachine = function() {
                                     if (window.gachaActiveState === "spinning" || window.gachaActiveState === "dispensed") return;
@@ -4261,26 +4320,26 @@ window.updateArchitectRanges = function() {
                                     window.gachaActiveState = "spinning";
 
                                     if (crank) {
-                                        crank.classList.add('crank-animate');
-                                    }
+                                                                            crank.classList.add('crank-animate');
+                                                                        }
 
-                                    if (globe) {
+                                                                        if (globe) {
                                                                             Array.from(globe.querySelectorAll('.gacha-ball-pile')).forEach(ball => {
-                                                                                ball.style.animationPlayState = 'running'; /* Resume organic swirl */
+                                                                                ball.classList.add('ball-spinning'); // Switch on high-fidelity physics animation
                                                                             });
                                                                         }
 
-                                    window.SoundManager.play('swing');
+                                                                        window.SoundManager.play('swing');
 
-                                    setTimeout(() => {
+                                                                        setTimeout(() => {
                                                                             if (crank) crank.classList.remove('crank-animate');
                                                                             if (globe) {
                                                                                 Array.from(globe.querySelectorAll('.gacha-ball-pile')).forEach(ball => {
-                                                                                    ball.style.animationPlayState = 'paused'; /* Freeze balls on their current active spot */
+                                                                                    ball.classList.remove('ball-spinning'); // Automatically let gravity settle them
                                                                                 });
                                                                             }
 
-                                        window.gachaActiveState = "dispensed";
+                                                                            window.gachaActiveState = "dispensed";
                                         let color = window.getTierColor(rolledItem.statsRolled);
 
                                         // Render capsule drop
@@ -4338,7 +4397,480 @@ window.updateArchitectRanges = function() {
                     if (typeof window.renderForgeTab === "function") window.renderForgeTab();
                 };
 
-                // --- DYNAMIC RECENT LOGS & SHOWCASE SYSTEM ---
+                // --- MISSION CLAIM & DRAGGABLE WINDOW SYSTEM ---
+
+                window.switchMissionsTab = function(tabId) {
+                                    window.state.missionsTab = tabId;
+                                    window.renderMissionsWindow();
+                                };
+
+                                window.buyMissionUpgrade = function(type) {
+                                    let p = window.playerStats;
+                                    p.missionUpgrades = p.missionUpgrades || { gold: 0, atk: 0, hp: 0 };
+                                    let curLevel = p.missionUpgrades[type] || 0;
+                                    let baseCost = type === 'gold' ? 5 : 8;
+                                    let scalingFactor = type === 'gold' ? 3 : 4;
+                                    let cost = baseCost + curLevel * scalingFactor;
+
+                                    if ((p.missionTokens || 0) < cost) {
+                                        window.pushHeaderToast("❌ Insufficient Mission Tokens!", "#e74c3c");
+                                        return;
+                                    }
+
+                                    p.missionTokens -= cost;
+                                    p.missionUpgrades[type]++;
+                                    window.pushHeaderToast(`🎉 Upgraded Mission ${type.toUpperCase()} to Lv. ${p.missionUpgrades[type]}!`, "#2ecc71");
+
+                                    window.SoundManager.play('spell');
+                                    window.updateUI();
+                                    window.renderMissionsWindow();
+                                    window.saveGame();
+                                };
+
+                                window.buyMissionItem = function(itemName, cost) {
+                                                    let p = window.playerStats;
+                                                    if ((p.missionTokens || 0) < cost) {
+                                                        window.pushHeaderToast(`❌ Insufficient Mission Tokens! Requires ${cost}.`, "#e74c3c");
+                                                        return;
+                                                    }
+
+                                                    p.missionTokens -= cost;
+                                                    if (itemName === "Gacha Key") {
+                                                        window.addEtcDrop("Gacha Key", 1);
+                                                    } else if (itemName === "Catalyst Core") {
+                                                        window.addEtcDrop("Catalyst Core", 1);
+                                                    } else if (itemName === "Astral Essence") {
+                                                        window.addEtcDrop("Astral Essence", 1);
+                                                    } else if (itemName === "Double XP Potion") {
+                                                        window.addUseDrop("Double XP Potion", 1);
+                                                    } else if (itemName === "Double Drop Potion") {
+                                                        window.addUseDrop("Double Drop Potion", 1);
+                                                    } else if (itemName === "Drop Quality Potion") {
+                                                        window.addUseDrop("Drop Quality Potion", 1);
+                                                    }
+
+                                                    window.pushHeaderToast(`🛒 Purchased ${itemName}!`, "#2ecc71");
+                                                    window.SoundManager.play('fairy');
+                                                    window.updateUI();
+                                                    window.renderMissionsWindow();
+                                                    window.saveGame();
+                                                };
+
+                                window.claimMissionReward = function(missionId, isWeekly = false) {
+                                    let missions = isWeekly ? window.playerStats.weeklyMissions : window.playerStats.dailyMissions;
+                                    if (!missions) return;
+                                    let m = missions.find(x => x.id === missionId);
+                                    if (!m || !m.completed || m.claimed) return;
+
+                                    m.claimed = true;
+
+                                    // Award 1 Mission Point (Token) per claimed mission
+                                    window.playerStats.missionTokens = (window.playerStats.missionTokens || 0) + 1;
+
+                                    if (typeof window.addEtcDrop === "function") {
+                                        if (m.treat === "Gold") {
+                                            window.playerStats.coins += m.treatQty;
+                                        } else if (m.treat === "Epic Gear Piece") {
+                                            let activeStage = window.playerStats.stage || 1;
+                                            let scale = Math.floor((activeStage - 1) / 10) + 1;
+                                            let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+                                            let chosenType = types[Math.floor(Math.random() * types.length)];
+                                            let newItem = window.createItemObject(chosenType, 3, scale, 3);
+                                            window.inventory.EQUIP.push(newItem);
+                                            if (typeof window.pushLog === "function") window.pushLog(`<strong style="color:#e67e22;">[MISSION]</strong> Received guaranteed Epic reward: <span style="color:${window.getTierColor(3)};">${newItem.name}</span>!`);
+                                        } else if (window.useDex && window.useDex[m.treat]) {
+                                            if (typeof window.addUseDrop === "function") window.addUseDrop(m.treat, m.treatQty);
+                                        } else {
+                                            window.addEtcDrop(m.treat, m.treatQty);
+                                        }
+
+                                        if (m.potionAward) {
+                                            if (typeof window.addUseDrop === "function") window.addUseDrop(m.potionAward, 3);
+                                            if (typeof window.pushLog === "function") window.pushLog(`<strong style="color:#2ecc71;">[MISSION]</strong> Received extra potion stash: 3x ${m.potionAward}!`);
+                                        }
+                                    }
+
+                                    if (typeof window.pushHeaderToast === "function") {
+                                        let textLabel = m.potionAward ? `${m.treatQty}x ${m.treat} & 3x ${m.potionAward}` : `${m.treatQty}x ${m.treat}`;
+                                        window.pushHeaderToast(`🎁 Claimed: ${textLabel} & +1 Mission Token!`, "#2ecc71");
+                                    }
+
+                                    if (window.SoundManager) window.SoundManager.play('fairy');
+
+                                    window.updateUI();
+                                    window.renderMissionsWindow();
+                                };
+
+                                window.claimMasterMissionReward = function(isWeekly = false) {
+                                    let missions = isWeekly ? window.playerStats.weeklyMissions : window.playerStats.dailyMissions;
+                                    if (!missions) return;
+
+                                    let allDone = missions.every(m => m.completed);
+                                    let alreadyClaimed = isWeekly ? window.playerStats.weeklyRewardClaimed : window.playerStats.dailyRewardClaimed;
+
+                                    if (!allDone || alreadyClaimed) return;
+
+                                    if (isWeekly) {
+                                        window.playerStats.weeklyRewardClaimed = true;
+
+                                        // Award 10 Mission Tokens for Weekly Board completion
+                                        window.playerStats.missionTokens = (window.playerStats.missionTokens || 0) + 10;
+
+                                        let scalingPP = 2 + Math.floor(window.playerStats.prestigeCount / 5);
+                                        window.playerStats.prestigePoints += scalingPP;
+                                        window.addEtcDrop("Gacha Key", 3);
+                                        window.addEtcDrop("Catalyst Core", 1);
+
+                                        let activeStage = window.playerStats.stage || 1;
+                                        let scale = Math.floor((activeStage - 1) / 10) + 1;
+                                        let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+                                        let chosenType = types[Math.floor(Math.random() * types.length)];
+                                        let minStars = Math.random() < 0.20 ? 5 : 4;
+                                        let grandItem = window.createItemObject(chosenType, minStars, scale, minStars);
+                                        window.inventory.EQUIP.push(grandItem);
+
+                                        if (typeof window.pushLog === "function") window.pushLog(`<strong style="color:#f1c40f;">🏆 [MISSION BOARD] Beaten Weekly Board! Earned +${scalingPP} PP, Gacha Keys, 10x Mission Tokens, and ${grandItem.name}!</strong>`);
+                                    } else {
+                                        window.playerStats.dailyRewardClaimed = true;
+
+                                        // Award 3 Mission Tokens for Daily Board completion
+                                        window.playerStats.missionTokens = (window.playerStats.missionTokens || 0) + 3;
+
+                                        window.addEtcDrop("Gacha Key", 1);
+                                        window.addEtcDrop("Catalyst Core", 1);
+                                        window.addEtcDrop("Eridium Shard", 2);
+                                    }
+
+                                    if (window.SoundManager) window.SoundManager.play('revive');
+
+                                    window.updateUI();
+                                    window.renderMissionsWindow();
+                                };
+
+                                window.toggleMissions = function() {
+                                    let modal = document.getElementById('missions-draggable-window');
+                                    if (modal) {
+                                        modal.remove();
+                                        window.hideTooltip();
+                                    } else {
+                                        window.hideTooltip();
+                                        window.setPauseState(true);
+                                        window.checkAndResetMissions();
+                                        window.state.missionsTab = "BOARD";
+
+                                        let win = document.createElement('div');
+                                        win.id = 'missions-draggable-window';
+                                        win.className = 'draggable-window';
+                                        win.style.left = '80px';
+                                        win.style.top = '60px';
+
+                                        document.getElementById('game-container').appendChild(win);
+                                        window.renderMissionsWindow();
+                                        window.makeWindowDraggable(win, document.getElementById('missions-win-handle'));
+                                    }
+                                };
+
+                                window.renderMissionsWindow = function() {
+                                    let win = document.getElementById('missions-draggable-window');
+                                    if (!win) return;
+
+                                    let currentTab = window.state.missionsTab || "BOARD";
+                                    let tokenBalance = window.playerStats.missionTokens || 0;
+
+                                    let tabHeaderHtml = `
+                                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:12px; padding:0 2px;">
+                                            <button onclick="window.switchMissionsTab('BOARD')" class="sub-tab-btn ${currentTab === 'BOARD' ? 'active' : ''}" style="padding:6px; font-weight:bold; font-size:10.5px;">📋 Guild Board</button>
+                                            <button onclick="window.switchMissionsTab('SHOP')" class="sub-tab-btn ${currentTab === 'SHOP' ? 'active' : ''}" style="padding:6px; font-weight:bold; font-size:10.5px;">🏪 Mission Shop</button>
+                                        </div>
+                                    `;
+
+                                    let contentHtml = "";
+
+                                    if (currentTab === "BOARD") {
+                                        let dailies = window.playerStats.dailyMissions || [];
+                                        let weeklies = window.playerStats.weeklyMissions || [];
+
+                                        let dailyDoneCount = dailies.filter(m => m.completed).length;
+                                        let weeklyDoneCount = weeklies.filter(m => m.completed).length;
+
+                                        let dailyMasterClaimed = window.playerStats.dailyRewardClaimed;
+                                        let weeklyMasterClaimed = window.playerStats.weeklyRewardClaimed;
+
+                                        let getMissionRowHtml = (m, isWeekly) => {
+                                            let pct = (m.current / m.target) * 100;
+                                            let btnHtml = "";
+                                            if (m.claimed) {
+                                                btnHtml = `<span style="color:#7f8c8d; font-size:10px; font-weight:bold;">Claimed ✓</span>`;
+                                            } else if (m.completed) {
+                                                btnHtml = `<button class="btn-action" style="padding:2px 8px; font-size:10px; background:#2ecc71; color:white;" onclick="window.claimMissionReward('${m.id}', ${isWeekly})">Claim</button>`;
+                                            } else {
+                                                btnHtml = `<span style="color:#888; font-size:10px; font-family:monospace;">${m.current.toLocaleString()}/${m.target.toLocaleString()}</span>`;
+                                            }
+
+                                            let rewardText = `+${m.treatQty} ${m.treat}`;
+                                            if (m.potionAward) {
+                                                rewardText += ` & 3x ${m.potionAward.replace(" Elixir", "")}`;
+                                            }
+
+                                            return `
+                                                <div style="background:#111; border:1px solid #2d3748; border-radius:6px; padding:8px; margin-bottom:6px; display:flex; flex-direction:column; gap:4px;">
+                                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                                        <strong style="font-size:11px; color:#fff; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;">${m.desc}</strong>
+                                                        ${btnHtml}
+                                                    </div>
+                                                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:9.5px; color:#aaa; margin-top:2px;">
+                                                        <span>Reward: <span style="color:#f1c40f;">${rewardText}</span></span>
+                                                    </div>
+                                                    <div style="width:100%; height:4px; background:#222; border-radius:2px; overflow:hidden; border:1px solid #333; margin-top:2px;">
+                                                        <div style="width:${pct}%; height:100%; background:${isWeekly ? '#9b59b6' : '#2ecc71'};"></div>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        };
+
+                                        let dailyMasterBtnHtml = "";
+                                        if (dailyMasterClaimed) {
+                                            dailyMasterBtnHtml = `<button class="btn-action" style="background:#333; color:#777; width:100%; font-size:10.5px; cursor:not-allowed;" disabled>Grand Treat Claimed ✓</button>`;
+                                        } else if (dailyDoneCount === 6) {
+                                            dailyMasterBtnHtml = `<button class="btn-action btn-pulse" style="width:100%; font-size:10.5px;" onclick="window.claimMasterMissionReward(false)">🎁 Claim Daily Grand Treat!</button>`;
+                                        } else {
+                                            dailyMasterBtnHtml = `<button class="btn-action" style="background:#222; color:#555; border:1px solid #333; width:100%; font-size:10.5px; cursor:not-allowed;" disabled>Complete all 6 (${dailyDoneCount}/6)</button>`;
+                                        }
+
+                                        let weeklyMasterBtnHtml = "";
+                                        let scalingPPText = 2 + Math.floor(window.playerStats.prestigeCount / 5);
+                                        if (window.playerStats.prestigeCount === 0) {
+                                            weeklyMasterBtnHtml = `
+                                                <div style="background:rgba(231,76,60,0.08); border:1px dashed #e74c3c; border-radius:6px; padding:10px; text-align:center; color:#e74c3c; font-size:10.5px; font-weight:bold; width:100%;">
+                                                    🔒 Weekly Board unlocks after your first Ascension at the Altar of Ascension.
+                                                </div>
+                                            `;
+                                        } else {
+                                            if (weeklyMasterClaimed) {
+                                                weeklyMasterBtnHtml = `<button class="btn-action" style="background:#333; color:#777; width:100%; font-size:10.5px; cursor:not-allowed;" disabled>Grand Treat Claimed ✓</button>`;
+                                            } else if (weeklyDoneCount === 3) {
+                                                weeklyMasterBtnHtml = `<button class="btn-action btn-pulse" style="width:100%; font-size:10.5px; background:#9b59b6; border-color:#8e44ad;" onclick="window.claimMasterMissionReward(true)">🎁 Claim Weekly Grand Treat!</button>`;
+                                            } else {
+                                                weeklyMasterBtnHtml = `<button class="btn-action" style="background:#222; color:#555; border:1px solid #333; width:100%; font-size:10.5px; cursor:not-allowed;" disabled>Complete all 3 (${weeklyDoneCount}/3)</button>`;
+                                            }
+                                        }
+
+                                        let weekliesCardHtml = "";
+                                        if (window.playerStats.prestigeCount === 0) {
+                                            weekliesCardHtml = `
+                                                <div style="border:1px solid #444; border-radius:6px; padding:12px; background:rgba(0,0,0,0.4); text-align:center; color:#aaa; font-size:11px; font-style:italic;">
+                                                    Weekly board locked until Ascension. Slay Hooktail to claim your destiny.
+                                                </div>
+                                            `;
+                                        } else {
+                                            weekliesCardHtml = `
+                                                <div style="border:1px solid #9b59b6; border-radius:6px; padding:10px; background:rgba(155,89,182,0.03);">
+                                                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #9b59b6; padding-bottom:4px; margin-bottom:8px;">
+                                                        <strong style="color:#9b59b6; font-size:12px; text-transform:uppercase;">📆 Weekly Objectives</strong>
+                                                        <span style="font-size:9.5px; color:#aaa; font-family:monospace;" id="weekly-timer-val">Refreshing...</span>
+                                                    </div>
+                                                    <div>
+                                                        ${weeklies.map(m => getMissionRowHtml(m, true)).join("")}
+                                                    </div>
+                                                    <div style="margin-top:10px;">
+                                                        ${weeklyMasterBtnHtml}
+                                                        ${weeklyMasterClaimed ? '' : `<div style="font-size:9px; color:#aaa; text-align:center; margin-top:4px;">Grand treat: +${scalingPPText} PP (scales with prestiges), 3x Gacha Keys, 1x Catalyst Core, and a high-tier guaranteed Gear Drop!</div>`}
+                                                    </div>
+                                                </div>
+                                            `;
+                                        }
+
+                                        contentHtml = `
+                                            <!-- DAILY MISSIONS PANEL -->
+                                            <div style="border:1px solid #2ecc71; border-radius:6px; padding:10px; background:rgba(46,204,113,0.03); margin-bottom:12px;">
+                                                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #2ecc71; padding-bottom:4px; margin-bottom:8px;">
+                                                    <strong style="color:#2ecc71; font-size:12px; text-transform:uppercase;">📅 Daily Objectives</strong>
+                                                    <span style="font-size:9.5px; color:#aaa; font-family:monospace;" id="daily-timer-val">Refreshing...</span>
+                                                </div>
+                                                <div>
+                                                    ${dailies.map(m => getMissionRowHtml(m, false)).join("")}
+                                                </div>
+                                                <div style="margin-top:10px;">
+                                                    ${dailyMasterBtnHtml}
+                                                    ${dailyMasterClaimed ? '' : `<div style="font-size:9px; color:#aaa; text-align:center; margin-top:4px;">Grand treat: 1x Gacha Key, 1x Catalyst Core, 2x Eridium Shards</div>`}
+                                                </div>
+                                            </div>
+
+                                            <!-- WEEKLY MISSIONS PANEL -->
+                                            ${weekliesCardHtml}
+                                        `;
+                                    } else {
+                                        // MISSION SHOP LAYOUT
+                                        let p = window.playerStats;
+                                        p.missionUpgrades = p.missionUpgrades || { gold: 0, atk: 0, hp: 0 };
+
+                                        let lvlGold = p.missionUpgrades.gold || 0;
+                                        let costGold = 5 + lvlGold * 3;
+
+                                        let lvlAtk = p.missionUpgrades.atk || 0;
+                                        let costAtk = 8 + lvlAtk * 4;
+
+                                        let lvlHp = p.missionUpgrades.hp || 0;
+                                        let costHp = 8 + lvlHp * 4;
+
+                                        let canAffordGold = tokenBalance >= costGold;
+                                        let canAffordAtk = tokenBalance >= costAtk;
+                                        let canAffordHp = tokenBalance >= costHp;
+
+                                        contentHtml = `
+                                            <div style="display:flex; flex-direction:column; gap:8px;">
+                                                <div style="background:#111; border:1px solid #2ecc71; border-radius:6px; padding:10px;">
+                                                    <strong style="color:#2ecc71; font-size:12px; display:block; margin-bottom:4px;">🎖️ PERMANENT GUILD UPGRADES</strong>
+                                                    <span style="font-size:9.5px; color:#aaa; display:block; margin-bottom:8px; line-height:1.4;">These bonuses persist permanently and are NOT reset upon Prestige Ascension.</span>
+
+                                                    <!-- Gold % Upgrade -->
+                                                    <div style="background:#07030b; border:1px solid #333; padding:8px; border-radius:4px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+                                                        <div>
+                                                            <strong style="color:#f1c40f; font-size:11px;">Midas Training</strong>
+                                                            <div style="font-size:9px; color:#aaa;">+5% permanent Gold Multiplier</div>
+                                                            <span style="font-size:9.5px; color:#2ecc71; font-weight:bold;">Lv. ${lvlGold} (Current: +${lvlGold * 5}%)</span>
+                                                        </div>
+                                                        <button class="btn-action" style="background:#f1c40f; color:#000; font-size:10px; padding:4px 8px;" ${canAffordGold ? '' : 'disabled style="opacity:0.5;"'} onclick="window.buyMissionUpgrade('gold')">
+                                                            Cost: ${costGold}
+                                                        </button>
+                                                    </div>
+
+                                                    <!-- Attack % Upgrade -->
+                                                    <div style="background:#07030b; border:1px solid #333; padding:8px; border-radius:4px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+                                                        <div>
+                                                            <strong style="color:#e74c3c; font-size:11px;">Gladiator Mastery</strong>
+                                                            <div style="font-size:9px; color:#aaa;">+2% permanent Attack power</div>
+                                                            <span style="font-size:9.5px; color:#2ecc71; font-weight:bold;">Lv. ${lvlAtk} (Current: +${lvlAtk * 2}%)</span>
+                                                        </div>
+                                                        <button class="btn-action" style="background:#e74c3c; color:#fff; font-size:10px; padding:4px 8px;" ${canAffordAtk ? '' : 'disabled style="opacity:0.5;"'} onclick="window.buyMissionUpgrade('atk')">
+                                                            Cost: ${costAtk}
+                                                        </button>
+                                                    </div>
+
+                                                    <!-- HP % Upgrade -->
+                                                    <div style="background:#07030b; border:1px solid #333; padding:8px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">
+                                                        <div>
+                                                            <strong style="color:#3498db; font-size:11px;">Iron Constitution</strong>
+                                                            <div style="font-size:9px; color:#aaa;">+3% permanent Max HP</div>
+                                                            <span style="font-size:9.5px; color:#2ecc71; font-weight:bold;">Lv. ${lvlHp} (Current: +${lvlHp * 3}%)</span>
+                                                        </div>
+                                                        <button class="btn-action" style="background:#3498db; color:#fff; font-size:10px; padding:4px 8px;" ${canAffordHp ? '' : 'disabled style="opacity:0.5;"'} onclick="window.buyMissionUpgrade('hp')">
+                                                            Cost: ${costHp}
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div style="background:#111; border:1px solid #3498db; border-radius:6px; padding:10px;">
+                                                    <strong style="color:#3498db; font-size:12px; display:block; margin-bottom:8px;">💎 CONSUMABLES & REAGENTS</strong>
+
+                                                    <!-- Gacha Key -->
+                                                                                        <div style="background:#07030b; border:1px solid #222; padding:6px 8px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                                                                                            <div>
+                                                                                                <strong style="color:#f1c40f; font-size:10.5px;">🔑 Gacha Key</strong>
+                                                                                                <div style="font-size:9px; color:#aaa;">Roll standard vending crate</div>
+                                                                                            </div>
+                                                                                            <button class="btn-action" style="background:#bdc3c7; color:#111; padding:3px 8px; font-size:9.5px;" ${tokenBalance >= 2 ? '' : 'disabled'} onclick="window.buyMissionItem('Gacha Key', 2)">Buy (2 MP)</button>
+                                                                                        </div>
+
+                                                                                        <!-- Catalyst Core -->
+                                                                                        <div style="background:#07030b; border: 1px solid #222; padding:6px 8px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                                                                                            <div>
+                                                                                                <strong style="color:#2ecc71; font-size:10.5px;">🔋 Catalyst Core</strong>
+                                                                                                <div style="font-size:9px; color:#aaa;">Lock & re-roll item properties</div>
+                                                                                            </div>
+                                                                                            <button class="btn-action" style="background:#bdc3c7; color:#111; padding:3px 8px; font-size:9.5px;" ${tokenBalance >= 3 ? '' : 'disabled'} onclick="window.buyMissionItem('Catalyst Core', 3)">Buy (3 MP)</button>
+                                                                                        </div>
+
+                                                                                        <!-- Astral Essence -->
+                                                                                        <div style="background:#07030b; border: 1px solid #222; padding:6px 8px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                                                                                            <div>
+                                                                                                <strong style="color:#9b59b6; font-size:10.5px;">🌌 Astral Essence</strong>
+                                                                                                <div style="font-size:9px; color:#aaa;">Infuse powerful gear enchantments</div>
+                                                                                            </div>
+                                                                                            <button class="btn-action" style="background:#bdc3c7; color:#111; padding:3px 8px; font-size:9.5px;" ${tokenBalance >= 4 ? '' : 'disabled'} onclick="window.buyMissionItem('Astral Essence', 4)">Buy (4 MP)</button>
+                                                                                        </div>
+
+                                                                                        <!-- Double XP Potion -->
+                                                                                        <div style="background:#07030b; border: 1px solid #222; padding:6px 8px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                                                                                            <div>
+                                                                                                <strong style="color:#a855f7; font-size:10.5px;">🧪 Double XP Elixir</strong>
+                                                                                                <div style="font-size:9px; color:#aaa;">Doubles monster EXP gains (+100% EXP)</div>
+                                                                                            </div>
+                                                                                            <button class="btn-action" style="background:#bdc3c7; color:#111; padding:3px 8px; font-size:9.5px;" ${tokenBalance >= 3 ? '' : 'disabled'} onclick="window.buyMissionItem('Double XP Potion', 3)">Buy (3 MP)</button>
+                                                                                        </div>
+
+                                                                                        <!-- Double Drop Potion -->
+                                                                                        <div style="background:#07030b; border: 1px solid #222; padding:6px 8px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                                                                                            <div>
+                                                                                                <strong style="color:#22c55e; font-size:10.5px;">🧪 Double Drop Elixir</strong>
+                                                                                                <div style="font-size:9px; color:#aaa;">Doubles global drop rate modifier (+100%)</div>
+                                                                                            </div>
+                                                                                            <button class="btn-action" style="background:#bdc3c7; color:#111; padding:3px 8px; font-size:9.5px;" ${tokenBalance >= 4 ? '' : 'disabled'} onclick="window.buyMissionItem('Double Drop Potion', 4)">Buy (4 MP)</button>
+                                                                                        </div>
+
+                                                                                        <!-- Drop Quality Potion -->
+                                                                                        <div style="background:#07030b; border: 1px solid #222; padding:6px 8px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">
+                                                                                            <div>
+                                                                                                <strong style="color:#3b82f6; font-size:10.5px;">🧪 Drop Quality Elixir</strong>
+                                                                                                <div style="font-size:9px; color:#aaa;">Boosts drop quality checks (+50% Qly)</div>
+                                                                                            </div>
+                                                                                            <button class="btn-action" style="background:#bdc3c7; color:#111; padding:3px 8px; font-size:9.5px;" ${tokenBalance >= 5 ? '' : 'disabled'} onclick="window.buyMissionItem('Drop Quality Potion', 5)">Buy (5 MP)</button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            `;
+                                    }
+
+                                    win.innerHTML = `
+                                        <div class="draggable-header" id="missions-win-handle" style="background: linear-gradient(180deg, #181d24 0%, #0d1117 100%);">
+                                            <span> Guild Board & Shop</span>
+                                            <button onclick="document.getElementById('missions-draggable-window').remove(); window.setPauseState(false); window.hideTooltip();" style="background:transparent; border:none; color:#e74c3c; font-weight:bold; cursor:pointer; font-size:11px; padding:2px;">[X]</button>
+                                        </div>
+                                        <div class="draggable-content" style="max-height: 400px; padding: 12px; background:#07030b;">
+
+                                            ${tabHeaderHtml}
+
+                                            <!-- Mission Points Balance Bar -->
+                                            <div style="background:#111; border:1px solid #333; padding:8px; border-radius:6px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; font-family:monospace; font-size:11px;">
+                                                <span>Mission Points:</span>
+                                                <strong style="color:#f1c40f; font-size:13px;" id="mission-point-lbl">${tokenBalance} MP</strong>
+                                            </div>
+
+                                            ${contentHtml}
+
+                                        </div>
+                                    `;
+
+                                    if (currentTab === "BOARD") {
+                                        // Dynamic countdown timer calculations locked to Pacific Time (PST/PDT)
+                                                            let now = Date.now();
+                                                            let ptNowStr = new Date(now).toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
+                                                            let ptNow = new Date(ptNowStr);
+
+                                                            // Next midnight in Pacific Time
+                                                            let nextMidnightPt = new Date(ptNow.getFullYear(), ptNow.getMonth(), ptNow.getDate() + 1, 0, 0, 0, 0);
+                                                            let dailyLeftMs = nextMidnightPt.getTime() - ptNow.getTime();
+
+                                                            let dH = Math.floor(dailyLeftMs / 3600000);
+                                                            let dM = Math.floor((dailyLeftMs % 3600000) / 60000);
+                                                            let dTimerEl = document.getElementById('daily-timer-val');
+                                                            if (dTimerEl) dTimerEl.innerText = `${dH}h ${dM}m left`;
+
+                                                            // Next Monday 12:00 AM in Pacific Time
+                                                            let dayOfWeek = ptNow.getDay();
+                                                            let daysToMonday = (8 - dayOfWeek) % 7;
+                                                            if (daysToMonday === 0) daysToMonday = 7;
+                                                            let nextMondayPt = new Date(ptNow.getFullYear(), ptNow.getMonth(), ptNow.getDate() + daysToMonday, 0, 0, 0, 0);
+                                                            let weeklyLeftMs = nextMondayPt.getTime() - ptNow.getTime();
+
+                                                            let wD = Math.floor(weeklyLeftMs / 86400000);
+                                                            let wH = Math.floor((weeklyLeftMs % 86400000) / 3600000);
+                                                            let wTimerEl = document.getElementById('weekly-timer-val');
+                                                                                                                        if (wTimerEl) wTimerEl.innerText = `${wD}d ${wH}h left`;
+                                                                                                                    }
+                                                                                                                };
+
+                                                                            // --- DYNAMIC RECENT LOGS & SHOWCASE SYSTEM ---
                 window.gachaShowcaseItems = [];
 
                 window.initGachaShowcase = function() {

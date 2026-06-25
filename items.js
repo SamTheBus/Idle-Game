@@ -1501,11 +1501,12 @@ window.temperItem = function() {
         }
 
         if (isSuccess) {
-            window.forgeSelectedItem.temperLevel++;
-            window.forgeSelectedItem.consecutiveFailures = 0;
-            window.recalculateItemStats(window.forgeSelectedItem);
-            window.playerStats.totalTempers = (window.playerStats.totalTempers || 0) + 1;
-            if (typeof window.pushLog === "function") window.pushLog(`<span style='color:#e67e22;'>[FORGE]</span> Successfully tempered ${window.forgeSelectedItem.name} to [+${window.forgeSelectedItem.temperLevel}]!`);
+                    window.forgeSelectedItem.temperLevel++;
+                    window.forgeSelectedItem.consecutiveFailures = 0;
+                    window.recalculateItemStats(window.forgeSelectedItem);
+                    window.playerStats.totalTempers = (window.playerStats.totalTempers || 0) + 1;
+                    if (typeof window.progressMission === "function") window.progressMission('tempers', 1);
+                    if (typeof window.pushLog === "function") window.pushLog(`<span style='color:#e67e22;'>[FORGE]</span> Successfully tempered ${window.forgeSelectedItem.name} to [+${window.forgeSelectedItem.temperLevel}]!`);
             if (typeof window.pushHeaderToast === "function") window.pushHeaderToast("🔨 Success! [+" + window.forgeSelectedItem.temperLevel + "]", "#2ecc71");
             if (typeof window.spawnTemperParticles === "function") window.spawnTemperParticles(true);
             if (typeof window.checkAchievements === "function") window.checkAchievements();
@@ -1827,13 +1828,14 @@ window.reforgeItemStat = function() {
     else if (newProp === "bonusInt") rolledValue = Math.ceil(window.randInt(1, 3) * stageScale * rarityMult);
 
     item[newProp] = rolledValue;
-    item.reforgedProperty = newProp;
+        item.reforgedProperty = newProp;
 
-    window.recalculateItemStats(item);
-    item.name = window.buildProceduralName(item);
-    window.playerStats.totalReforges = (window.playerStats.totalReforges || 0) + 1;
+        window.recalculateItemStats(item);
+        item.name = window.buildProceduralName(item);
+        window.playerStats.totalReforges = (window.playerStats.totalReforges || 0) + 1;
+        if (typeof window.progressMission === "function") window.progressMission('reforges', 1);
 
-    if (typeof window.pushLog === "function") window.pushLog(`<span style='color:#e67e22;'>[FORGE]</span> Reforged modifier into <strong style='color:#2ecc71;'>${window.getStatLabel(newProp)} (+${rolledValue})</strong> on ${item.name}!`);
+        if (typeof window.pushLog === "function") window.pushLog(`<span style='color:#e67e22;'>[FORGE]</span> Reforged modifier into <strong style='color:#2ecc71;'>${window.getStatLabel(newProp)} (+${rolledValue})</strong> on ${item.name}!`);
     if (typeof window.pushHeaderToast === "function") window.pushHeaderToast("🔨 Stat Reforged!", "#2ecc71");
 
     if (typeof window.spawnTemperParticles === "function") window.spawnTemperParticles(true);
@@ -1852,39 +1854,56 @@ window.reforgeItemStat = function() {
         };
 
         window.rollGachaCrateItem = function() {
-            let p = window.resolvePlayerStats();
-            let maxBag = window.getMaxBagSlots();
+                    let p = window.resolvePlayerStats();
+                    let maxBag = window.getMaxBagSlots();
 
-            let keys = window.inventory.ETC["Gacha Key"] || 0;
-            if (keys < 1) {
-                return { error: "Insufficient Gacha Keys!" };
-            }
+                    let keys = window.inventory.ETC["Gacha Key"] || 0;
+                    if (keys < 1) {
+                        return { error: "Insufficient Gacha Keys!" };
+                    }
 
-            let allowArtifact = (Math.random() < 0.0005);
-            let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
-            let chosenType = allowArtifact ? "artifact" : types[Math.floor(Math.random() * types.length)];
+                    let allowArtifact = (Math.random() < 0.0005);
+                    let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+                    let chosenType = allowArtifact ? "artifact" : types[Math.floor(Math.random() * types.length)];
 
-            if (chosenType === "artifact") {
-                if (window.inventory.ARTIFACT.length >= maxBag) { return { error: "Artifact Sack Full!" }; }
-            } else {
-                if (window.inventory.EQUIP.length >= maxBag) { return { error: "Inventory Full!" }; }
-            }
+                    if (chosenType === "artifact") {
+                        if (window.inventory.ARTIFACT.length >= maxBag) { return { error: "Artifact Sack Full!" }; }
+                    } else {
+                        if (window.inventory.EQUIP.length >= maxBag) { return { error: "Inventory Full!" }; }
+                    }
 
-            // Deduct key & save state
-            window.inventory.ETC["Gacha Key"]--;
-            if (window.inventory.ETC["Gacha Key"] === 0) delete window.inventory.ETC["Gacha Key"];
+                    // Deduct key & save state
+                    window.inventory.ETC["Gacha Key"]--;
+                    if (window.inventory.ETC["Gacha Key"] === 0) delete window.inventory.ETC["Gacha Key"];
 
-            let statLinesCount = 1;
-            let luckMultiplier = p.qly + ((window.playerStats.vendingQLevel || 0) * 0.01);
-            let roll = Math.random() * 100;
+                    // --- PITY COUNTER ENGINE ---
+                    window.playerStats.vendingPity = (window.playerStats.vendingPity || 0) + 1;
+                    let isPityTriggered = false;
 
-            if (roll < (0.02 * luckMultiplier)) statLinesCount = 5;
-            else if (roll < (0.18 * luckMultiplier)) statLinesCount = 4;
-            else if (roll < (0.80 * luckMultiplier)) statLinesCount = 3;
-            else if (roll < (4.00 * luckMultiplier)) statLinesCount = 2;
-            else statLinesCount = 1;
+                    if (window.playerStats.vendingPity >= 20) {
+                        isPityTriggered = true;
+                        window.playerStats.vendingPity = 0; // Reset pity
+                    }
 
-            let peakRunStage = Math.max(window.playerStats.stage, window.playerStats.maxStage || 1);
+                    let statLinesCount = 1;
+                    if (isPityTriggered) {
+                        statLinesCount = 5; // Guaranteed Mythic
+                    } else {
+                        // Decoupled from active equip qly (re-balanced at flat +2.5% per level of Gacha Calibration)
+                                            let luckMultiplier = 1.0 + ((window.playerStats.vendingQLevel || 0) * 0.025);
+                                            let roll = Math.random() * 100;
+
+                        if (roll < (0.02 * luckMultiplier)) {
+                            statLinesCount = 5;
+                            window.playerStats.vendingPity = 0; // Natural pull resets pity
+                        }
+                        else if (roll < (0.18 * luckMultiplier)) statLinesCount = 4;
+                        else if (roll < (0.80 * luckMultiplier)) statLinesCount = 3;
+                        else if (roll < (4.00 * luckMultiplier)) statLinesCount = 2;
+                        else statLinesCount = 1;
+                    }
+
+                    let peakRunStage = Math.max(window.playerStats.stage, window.playerStats.maxStage || 1);
             let stageScale = Math.floor((peakRunStage - 1) / 10) + 1;
 
             let newItem = window.createItemObject(chosenType, statLinesCount, stageScale, 0);
