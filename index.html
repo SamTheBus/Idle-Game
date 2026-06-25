@@ -64,6 +64,7 @@
             <!-- Elevated Glowing Top Panel Action Toggles -->
             <button id="btn-missions-top" class="nav-btn" onclick="window.toggleMissions()" style="background: linear-gradient(135deg, #10b981, #059669); border-color: #34d399; box-shadow: 0 0 10px rgba(16, 185, 129, 0.45); font-weight: bold;">📅 Missions</button>
             <button id="btn-achievements-top" class="nav-btn" onclick="window.toggleAchievements()" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-color: #a78bfa; box-shadow: 0 0 10px rgba(139, 92, 246, 0.45); font-weight: bold;">🏆 Trophies</button>
+            <button id="btn-settings-top" class="nav-btn" onclick="window.toggleSettings()" style="background: linear-gradient(135deg, #4b5563, #1f2937); border-color: #6b7280; font-weight: bold;">⚙️ Settings</button>
         </div>
         <div class="brand-title">SAQ: Slaying & Questing</div>
     </div>
@@ -73,7 +74,52 @@
     <div id="etc-tooltip" class="tooltip-base"></div>
     <div id="log-item-tooltip" class="tooltip-base"></div>
     <div id="stat-tooltip" class="tooltip-base"></div>
-        
+
+    <!-- Settings Portal Modal -->
+    <div id="settings-modal" style="display:none; position:fixed; top:10%; left:50%; transform:translateX(-50%);
+        width:90%; max-width:380px; background:#111; border:2px solid var(--accent-blue); border-radius:8px;
+        z-index:20000; padding:15px; box-shadow:0 0 30px rgba(0,0,0,0.9); max-height:80vh; overflow-y:auto; overscroll-behavior: contain;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:15px;">
+            <h3 style="margin:0; color:var(--accent-blue); font-size:14px;">⚙️ Game Settings</h3>
+            <button onclick="window.toggleSettings()" style="background:#e74c3c; color:white; border:none; border-radius:4px; padding:6px 12px; font-weight:bold; cursor:pointer; font-size:11px;">Close</button>
+        </div>
+
+        <!-- Fullscreen -->
+        <div style="background:#151515; border:1px solid #333; padding:10px; border-radius:6px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:12px; font-weight:bold; color:#fff;">🖥️ Fullscreen Mode</span>
+            <button id="btn-settings-fullscreen" class="btn-action" style="background:#16a085; font-size:11px;" onclick="window.toggleFullscreen()">Toggle Fullscreen</button>
+        </div>
+
+        <!-- Sticky Camera -->
+        <div style="background:#151515; border:1px solid #333; padding:10px; border-radius:6px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:12px; font-weight:bold; color:#fff;">📌 Sticky Camera</span>
+            <button id="settings-toggle-sticky" class="btn-action" style="font-size:11px;" onclick="window.toggleStickyCanvas()">Sticky: ON</button>
+        </div>
+
+        <!-- Audio Section -->
+        <div style="background:#151515; border:1px solid #333; padding:12px; border-radius:6px;">
+            <div style="color: #f1c40f; font-weight: bold; margin-bottom: 12px; font-size: 13px; text-align:center; border-bottom:1px solid #222; padding-bottom:5px;">🔊 Sound Control</div>
+
+            <div style="margin-bottom: 10px;">
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
+                    <label for="slider-vol-master" style="color:#aaa;">Master Volume:</label>
+                    <span id="vol-master-label" style="color:#3498db; font-weight:bold;">50%</span>
+                </div>
+                <input type="range" id="slider-vol-master" min="0" max="1" step="0.05" value="0.5" oninput="window.changeVolume('master', this.value)" style="width: 100%; background:#333; outline:none; height:4px; border-radius:2px; appearance:none; cursor:pointer;">
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
+                    <label for="slider-vol-sfx" style="color:#aaa;">SFX Volume:</label>
+                    <span id="vol-sfx-label" style="color:#2ecc71; font-weight:bold;">80%</span>
+                </div>
+                <input type="range" id="slider-vol-sfx" min="0" max="1" step="0.05" value="0.8" oninput="window.changeVolume('sfx', this.value)" style="width: 100%; background:#333; outline:none; height:4px; border-radius:2px; appearance:none; cursor:pointer;">
+            </div>
+
+            <button id="btn-audio-mute" onclick="window.toggleMute()" style="width: 100%; background: #c0392b; color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; transition: background 0.2s;">Mute Audio</button>
+        </div>
+    </div>
+
     <!-- Artifacts Database Portal -->
     <div id="altar-modal">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:10px;">
@@ -400,35 +446,7 @@
         <!-- Action Toggles (Right Side) -->
         <div style="display: flex; gap: 4px; justify-content: flex-end; flex-wrap: wrap;">
             <button id="btn-leave-activity" class="btn-toggle" onclick="window.leaveActivity()" style="background: #c0392b; display: none; color: white; border-color: #f1c40f; font-size: 10px; padding: 6px 10px;">🏃 Leave</button>
-
-            <div style="position: relative;">
-                <button onclick="window.toggleAudioMenu()" class="btn-toggle" style="background: #1e293b; color: white; font-size: 10px; padding: 6px 10px;">🔊 Sound ▼</button>
-                <div id="audio-menu" style="display: none; position: absolute; bottom: 35px; right: 0; background: #151515; border: 1px solid #444; border-radius: 6px; padding: 12px; width: 220px; z-index: 10000; box-shadow: 0 -4px 15px rgba(0,0,0,0.9);">
-                    <div style="color: #f1c40f; font-weight: bold; margin-bottom: 10px; font-size: 14px; text-align:center; border-bottom:1px solid #333; padding-bottom:5px;">🔊 Sound Control</div>
-
-                    <div style="margin-bottom: 10px;">
-                        <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
-                            <label for="slider-vol-master" style="color:#aaa;">Master Vol:</label>
-                            <span id="vol-master-label" style="color:#3498db; font-weight:bold;">50%</span>
-                        </div>
-                        <input type="range" id="slider-vol-master" min="0" max="1" step="0.05" value="0.5" oninput="window.changeVolume('master', this.value)" style="width: 100%; background:#333; outline:none; height:4px; border-radius:2px; appearance:none; cursor:pointer;">
-                    </div>
-
-                    <div style="margin-bottom: 12px;">
-                        <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
-                            <label for="slider-vol-sfx" style="color:#aaa;">SFX Vol:</label>
-                            <span id="vol-sfx-label" style="color:#2ecc71; font-weight:bold;">80%</span>
-                        </div>
-                        <input type="range" id="slider-vol-sfx" min="0" max="1" step="0.05" value="0.8" oninput="window.changeVolume('sfx', this.value)" style="width: 100%; background:#333; outline:none; height:4px; border-radius:2px; appearance:none; cursor:pointer;">
-                    </div>
-
-                    <button id="btn-audio-mute" onclick="window.toggleMute()" style="width: 100%; background: #c0392b; color: white; border: none; padding: 6px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; transition: background 0.2s;">Mute Audio</button>
-                </div>
-            </div>
-
-            <button id="btn-fullscreen" class="btn-toggle" onclick="window.toggleFullscreen()" style="background: #16a085; color: white; font-size: 10px; padding: 6px 10px;">🖥️ Fullscreen</button>
             <button id="btn-pause" class="btn-toggle" onclick="window.togglePause()" style="background: #34495e; color: white; font-size: 10px; padding: 6px 10px;">▶️ Pause</button>
-            <button id="toggle-sticky" class="btn-toggle active" onclick="window.toggleStickyCanvas()" style="font-size: 10px; padding: 6px 10px;">Sticky: ON</button>
             <button id="toggle-auto" class="btn-toggle active" onclick="window.toggleAuto()" style="font-size: 10px; padding: 6px 10px;">Auto: ON</button>
         </div>
     </div>

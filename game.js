@@ -793,16 +793,17 @@ window.onload = function() {
                 }
             }
 
-            // Auto-close Sound menu if clicking outside of it
-            let audioMenu = document.getElementById('audio-menu');
-            if (audioMenu && audioMenu.style.display === 'block') {
-                if (!e.target.closest('#audio-menu') && !e.target.closest('button[onclick*="toggleAudioMenu"]')) {
-                    audioMenu.style.display = 'none';
-                }
-            }
-        });
+            // Auto-close Settings menu if clicking outside of it
+                        let settingsModal = document.getElementById('settings-modal');
+                        if (settingsModal && settingsModal.style.display === 'block') {
+                            if (!e.target.closest('#settings-modal') && !e.target.closest('button[onclick*="toggleSettings"]')) {
+                                settingsModal.style.display = 'none';
+                                window.hideTooltip();
+                            }
+                        }
+                    });
 
-        requestAnimationFrame(engineCycle);
+                    requestAnimationFrame(engineCycle);
     window.updateUI();
 };
 

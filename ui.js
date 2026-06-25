@@ -1086,10 +1086,10 @@ window.showCustomConfirm = function(title, message, confirmText, cancelText, acc
 
     window.updateStickyCanvasStyle = function() {
         let active = window.playerStats.stickyCanvas !== false;
-        let btn = document.getElementById('toggle-sticky');
+        let btn = document.getElementById('settings-toggle-sticky');
         if (btn) {
             btn.innerText = active ? "Sticky Cam: ON" : "Sticky Cam: OFF";
-            btn.className = active ? "btn-toggle active" : "btn-toggle";
+            btn.className = active ? "btn-action" : "btn-action un";
         }
         let canvasEl = document.getElementById('gameCanvas');
         if (canvasEl) {
@@ -1107,9 +1107,23 @@ window.showCustomConfirm = function(title, message, confirmText, cancelText, acc
 
     window.toggleStickyCanvas = function() {
         window.playerStats.stickyCanvas = !window.playerStats.stickyCanvas;
-        window.updateStickyCanvasStyle();
-        if (typeof window.saveGame === "function") window.saveGame();
-    };
+            window.updateStickyCanvasStyle();
+            if (typeof window.saveGame === "function") window.saveGame();
+        };
+
+        window.toggleSettings = function() {
+            let modal = document.getElementById('settings-modal');
+            if (!modal) return;
+            if (modal.style.display === 'none' || modal.style.display === '') {
+                window.hideTooltip();
+                modal.style.display = 'block';
+                window.updateAudioUI();
+                window.updateStickyCanvasStyle();
+            } else {
+                modal.style.display = 'none';
+                window.hideTooltip();
+            }
+        };
 
     window.leaveActivity = function() {
         if (!window.playerStats.isDungeonMode && !window.playerStats.isCrucibleMode) {
@@ -4564,7 +4578,6 @@ window.updateArchitectRanges = function() {
                                         window.hideTooltip();
                                     } else {
                                         window.hideTooltip();
-                                        window.setPauseState(true);
                                         window.checkAndResetMissions();
                                         window.state.missionsTab = "BOARD";
 
@@ -4832,11 +4845,11 @@ window.updateArchitectRanges = function() {
                                     }
 
                                     win.innerHTML = `
-                                        <div class="draggable-header" id="missions-win-handle" style="background: linear-gradient(180deg, #181d24 0%, #0d1117 100%);">
-                                            <span> Guild Board & Shop</span>
-                                            <button onclick="document.getElementById('missions-draggable-window').remove(); window.setPauseState(false); window.hideTooltip();" style="background:transparent; border:none; color:#e74c3c; font-weight:bold; cursor:pointer; font-size:11px; padding:2px;">[X]</button>
-                                        </div>
-                                        <div class="draggable-content" style="max-height: 400px; padding: 12px; background:#07030b;">
+                                                    <div class="draggable-header" id="missions-win-handle" style="background: linear-gradient(180deg, #181d24 0%, #0d1117 100%);">
+                                                        <span> Guild Board & Shop</span>
+                                                        <button onclick="document.getElementById('missions-draggable-window').remove(); window.hideTooltip();" style="background:transparent; border:none; color:#e74c3c; font-weight:bold; cursor:pointer; font-size:11px; padding:2px;">[X]</button>
+                                                    </div>
+                                                    <div class="draggable-content" style="max-height: 400px; padding: 12px; background:#07030b;">
 
                                             ${tabHeaderHtml}
 
