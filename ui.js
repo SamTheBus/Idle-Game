@@ -873,39 +873,40 @@ window.showStatBreakdown = function(e, statKey, isPct = false) {
     }
 
     let achTotal = 0; let achPctTotal = 0;
-    if (window.playerStats.unlockedAchievements && window.AchievementsData) {
-        window.playerStats.unlockedAchievements.forEach(id => {
-            let ach = window.AchievementsData.find(a => a.id === id);
-            if (ach && ach.stats) {
-                if (ach.stats[statKey] !== undefined) achTotal += ach.stats[statKey];
-                let pctKey = statKey + "Pct";
-                if (ach.stats[pctKey] !== undefined) achPctTotal += ach.stats[pctKey];
-            }
-        });
-    }
+        if (window.playerStats.unlockedAchievements && window.AchievementsData) {
+            window.playerStats.unlockedAchievements.forEach(id => {
+                let ach = window.AchievementsData.find(a => a.id === id);
+                if (ach && ach.stats) {
+                    if (ach.stats[statKey] !== undefined) achTotal += ach.stats[statKey];
+                    let pctKey = statKey + "Pct";
+                    if (ach.stats[pctKey] !== undefined) achPctTotal += ach.stats[pctKey];
+                }
+            });
+        }
 
-if (statKey === 'atk' && window.playerStats.atkPotionTimer > 0) gearTotal += Math.ceil((window.playerStats.baseAtk + alloc.spAtk * 6 + gearTotal + artTotal + achTotal) * 0.10);    if (statKey === 'maxHp' && window.playerStats.hpPotionTimer > 0) gearTotal += Math.ceil((window.playerStats.baseMaxHp + alloc.spHp * 45 + gearTotal + artTotal) * 0.10);
-    if (statKey === 'def' && window.playerStats.defPotionTimer > 0) gearTotal += Math.ceil((window.playerStats.baseDef + alloc.spDef * 4 + gearTotal + artTotal) * 0.10);
-    if (statKey === 'moveSpeed' && window.playerStats.hastePotionTimer > 0) gearTotal += 3;
+        let intScaleTotal = 0;
+        let prestigeTotal = 0;
+        if (statKey === 'fairySpawn') {
+            intScaleTotal = effectiveInt * 0.001;
+            prestigeTotal = (window.playerStats.prestigeUpgrades?.fairy || 0) * 0.05;
+        }
 
-    if (statKey === 'moveSpeed' && window.checkArtifactTrait("move_speed")) artTotal += 10;
-    if (statKey === 'def' && window.checkArtifactTrait("defense")) artTotal += 15;
-    if (statKey === 'gold' && window.checkArtifactTrait("gold_hoard")) artTotal += 0.50;
+        let formatVal = (v) => isPct ? `+${Math.floor(v*100)}%` : `+${v.toLocaleString()}`;
+        if (statKey === 'gold') formatVal = (v) => `+${v.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
-    let formatVal = (v) => isPct ? `+${Math.floor(v*100)}%` : `+${v.toLocaleString()}`;
-    if (statKey === 'gold') formatVal = (v) => `+${v.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        let html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;">
+            <div class="tt-title" style="color:${data.color};">${data.title} Breakdown</div>
+            <div class="tt-stat-line" style="color:#aaa;">• Base Entity: ${formatVal(data.base).replace('+','')}</div>`;
 
-    let html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;">
-        <div class="tt-title" style="color:${data.color};">${data.title} Breakdown</div>
-        <div class="tt-stat-line" style="color:#aaa;">• Base Entity: ${formatVal(data.base).replace('+','')}</div>`;
+        if (data.lvl > 0) html += `<div class="tt-stat-line" style="color:#3498db;">• Level Stats (SP): ${formatVal(data.lvl)}</div>`;
+        if (gearTotal > 0) html += `<div class="tt-stat-line" style="color:#2ecc71;">• Equipment / Elixirs: ${formatVal(gearTotal)}</div>`;
+        if (artTotal > 0) html += `<div class="tt-stat-line" style="color:#9b59b6;">• Artifacts: ${formatVal(artTotal)}</div>`;
+        if (achTotal > 0) html += `<div class="tt-stat-line" style="color:#f1c40f;">• Achievements (Flat): ${formatVal(achTotal)}</div>`;
+        if (achPctTotal > 0) html += `<div class="tt-stat-line" style="color:#f1c40f;">• Achievements (Mult): +${Math.round(achPctTotal * 100)}%</div>`;
+        if (prestigeTotal > 0) html += `<div class="tt-stat-line" style="color:#8e44ad;">• Prestige Upgrades: ${formatVal(prestigeTotal)}</div>`;
+        if (intScaleTotal > 0) html += `<div class="tt-stat-line" style="color:#9b59b6;">• Intelligence Scaling (INT): ${formatVal(intScaleTotal)}</div>`;
 
-    if (data.lvl > 0) html += `<div class="tt-stat-line" style="color:#3498db;">• Level Stats (SP): ${formatVal(data.lvl)}</div>`;
-    if (gearTotal > 0) html += `<div class="tt-stat-line" style="color:#2ecc71;">• Equipment / Elixirs: ${formatVal(gearTotal)}</div>`;
-    if (artTotal > 0) html += `<div class="tt-stat-line" style="color:#9b59b6;">• Artifacts: ${formatVal(artTotal)}</div>`;
-    if (achTotal > 0) html += `<div class="tt-stat-line" style="color:#f1c40f;">• Achievements (Flat): ${formatVal(achTotal)}</div>`;
-    if (achPctTotal > 0) html += `<div class="tt-stat-line" style="color:#f1c40f;">• Achievements (Mult): +${Math.round(achPctTotal * 100)}%</div>`;
-
-    let totalVal = data.base + data.lvl + gearTotal + artTotal + achTotal;
+        let totalVal = data.base + data.lvl + gearTotal + artTotal + achTotal + intScaleTotal + prestigeTotal;
     if (statKey === 'atk' && effectiveStr > 0) {
         html += `<div class="tt-stat-line" style="color:#e67e22;">• Strength Scaling (STR): +${Math.floor(totalVal * (effectiveStr * 0.01))}</div>`;
         html += `<div class="tt-stat-line" style="color:#e67e22; font-style:italic;">  (+${effectiveStr}% Multiplier)</div>`;
@@ -1099,11 +1100,11 @@ if (statKey === 'atk' && window.playerStats.atkPotionTimer > 0) gearTotal += Mat
                                                                                           return `<button class="btn-action" style="margin-top:8px; background:${color}; color:${fontColor}; font-weight:bold;" ${disabled} onclick="window.buyPrestigeUpgrade('${type}')">Upgrade (${cost} PP)</button>`;
                                                                                       };
 
-                                                                                      let requiredStage = Math.max(25, Math.floor((p.lifetimePeakStage || 1) * 0.85));
-                                                                                      let challengeBtnHtml = "";
-                                                                                      if (p.level < 25) challengeBtnHtml = `<button class="btn-action" style="background:#333; color:#777; border: 1px solid #444; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:not-allowed;" disabled>🔒 Requires Level 25 to Re-Challenge</button>`;
-                                                                                      else if (p.stage < requiredStage) challengeBtnHtml = `<button class="btn-action" style="background:#2c1a1a; color:#e74c3c; border: 1px solid #781c1c; font-weight:bold; font-size:11px; padding:8px 16px; border-radius:4px; cursor:not-allowed;" disabled>🔒 Push to Stage ${requiredStage} (Current: ${p.stage})</button>`;
-                                                                                      else challengeBtnHtml = `<button class="btn-action" style="background:#e74c3c; color:white; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:pointer;" onclick="window.challengeHooktail()">Challenge Prestige Boss</button>`;
+                                                                                      let requiredStage = Math.max(80, Math.floor((p.lifetimePeakStage || 1) * 0.85));
+                                                                                                                                                                            let challengeBtnHtml = "";
+                                                                                                                                                                            if (p.level < 25) challengeBtnHtml = `<button class="btn-action" style="background:#333; color:#777; border: 1px solid #444; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:not-allowed;" disabled>🔒 Requires Level 25 to Re-Challenge</button>`;
+                                                                                                                                                                            else if (p.stage < requiredStage) challengeBtnHtml = `<button class="btn-action" style="background:#2c1a1a; color:#e74c3c; border: 1px solid #781c1c; font-weight:bold; font-size:11px; padding:8px 16px; border-radius:4px; cursor:not-allowed;" disabled>🔒 Push to Stage ${requiredStage} (Current: ${p.stage})</button>`;
+                                                                                                                                                                            else challengeBtnHtml = `<button class="btn-action" style="background:#e74c3c; color:white; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:pointer;" onclick="window.challengeHooktail()">Challenge Prestige Boss</button>`;
 
                                                                                       el.innerHTML = `
                                                                                           <div style="display:flex; flex-direction:column; gap:12px;">
@@ -1204,10 +1205,10 @@ if (statKey === 'atk' && window.playerStats.atkPotionTimer > 0) gearTotal += Mat
                                                                               };
 
                                        window.challengeHooktail = function() {
-                                           if (window.playerStats.level < 25) { window.pushHeaderToast("Requires Level 25!", "#e74c3c"); return; }
+                                                                                  if (window.playerStats.level < 25) { window.pushHeaderToast("Requires Level 25!", "#e74c3c"); return; }
 
-                                           let requiredStage = Math.max(25, Math.floor((window.playerStats.lifetimePeakStage || 1) * 0.85));
-                                           if (window.playerStats.stage < requiredStage) { window.pushHeaderToast(`Requires Campaign Stage ${requiredStage} to challenge Hooktail!`, "#e74c3c"); return; }
+                                                                                  let requiredStage = Math.max(80, Math.floor((window.playerStats.lifetimePeakStage || 1) * 0.85));
+                                                                                  if (window.playerStats.stage < requiredStage) { window.pushHeaderToast(`Requires Campaign Stage ${requiredStage} to challenge Hooktail!`, "#e74c3c"); return; }
 
                                            if (window.playerStats.isDungeonMode || window.playerStats.isCrucibleMode || window.playerStats.isPrestigeBossMode) {
                                                window.pushHeaderToast("Cannot challenge while in another activity!", "#e74c3c"); return;

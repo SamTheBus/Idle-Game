@@ -10,13 +10,30 @@ window.formatNumber = function(num) {
     if (num < 1000) {
         return num % 1 === 0 ? num.toFixed(0) : num.toFixed(1);
     }
-    const suffixes = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "aa", "ab", "ac", "ad", "ae", "af", "ag", "ah", "ai", "aj", "ak", "al", "am", "an", "ao", "ap", "aq", "ar", "as", "at", "au", "av", "aw", "ax", "ay", "az", "ba", "bb", "bc", "bd", "be", "bf", "bg", "bh", "bi", "bj", "bk", "bl", "bm", "bn", "bo", "bp", "bq", "br", "bs", "bt", "bu", "bv", "bw", "bx", "by", "bz"];
+    const standardSuffixes = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
     const i = Math.floor(Math.log10(num) / 3);
-    if (i >= suffixes.length) {
-        return num.toExponential(2);
+    if (i < standardSuffixes.length) {
+        return `${(num / Math.pow(10, i * 3)).toFixed(2)} ${standardSuffixes[i]}`;
     }
+
+    // Procedural alphabetical suffix engine (aa - zz, then aaa - zzz)
+    let baseAlpha = i - standardSuffixes.length;
+    let suffix = "";
+    if (baseAlpha < 676) {
+        let char1 = String.fromCharCode(97 + Math.floor(baseAlpha / 26));
+        let char2 = String.fromCharCode(97 + (baseAlpha % 26));
+        suffix = char1 + char2;
+    } else {
+        let temp = baseAlpha - 676;
+        let char1 = String.fromCharCode(97 + Math.floor(temp / 676));
+        let char2 = String.fromCharCode(97 + Math.floor((temp % 676) / 26));
+        let char3 = String.fromCharCode(97 + (temp % 26));
+        suffix = char1 + char2 + char3;
+    }
+    suffix = suffix.toUpperCase(); // Gives it the premium 'AAA' look!
+
     const formatted = (num / Math.pow(10, i * 3)).toFixed(2);
-    return `${formatted} ${suffixes[i]}`;
+    return `${formatted} ${suffix}`;
 };
 
 window.randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
@@ -692,15 +709,15 @@ window.resolvePlayerStats = function(useDraft = false) {
 
     let effectiveStr = Math.max(0, p.str - 5); let effectiveDex = Math.max(0, p.dex - 5); let effectiveInt = Math.max(0, p.int - 5);
 
-    itemAtkPct += effectiveStr * 0.01; itemHpPct += effectiveStr * 0.01; itemDefPct += effectiveInt * 0.01;
-    p.critChance += parseFloat(((effectiveDex * 0.30) / (effectiveDex + 250)).toFixed(4));
-    p.critDamage += effectiveDex * 0.01;
-    p.moveSpeed += parseFloat(((effectiveDex * 20) / (effectiveDex + 150)).toFixed(1));
-    p.block += parseFloat(((effectiveInt * 0.12) / (effectiveInt + 150)).toFixed(4));
-    p.parry += parseFloat(((effectiveInt * 0.12) / (effectiveInt + 150)).toFixed(4));
-    p.fairySpawn += parseFloat(((effectiveInt * 1.50) / (effectiveInt + 400)).toFixed(4));
+        itemAtkPct += effectiveStr * 0.003; itemHpPct += effectiveStr * 0.003; itemDefPct += effectiveInt * 0.002;
+        p.critChance += parseFloat(((effectiveDex * 0.30) / (effectiveDex + 250)).toFixed(4));
+        p.critDamage += effectiveDex * 0.003;
+        p.moveSpeed += parseFloat(((effectiveDex * 20) / (effectiveDex + 150)).toFixed(1));
+        p.block += parseFloat(((effectiveInt * 0.12) / (effectiveInt + 150)).toFixed(4));
+        p.parry += parseFloat(((effectiveInt * 0.12) / (effectiveInt + 150)).toFixed(4));
+        p.fairySpawn += parseFloat((effectiveInt * 0.001).toFixed(4));
 
-    let flatDef = window.playerStats.baseDef + (alloc.spDef * 4) + aT.def + setCtx.flatDefBonus;
+        let flatDef = window.playerStats.baseDef + (alloc.spDef * 4) + aT.def + setCtx.flatDefBonus;
         let defMultiplier = 1.0 + setCtx.defPctBonus;
 
         for (let key in window.equippedSlots) {

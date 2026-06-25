@@ -33,10 +33,8 @@ window.rollSetForItem = function(isBoss, isRare, isDungeon, currentDungeon) {
 
 // Calculates gold expenses for set re-resonating
 window.getSetRerollGoldCost = function(item) {
-    let pCount = window.playerStats.prestigeCount || 0;
-    let itemLvlMultiplier = Math.pow(1.08, Math.max(0, (item.stageLevel - 1) * 5));
-    let prestigeMultiplier = Math.pow(1.15, pCount);
-    return Math.floor(100 * itemLvlMultiplier * Math.pow(1.5, item.statsRolled) * prestigeMultiplier);
+    let itemLvlMultiplier = Math.pow(1.045, Math.max(0, (item.stageLevel - 1) * 5));
+    return Math.floor(100 * itemLvlMultiplier * Math.pow(1.5, item.statsRolled));
 };
 
 // Generates highly detailed comparison layouts for Temper and Tier Up forge previews
@@ -69,24 +67,26 @@ window.getForgeDiffLines = function(item, previewItem) {
     });
 
     // 2. Render combined total / affix parameters comparative
-    let statsToCompare = [
-        { key: "atk", icon: "⚔️", label: "Attack Total", isPct: false },
-        { key: "maxHp", icon: "❤️", label: "Max HP Total", isPct: false },
-        { key: "def", icon: "🛡️", label: "Defense Total", isPct: false },
-        { key: "moveSpeed", icon: "👟", label: "Move Speed", isPct: false },
-        { key: "str", icon: "💪", label: "STR", isPct: false },
-        { key: "dex", icon: "🎯", label: "DEX", isPct: false },
-        { key: "int", icon: "🧠", label: "INT", isPct: false },
-        { key: "critChance", icon: "✨", label: "Crit Chance", isPct: true },
-        { key: "critDamage", icon: "💥", label: "Crit Multi", isPct: true },
-        { key: "block", icon: "🛡️", label: "Block Rate", isPct: true },
-        { key: "parry", icon: "⚡", label: "Parry Rate", isPct: true },
-        { key: "dropRate", icon: "🍀", label: "Drop Rate", isPct: true },
-        { key: "quality", icon: "💎", label: "Drop Quality", isPct: true },
-        { key: "goldMulti", icon: "🟡", label: "Gold Multi", isPct: true },
-        { key: "rareSpawn", icon: "✨", label: "Rare Spawn", isPct: true, isDoublePct: true },
-        { key: "fairySpawn", icon: "🧚", label: "Fairy Spawn", isPct: true }
-    ];
+        let statsToCompare = [
+            { key: "atk", icon: "⚔️", label: "Attack Total", isPct: false },
+            { key: "maxHp", icon: "❤️", label: "Max HP Total", isPct: false },
+            { key: "def", icon: "🛡️", label: "Defense Total", isPct: false },
+            { key: "moveSpeed", icon: "👟", label: "Move Speed", isPct: false },
+            { key: "str", icon: "💪", label: "STR", isPct: false },
+            { key: "dex", icon: "🎯", label: "DEX", isPct: false },
+            { key: "int", icon: "🧠", label: "INT", isPct: false },
+            { key: "critChance", icon: "✨", label: "Crit Chance", isPct: true },
+            { key: "critDamage", icon: "💥", label: "Crit Multi", isPct: true },
+            { key: "block", icon: "🛡️", label: "Block Rate", isPct: true },
+            { key: "parry", icon: "⚡", label: "Parry Rate", isPct: true },
+            { key: "dropRate", icon: "🍀", label: "Drop Rate", isPct: true },
+            { key: "quality", icon: "💎", label: "Drop Quality", isPct: true },
+            { key: "goldMulti", icon: "🟡", label: "Gold Multi", isPct: true },
+            { key: "rareSpawn", icon: "✨", label: "Rare Spawn", isPct: true, isDoublePct: true },
+            { key: "fairySpawn", icon: "🧚", label: "Fairy Spawn", isPct: true },
+            { key: "activeAttackSpeed", icon: "⚡", label: "Active Atk Spd", isPct: true },
+            { key: "idleAttackSpeed", icon: "⏱️", label: "Idle Atk Spd", isPct: true }
+        ];
     statsToCompare.forEach(s => {
         let curVal = item[s.key] || 0;
         let newVal = previewItem[s.key] || 0;
@@ -184,9 +184,8 @@ window.renderForgeTab = function() {
                 html += `<div style="color:#e74c3c; font-weight:bold; text-align:center; padding: 20px 0;">MAXIMUM TEMPER LIMIT REACHED</div>`;
             } else {
                 let costGold = window.getTemperGoldCost(item);
-                let scrapReqAmount = window.getRequiredScrapAmountForTemper(item.temperLevel + 1, item.type === "artifact");
-                let scrapReq = window.getRequiredScrapForTemper(item.temperLevel + 1, item.type === "artifact");
-                let playerScrap = window.inventory.ETC[scrapReq] || 0;
+                let scrapReqAmount = window.getRequiredScrapAmountForTemper(item);
+                let scrapReq = window.getRequiredScrapForTemper(item);
                 let failChance = item.temperLevel * 5;
                 let goldColor = window.playerStats.coins >= costGold ? "#f1c40f" : "#e74c3c";
                 let scrapColor = playerScrap >= scrapReqAmount ? "#bdc3c7" : "#e74c3c";
@@ -467,7 +466,7 @@ window.createItemObject = function(chosenType, statLinesCount, stageScale, minSt
     }
 
     let prestigeMult = Math.pow(1.08, window.playerStats.prestigeCount || 0);
-    let expScale = Math.pow(1.06, stageScale * 10);
+        let expScale = Math.pow(stageScale, 2.4);
 
     // Apply baseline attribute values matching slot configurations (Slot-Specific Base Stats)
     if (!isArt) {
@@ -647,7 +646,7 @@ window.getStatBaseRange = function(item, statKey) {
     let stageLevel = item.stageLevel || 1;
     let isArt = item.type === "artifact";
     let rarityMult = isArt ? 1.45 : (1 + ((item.statsRolled || 0) * 0.15));
-    let expScale = Math.pow(1.06, stageLevel * 10);
+    let expScale = Math.pow(stageLevel, 2.4);
 
     let min = 0; let max = 0;
 
@@ -799,17 +798,17 @@ window.recalculateItemStats = function(item) {
     item.bonusDex = item.bonusDex || 0;
     item.bonusInt = item.bonusInt || 0;
 
-    let expScale = Math.pow(1.06, (item.stageLevel || 1) * 10);
-    let prestigeCount = window.playerStats.prestigeCount || 0;
-    let prestigeMult = Math.pow(1.08, prestigeCount);
+    let expScale = Math.pow(item.stageLevel || 1, 2.4);
+        let prestigeCount = window.playerStats.prestigeCount || 0;
+        let prestigeMult = Math.pow(1.08, prestigeCount);
 
     // Dynamic base scaling transitions for standard slot configurations
-    if (item.type !== "artifact" && item.statsRolled !== "UNIQUE") {
-        let stars = item.statsRolled || 0;
-        let baseRarityMult = 1.0 + (stars * 0.10); // Base stats scale up by 10% per star rarity tier!
+        if (item.type !== "artifact" && item.statsRolled !== "UNIQUE") {
+            let stars = item.statsRolled || 0;
+            let baseRarityMult = 1.0 + (stars * 0.30); // Base stats scale up by 30% per star rarity tier!
 
-        if (item.type === "weapon" && !item.isUniqueStaff && !item.isUniqueSword && !item.isUniqueSingularity && !item.isUniqueMaelstrom) {
-            item.baseAtk = Math.ceil(1.5 * expScale * prestigeMult * baseRarityMult);
+            if (item.type === "weapon" && !item.isUniqueStaff && !item.isUniqueSword && !item.isUniqueSingularity && !item.isUniqueMaelstrom) {
+                item.baseAtk = Math.ceil(1.5 * expScale * prestigeMult * baseRarityMult);
         } else if (item.type === "chest" || item.type === "overall") {
             let overallMult = item.type === "overall" ? 1.8 : 1.0;
             item.baseDef = Math.ceil(2.0 * expScale * prestigeMult * baseRarityMult * overallMult);
@@ -957,9 +956,9 @@ window.addRandomStatLineToItem = function(item) {
     }
 
     let selectedStat = pool[Math.floor(Math.random() * pool.length)];
-    let stageScale = item.stageLevel || 1;
-    let expScale = Math.pow(1.06, stageScale * 10);
-    let rarityMult = 1 + (item.statsRolled * 0.15);
+        let stageScale = item.stageLevel || 1;
+        let expScale = Math.pow(stageScale, 2.4);
+        let rarityMult = 1 + (item.statsRolled * 0.15);
     let prestigeMult = Math.pow(1.08, window.playerStats.prestigeCount || 0);
 
     if (selectedStat === "atk") item.bonusAtk += Math.ceil(window.randFloat(0.15, 0.35) * expScale * rarityMult * prestigeMult);
@@ -1257,51 +1256,36 @@ window.getMaxTemper = function(stars, type = "") {
     return base;
 };
 
-window.getRequiredScrapForTemper = function(targetLevel, isArtifact) {
-    if (isArtifact) return "Overlord's Sigil";
-    if (targetLevel <= 3) return "Monster Soul";
-    if (targetLevel <= 5) return "Rare Scrap";
-    if (targetLevel <= 7) return "Magic Scrap";
-    if (targetLevel <= 9) return "Epic Scrap";
-    if (targetLevel <= 12) return "Legendary Scrap";
-    return "Mythic Scrap";
+window.getRequiredScrapForTemper = function(item) {
+    if (!item) return "Monster Soul";
+    if (item.type === "artifact" || item.statsRolled === "UNIQUE") return "Overlord's Sigil";
+
+    const scraps = ["Monster Soul", "Rare Scrap", "Magic Scrap", "Epic Scrap", "Legendary Scrap", "Mythic Scrap"];
+    return scraps[item.statsRolled] || "Monster Soul";
 };
 
-window.getRequiredScrapAmountForTemper = function(targetLevel, isArtifact) {
+window.getRequiredScrapAmountForTemper = function(item) {
+    if (!item) return 1;
+    let isArtifact = (item.type === "artifact" || item.statsRolled === "UNIQUE");
+    let targetLevel = (item.temperLevel || 0) + 1;
+
     if (isArtifact) {
         if (targetLevel <= 2) return 1;
         if (targetLevel <= 4) return 2;
         return 3;
     }
-    if (targetLevel <= 1) return 10;
-    if (targetLevel <= 2) return 25;
-    if (targetLevel <= 3) return 50;
-    if (targetLevel <= 4) return 5;
-    if (targetLevel <= 5) return 10;
-    if (targetLevel <= 6) return 4;
-    if (targetLevel <= 7) return 8;
-    if (targetLevel <= 8) return 3;
-    if (targetLevel <= 9) return 6;
-    if (targetLevel <= 10) return 2;
-    if (targetLevel <= 11) return 3;
-    if (targetLevel <= 12) return 4;
-    if (targetLevel <= 13) return 1;
-    if (targetLevel <= 14) return 2;
-    if (targetLevel <= 15) return 3;
-    if (targetLevel === 16) return 4;
-    if (targetLevel === 17) return 5;
-    if (targetLevel === 18) return 6;
-    if (targetLevel === 19) return 8;
-    return 10;
+
+    // Scales linearly based on target temper level and item level brackets (1 + stage / 15)
+    let stageScaleFactor = 1 + Math.floor((item.stageLevel || 1) / 15);
+    return targetLevel * 5 * stageScaleFactor;
 };
 
 window.getTemperGoldCost = function(item) {
     let baseCost = item.type === "artifact" ? 1000 : 100;
-    let pCount = window.playerStats.prestigeCount || 0;
-    let itemLvlMultiplier = Math.pow(1.08, Math.max(0, (item.stageLevel - 1) * 5));
-    let prestigeMultiplier = Math.pow(1.15, pCount);
-    return Math.floor(baseCost * Math.pow(1.5, item.temperLevel) * itemLvlMultiplier * prestigeMultiplier);
+    let itemLvlMultiplier = Math.pow(1.045, Math.max(0, (item.stageLevel - 1) * 5));
+    return Math.floor(baseCost * Math.pow(1.5, item.temperLevel) * itemLvlMultiplier);
 };
+
 
 window.getTierUpScrapName = function(stars) {
     if (stars === 5) return "Mythic Scrap";
@@ -1495,13 +1479,13 @@ window.temperItem = function() {
     let isArt = window.forgeSelectedItem.type === "artifact";
 
     if (window.forgeMode === 'temper') {
-        let maxT = window.getMaxTemper(window.forgeSelectedItem.statsRolled, window.forgeSelectedItem.type);
-        if (window.forgeSelectedItem.temperLevel >= maxT) return;
-        let costGold = window.getTemperGoldCost(window.forgeSelectedItem);
-        let scrapReqAmount = window.getRequiredScrapAmountForTemper(window.forgeSelectedItem.temperLevel + 1, isArt);
-        let scrapReq = window.getRequiredScrapForTemper(window.forgeSelectedItem.temperLevel + 1, isArt);
+            let maxT = window.getMaxTemper(window.forgeSelectedItem.statsRolled, window.forgeSelectedItem.type);
+            if (window.forgeSelectedItem.temperLevel >= maxT) return;
+            let costGold = window.getTemperGoldCost(window.forgeSelectedItem);
+            let scrapReqAmount = window.getRequiredScrapAmountForTemper(window.forgeSelectedItem);
+            let scrapReq = window.getRequiredScrapForTemper(window.forgeSelectedItem);
 
-        if (window.playerStats.coins < costGold) { if(typeof window.pushLog==="function") window.pushLog(`<span style='color:#e74c3c;'>Not enough Gold to temper!</span>`); return; }
+            if (window.playerStats.coins < costGold) { if(typeof window.pushLog==="function") window.pushLog(`<span style='color:#e74c3c;'>Not enough Gold to temper!</span>`); return; }
         if (!window.inventory.ETC[scrapReq] || window.inventory.ETC[scrapReq] < scrapReqAmount) { if(typeof window.pushLog==="function") window.pushLog(`<span style='color:#e74c3c;'>Not enough ${scrapReq} to temper!</span>`); return; }
 
         let failChance = window.forgeSelectedItem.temperLevel * 5;
@@ -1777,10 +1761,8 @@ window.reforgeItemStat = function() {
     }
 
     let rProp = item.reforgedProperty;
-    let pCount = window.playerStats.prestigeCount || 0;
-    let itemLvlMultiplier = Math.pow(1.08, Math.max(0, (item.stageLevel - 1) * 5));
-    let prestigeMultiplier = Math.pow(1.15, pCount);
-    let costGold = Math.floor(150 * itemLvlMultiplier * Math.pow(2, item.statsRolled) * prestigeMultiplier);
+        let itemLvlMultiplier = Math.pow(1.045, Math.max(0, (item.stageLevel - 1) * 5));
+        let costGold = Math.floor(150 * itemLvlMultiplier * Math.pow(2, item.statsRolled));
 
     let ownedCores = window.inventory.ETC["Catalyst Core"] || 0;
 
@@ -1818,9 +1800,9 @@ window.reforgeItemStat = function() {
     if (eligiblePool.length === 0) eligiblePool = possiblePool;
 
     let newProp = eligiblePool[Math.floor(Math.random() * eligiblePool.length)];
-    let stageScale = item.stageLevel || 1;
-    let expScale = Math.pow(1.06, stageScale * 10);
-    let rarityMult = 1 + (item.statsRolled * 0.15);
+        let stageScale = item.stageLevel || 1;
+        let expScale = Math.pow(stageScale, 2.4);
+        let rarityMult = 1 + (item.statsRolled * 0.15);
     let rolledValue = 0;
 
     if (newProp === "bonusAtk") rolledValue = Math.ceil(window.randInt(1, 2) * expScale * rarityMult);

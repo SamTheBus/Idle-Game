@@ -144,9 +144,9 @@ window.applyOfflineGains = function(offlineMs) {
 
             let killsNeededForStage = 5 - window.playerStats.killCount;
 
-                        // Smooth out post-wall base acceleration to prevent runaway super-exponential cliffs
-                        let growthRate = 1.06 + ((currentStage * 0.04) / (currentStage + 200));
-                        let expScale = Math.pow(growthRate, currentStage);
+                                    // Smooth out post-wall base acceleration to prevent runaway super-exponential cliffs
+                                    let growthRate = 1.045 + ((currentStage * 0.04) / (currentStage + 200));
+                                    let expScale = Math.pow(growthRate, currentStage);
 
                         let mobHp = 15 * expScale;
             let bossHp = 60 * expScale;
@@ -847,13 +847,47 @@ function update() {
         window.lastUpdateTime = now;
     }
 
-    if (window.getStageTier() === 1 && !window.playerStats.isDungeonMode && !window.playerStats.isCrucibleMode) {
-        if (Math.random() < 0.40) {
-            window.snowflakes.push({
-                x: Math.random() * canvas.width, y: -10, r: Math.random() * 1.8 + 0.8, speed: Math.random() * 0.8 + 0.4, swingSpeed: Math.random() * 0.02 + 0.01, swingRange: Math.random() * 1.5 + 0.5
-            });
+    if (window.getStageTier() === 1 && !window.playerStats.isDungeonMode) {
+            if (Math.random() < 0.40) {
+                window.snowflakes.push({
+                    x: Math.random() * canvas.width, y: -10, r: Math.random() * 1.8 + 0.8, speed: Math.random() * 0.8 + 0.4, swingSpeed: Math.random() * 0.02 + 0.01, swingRange: Math.random() * 1.5 + 0.5
+                });
+            }
+        } else { window.snowflakes = []; }
+
+        // Spawn floating swamp spores in the Forest environment (Tier 0)
+        if (window.getStageTier() === 0 && !window.playerStats.isDungeonMode && !window.playerStats.isCrucibleMode && !window.playerStats.isPrestigeBossMode && !window.isGamePaused) {
+            if (Math.random() < 0.08 && window.particles.length < 250) {
+                window.particles.push({
+                    x: Math.random() * canvas.width,
+                    y: 220 + Math.random() * 80,
+                    vx: (Math.random() - 0.5) * 0.4,
+                    vy: -window.randFloat(0.25, 0.65),
+                    radius: window.randFloat(0.8, 1.8),
+                    color: Math.random() > 0.5 ? "rgba(46, 204, 113, 0.55)" : "rgba(0, 255, 136, 0.4)",
+                    alpha: 1.0,
+                    gravity: -0.01, // Float upward slowly
+                    life: window.randInt(60, 110)
+                });
+            }
         }
-    } else { window.snowflakes = []; }
+
+        // Spawn floating swamp spores in the Forest environment (Tier 0)
+        if (window.getStageTier() === 0 && !window.playerStats.isDungeonMode && !window.playerStats.isCrucibleMode && !window.playerStats.isPrestigeBossMode && !window.isGamePaused) {
+            if (Math.random() < 0.08 && window.particles.length < 250) {
+                window.particles.push({
+                    x: Math.random() * canvas.width,
+                    y: 220 + Math.random() * 80,
+                    vx: (Math.random() - 0.5) * 0.4,
+                    vy: -window.randFloat(0.25, 0.65),
+                    radius: window.randFloat(0.8, 1.8),
+                    color: Math.random() > 0.5 ? "rgba(46, 204, 113, 0.55)" : "rgba(0, 255, 136, 0.4)",
+                    alpha: 1.0,
+                    gravity: -0.01, // Float upward slowly
+                    life: window.randInt(60, 110)
+                });
+            }
+        }
     for (let i = window.snowflakes.length - 1; i >= 0; i--) {
         let sf = window.snowflakes[i];
         sf.y += sf.speed; sf.x += Math.sin(window.logicClock * sf.swingSpeed) * sf.swingRange * 0.4;
@@ -1116,18 +1150,19 @@ function update() {
                 });
             }
             if (window.playerStats.prestigeApproachTimer === 0) {
-                            let scaleVal = window.playerStats.prestigeCount || 0;
+                                        let scaleVal = window.playerStats.prestigeCount || 0;
 
-                            // Rebalanced Hooktail curves to make Ascension a formidable, high-stakes endgame check
-                            let hp = 120000 * Math.pow(1.62, scaleVal);
-                            let dmg = 1800 * Math.pow(1.25, scaleVal);
-                            let def = 150 + 75 * scaleVal;
+                                        // Rebalanced Hooktail curves to make Ascension a formidable, high-stakes endgame check
+                                        // Perfectly tuned for Stage 80-100 first-wall, scaling progressively faster
+                                        let hp = 50000 * Math.pow(1.85, scaleVal);
+                                        let dmg = 500 * Math.pow(1.35, scaleVal);
+                                        let def = 80 + 60 * scaleVal;
 
-                            window.mob = {
-                                x: canvas.width - 230, y: 65, w: 180, h: 160, type: "prestige_boss", isRare: false,
-                                hp: Math.floor(hp), maxHp: Math.floor(hp), damage: Math.floor(dmg), def: Math.floor(def),
-                                flashTimer: 0, isStopped: false, attackCooldown: 75, attackTimer: 75
-                            };
+                                        window.mob = {
+                                            x: canvas.width - 230, y: 65, w: 180, h: 160, type: "prestige_boss", isRare: false,
+                                            hp: Math.floor(hp), maxHp: Math.floor(hp), damage: Math.floor(dmg), def: Math.floor(def),
+                                            flashTimer: 0, isStopped: false, attackCooldown: 75, attackTimer: 75
+                                        };
                 window.pushLog(`<span style='color:#e74c3c; font-weight:bold;'>[ASCENSION] HOOKTAIL APPEARS! Slay her to Ascend!</span>`);
             }
             window.logicClock++; return;
@@ -1663,10 +1698,10 @@ window.handleMobDeath = function() {
     if (window.SoundManager) window.SoundManager.play('death');
 
     let xpYield = 0;
-    let scaleVal = window.playerStats.isDungeonMode ? (window.playerStats.currentDungeonStage[window.playerStats.currentDungeon] || 1) : window.playerStats.stage;
-    if (window.playerStats.isCrucibleMode) scaleVal = window.playerStats.crucibleWave;
+        let scaleVal = window.playerStats.isDungeonMode ? (window.playerStats.currentDungeonStage[window.playerStats.currentDungeon] || 1) : window.playerStats.stage;
+        if (window.playerStats.isCrucibleMode) scaleVal = window.playerStats.crucibleWave;
 
-    let expScale = Math.pow(1.06, scaleVal);
+        let expScale = Math.pow(1.045, scaleVal);
 
     if (window.playerStats.isCrucibleMode) {
         xpYield = Math.floor(10 * expScale);
@@ -1952,24 +1987,24 @@ window.processEnemySpawn = function() {    // 2. BACKGROUND SCENERY & VEGETATION
     }
 
     let scale;
-        if (window.playerStats.isDungeonMode) {
-            window.playerStats.currentDungeonStage = window.playerStats.currentDungeonStage || { equip: 1, gold: 1, mat: 1 };
-            let dStage = window.playerStats.currentDungeonStage[window.playerStats.currentDungeon] || 1;
+            if (window.playerStats.isDungeonMode) {
+                window.playerStats.currentDungeonStage = window.playerStats.currentDungeonStage || { equip: 1, gold: 1, mat: 1 };
+                let dStage = window.playerStats.currentDungeonStage[window.playerStats.currentDungeon] || 1;
 
-            // Steep exponential growth scaling specifically configured for Dungeons to serve as a progression check
-            let growthRate = 1.08 + (dStage * 0.00025);
-            scale = Math.pow(growthRate, dStage);
-        } else {
-                    let activeStage = window.playerStats.stage;
-                    if (window.playerStats.isUberBoss) {
-                        let runPeak = Math.max(window.playerStats.stage, window.playerStats.maxStage || 1);
-                        let allTime90 = Math.floor((window.playerStats.lifetimePeakStage || 1) * 0.90);
-                        activeStage = Math.max(runPeak, allTime90);
+                // Steep exponential growth scaling specifically configured for Dungeons to serve as a progression check
+                let growthRate = 1.05 + (dStage * 0.00025);
+                scale = Math.pow(growthRate, dStage);
+            } else {
+                        let activeStage = window.playerStats.stage;
+                        if (window.playerStats.isUberBoss) {
+                            let runPeak = Math.max(window.playerStats.stage, window.playerStats.maxStage || 1);
+                            let allTime90 = Math.floor((window.playerStats.lifetimePeakStage || 1) * 0.90);
+                            activeStage = Math.max(runPeak, allTime90);
+                        }
+                        // Smooth out post-wall base acceleration to prevent runaway super-exponential cliffs
+                        let growthRate = 1.045 + ((activeStage * 0.04) / (activeStage + 200));
+                        scale = Math.pow(growthRate, activeStage);
                     }
-                    // Smooth out post-wall base acceleration to prevent runaway super-exponential cliffs
-                    let growthRate = 1.06 + ((activeStage * 0.04) / (activeStage + 200));
-                    scale = Math.pow(growthRate, activeStage);
-                }
 
     if (window.playerStats.isDungeonMode) {
             let hpScale = window.playerStats.currentDungeon === 'gold' ? 1.5 : 1;
@@ -2108,18 +2143,27 @@ window.handlePlayerDefeat = function() {
     if (prestigeCount >= 1) rollbackPercent = Math.min(0.95, 0.90 + (prestigeCount - 1) * 0.01);
 
     let restartStage;
-    if (wasDungeon) {
-        restartStage = window.playerStats.stage;
-        let dNames = { 'equip': 'Equipment Dungeon', 'gold': 'Gold Mine', 'mat': 'Material Cavern' };
-        let dName = dNames[activeDungeon] || "Dungeon";
-        document.getElementById('death-stat-peak').innerText = `${dName} Floor ${dungeonFloor}`;
-        document.getElementById('death-stat-retreat').innerText = `Campaign Stage ${restartStage}`;
-    } else {
-        restartStage = Math.max(1, Math.floor((window.playerStats.maxStage || 1) * rollbackPercent));
-        window.playerStats.stage = restartStage;
-        document.getElementById('death-stat-peak').innerText = `Stage ${window.playerStats.maxStage || 1}`;
-        document.getElementById('death-stat-retreat').innerText = `Stage ${restartStage}`;
-    }
+        if (wasDungeon) {
+            restartStage = window.playerStats.stage;
+            let dNames = { 'equip': 'Equipment Dungeon', 'gold': 'Gold Mine', 'mat': 'Material Cavern' };
+            let dName = dNames[activeDungeon] || "Dungeon";
+            document.getElementById('death-stat-peak').innerText = `${dName} Floor ${dungeonFloor}`;
+            document.getElementById('death-stat-retreat').innerText = `Campaign Stage ${restartStage}`;
+        } else {
+            // Campaign only rollback condition (Dungeons, Crucible, Altar Uber Bosses, and Prestige Bosses bypass rollback)
+            let isOutsideCampaign = window.playerStats.isUberBoss || window.playerStats.isPrestigeBossMode || window.playerStats.isCrucibleMode;
+            if (isOutsideCampaign) {
+                restartStage = window.playerStats.stage;
+                document.getElementById('death-stat-peak').innerText = window.playerStats.isUberBoss ? "Rift Guardian" : "Prestige Boss";
+                document.getElementById('death-stat-retreat').innerText = `Campaign Stage ${restartStage}`;
+            } else {
+                // Standard campaign death (mobs or stage bosses) -> Rollback applied
+                restartStage = Math.max(1, Math.floor((window.playerStats.maxStage || 1) * rollbackPercent));
+                window.playerStats.stage = restartStage;
+                document.getElementById('death-stat-peak').innerText = `Stage ${window.playerStats.maxStage || 1}`;
+                document.getElementById('death-stat-retreat').innerText = `Stage ${restartStage}`;
+            }
+        }
 
     document.getElementById('death-stat-kills').innerText = (window.playerStats.runKills || 0).toLocaleString();
     document.getElementById('death-stat-run-gold').innerText = `+` + (window.playerStats.runGold || 0).toLocaleString();
