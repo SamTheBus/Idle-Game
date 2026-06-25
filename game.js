@@ -497,7 +497,8 @@ window.loadGame = function() {
                         if (window.playerStats.qlyPotionStrength === undefined) window.playerStats.qlyPotionStrength = 0.50;
 
             if (window.playerStats.unlockedAchievements === undefined) window.playerStats.unlockedAchievements = [];
-                        if (window.playerStats.totalGoldEarned === undefined) window.playerStats.totalGoldEarned = window.playerStats.coins || 0;
+                        if (window.playerStats.unviewedAchievements === undefined) window.playerStats.unviewedAchievements = [];
+                                    if (window.playerStats.totalGoldEarned === undefined) window.playerStats.totalGoldEarned = window.playerStats.coins || 0;
                         if (window.playerStats.totalTempers === undefined) window.playerStats.totalTempers = 0;
                         if (window.playerStats.totalEnchants === undefined) window.playerStats.totalEnchants = 0;
                         if (window.playerStats.riftGuardiansSlain === undefined) window.playerStats.riftGuardiansSlain = 0;
@@ -605,19 +606,19 @@ window.loadGame = function() {
                 let offlineMs = now - parsed.lastSaveTime;
 
                 let keyTypes = ['equip', 'gold', 'mat'];
-                keyTypes.forEach(k => {
-                    let count = k + 'Keys';
-                    let time = 'next' + k.charAt(0).toUpperCase() + k.slice(1) + 'KeyTime';
-                    if (window.playerStats[count] < 3) {
-                        let keyTime = window.playerStats[time] || now;
-                        let msSinceNextKey = now - keyTime;
-                        if (msSinceNextKey >= 0) {
-                            let keysEarned = 1 + Math.floor(msSinceNextKey / 3600000);
-                            window.playerStats[count] = Math.min(3, window.playerStats[count] + keysEarned);
-                            window.playerStats[time] = now + (3600000 - (msSinceNextKey % 3600000));
-                        }
-                    }
-                });
+                                keyTypes.forEach(k => {
+                                    let count = k + 'Keys';
+                                    let time = 'next' + k.charAt(0).toUpperCase() + k.slice(1) + 'KeyTime';
+                                    if (window.playerStats[count] < 3) {
+                                        let keyTime = window.playerStats[time] || now;
+                                        let msSinceNextKey = now - keyTime;
+                                        if (msSinceNextKey >= 0) {
+                                            let keysEarned = 1 + Math.floor(msSinceNextKey / 21600000); // 6 Hours
+                                            window.playerStats[count] = Math.min(3, window.playerStats[count] + keysEarned);
+                                            window.playerStats[time] = now + (21600000 - (msSinceNextKey % 21600000));
+                                        }
+                                    }
+                                });
                 if (typeof window.applyOfflineGains === "function") window.applyOfflineGains(offlineMs);
             }
             setTimeout(() => { if(typeof window.pushLog === "function") window.pushLog(`<span style='color:#3498db; font-weight:bold;'>[SYSTEM] Local save loaded successfully.</span>`); }, 500);
@@ -1004,32 +1005,40 @@ function update() {
     }
 
     let keyTypes = ['equip', 'gold', 'mat'];
-    keyTypes.forEach(k => {
-        let count = k + 'Keys'; let time = 'next' + k.charAt(0).toUpperCase() + k.slice(1) + 'KeyTime';
-        if (window.playerStats[count] < 3) {
-            if (!window.playerStats[time]) {
-                window.playerStats[time] = now + 3600000;
-            } else if (now >= window.playerStats[time]) {
-                let msOver = now - window.playerStats[time];
-                let keysEarned = 1 + Math.floor(msOver / 3600000);
-                window.playerStats[count] = Math.min(3, window.playerStats[count] + keysEarned);
-                window.playerStats[time] = window.playerStats[count] < 3 ? now + (3600000 - (msOver % 3600000)) : 0;
-            }
-        }
-    });
-
-    if (document.getElementById('dungeon-menu') && document.getElementById('dungeon-menu').style.display === 'block') {
         keyTypes.forEach(k => {
             let count = k + 'Keys'; let time = 'next' + k.charAt(0).toUpperCase() + k.slice(1) + 'KeyTime';
-            let timerEl = document.getElementById('dt-' + k); let keysEl = document.getElementById('dk-' + k);
             if (window.playerStats[count] < 3) {
-                let msLeft = Math.max(0, window.playerStats[time] - now);
-                let mins = Math.floor(msLeft / 60000); let secs = Math.floor((msLeft % 60000) / 1000);
-                if (timerEl) timerEl.innerText = `(${mins}m ${secs}s)`;
-            } else { if (timerEl) timerEl.innerText = "(Full)"; }
-            if (keysEl) keysEl.innerText = window.playerStats[count];
+                if (!window.playerStats[time]) {
+                    window.playerStats[time] = now + 21600000; // 6 Hours
+                } else if (now >= window.playerStats[time]) {
+                    let msOver = now - window.playerStats[time];
+                    let keysEarned = 1 + Math.floor(msOver / 21600000);
+                    window.playerStats[count] = Math.min(3, window.playerStats[count] + keysEarned);
+                    window.playerStats[time] = window.playerStats[count] < 3 ? now + (21600000 - (msOver % 21600000)) : 0;
+                }
+            }
         });
-    }
+
+        if (document.getElementById('dungeon-menu') && document.getElementById('dungeon-menu').style.display === 'block') {
+            keyTypes.forEach(k => {
+                let count = k + 'Keys'; let time = 'next' + k.charAt(0).toUpperCase() + k.slice(1) + 'KeyTime';
+                let timerEl = document.getElementById('dt-' + k); let keysEl = document.getElementById('dk-' + k);
+                if (window.playerStats[count] < 3) {
+                    let msLeft = Math.max(0, window.playerStats[time] - now);
+                    let hours = Math.floor(msLeft / 3600000);
+                    let mins = Math.floor((msLeft % 3600000) / 60000);
+                    let secs = Math.floor((msLeft % 60000) / 1000);
+                    if (timerEl) {
+                        if (hours > 0) {
+                            timerEl.innerText = `(${hours}h ${mins}m)`;
+                        } else {
+                            timerEl.innerText = `(${mins}m ${secs}s)`;
+                        }
+                    }
+                } else { if (timerEl) timerEl.innerText = "(Full)"; }
+                if (keysEl) keysEl.innerText = window.playerStats[count];
+            });
+        }
 
     if (document.getElementById('tab-market') && document.getElementById('tab-market').classList.contains('active')) {
         if (now >= window.playerStats.shopRefreshTime) { window.refreshMarketShopIfNeeded(); }
@@ -2570,11 +2579,11 @@ window.enterDungeon = function(type) {
         `Spend 1 Key to enter the Infinite ${dNames[type]}? Starting checkpoint: Stage ${checkpoint}`,
         "Enter Dungeon", "Cancel", "#8e44ad",
         function() {
-            window.saveCurrentActivityPeak();
-            window.playerStats[countField]--;
-            if (window.playerStats[countField] === 2) window.playerStats[timeField] = Date.now() + 3600000;
+                    window.saveCurrentActivityPeak();
+                    window.playerStats[countField]--;
+                    if (window.playerStats[countField] === 2) window.playerStats[timeField] = Date.now() + 21600000; // 6 Hours
 
-            window.playerStats.isDungeonMode = true; window.playerStats.isCrucibleMode = false;
+                    window.playerStats.isDungeonMode = true; window.playerStats.isCrucibleMode = false;
             window.playerStats.currentDungeon = type; window.playerStats.currentDungeonStage[type] = checkpoint;
             window.playerStats.dungeonWave = 1; window.playerStats.killCount = 0; window.playerStats.targetsRequired = 5;
             window.playerStats.isBossMode = false; window.playerStats.isUberBoss = false; window.mob = null;

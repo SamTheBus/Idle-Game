@@ -3,7 +3,7 @@
    initial global state, and system utility functions.
    ========================================================================= */
 
-window.GAME_VERSION = 0.74; // Pre-release Alpha 0.7.4 // Increment this whenever you push a new release
+window.GAME_VERSION = 0.76; // Pre-release Alpha 0.7.6 // Increment this whenever you push a new release
 
 
 
@@ -560,20 +560,24 @@ window.checkAchievements = function() {
 
     let unlockedAny = false;
     window.AchievementsData.forEach(ach => {
-        if (window.playerStats.unlockedAchievements.includes(ach.id)) return;
-        let progress = window.getAchievementProgress(ach);
-        let targetValue = ach.isSingleTier ? 1 : ach.reqValue;
-        if (progress >= targetValue) {
-            window.playerStats.unlockedAchievements.push(ach.id);
-            unlockedAny = true;
+            if (window.playerStats.unlockedAchievements.includes(ach.id)) return;
+            let progress = window.getAchievementProgress(ach);
+            let targetValue = ach.isSingleTier ? 1 : ach.reqValue;
+            if (progress >= targetValue) {
+                window.playerStats.unlockedAchievements.push(ach.id);
+                if (!window.playerStats.unviewedAchievements) window.playerStats.unviewedAchievements = [];
+                if (!window.playerStats.unviewedAchievements.includes(ach.id)) {
+                    window.playerStats.unviewedAchievements.push(ach.id);
+                }
+                unlockedAny = true;
 
-            let currentAchId = ach.id;
-            if (typeof window.pushLog === "function") window.pushLog(`<strong style="color:#f1c40f;">🏆 CHALLENGE ACHIEVED: [${ach.name}]!</strong> - ${ach.desc}`);
-            if (typeof window.pushHeaderToast === "function") window.pushHeaderToast(`🏆 Milestone Unlocked: ${ach.name}! (Click to View)`, "#f1c40f", function() {
-                if (typeof window.navigateToAchievement === "function") window.navigateToAchievement(currentAchId);
-            });
-        }
-    });
+                let currentAchId = ach.id;
+                if (typeof window.pushLog === "function") window.pushLog(`<strong style="color:#f1c40f;">🏆 CHALLENGE ACHIEVED: [${ach.name}]!</strong> - ${ach.desc}`);
+                if (typeof window.pushHeaderToast === "function") window.pushHeaderToast(`🏆 Milestone Unlocked: ${ach.name}! (Click to View)`, "#f1c40f", function() {
+                    if (typeof window.navigateToAchievement === "function") window.navigateToAchievement(currentAchId);
+                });
+            }
+        });
     if (unlockedAny) {
         window.recalculateAchievementTotals();
         if (typeof window.resolvePlayerStats === "function" && typeof window.updateUI === "function") {
@@ -949,16 +953,17 @@ window.playerStats = {
     hasTriggeredTimeCapsule: false,
     hasTriggeredAethericRecharge: false,
     hasClickedThisBattle: false,
-        damageTakenThisBattle: 0,
-        ankhTriggeredThisBattle: false,
-        dailyMissions: [],
-        weeklyMissions: [],
-        dailyRerollsDone: 0, // Reset daily at 12:00 AM PST/PDT
-        lastDailyResetTime: 0,
-        lastWeeklyResetTime: 0,
-        dailyRewardClaimed: false,
-        weeklyRewardClaimed: false
-    };
+            damageTakenThisBattle: 0,
+            ankhTriggeredThisBattle: false,
+            dailyMissions: [],
+            weeklyMissions: [],
+            dailyRerollsDone: 0, // Reset daily at 12:00 AM PST/PDT
+            lastDailyResetTime: 0,
+            lastWeeklyResetTime: 0,
+            dailyRewardClaimed: false,
+            weeklyRewardClaimed: false,
+            unviewedAchievements: []
+        };
 
     // --- PROCEDURAL MISSION & QUEST SYSTEM ---
 

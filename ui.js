@@ -1021,9 +1021,51 @@ window.updateUI = function() {
 
     // Draft drawer visibility
     let draftBar = document.getElementById('draft-controls-container');
-    if (draftBar) {
-        draftBar.style.display = hasDraftChanges ? "block" : "none";
-    }
+        if (draftBar) {
+            draftBar.style.display = hasDraftChanges ? "block" : "none";
+        }
+
+        // Dynamic Top Missions Pulsing Alert Trigger
+        let missionsBtn = document.getElementById('btn-missions-top');
+        if (missionsBtn) {
+            let dailies = window.playerStats.dailyMissions || [];
+            let weeklies = window.playerStats.weeklyMissions || [];
+            let dailyClaimable = dailies.some(m => m.completed && !m.claimed);
+            let weeklyClaimable = weeklies.some(m => m.completed && !m.claimed);
+            let dailyMasterClaimable = !window.playerStats.dailyRewardClaimed && (dailies.filter(m => m.completed).length >= 5);
+            let weeklyMasterClaimable = window.playerStats.prestigeCount > 0 && !window.playerStats.weeklyRewardClaimed && (weeklies.filter(m => m.completed).length === 3);
+
+            if (dailyClaimable || weeklyClaimable || dailyMasterClaimable || weeklyMasterClaimable) {
+                missionsBtn.style.animation = "glowGreen 1.8s infinite";
+                missionsBtn.style.borderColor = "#2ecc71";
+                if (!missionsBtn.querySelector('.badge-exclamation')) {
+                    missionsBtn.insertAdjacentHTML('beforeend', ' <span class="badge-exclamation" style="color:#2ecc71; font-weight:bold; margin-left:3px;">!</span>');
+                }
+            } else {
+                missionsBtn.style.animation = "";
+                missionsBtn.style.borderColor = "";
+                let b = missionsBtn.querySelector('.badge-exclamation');
+                if (b) b.remove();
+            }
+        }
+
+        // Dynamic Top Trophies Pulsing Alert Trigger
+        let trophiesBtn = document.getElementById('btn-achievements-top');
+        if (trophiesBtn) {
+            let hasUnviewed = window.playerStats.unviewedAchievements && window.playerStats.unviewedAchievements.length > 0;
+            if (hasUnviewed) {
+                trophiesBtn.style.animation = "glowGold 1.8s infinite";
+                trophiesBtn.style.borderColor = "#f1c40f";
+                if (!trophiesBtn.querySelector('.badge-exclamation')) {
+                    trophiesBtn.insertAdjacentHTML('beforeend', ' <span class="badge-exclamation" style="color:#f1c40f; font-weight:bold; margin-left:3px;">!</span>');
+                }
+            } else {
+                trophiesBtn.style.animation = "";
+                trophiesBtn.style.borderColor = "";
+                let b = trophiesBtn.querySelector('.badge-exclamation');
+                if (b) b.remove();
+            }
+        }
 
     // Refresh core SP allocations button display
     const updateSPButtonStates = () => {
@@ -2811,13 +2853,47 @@ window.positionTooltip = function(e, tt) {
     let vx, vy;
 
     const isLandscapeMobile = window.innerHeight <= 550 && window.innerWidth > window.innerHeight;
+    const isMobile = window.innerWidth <= 600 || isLandscapeMobile;
 
-    if (window.innerWidth <= 600 || isLandscapeMobile) {
-        // Mobile-centric responsive layout centering tooltips to prevent any layout cutting-off
+    if (isMobile) {
+        // Check if displaying a comparison layout to shrink sizing safely on mobile
+        let isComparison = tt.querySelector('.compare-border') !== null;
+        if (isComparison) {
+            tt.style.fontSize = "9.5px";
+            tt.querySelectorAll('.tooltip-card').forEach(card => {
+                card.style.padding = "6px 8px";
+            });
+            tt.querySelectorAll('.tt-title').forEach(title => {
+                title.style.fontSize = "10.5px";
+                title.style.marginBottom = "2px";
+            });
+            tt.querySelectorAll('.tt-subtitle').forEach(sub => {
+                sub.style.fontSize = "8.5px";
+                sub.style.marginBottom = "2px";
+            });
+            tt.querySelectorAll('.tt-stat-line').forEach(line => {
+                line.style.fontSize = "9px";
+                line.style.marginBottom = "1px";
+            });
+            // Hides descriptive lore on compact comparisons tooltips to save vertical viewport space
+            tt.querySelectorAll('div[style*="lore"]').forEach(lore => {
+                lore.style.display = "none";
+            });
+            ttWidth = tt.offsetWidth;
+            ttHeight = tt.offsetHeight;
+        } else {
+            tt.style.fontSize = "";
+            tt.querySelectorAll('.tooltip-card').forEach(card => card.style.padding = "");
+            tt.querySelectorAll('.tt-title').forEach(title => { title.style.fontSize = ""; title.style.marginBottom = ""; });
+            tt.querySelectorAll('.tt-subtitle').forEach(sub => { sub.style.fontSize = ""; sub.style.marginBottom = ""; });
+            tt.querySelectorAll('.tt-stat-line').forEach(line => { line.style.fontSize = ""; line.style.marginBottom = ""; });
+            tt.querySelectorAll('div[style*="lore"]').forEach(lore => { lore.style.display = ""; });
+        }
+
+        // Centering alignment preventing layout cutting-off
         vx = (window.innerWidth - ttWidth) / 2;
         vy = clientY + 18;
 
-        // Ensure vertical viewport bounds containment
         if (vy + ttHeight > window.innerHeight) {
             vy = clientY - ttHeight - 18;
         }
@@ -2825,15 +2901,26 @@ window.positionTooltip = function(e, tt) {
             vy = padding;
         }
 
-        // Dynamically constrain max-height once more to make it scrollable if larger than screen
         let spaceAvailable = window.innerHeight - (2 * padding);
         if (ttHeight > spaceAvailable) {
             tt.style.maxHeight = spaceAvailable + "px";
             tt.style.overflowY = "auto";
             vy = padding;
+        } else {
+            tt.style.maxHeight = "";
+            tt.style.overflowY = "";
         }
     } else {
-        // Desktop coordinate mapping
+        // Restore standard desktop layout sizes
+        tt.style.fontSize = "";
+        tt.style.maxHeight = "";
+        tt.style.overflowY = "";
+        tt.querySelectorAll('.tooltip-card').forEach(card => card.style.padding = "");
+        tt.querySelectorAll('.tt-title').forEach(title => { title.style.fontSize = ""; title.style.marginBottom = ""; });
+        tt.querySelectorAll('.tt-subtitle').forEach(sub => { sub.style.fontSize = ""; sub.style.marginBottom = ""; });
+        tt.querySelectorAll('.tt-stat-line').forEach(line => { line.style.fontSize = ""; line.style.marginBottom = ""; });
+        tt.querySelectorAll('div[style*="lore"]').forEach(lore => { lore.style.display = ""; });
+
         vx = clientX + 15;
         vy = clientY + 15;
 
@@ -3697,20 +3784,37 @@ window.toggleAchievements = function() {
     }
 };
 
+window.viewAchievement = function(achId) {
+    if (window.playerStats.unviewedAchievements) {
+        window.playerStats.unviewedAchievements = window.playerStats.unviewedAchievements.filter(id => id !== achId);
+        window.updateUI();
+        // Redraw card immediately to remove gold highlight on view
+        let card = document.getElementById(`ach-card-${achId}`);
+        if (card) {
+            card.style.animation = "";
+            card.style.boxShadow = "";
+        }
+    }
+};
+
 window.buildAchievementsModal = function() {
     let listEl = document.getElementById('achievements-list');
     if (!listEl) return;
 
     listEl.innerHTML = window.AchievementsData.map(ach => {
         let unlocked = window.playerStats.unlockedAchievements && window.playerStats.unlockedAchievements.includes(ach.id);
+        let isUnviewed = window.playerStats.unviewedAchievements && window.playerStats.unviewedAchievements.includes(ach.id);
+
         let borderStyle = unlocked
             ? "border-color: #f1c40f; background: rgba(241, 196, 15, 0.05); color: #fff;"
             : "border-color: #333; opacity: 0.5; filter: grayscale(100%); color: #7f8c8d;";
         let iconDisplay = unlocked ? ach.icon : "🔒";
 
-        return `<div id="ach-card-${ach.id}" class="bag-item" style="cursor:help; display:flex; flex-direction:row; justify-content:flex-start; align-items:center; gap:10px; ${borderStyle}; padding:8px;"
-            onmouseenter="window.showAchievementTooltip(event, '${ach.id}')"
-            ontouchstart="window.showAchievementTooltip(event, '${ach.id}')"
+        let glowStyle = isUnviewed ? "animation: glowGold 1.5s infinite; border-color: #f1c40f !important;" : "";
+
+        return `<div id="ach-card-${ach.id}" class="bag-item" style="cursor:help; display:flex; flex-direction:row; justify-content:flex-start; align-items:center; gap:10px; ${borderStyle} ${glowStyle} padding:8px;"
+            onmouseenter="window.showAchievementTooltip(event, '${ach.id}'); window.viewAchievement('${ach.id}');"
+            ontouchstart="window.showAchievementTooltip(event, '${ach.id}'); window.viewAchievement('${ach.id}');"
             onmouseleave="window.hideTooltip()">
             <span style="font-size:22px; width:30px; text-align:center;">${iconDisplay}</span>
             <div style="flex:1; text-align:left;">
