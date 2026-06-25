@@ -1550,7 +1550,7 @@ canvas {
                 padding: 6px !important;
             }
 
-            /* --- STACK SELECTION BOXES TO PREVENT BLEED OVERFLOWS --- */
+            /* --- STACK SELECTION BOXES & ITEM SACKS --- */
             #forge-station-container,
             #bulk-salvage-bar > div {
                 flex-direction: column !important;
@@ -1570,13 +1570,106 @@ canvas {
             }
 
             .forge-grid {
-                grid-template-columns: 1fr !important; /* Stack details & bag lists vertically */
+                grid-template-columns: 1fr !important;
                 gap: 8px !important;
             }
 
             #forge-list {
                 height: auto !important;
                 min-height: 160px !important;
+            }
+
+            /* --- COMPACT ELEGANT SACK ITEMS --- */
+            #menu-panel .bag-item {
+                display: flex !important;
+                flex-direction: column !important; /* Stack item names above buttons */
+                align-items: stretch !important;
+                padding: 6px 8px !important;
+                gap: 6px !important;
+            }
+
+            #menu-panel .bag-item > div:first-child {
+                width: 100% !important;
+                text-align: left !important;
+                white-space: normal !important;
+            }
+
+            #menu-panel .bag-item > div:last-child {
+                display: flex !important;
+                width: 100% !important;
+                justify-content: flex-end !important;
+                gap: 3px !important;
+                margin-top: 2px !important;
+                margin-left: 0 !important;
+            }
+
+            #menu-panel .bag-item .btn-action {
+                flex: 1 !important;
+                padding: 4px 6px !important;
+                font-size: 10px !important;
+                text-align: center !important;
+            }
+
+            .bag-container {
+                min-height: 110px !important;
+                max-height: calc(100vh - 165px) !important;
+            }
+
+            /* --- DETAILED STATS LIST COLUMN SQUISH FIX --- */
+            .stats-panel-right div[style*="grid-template-columns"] {
+                grid-template-columns: 1fr !important; /* Stack stats vertically inside column to prevent overlapping */
+                gap: 2px !important;
+            }
+
+            .slots-card {
+                padding: 4px !important;
+                min-height: 48px !important;
+            }
+
+            .slots-card strong {
+                font-size: 9px !important;
+            }
+
+            .slots-card button {
+                padding: 2px 4px !important;
+                font-size: 8px !important;
+            }
+
+            /* --- COMPACT HIGH-YIELD TOOLTIPS --- */
+            .tooltip-base {
+                max-height: 85vh !important;
+                overflow-y: auto !important;
+                pointer-events: auto !important; /* Allows scroll swiping inside tooltips */
+            }
+
+            .tooltip-card {
+                padding: 8px !important;
+                width: 200px !important; /* Narrower to prevent offscreen clipping */
+                font-size: 10px !important;
+            }
+
+            .tt-title {
+                font-size: 11px !important;
+                margin-bottom: 2px !important;
+            }
+
+            .tt-subtitle {
+                font-size: 9px !important;
+                margin-bottom: 4px !important;
+            }
+
+            .tt-stat-line {
+                font-size: 9.5px !important;
+                margin-bottom: 1px !important;
+            }
+
+            .tooltip-card div[style*="lore"] {
+                display: none !important; /* Hides the decorative flavor lore text to save over 100px of vertical space */
+            }
+
+            .tooltip-card div[style*="Base Stats"] {
+                padding: 3px !important;
+                margin: 4px 0 !important;
             }
 
             /* --- ULTRA-COMPACT CONTROL BAR (PREVENTS WRAP & CLIPPING) --- */

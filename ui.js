@@ -2844,6 +2844,16 @@ window.switchMarketSubTab = function(subTabId) {
     if (typeof window.hideTooltip === "function") window.hideTooltip();
 };
 
+window.toggleFullscreen = function() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+            console.log("Fullscreen activation failed", err);
+        });
+    } else {
+        document.exitFullscreen();
+    }
+};
+
 // --- LOG SYSTEM BOX ---
 
 window.toggleLogPanel = function() {
