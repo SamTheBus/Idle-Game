@@ -3,8 +3,554 @@
    tooltips, and modal displays.
    ========================================================================= */
 
-window.draftAllocations = null;
+window.getEtcIconHtml = function(key) {
+    let bg = "rgba(170, 170, 170, 0.12)";
+    let border = "#444";
+    let svgContent = "";
+
+    if (key === "Eridium Shard") {
+        bg = "rgba(155, 89, 182, 0.25)"; border = "#9b59b6";
+        svgContent = `
+        <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
+            <defs>
+                <linearGradient id="grad_EridiumShard" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#e84393" />
+                    <stop offset="100%" stop-color="#8e44ad" />
+                </linearGradient>
+            </defs>
+            <path d="M16 2 L26 16 L16 30 L6 16 Z" fill="url(#grad_EridiumShard)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M16 2 L16 30" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+            <path d="M6 16 L26 16" stroke="rgba(0,0,0,0.25)" stroke-width="1.5"/>
+        </svg>`;
+    }
+    else if (key === "Gacha Key") {
+        bg = "rgba(241, 196, 15, 0.25)"; border = "#f1c40f";
+        svgContent = `
+        <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
+            <defs>
+                <linearGradient id="grad_GachaKey" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ffd700" />
+                    <stop offset="100%" stop-color="#b7950b" />
+                </linearGradient>
+            </defs>
+            <circle cx="11" cy="21" r="6" fill="url(#grad_GachaKey)" stroke="#000" stroke-width="2" />
+            <circle cx="11" cy="21" r="2.5" fill="#111" stroke="#000" stroke-width="1.5" />
+            <path d="M15 17 L27 5 L30 8 L28 10 L26 8 L24 12 L22 10" stroke="#000" stroke-width="2" stroke-linejoin="round" fill="none" />
+            <path d="M15.5 16.5 L26.5 5.5" stroke="url(#grad_GachaKey)" stroke-width="3" stroke-linecap="round" fill="none"/>
+            <path d="M26.5 5.5 L28.5 7.5 M24.5 7.5 L26.5 9.5" stroke="url(#grad_GachaKey)" stroke-width="2" stroke-linecap="round"/>
+        </svg>`;
+    }
+    else if (key === "Ancient Core") {
+        bg = "rgba(231, 76, 60, 0.25)"; border = "#e74c3c";
+        svgContent = `
+        <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
+            <defs>
+                <radialGradient id="grad_AncientCore" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#ffffff" />
+                    <stop offset="30%" stop-color="#e74c3c" />
+                    <stop offset="100%" stop-color="#960018" />
+                </radialGradient>
+            </defs>
+            <circle cx="16" cy="16" r="11" fill="url(#grad_AncientCore)" stroke="#000" stroke-width="2" />
+            <path d="M5 16 L27 16" stroke="#000" stroke-width="2" />
+            <path d="M16 5 L16 27" stroke="#000" stroke-width="2" />
+            <circle cx="16" cy="16" r="4" fill="#fff" opacity="0.8" />
+        </svg>`;
+    }
+    else if (key === "Overlord's Sigil") {
+        bg = "rgba(26, 188, 156, 0.25)"; border = "#1abc9c";
+        svgContent = `
+        <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
+            <defs>
+                <linearGradient id="grad_OverlordsSigil" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#1abc9c" />
+                    <stop offset="100%" stop-color="#16a085" />
+                </linearGradient>
+            </defs>
+            <path d="M16 4 L19 14 L27 10 L24 20 L16 28 L8 20 L5 10 L13 14 Z" fill="url(#grad_OverlordsSigil)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <circle cx="16" cy="16" r="3.5" fill="#fff" stroke="#000" stroke-width="1.5" />
+        </svg>`;
+    }
+    else if (key === "Astral Essence") {
+        bg = "rgba(142, 68, 173, 0.25)"; border = "#8e44ad";
+        svgContent = `
+        <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
+            <defs>
+                <linearGradient id="grad_AstralEssence" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#e84393" />
+                    <stop offset="50%" stop-color="#9b59b6" />
+                    <stop offset="100%" stop-color="#3498db" />
+                </linearGradient>
+            </defs>
+            <path d="M16 3 L19 13 L29 16 L19 19 L16 29 L13 19 L3 16 L13 13 Z" fill="url(#grad_AstralEssence)" stroke="#000" stroke-width="2" stroke-linejoin="round" />
+            <circle cx="16" cy="16" r="3" fill="#ffffff" opacity="0.9" />
+        </svg>`;
+    }
+    else if (key === "Mythic Scrap") {
+        bg = "rgba(231, 76, 60, 0.25)"; border = "#e74c3c";
+        svgContent = `
+        <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
+            <defs>
+                <linearGradient id="grad_MythicScrap" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ff7675" />
+                    <stop offset="100%" stop-color="#d63031" />
+                </linearGradient>
+            </defs>
+            <path d="M6 10 L18 4 L28 14 L24 26 L10 28 L4 18 Z" fill="url(#grad_MythicScrap)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M14 8 L24 16 M10 18 L20 22" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>`;
+    }
+    else if (key === "Legendary Scrap") {
+        bg = "rgba(241, 196, 15, 0.25)"; border = "#f1c40f";
+        svgContent = `
+        <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
+            <defs>
+                <linearGradient id="grad_LegendaryScrap" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ffeaa7" />
+                    <stop offset="100%" stop-color="#fdcb6e" />
+                </linearGradient>
+            </defs>
+            <path d="M8 6 L22 8 L26 22 L14 28 L4 16 Z" fill="url(#grad_LegendaryScrap)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M12 10 L20 18" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>`;
+    }
+    else if (key === "Epic Scrap") {
+        bg = "rgba(230, 126, 34, 0.25)"; border = "#e67e22";
+        svgContent = `
+        <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
+            <defs>
+                <linearGradient id="grad_EpicScrap" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ffbe76" />
+                    <stop offset="100%" stop-color="#e67e22" />
+                </linearGradient>
+            </defs>
+            <path d="M10 4 L26 8 L22 24 L8 26 Z" fill="url(#grad_EpicScrap)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M12 12 L20 16" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>`;
+    }
+    else if (key === "Magic Scrap") {
+        bg = "rgba(155, 89, 182, 0.25)"; border = "#9b59b6";
+        svgContent = `
+        <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
+            <defs>
+                <linearGradient id="grad_MagicScrap" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#a29bfe" />
+                    <stop offset="100%" stop-color="#6c5ce7" />
+                </linearGradient>
+            </defs>
+            <path d="M6 14 L16 4 L28 12 L22 26 L10 24 Z" fill="url(#grad_MagicScrap)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M12 10 L18 20" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>`;
+    }
+    else if (key === "Rare Scrap") {
+        bg = "rgba(52, 152, 219, 0.25)"; border = "#3498db";
+        svgContent = `
+        <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
+            <defs>
+                <linearGradient id="grad_RareScrap" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#74b9ff" />
+                    <stop offset="100%" stop-color="#0984e3" />
+                </linearGradient>
+            </defs>
+            <path d="M4 8 L18 6 L28 16 L16 28 L6 20 Z" fill="url(#grad_RareScrap)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M10 12 L20 18" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>`;
+    }
+    else if (key === "Luminous Soul") {
+        bg = "rgba(255, 182, 193, 0.25)"; border = "#ffb6c1";
+        svgContent = `
+        <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
+            <defs>
+                <linearGradient id="grad_LuminousSoul" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stop-color="#fd79a8" />
+                    <stop offset="100%" stop-color="#ffb6c1" />
+                </linearGradient>
+            </defs>
+            <path d="M16 3 C16 3, 6 15, 6 22 C6 27, 10.5 30, 16 30 C21.5 30, 26 27, 26 22 C26 15, 16 3, 16 3 Z" fill="url(#grad_LuminousSoul)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <circle cx="13" cy="20" r="3" fill="#fff" opacity="0.6"/>
+        </svg>`;
+    }
+    else if (key === "Monster Soul") {
+        bg = "rgba(170, 170, 170, 0.25)"; border = "#888";
+        svgContent = `
+        <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
+            <defs>
+                <linearGradient id="grad_MonsterSoul" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stop-color="#2d3436" />
+                    <stop offset="100%" stop-color="#636e72" />
+                </linearGradient>
+            </defs>
+            <path d="M16 3 C16 3, 6 15, 6 22 C6 27, 10.5 30, 16 30 C21.5 30, 26 27, 26 22 C26 15, 16 3, 16 3 Z" fill="url(#grad_MonsterSoul)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M11 19 L14 17" stroke="#e74c3c" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M21 19 L18 17" stroke="#e74c3c" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>`;
+    }
+    else if (key === "Catalyst Core") {
+        bg = "rgba(46, 204, 113, 0.25)"; border = "#2ecc71";
+        svgContent = `
+        <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
+            <defs>
+                <linearGradient id="grad_CatalystCore" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#2ecc71" />
+                    <stop offset="50%" stop-color="#a3fd83" />
+                    <stop offset="100%" stop-color="#27ae60" />
+                </linearGradient>
+            </defs>
+            <rect x="9" y="4" width="14" height="24" rx="3" fill="url(#grad_CatalystCore)" stroke="#000" stroke-width="2"/>
+            <line x1="9" y1="10" x2="23" y2="10" stroke="#000" stroke-width="2"/>
+            <line x1="9" y1="22" x2="23" y2="22" stroke="#000" stroke-width="2"/>
+            <rect x="13" y="13" width="6" height="6" fill="#fff" opacity="0.9" rx="1"/>
+        </svg>`;
+    }
+    else {
+        svgContent = `
+        <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
+            <rect x="6" y="8" width="20" height="18" rx="2" fill="#7f8c8d" stroke="#000" stroke-width="2"/>
+            <path d="M6 14 L26 14" stroke="#000" stroke-width="2"/>
+            <rect x="13" y="10" width="6" height="8" fill="#d5dbdb" stroke="#000" stroke-width="1.5" />
+        </svg>`;
+    }
+
+    return `<span style="background: ${bg}; border: 1px solid ${border}; border-radius: 4px; padding: 4px; margin-right: 12px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.6);">${svgContent}</span>`;
+};
+
+window.getUseIconHtml = function(key) {
+    let bg = "rgba(170, 170, 170, 0.12)";
+    let border = "#444";
+    let svgContent = "";
+
+    const getPotionSvg = (liquidColor) => {
+        let uniqueId = "liq_" + liquidColor.replace('#', '');
+        return `
+        <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
+            <defs>
+                <linearGradient id="${uniqueId}" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stop-color="${liquidColor}" />
+                    <stop offset="70%" stop-color="${liquidColor}" />
+                    <stop offset="100%" stop-color="rgba(255,255,255,0.4)" />
+                </linearGradient>
+            </defs>
+            <path d="M13 5 L19 5 L19 12 L26 23 C28 26, 26 29, 21 29 L11 29 C6 29, 4 26, 6 23 L13 12 Z" fill="none" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M8.5 21 L23.5 21 L25 24 C26.2 26.2, 25 28, 21 28 L11 28 C7 28, 5.8 26.2, 7 24 Z" fill="url(#${uniqueId})" stroke="#000" stroke-width="1.5"/>
+            <rect x="13.5" y="2" width="5" height="4" fill="#a0522d" stroke="#000" stroke-width="1.5"/>
+            <path d="M9 22 C8 24, 9 26, 11 27" stroke="#fff" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.65"/>
+        </svg>`;
+    };
+
+    if (key === "SP Reset Scroll") {
+        bg = "rgba(155, 89, 182, 0.25)"; border = "#9b59b6";
+        svgContent = `
+        <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
+            <defs>
+                <linearGradient id="grad_Scroll_SP" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#fdf6e2" />
+                    <stop offset="100%" stop-color="#d5dbdb" />
+                </linearGradient>
+            </defs>
+            <path d="M6 10 L26 6 L26 22 L6 26 Z" fill="url(#grad_Scroll_SP)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <rect x="13" y="11" width="6" height="11" transform="rotate(-11 16 16)" fill="#9b59b6" stroke="#000" stroke-width="1.5" />
+            <path d="M6 10 C6 10, 4 12, 6 14" stroke="#000" stroke-width="2" fill="none" />
+            <path d="M26 6 C26 6, 28 8, 26 10" stroke="#000" stroke-width="2" fill="none" />
+        </svg>`;
+    }
+    else if (key === "PP Reset Scroll") {
+        bg = "rgba(230, 126, 34, 0.25)"; border = "#e67e22";
+        svgContent = `
+        <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
+            <defs>
+                <linearGradient id="grad_Scroll_PP" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#fdf6e2" />
+                    <stop offset="100%" stop-color="#d5dbdb" />
+                </linearGradient>
+            </defs>
+            <path d="M6 10 L26 6 L26 22 L6 26 Z" fill="url(#grad_Scroll_PP)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <rect x="13" y="11" width="6" height="11" transform="rotate(-11 16 16)" fill="#e67e22" stroke="#000" stroke-width="1.5" />
+            <path d="M6 10 C6 10, 4 12, 6 14" stroke="#000" stroke-width="2" fill="none" />
+            <path d="M26 6 C26 6, 28 8, 26 10" stroke="#000" stroke-width="2" fill="none" />
+        </svg>`;
+    }
+    else if (key.includes("Attack")) {
+        bg = "rgba(46, 204, 113, 0.25)"; border = "#2ecc71";
+        svgContent = getPotionSvg("#2ecc71");
+    }
+    else if (key.includes("Vitality")) {
+        bg = "rgba(231, 76, 60, 0.25)"; border = "#e74c3c";
+        svgContent = getPotionSvg("#e74c3c");
+    }
+    else if (key.includes("Armored")) {
+        bg = "rgba(52, 152, 219, 0.25)"; border = "#3498db";
+        svgContent = getPotionSvg("#3498db");
+    }
+    else if (key.includes("Haste")) {
+        bg = "rgba(241, 196, 15, 0.25)"; border = "#f1c40f";
+        svgContent = getPotionSvg("#f1c40f");
+    }
+    else if (key.includes("XP") || key.includes("Double XP")) {
+        bg = "rgba(168, 85, 247, 0.25)"; border = "#a855f7";
+        svgContent = getPotionSvg("#a855f7");
+    }
+    else if (key.includes("Drop Rate") || key.includes("Double Drop") || key.includes("Drop Elixir")) {
+        bg = "rgba(34, 197, 94, 0.25)"; border = "#22c55e";
+        svgContent = getPotionSvg("#22c55e");
+    }
+    else if (key.includes("Quality")) {
+        bg = "rgba(236, 72, 153, 0.25)"; border = "#ec4899";
+        svgContent = getPotionSvg("#ec4899");
+    }
+    else {
+            svgContent = getPotionSvg("#bdc3c7");
+        }
+
+        return `<span style="background: ${bg}; border: 1px solid ${border}; border-radius: 4px; padding: 4px; margin-right: 12px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.6);">${svgContent}</span>`;
+    };
+
+    window.getBossIconHtml = function(bossType) {
+        if (bossType === "guardian") {
+            return `
+            <svg width="56" height="56" viewBox="0 0 64 64" style="display:block; margin: 0 auto; filter: drop-shadow(0 0 6px rgba(52, 152, 219, 0.45));">
+                <defs>
+                    <linearGradient id="goliath_shield" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#34495e" />
+                        <stop offset="100%" stop-color="#1a252f" />
+                    </linearGradient>
+                    <radialGradient id="goliath_core" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#ffffff" />
+                        <stop offset="40%" stop-color="#00d2ff" />
+                        <stop offset="100%" stop-color="#003755" />
+                    </radialGradient>
+                </defs>
+                <path d="M32 4 L52 14 L46 44 L32 58 L18 44 L12 14 Z" fill="url(#goliath_shield)" stroke="#00d2ff" stroke-width="2.5" stroke-linejoin="round" />
+                <path d="M32 4 L32 58" stroke="#111" stroke-width="2" />
+                <path d="M12 14 L32 20 L52 14" fill="none" stroke="#111" stroke-width="2" />
+                <circle cx="32" cy="30" r="10" fill="url(#goliath_core)" stroke="#fff" stroke-width="1.5" />
+                <polygon points="26,24 20,22 24,28" fill="#e74c3c" />
+                <polygon points="38,24 44,22 40,28" fill="#e74c3c" />
+            </svg>`;
+        } else if (bossType === "chronos") {
+            return `
+            <svg width="56" height="56" viewBox="0 0 64 64" style="display:block; margin: 0 auto; filter: drop-shadow(0 0 6px rgba(241, 196, 15, 0.45));">
+                <defs>
+                    <linearGradient id="chronos_gold" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ffd700" />
+                        <stop offset="50%" stop-color="#fdcb6e" />
+                        <stop offset="100%" stop-color="#b7950b" />
+                    </linearGradient>
+                </defs>
+                <circle cx="32" cy="32" r="24" fill="none" stroke="url(#chronos_gold)" stroke-width="3" />
+                <g stroke="url(#chronos_gold)" stroke-width="3" stroke-linecap="round">
+                    <line x1="32" y1="4" x2="32" y2="8" />
+                    <line x1="32" y1="56" x2="32" y2="60" />
+                    <line x1="4" y1="32" x2="8" y2="32" />
+                    <line x1="56" y1="32" x2="60" y2="32" />
+                </g>
+                <circle cx="32" cy="32" r="16" fill="#111" stroke="url(#chronos_gold)" stroke-width="1.5" />
+                <path d="M27 22 L37 22 L27 42 L37 42 Z" fill="none" stroke="#f1c40f" stroke-width="1" />
+                <path d="M29 23 L35 23 L32 32 Z" fill="#ffeaa7" />
+                <path d="M32 32 L29 41 L35 41 Z" fill="#ffeaa7" />
+                <line x1="32" y1="32" x2="32" y2="20" stroke="#fff" stroke-width="2" stroke-linecap="round" />
+                <line x1="32" y1="32" x2="40" y2="32" stroke="#e67e22" stroke-width="1.5" stroke-linecap="round" />
+            </svg>`;
+        } else if (bossType === "nexus") {
+            return `
+            <svg width="56" height="56" viewBox="0 0 64 64" style="display:block; margin: 0 auto; filter: drop-shadow(0 0 6px rgba(255, 0, 127, 0.45));">
+                <defs>
+                    <linearGradient id="nexus_neon" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ff007f" />
+                        <stop offset="100%" stop-color="#00d2ff" />
+                    </linearGradient>
+                </defs>
+                <rect x="14" y="14" width="36" height="36" fill="none" stroke="url(#nexus_neon)" stroke-width="2" />
+                <rect x="20" y="20" width="24" height="24" fill="none" stroke="#00b894" stroke-width="1.5" />
+                <line x1="14" y1="14" x2="20" y2="20" stroke="url(#nexus_neon)" stroke-width="1.5" />
+                <line x1="50" y1="14" x2="44" y2="20" stroke="url(#nexus_neon)" stroke-width="1.5" />
+                <line x1="14" y1="50" x2="20" y2="44" stroke="url(#nexus_neon)" stroke-width="1.5" />
+                <line x1="50" y1="50" x2="44" y2="44" stroke="url(#nexus_neon)" stroke-width="1.5" />
+                <circle cx="32" cy="32" r="5" fill="#fff" stroke="#ff007f" stroke-width="1" />
+                <circle cx="32" cy="32" r="2" fill="#000" />
+            </svg>`;
+        }
+        return `🔮`;
+    };
+
+    window.getArtifactIconHtml = function(trait, size = 24) {
+        let svg = "";
+        if (trait === "frenzy") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <defs><linearGradient id="g_frenzy" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ff4d4d"/><stop offset="100%" stop-color="#780016"/></linearGradient></defs>
+                <rect x="6" y="6" width="20" height="20" rx="4" fill="url(#g_frenzy)" stroke="#000" stroke-width="1.5"/>
+                <path d="M12 12 L20 12 L16 18 Z" fill="#fff" stroke="#000" stroke-width="1"/>
+                <path d="M10 20 L22 20" stroke="#ff3333" stroke-width="2" stroke-linecap="round"/>
+            </svg>`;
+        } else if (trait === "vampirism") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <defs><linearGradient id="g_vamp" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#800000"/><stop offset="100%" stop-color="#ff1a1a"/></linearGradient></defs>
+                <path d="M10 6 L22 6 L22 14 C22 19, 16 22, 16 22 C16 22, 10 19, 10 14 Z" fill="#d4af37" stroke="#000" stroke-width="1.5"/>
+                <path d="M11 7 L21 7 L21 12 C21 14, 11 14, 11 12 Z" fill="url(#g_vamp)"/>
+                <line x1="16" y1="22" x2="16" y2="28" stroke="#d4af37" stroke-width="2"/>
+                <line x1="12" y1="28" x2="20" y2="28" stroke="#d4af37" stroke-width="3" stroke-linecap="round"/>
+            </svg>`;
+        } else if (trait === "gold_hoard") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="10" fill="#ffd700" stroke="#000" stroke-width="1.5"/>
+                <circle cx="16" cy="16" r="5" fill="#111" stroke="#000" stroke-width="1.5"/>
+            </svg>`;
+        } else if (trait === "magic_find") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="10" fill="#2ecc71" stroke="#000" stroke-width="1.5"/>
+                <path d="M16 10 L20 18 L12 18 Z" fill="#f1c40f" stroke="#000" stroke-width="1"/>
+            </svg>`;
+        } else if (trait === "move_speed") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <path d="M8 24 L14 10 L24 16 L18 26 Z" fill="#3498db" stroke="#000" stroke-width="1.5"/>
+                <path d="M6 16 L12 12" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+            </svg>`;
+        } else if (trait === "defense") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <path d="M16 4 L26 10 L22 24 L16 28 L10 24 L6 10 Z" fill="#34495e" stroke="#000" stroke-width="1.5"/>
+                <path d="M16 7 L22 11 L19 21 L16 24 L13 21 L10 11 Z" fill="#5d6d7e"/>
+            </svg>`;
+        } else if (trait === "parry_strike") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <path d="M6 10 L16 6 L26 10 L24 22 L16 28 L8 22 Z" fill="#7f8c8d" stroke="#000" stroke-width="1.5"/>
+                <path d="M12 14 L20 14 M16 10 L16 22" stroke="#e74c3c" stroke-width="2" stroke-linecap="round"/>
+            </svg>`;
+        } else if (trait === "echo_strike") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <path d="M8 24 L24 8 L26 10 L10 26 Z" fill="#00d2ff" stroke="#000" stroke-width="1.5"/>
+                <path d="M12 28 L28 12" stroke="rgba(0, 210, 255, 0.4)" stroke-width="2"/>
+            </svg>`;
+        } else if (trait === "idle_spd") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="10" fill="#2c3e50" stroke="#000" stroke-width="1.5"/>
+                <line x1="16" y1="16" x2="16" y2="10" stroke="#e67e22" stroke-width="2" stroke-linecap="round"/>
+                <line x1="16" y1="16" x2="22" y2="16" stroke="#f1c40f" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>`;
+        } else if (trait === "active_spd") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <path d="M19 3 L7 17 L15 17 L11 29 L27 13 L17 13 Z" fill="#f1c40f" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>`;
+        } else if (trait === "dodge_buff") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <rect x="13" y="4" width="6" height="24" rx="2" fill="#2ecc71" stroke="#000" stroke-width="1.5"/>
+                <line x1="11" y1="12" x2="21" y2="12" stroke="#000" stroke-width="1.5"/>
+            </svg>`;
+        } else if (trait === "extend_buffs") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <path d="M8 6 L24 6 L16 16 Z M16 16 L8 26 L24 26 Z" fill="#e67e22" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>`;
+        } else if (trait === "bag_space") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <rect x="7" y="10" width="18" height="16" rx="3" fill="#8e44ad" stroke="#000" stroke-width="1.5"/>
+                <path d="M11 10 C11 6, 21 6, 21 10" fill="none" stroke="#000" stroke-width="2"/>
+            </svg>`;
+        } else if (trait === "second_wind") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <circle cx="16" cy="11" r="5" fill="#f1c40f" stroke="#000" stroke-width="1.5"/>
+                <path d="M12 16 L20 16 L16 28 Z" fill="#ffd700" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>`;
+        } else if (trait === "golem_stance") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <polygon points="16,4 28,12 28,24 16,28 4,24 4,12" fill="#7f8c8d" stroke="#000" stroke-width="1.5"/>
+            </svg>`;
+        } else if (trait === "fairy_wealth") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="10" fill="#ffb6c1" stroke="#000" stroke-width="1.5"/>
+                <path d="M16 10 L20 18 L12 18 Z" fill="#f1c40f" stroke="#000" stroke-width="1"/>
+            </svg>`;
+        } else if (trait === "void_pull") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="10" fill="#110221" stroke="#8e44ad" stroke-width="2"/>
+                <circle cx="16" cy="16" r="5" fill="#e84393"/>
+            </svg>`;
+        } else if (trait === "titan_grip") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <rect x="8" y="10" width="16" height="12" rx="3" fill="#34495e" stroke="#000" stroke-width="1.5"/>
+                <path d="M12 6 C12 6, 20 6, 20 10" fill="none" stroke="#000" stroke-width="2"/>
+            </svg>`;
+        } else if (trait === "alchemist_alembic") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <circle cx="16" cy="20" r="8" fill="#1abc9c" stroke="#000" stroke-width="1.5"/>
+                <rect x="14" y="6" width="4" height="6" fill="#bdc3c7" stroke="#000" stroke-width="1.5"/>
+            </svg>`;
+        } else if (trait === "philosopher_catalyst") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <polygon points="16,4 28,26 4,26" fill="#2ecc71" stroke="#000" stroke-width="1.5"/>
+            </svg>`;
+        } else if (trait === "cauldron_eternity") {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <path d="M8 10 C8 10, 4 24, 16 26 C16 26, 28 24, 28 10 Z" fill="#2c3e50" stroke="#000" stroke-width="1.5"/>
+                <ellipse cx="16" cy="10" rx="10" ry="3" fill="#9b59b6" stroke="#000" stroke-width="1.5"/>
+            </svg>`;
+        } else {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="10" fill="#7f8c8d" stroke="#000" stroke-width="1.5"/>
+            </svg>`;
+        }
+        return `<span style="display:inline-flex; align-items:center; justify-content:center; width:${size}px; height:${size}px; background:#111; border:1px solid #444; border-radius:4px; padding:2px; box-shadow:inset 0 0 4px #000;">${svg}</span>`;
+    };
+
+    window.getUniqueIconHtml = function(item, size = 32) {
+        let svg = "";
+        if (item.isUniqueStaff) {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <line x1="8" y1="24" x2="24" y2="8" stroke="#853c00" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="24" cy="8" r="5" fill="#e67e22" stroke="#000" stroke-width="1.5"/>
+                <path d="M22 6 L26 10" stroke="#fff" stroke-width="1"/>
+            </svg>`;
+        } else if (item.isUniqueSword) {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <path d="M6 26 L26 6 L28 8 L8 28 Z" fill="#960018" stroke="#000" stroke-width="1.5"/>
+                <path d="M5 27 L9 25" stroke="#000" stroke-width="2"/>
+            </svg>`;
+        } else if (item.isUniqueSingularity) {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <path d="M6 26 L26 6 L28 8 L8 28 Z" fill="#150326" stroke="#8e44ad" stroke-width="1.5"/>
+                <circle cx="26" cy="6" r="3" fill="#e84393"/>
+            </svg>`;
+        } else if (item.isUniqueMaelstrom) {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <path d="M8 24 L24 8 Q28 14, 20 20 Z" fill="#2ecc71" stroke="#000" stroke-width="1.5"/>
+            </svg>`;
+        } else if (item.isUniqueAegis) {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <path d="M16 4 L26 10 L22 24 L16 28 L10 24 L6 10 Z" fill="#021a2c" stroke="#3498db" stroke-width="1.5"/>
+            </svg>`;
+        } else if (item.isUniqueWatch) {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="10" fill="#221c03" stroke="#f1c40f" stroke-width="1.5"/>
+                <line x1="16" y1="16" x2="16" y2="10" stroke="#fff" stroke-width="1.5"/>
+                <line x1="16" y1="16" x2="20" y2="16" stroke="#fff" stroke-width="1"/>
+            </svg>`;
+        } else if (item.isUniqueChronicle) {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <rect x="8" y="6" width="16" height="20" rx="2" fill="#1f1b0a" stroke="#f39c12" stroke-width="1.5"/>
+                <line x1="12" y1="10" x2="20" y2="10" stroke="#aaa" stroke-width="1"/>
+            </svg>`;
+        } else if (item.isUniqueWarpCore) {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <path d="M10 24 L14 10 L22 16 L18 26 Z" fill="#001a1a" stroke="#1abc9c" stroke-width="1.5"/>
+            </svg>`;
+        } else if (item.isUniqueTempest) {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <path d="M8 20 L16 6 L24 20 Z" fill="#03212c" stroke="#00d2ff" stroke-width="1.5"/>
+            </svg>`;
+        } else {
+            svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="10" fill="#444" stroke="#888" stroke-width="1.5"/>
+            </svg>`;
+        }
+        return `<span style="display:inline-flex; align-items:center; justify-content:center; width:${size}px; height:${size}px; background:#111; border:1px solid #444; border-radius:4px; padding:3px; box-shadow:inset 0 0 6px #000;">${svg}</span>`;
+                };
+
+        window.hexToRgba = function(hex, alpha) {
+            if (!hex || hex.charAt(0) !== '#') return `rgba(155, 89, 182, ${alpha})`;
+            let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        };
+
+        window.draftAllocations = null;
 window.draftSP = 0;
+window.activeStatTooltip = null;
 window.activeStatTooltip = null;
 window.draftHoldTimeout = null;
 window.didFastDump = false;
@@ -139,32 +685,32 @@ window.renderRiftConsole = function() {
     }
 
     let slidesHtml = window.riftBossesMetadata.map((boss, idx) => {
-        let lvl = isRiftActive ? activeLvl : selectedLvl;
-        let equivalentStage = 50 + lvl * 10;
-        let gRate = 1.045 + ((equivalentStage * 0.04) / (equivalentStage + 200));
-        let rScale = Math.pow(gRate, equivalentStage);
+            let lvl = isRiftActive ? activeLvl : selectedLvl;
+            let equivalentStage = 50 + lvl * 10;
+            let gRate = 1.045 + ((equivalentStage * 0.04) / (equivalentStage + 200));
+            let rScale = Math.pow(gRate, equivalentStage);
 
-        let hpVal = Math.floor(boss.hpMult * (60 * rScale));
-        let dmgVal = Math.floor(20 * rScale * boss.dmgMult);
-        let defVal = Math.floor(boss.defMult * rScale);
+            let hpVal = Math.floor(boss.hpMult * (60 * rScale));
+            let dmgVal = Math.floor(20 * rScale * boss.dmgMult);
+            let defVal = Math.floor(boss.defMult * rScale);
 
-        let lootHtml = boss.artifacts.map(art => {
-            let artDetails = window.ARTIFACT_POOL.find(a => a.name === art.name);
-            let trait = artDetails ? artDetails.trait : art.trait;
+            let lootHtml = boss.artifacts.map(art => {
+                let artDetails = window.ARTIFACT_POOL.find(a => a.name === art.name);
+                let trait = artDetails ? artDetails.trait : art.trait;
+                return `
+                    <div class="rift-loot-icon" onmouseenter="window.showDummyArtifact(event, '${trait}')" ontouchstart="window.showDummyArtifact(event, '${trait}')" onmouseleave="window.hideTooltip()">
+                        <span>${window.getArtifactIconHtml(trait, 28)}</span>
+                    </div>
+                `;
+            }).join("");
+
             return `
-                <div class="rift-loot-icon" onmouseenter="window.showDummyArtifact(event, '${trait}')" ontouchstart="window.showDummyArtifact(event, '${trait}')" onmouseleave="window.hideTooltip()">
-                    <span>${window.getArtifactIcon(trait)}</span>
-                </div>
-            `;
-        }).join("");
-
-        return `
-            <div class="rift-slide">
-                <div style="text-align:center;">
-                    <div style="font-size:45px; margin: 4px 0;">${boss.avatar}</div>
-                    <div class="rift-boss-badge">${boss.name}</div>
-                    <div style="font-style:italic; font-size:10.5px; color:#aaa; margin-bottom:8px;">"${boss.title}"</div>
-                </div>
+                <div class="rift-slide">
+                    <div style="text-align:center;">
+                        <div style="margin: 8px 0;">${window.getBossIconHtml(boss.type)}</div>
+                        <div class="rift-boss-badge">${boss.name}</div>
+                        <div style="font-style:italic; font-size:10.5px; color:#aaa; margin-bottom:8px;">"${boss.title}"</div>
+                    </div>
                 <div style="font-size:11px; color:#ddd; line-height:1.4; text-align:center; padding: 0 10px; margin-bottom:10px; min-height:34px; white-space:normal;">
                     ${boss.desc}
                 </div>
@@ -1415,54 +1961,68 @@ window.showStatBreakdown = function(e, statKey, isPct = false) {
                                        };
 
                                        window.renderMysticalShop = function() {
-                                           let el = document.getElementById('mystical-shop-list');
-                                           if (!el) return;
+                                                                                  let el = document.getElementById('mystical-shop-list');
+                                                                                  if (!el) return;
 
-                                           let stockHtml = window.MYSTICAL_STOCK.map((item, index) => {
-                                               let costColor = "#e74c3c";
-                                               let currencyLabel = "Gold";
-                                               let displayCost = item.cost;
+                                                                                  let stockHtml = window.MYSTICAL_STOCK.map((item, index) => {
+                                                                                      let costColor = "#e74c3c";
+                                                                                      let currencyLabel = "Gold";
+                                                                                      let displayCost = item.cost;
 
-                                               if (item.currency === "Luminous Soul") {
-                                                   let owned = window.inventory.ETC["Luminous Soul"] || 0;
-                                                   costColor = owned >= item.cost ? "#ffb6c1" : "#e74c3c";
-                                                   currencyLabel = "Souls";
-                                               } else if (item.currency === "Astral Shards") {
-                                                   let owned = window.playerStats.astralShards || 0;
-                                                   costColor = owned >= item.cost ? "#9b59b6" : "#e74c3c";
-                                                   currencyLabel = "Shards";
-                                               } else {
-                                                   displayCost = Math.ceil(item.cost * Math.pow(1.08, window.playerStats.stage));
-                                                   costColor = window.playerStats.coins >= displayCost ? "#f1c40f" : "#e74c3c";
-                                               }
+                                                                                      if (item.currency === "Luminous Soul") {
+                                                                                          let owned = window.inventory.ETC["Luminous Soul"] || 0;
+                                                                                          costColor = owned >= item.cost ? "#ffb6c1" : "#e74c3c";
+                                                                                          currencyLabel = "Souls";
+                                                                                      } else if (item.currency === "Astral Shards") {
+                                                                                          let owned = window.playerStats.astralShards || 0;
+                                                                                          costColor = owned >= item.cost ? "#9b59b6" : "#e74c3c";
+                                                                                          currencyLabel = "Shards";
+                                                                                      } else {
+                                                                                          displayCost = Math.ceil(item.cost * Math.pow(1.08, window.playerStats.stage));
+                                                                                          costColor = window.playerStats.coins >= displayCost ? "#f1c40f" : "#e74c3c";
+                                                                                      }
 
-                                               return `<div class="shop-row" style="border-color: ${item.color}; background: rgba(155, 89, 182, 0.05); flex-direction: column; align-items: stretch; text-align: left; gap: 4px; padding: 8px; cursor: help;" onmouseenter="window.showMysticalShopTooltip(event, ${index})" ontouchstart="window.showMysticalShopTooltip(event, ${index})" onmouseleave="window.hideTooltip()">
-                                                   <div style="display:flex; justify-content:space-between; align-items:center;">
-                                                       <strong style="color:${item.color}; font-size:12px;">${item.name}</strong>
-                                                       <span style="color:${costColor}; font-weight:bold; font-size:11px;">${window.formatNumber(displayCost)} ${currencyLabel}</span>
-                                                   </div>
-                                                   <div style="font-size:10px; color:#aaa; margin-bottom:6px;">${item.desc}</div>
-                                                   <button class="btn-action" style="background:#9b59b6; color:#fff;" onclick="window.buyMysticalItem(${index})">Purchase</button>
-                                               </div>`;
-                                           }).join("");
+                                                                                      let iconHtml = (item.name === "Gacha Key" || item.name === "Astral Essence" || item.name === "Catalyst Core") ? getEtcIconHtml(item.name) : getUseIconHtml(item.name);
+                                                                                                                                            iconHtml = iconHtml.replace('margin-right: 12px;', 'margin-right: 8px;');
+                                                                                                                                            let bgStyle = window.hexToRgba(item.color, 0.05);
 
-                                           let transHtml = window.POTION_TRANSMUTATIONS.map((recipe, index) => {
-                                               let ownedCount = window.inventory.USE[recipe.req] || 0;
-                                               let canAfford = ownedCount >= recipe.amount;
-                                               let costColor = canAfford ? "#2ecc71" : "#e74c3c";
+                                                                                                                                            return `<div class="shop-row" style="border-color: ${item.color}; background: ${bgStyle}; flex-direction: column; align-items: stretch; text-align: left; gap: 4px; padding: 8px; cursor: help;" onmouseenter="window.showMysticalShopTooltip(event, ${index})" ontouchstart="window.showMysticalShopTooltip(event, ${index})" onmouseleave="window.hideTooltip()">
+                                                                                                                                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                                                                                                                                    <div style="display:flex; align-items:center;">
+                                                                                                                                                        ${iconHtml}
+                                                                                                                                                        <strong style="color:${item.color}; font-size:12px;">${item.name}</strong>
+                                                                                                                                                    </div>
+                                                                                                                                                    <span style="color:${costColor}; font-weight:bold; font-size:11px;">${window.formatNumber(displayCost)} ${currencyLabel}</span>
+                                                                                                                                                </div>
+                                                                                                                                                <div style="font-size:10px; color:#aaa; margin-bottom:6px;">${item.desc}</div>
+                                                                                                                                                <button class="btn-action" style="background:#9b59b6; color:#fff;" onclick="window.buyMysticalItem(${index})">Purchase</button>
+                                                                                                                                            </div>`;
+                                                                                                                                        }).join("");
 
-                                               return `<div class="shop-row" style="border-color: ${recipe.color}; background: rgba(155, 89, 182, 0.02); flex-direction: column; align-items: stretch; text-align: left; gap: 4px; padding: 8px; cursor: help;" onmouseenter="window.showTransmuteTooltip(event, ${index})" ontouchstart="window.showTransmuteTooltip(event, ${index})" onmouseleave="window.hideTooltip()">
-                                                   <div style="display:flex; justify-content:space-between; align-items:center;">
-                                                       <strong style="color:${recipe.color}; font-size:12px;">🧪 Transmute: ${recipe.result}</strong>
-                                                       <span style="color:${costColor}; font-weight:bold; font-size:11px;">${recipe.amount}x ${recipe.req}</span>
-                                                   </div>
-                                                   <div style="font-size:10px; color:#aaa; margin-bottom:6px;">${recipe.desc} (Owned: ${ownedCount})</div>
-                                                   <button class="btn-action" style="background:${recipe.color}; color:#fff;" ${canAfford ? '' : 'disabled style="opacity:0.5; cursor:not-allowed;"'} onclick="window.transmutePotion(${index})">Transmute</button>
-                                               </div>`;
-                                           }).join("");
+                                                                                                                                        let transHtml = window.POTION_TRANSMUTATIONS.map((recipe, index) => {
+                                                                                                                                            let ownedCount = window.inventory.USE[recipe.req] || 0;
+                                                                                                                                            let canAfford = ownedCount >= recipe.amount;
+                                                                                                                                            let costColor = canAfford ? "#2ecc71" : "#e74c3c";
 
-                                           el.innerHTML = stockHtml + transHtml;
-                                       };
+                                                                                                                                            let iconHtml = getUseIconHtml(recipe.result);
+                                                                                                                                            iconHtml = iconHtml.replace('margin-right: 12px;', 'margin-right: 8px;');
+                                                                                                                                            let bgStyle = window.hexToRgba(recipe.color, 0.03);
+
+                                                                                                                                            return `<div class="shop-row" style="border-color: ${recipe.color}; background: ${bgStyle}; flex-direction: column; align-items: stretch; text-align: left; gap: 4px; padding: 8px; cursor: help;" onmouseenter="window.showTransmuteTooltip(event, ${index})" ontouchstart="window.showTransmuteTooltip(event, ${index})" onmouseleave="window.hideTooltip()">
+                                                                                                                                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                                                                                                                                    <div style="display:flex; align-items:center;">
+                                                                                                                                                        ${iconHtml}
+                                                                                                                                                        <strong style="color:${recipe.color}; font-size:12px;">Transmute: ${recipe.result}</strong>
+                                                                                                                                                    </div>
+                                                                                                                                                    <span style="color:${costColor}; font-weight:bold; font-size:11px;">${recipe.amount}x ${recipe.req}</span>
+                                                                                                                                                </div>
+                                                                                                                                                <div style="font-size:10px; color:#aaa; margin-bottom:6px;">${recipe.desc} (Owned: ${ownedCount})</div>
+                                                                                                                                                <button class="btn-action" style="background:${recipe.color}; color:#fff;" ${canAfford ? '' : 'disabled style="opacity:0.5; cursor:not-allowed;"'} onclick="window.transmutePotion(${index})">Transmute</button>
+                                                                                                                                            </div>`;
+                                                                                                                                        }).join("");
+
+                                                                                  el.innerHTML = stockHtml + transHtml;
+                                                                              };
 
                                        window.renderGoldUpgrades = function() {
                                            let el = document.getElementById('gold-upgrades-list');
@@ -1780,43 +2340,49 @@ window.showStatBreakdown = function(e, statKey, isPct = false) {
                                            }
 
                                            let canAfford = playerBalance >= actualCost;
-                                           let costTextColor = canAfford ? "#2ecc71" : "#e74c3c";
+                                                                                      let costTextColor = canAfford ? "#2ecc71" : "#e74c3c";
 
-                                           tt.innerHTML = `<div style="padding: 10px; width: 230px; box-sizing: border-box;">
-                                               <div class="tt-title" style="color:${color}; font-weight:bold;">🔮 ${item.name}</div>
-                                               <div style="font-size:11px; color:#aaa; margin-bottom:8px; line-height:1.4; white-space:normal;">${item.desc}</div>
-                                               <div style="font-size:11px; margin-bottom:6px; border-top:1px dashed #444; padding-top:6px;">
-                                                   • <span style="color:#bdc3c7;">Currently Owned:</span> <strong style="color:${color};">${ownedAmount.toLocaleString()}</strong>
-                                               </div>
-                                               <div style="font-size:11px; margin-bottom:4px;">
-                                                 • <span style="color:#bdc3c7;">Exchange Rate:</span> <strong style="color:${costTextColor};">${window.formatNumber(actualCost)} / ${window.formatNumber(playerBalance)} ${currencyName}</strong>
-                                                  </div>
-                                                   <div style="font-size:10px; color:${canAfford ? '#2ecc71' : '#e74c3c'}; font-weight:bold; margin-top:4px;">
-                                                   ${canAfford ? '✓ Ready to Transmute' : '✗ Insufficient Materials'}
-                                               </div>
-                                           </div>`;
+                                                                                      let iconHtml = (item.name === "Gacha Key" || item.name === "Astral Essence" || item.name === "Catalyst Core") ? getEtcIconHtml(item.name) : getUseIconHtml(item.name);
+                                                                                      iconHtml = iconHtml.replace('margin-right: 12px;', 'margin-right: 8px;');
 
-                                           tt.style.borderColor = color; tt.style.display = "block"; window.positionTooltip(e, tt);
-                                       };
+                                                                                      tt.innerHTML = `<div style="padding: 10px; width: 230px; box-sizing: border-box;">
+                                                                                          <div class="tt-title" style="color:${color}; font-weight:bold; display:flex; align-items:center; gap:6px;">${iconHtml} <span>${item.name}</span></div>
+                                                                                          <div style="font-size:11px; color:#aaa; margin-bottom:8px; line-height:1.4; white-space:normal;">${item.desc}</div>
+                                                                                          <div style="font-size:11px; margin-bottom:6px; border-top:1px dashed #444; padding-top:6px;">
+                                                                                              • <span style="color:#bdc3c7;">Currently Owned:</span> <strong style="color:${color};">${ownedAmount.toLocaleString()}</strong>
+                                                                                          </div>
+                                                                                          <div style="font-size:11px; margin-bottom:4px;">
+                                                                                            • <span style="color:#bdc3c7;">Exchange Rate:</span> <strong style="color:${costTextColor};">${window.formatNumber(actualCost)} / ${window.formatNumber(playerBalance)} ${currencyName}</strong>
+                                                                                             </div>
+                                                                                              <div style="font-size:10px; color:${canAfford ? '#2ecc71' : '#e74c3c'}; font-weight:bold; margin-top:4px;">
+                                                                                              ${canAfford ? '✓ Ready to Transmute' : '✗ Insufficient Materials'}
+                                                                                          </div>
+                                                                                      </div>`;
 
-                                       window.showTransmuteTooltip = function(e, index) {
-                                           e.stopPropagation(); let recipe = window.POTION_TRANSMUTATIONS[index]; if (!recipe) return;
+                                                                                      tt.style.borderColor = color; tt.style.display = "block"; window.positionTooltip(e, tt);
+                                                                                  };
 
-                                           let ownedResult = window.inventory.USE[recipe.result] || 0; let ownedReq = window.inventory.USE[recipe.req] || 0;
-                                           let canAfford = ownedReq >= recipe.amount; let reqColor = canAfford ? "#2ecc71" : "#e74c3c";
+                                                                                  window.showTransmuteTooltip = function(e, index) {
+                                                                                      e.stopPropagation(); let recipe = window.POTION_TRANSMUTATIONS[index]; if (!recipe) return;
 
-                                           let tt = document.getElementById('game-tooltip');
-                                           tt.innerHTML = `<div style="padding: 10px; width: 230px; box-sizing: border-box;">
-                                               <div class="tt-title" style="color:${recipe.color};">🧪 Transmutation Recipe</div>
-                                               <div class="tt-subtitle">${recipe.result}</div>
-                                               <div style="color:#ddd; font-size:11px; margin-bottom:6px; white-space:normal; line-height:1.3;">${recipe.desc}</div>
-                                               <div style="margin-top:8px; border-top: 1px dashed #444; padding-top:6px; font-family:monospace; font-size:10px;">
-                                                   <div class="tt-stat-line" style="color:#aaa;">Result Owned: <strong style="color:#fff;">${ownedResult}</strong></div>
-                                                   <div class="tt-stat-line" style="color:#aaa;">Required Ingredients: <strong style="color:${reqColor};">${ownedReq} / ${recipe.amount} ${recipe.req}</strong></div>
-                                               </div>
-                                           </div>`;
-                                           tt.style.borderColor = recipe.color; tt.style.display = "block"; window.positionTooltip(e, tt);
-                                       };
+                                                                                      let ownedResult = window.inventory.USE[recipe.result] || 0; let ownedReq = window.inventory.USE[recipe.req] || 0;
+                                                                                      let canAfford = ownedReq >= recipe.amount; let reqColor = canAfford ? "#2ecc71" : "#e74c3c";
+
+                                                                                      let iconHtml = getUseIconHtml(recipe.result);
+                                                                                      iconHtml = iconHtml.replace('margin-right: 12px;', 'margin-right: 8px;');
+
+                                                                                      let tt = document.getElementById('game-tooltip');
+                                                                                      tt.innerHTML = `<div style="padding: 10px; width: 230px; box-sizing: border-box;">
+                                                                                          <div class="tt-title" style="color:${recipe.color}; display:flex; align-items:center; gap:6px;">${iconHtml} <span>Transmute</span></div>
+                                                                                          <div class="tt-subtitle">${recipe.result}</div>
+                                                                                          <div style="color:#ddd; font-size:11px; margin-bottom:6px; white-space:normal; line-height:1.3;">${recipe.desc}</div>
+                                                                                          <div style="margin-top:8px; border-top: 1px dashed #444; padding-top:6px; font-family:monospace; font-size:10px;">
+                                                                                              <div class="tt-stat-line" style="color:#aaa;">Result Owned: <strong style="color:#fff;">${ownedResult}</strong></div>
+                                                                                              <div class="tt-stat-line" style="color:#aaa;">Required Ingredients: <strong style="color:${reqColor};">${ownedReq} / ${recipe.amount} ${recipe.req}</strong></div>
+                                                                                          </div>
+                                                                                      </div>`;
+                                                                                      tt.style.borderColor = recipe.color; tt.style.display = "block"; window.positionTooltip(e, tt);
+                                                                                  };
 
                                        window.showGoldUpgradeTooltip = function(e, upId) {
                                            e.stopPropagation(); let p = window.playerStats; let up;
@@ -1856,11 +2422,15 @@ window.showStatBreakdown = function(e, statKey, isPct = false) {
                                                        <div style="font-size:10px; color:#888; font-style:italic; margin-bottom:8px;">Boss Target: ${bossName}</div>
                                                        <div style="display:flex; flex-direction:column; gap:6px;">
                                                `;
-                                               html += filtered.map(art => `
-                                                   <div class="bag-item" style="cursor:help; border-left: 3px solid ${color}; margin-bottom:0; background:#18181c; padding:6px 10px;" onmouseenter="window.showDummyArtifact(event, '${art.trait}')" ontouchstart="window.showDummyArtifact(event, '${art.trait}')" onmouseleave="window.hideTooltip()">
-                                                       <div><strong style="color:${color};">${art.name}</strong><br><span style="font-size:9.5px;color:#aaa;">${art.desc}</span></div>
-                                                   </div>
-                                               `).join("");
+                                               html += filtered.map(art => {
+                                                                                                  let iconBox = `<div style="margin-right:8px; display:inline-flex; align-items:center;">${window.getArtifactIconHtml(art.trait, 28)}</div>`;
+                                                                                                  return `
+                                                                                                      <div class="bag-item" style="cursor:help; border-left: 3px solid ${color}; margin-bottom:0; background:#18181c; padding:6px 10px; display:flex; align-items:center;" onmouseenter="window.showDummyArtifact(event, '${art.trait}')" ontouchstart="window.showDummyArtifact(event, '${art.trait}')" onmouseleave="window.hideTooltip()">
+                                                                                                          ${iconBox}
+                                                                                                          <div><strong style="color:${color};">${art.name}</strong><br><span style="font-size:9.5px;color:#aaa;">${art.desc}</span></div>
+                                                                                                      </div>
+                                                                                                  `;
+                                                                                              }).join("");
                                                html += `</div></div>`;
                                                return html;
                                            };
@@ -2002,44 +2572,50 @@ window.renderPaperDoll = function() {
             }
 
             let tierLabel = item.statsRolled === "UNIQUE" ? "UNIQUE" : `${item.statsRolled}★ ${window.getTierName(item.statsRolled)}`;
-            let temperTag = item.temperLevel > 0 ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>` : "";
-            let lockTag = item.locked ? " 🔒" : "";
+                        let temperTag = item.temperLevel > 0 ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>` : "";
+                        let lockTag = item.locked ? " 🔒" : "";
+                        let isUnique = item.isUniqueStaff || item.isUniqueSword || item.isUniqueSingularity || item.isUniqueMaelstrom || item.isUniqueAegis || item.isUniqueWatch || item.isUniqueChronicle || item.isUniqueWarpCore || item.isUniqueTempest;
 
-            if (isArt) {
-                el.innerHTML = `<strong style="font-size:10px; color:#1abc9c;">${item.name}${lockTag}</strong><br><span style="font-size:8px;color:#aaa;line-height:1;">${item.desc}</span><button class="btn-action un" style="margin-top:2px;padding:1px 3px;" onclick="window.unequipItem('${slot}')">Remove</button>`;
-            } else {
-                let s = [];
-                if (item.atk > 0) s.push(`⚔️${item.atk}`); if (item.maxHp > 0) s.push(`❤️${item.maxHp}`); if (item.def > 0) s.push(`🛡️${item.def}`);
-                if (item.moveSpeed > 0) s.push(`👟${item.moveSpeed}`); if (item.critChance > 0) s.push(`✨${Math.floor(item.critChance*100)}%`);
-                if (item.critDamage > 0) s.push(`💥${Math.floor(item.critDamage*100)}%`); if (item.block > 0) s.push(`🛡️${Math.floor(item.block*100)}%`);
-                if (item.parry > 0) s.push(`⚡${Math.floor(item.parry*100)}%`);
-                if (item.str > 0) s.push(`💪S:${item.str}`); if (item.dex > 0) s.push(`🎯D:${item.dex}`); if (item.int > 0) s.push(`🧠I:${item.int}`);
+                        let iconBox = "";
+                        if (isArt) {
+                            iconBox = `<div style="text-align:center; margin-bottom:4px;">${window.getArtifactIconHtml(item.trait, 32)}</div>`;
+                            el.innerHTML = `${iconBox}<strong style="font-size:10px; color:#1abc9c;">${item.name}${lockTag}</strong><br><span style="font-size:8px;color:#aaa;line-height:1;">${item.desc}</span><button class="btn-action un" style="margin-top:2px;padding:1px 3px;" onclick="window.unequipItem('${slot}')">Remove</button>`;
+                        } else {
+                            if (isUnique) {
+                                iconBox = `<div style="text-align:center; margin-bottom:4px;">${window.getUniqueIconHtml(item, 32)}</div>`;
+                            }
+                            let s = [];
+                            if (item.atk > 0) s.push(`⚔️${item.atk}`); if (item.maxHp > 0) s.push(`❤️${item.maxHp}`); if (item.def > 0) s.push(`🛡️${item.def}`);
+                            if (item.moveSpeed > 0) s.push(`👟${item.moveSpeed}`); if (item.critChance > 0) s.push(`✨${Math.floor(item.critChance*100)}%`);
+                            if (item.critDamage > 0) s.push(`💥${Math.floor(item.critDamage*100)}%`); if (item.block > 0) s.push(`🛡️${Math.floor(item.block*100)}%`);
+                            if (item.parry > 0) s.push(`⚡${Math.floor(item.parry*100)}%`);
+                            if (item.str > 0) s.push(`💪S:${item.str}`); if (item.dex > 0) s.push(`🎯D:${item.dex}`); if (item.int > 0) s.push(`🧠I:${item.int}`);
 
-                let setLabelHtml = "";
-                let setName = window.getItemSetName(item);
-                if (setName) {
-                    let matchingCount = 0; const setSlots = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
-                    let overallAdoptedSet = null;
-                    if (window.equippedSlots.overall) {
-                        overallAdoptedSet = (window.equippedSlots.helmet && window.getItemSetName(window.equippedSlots.helmet)) ||
-                                            (window.equippedSlots.boots && window.getItemSetName(window.equippedSlots.boots)) ||
-                                            (window.equippedSlots.weapon && window.getItemSetName(window.equippedSlots.weapon)) || null;
-                    }
-                    setSlots.forEach(sKey => {
-                        let eqItem = window.equippedSlots[sKey];
-                        if (eqItem) {
-                            let eqSetName = window.getItemSetName(eqItem);
-                            if (sKey === "overall" && overallAdoptedSet) eqSetName = overallAdoptedSet;
-                            if (eqSetName === setName) matchingCount += (sKey === "overall" ? 2 : 1);
+                            let setLabelHtml = "";
+                            let setName = window.getItemSetName(item);
+                            if (setName) {
+                                let matchingCount = 0; const setSlots = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
+                                let overallAdoptedSet = null;
+                                if (window.equippedSlots.overall) {
+                                    overallAdoptedSet = (window.equippedSlots.helmet && window.getItemSetName(window.equippedSlots.helmet)) ||
+                                                        (window.equippedSlots.boots && window.getItemSetName(window.equippedSlots.boots)) ||
+                                                        (window.equippedSlots.weapon && window.getItemSetName(window.equippedSlots.weapon)) || null;
+                                }
+                                setSlots.forEach(sKey => {
+                                    let eqItem = window.equippedSlots[sKey];
+                                    if (eqItem) {
+                                        let eqSetName = window.getItemSetName(eqItem);
+                                        if (sKey === "overall" && overallAdoptedSet) eqSetName = overallAdoptedSet;
+                                        if (eqSetName === setName) matchingCount += (sKey === "overall" ? 2 : 1);
+                                    }
+                                });
+                                if (matchingCount >= 2) {
+                                    let displayCount = Math.min(3, matchingCount);
+                                    setLabelHtml = `<div style="font-size:8px; color:#2ecc71; font-weight:bold; margin-top:2px; text-transform:uppercase; letter-spacing:0.5px;">✨ ${setName} Set (${displayCount}/3)</div>`;
+                                }
+                            }
+                            el.innerHTML = `${iconBox}<strong style="font-size:10px;">${item.name}${temperTag}${lockTag}</strong><div style="font-size:8px; color:${color}; font-weight:bold; margin:2px 0;">${tierLabel}</div>${setLabelHtml}<div style="font-size:9px;color:#bbb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${s.join(" ")}">${s.join(" ")}</div><button class="btn-action un" style="margin-top:2px;padding:1px 3px;" onclick="window.unequipItem('${slot}')">Remove</button>`;
                         }
-                    });
-                    if (matchingCount >= 2) {
-                        let displayCount = Math.min(3, matchingCount);
-                        setLabelHtml = `<div style="font-size:8px; color:#2ecc71; font-weight:bold; margin-top:2px; text-transform:uppercase; letter-spacing:0.5px;">✨ ${setName} Set (${displayCount}/3)</div>`;
-                    }
-                }
-                el.innerHTML = `<strong style="font-size:10px;">${item.name}${temperTag}${lockTag}</strong><div style="font-size:8px; color:${color}; font-weight:bold; margin:2px 0;">${tierLabel}</div>${setLabelHtml}<div style="font-size:9px;color:#bbb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${s.join(" ")}">${s.join(" ")}</div><button class="btn-action un" style="margin-top:2px;padding:1px 3px;" onclick="window.unequipItem('${slot}')">Remove</button>`;
-            }
         } else {
             el.className = "slots-card";
             let displaySlotName = slot.toUpperCase();
@@ -2076,13 +2652,22 @@ window.renderInventory = function() {
                     disabledAttr = "disabled style='opacity:0.5; cursor:not-allowed;'";
                 }
                 let details = `<span style="font-size:10px;color:#aaa;">Slot: ${typeText} | <span style="color:${nameColor};font-weight:bold;">${tierStr}</span></span>${lockWarning}`;
-                let uniqueStyle = window.getUniqueItemStyle(item);
-                let uniqueStyleStr = uniqueStyle ? `style="background: ${uniqueStyle.bg}; border: 1px solid ${uniqueStyle.border}; box-shadow: inset 0 0 6px ${uniqueStyle.shadow}, 0 0 8px ${uniqueStyle.glow};"` : "";
+                                let uniqueStyle = window.getUniqueItemStyle(item);
+                                let uniqueStyleStr = uniqueStyle ? `style="background: ${uniqueStyle.bg}; border: 1px solid ${uniqueStyle.border}; box-shadow: inset 0 0 6px ${uniqueStyle.shadow}, 0 0 8px ${uniqueStyle.glow};"` : "";
+                                let isUnique = item.isUniqueStaff || item.isUniqueSword || item.isUniqueSingularity || item.isUniqueMaelstrom || item.isUniqueAegis || item.isUniqueWatch || item.isUniqueChronicle || item.isUniqueWarpCore || item.isUniqueTempest;
 
-                return `<div class="bag-item" ${uniqueStyleStr}>
-                    <div style="flex:1; cursor:help; text-align:left;" onmouseenter="window.showInventoryTooltip(event, ${item.id})" ontouchstart="window.showInventoryTooltip(event, ${item.id})" onmouseleave="window.hideTooltip()">
-                        <strong style="color:${nameColor};">${item.name}${temperTag}${lockTag}</strong>${comparisonBadge}<br>${details}
-                    </div>
+                                let iconBox = "";
+                                if (isUnique) {
+                                    iconBox = `<div style="margin-right:8px; display:inline-flex; align-items:center;">${window.getUniqueIconHtml(item, 28)}</div>`;
+                                }
+
+                                return `<div class="bag-item" ${uniqueStyleStr}>
+                                    <div style="flex:1; cursor:help; text-align:left; display:flex; align-items:center;" onmouseenter="window.showInventoryTooltip(event, ${item.id})" ontouchstart="window.showInventoryTooltip(event, ${item.id})" onmouseleave="window.hideTooltip()">
+                                        ${iconBox}
+                                        <div style="flex:1;">
+                                            <strong style="color:${nameColor};">${item.name}${temperTag}${lockTag}</strong>${comparisonBadge}<br>${details}
+                                        </div>
+                                    </div>
                     <div style="position:relative; z-index:10; white-space:nowrap; margin-left: 10px;">
                         <button class="btn-action" ${disabledAttr} onclick="window.equipItem(${item.id})">Equip</button>
                         <button class="btn-action" style="background:${lockBg}; margin-left:2px;" onclick="window.toggleLock(${item.id})">${lockIcon}</button>
@@ -2099,21 +2684,26 @@ window.renderInventory = function() {
         if (window.inventory.ARTIFACT.length === 0) { artBox.innerHTML = "<div style='color:#666;text-align:center;padding-top:40px;'>No artifacts in sack.</div>"; }
         else {
             artBox.innerHTML = window.inventory.ARTIFACT.map(item => {
-                let nameColor = window.getTierColor(item.statsRolled);
-                let lockTag = item.locked ? " 🔒" : "";
-                let lockBg = item.locked ? "#e74c3c" : "#7f8c8d";
-                let lockIcon = item.locked ? "🔒" : "🔓";
-                let reqLvl = Math.max(1, ((item.stageLevel || 1) - 1) * 5 - (window.playerStats.prestigeCount || 0) * 2);
-                let lockWarning = ""; let disabledAttr = "";
-                if (window.playerStats.level < reqLvl) {
-                    lockWarning = ` <span style="color:#e74c3c; font-weight:bold; font-size:10px;">[Req. Lv ${reqLvl}]</span>`;
-                    disabledAttr = "disabled style='opacity:0.5; cursor:not-allowed;'";
-                }
-                let details = `<span style="font-size:10px;color:#d2b4de;font-weight:bold;">Trait: ${item.desc}</span>${lockWarning}`;
-                return `<div class="bag-item">
-                    <div style="flex:1; cursor:help; text-align:left;" onmouseenter="window.showInventoryTooltip(event, ${item.id})" ontouchstart="window.showInventoryTooltip(event, ${item.id})" onmouseleave="window.hideTooltip()">
-                        <strong style="color:${nameColor};">${item.name}${lockTag}</strong><br>${details}
-                    </div>
+                            let nameColor = window.getTierColor(item.statsRolled);
+                            let lockTag = item.locked ? " 🔒" : "";
+                            let lockBg = item.locked ? "#e74c3c" : "#7f8c8d";
+                            let lockIcon = item.locked ? "🔒" : "🔓";
+                            let reqLvl = Math.max(1, ((item.stageLevel || 1) - 1) * 5 - (window.playerStats.prestigeCount || 0) * 2);
+                            let lockWarning = ""; let disabledAttr = "";
+                            if (window.playerStats.level < reqLvl) {
+                                lockWarning = ` <span style="color:#e74c3c; font-weight:bold; font-size:10px;">[Req. Lv ${reqLvl}]</span>`;
+                                disabledAttr = "disabled style='opacity:0.5; cursor:not-allowed;'";
+                            }
+                            let details = `<span style="font-size:10px;color:#d2b4de;font-weight:bold;">Trait: ${item.desc}</span>${lockWarning}`;
+                            let iconBox = `<div style="margin-right:8px; display:inline-flex; align-items:center;">${window.getArtifactIconHtml(item.trait, 28)}</div>`;
+
+                            return `<div class="bag-item">
+                                <div style="flex:1; cursor:help; text-align:left; display:flex; align-items:center;" onmouseenter="window.showInventoryTooltip(event, ${item.id})" ontouchstart="window.showInventoryTooltip(event, ${item.id})" onmouseleave="window.hideTooltip()">
+                                    ${iconBox}
+                                    <div style="flex:1;">
+                                        <strong style="color:${nameColor};">${item.name}${lockTag}</strong><br>${details}
+                                    </div>
+                                </div>
                     <div style="position:relative; z-index:10; white-space:nowrap; margin-left: 10px;">
                         <button class="btn-action" ${disabledAttr} onclick="window.equipItem(${item.id})">Equip</button>
                         <button class="btn-action" style="background:${lockBg}; margin-left:2px;" onclick="window.toggleLock(${item.id})">${lockIcon}</button>
@@ -2124,45 +2714,11 @@ window.renderInventory = function() {
         }
     }
 
-    // 3. Materials Sacks
-        const getEtcIconHtml = (key) => {
-            let bg = "rgba(170, 170, 170, 0.12)";
-            let border = "#444";
-            let icon = "📦";
+     // 3. Materials Sacks
+         const getEtcIconHtml = window.getEtcIconHtml;
+         const getUseIconHtml = window.getUseIconHtml;
 
-            if (key === "Eridium Shard") { bg = "rgba(155, 89, 182, 0.25)"; border = "#9b59b6"; icon = "🔮"; }
-            else if (key === "Gacha Key") { bg = "rgba(241, 196, 15, 0.25)"; border = "#f1c40f"; icon = "🔑"; }
-            else if (key === "Ancient Core") { bg = "rgba(231, 76, 60, 0.25)"; border = "#e74c3c"; icon = "🔴"; }
-            else if (key === "Overlord's Sigil") { bg = "rgba(26, 188, 15, 0.25)"; border = "#1abc9c"; icon = "🔱"; }
-            else if (key === "Astral Essence") { bg = "rgba(142, 68, 173, 0.25)"; border = "#8e44ad"; icon = "🌌"; }
-            else if (key === "Mythic Scrap") { bg = "rgba(231, 76, 60, 0.25)"; border = "#e74c3c"; icon = "🟥"; }
-            else if (key === "Legendary Scrap") { bg = "rgba(241, 196, 15, 0.25)"; border = "#f1c40f"; icon = "🟨"; }
-            else if (key === "Epic Scrap") { bg = "rgba(230, 126, 34, 0.25)"; border = "#e67e22"; icon = "🟧"; }
-            else if (key === "Magic Scrap") { bg = "rgba(155, 89, 182, 0.25)"; border = "#9b59b6"; icon = "🟪"; }
-            else if (key === "Rare Scrap") { bg = "rgba(52, 152, 219, 0.25)"; border = "#3498db"; icon = "🟦"; }
-            else if (key === "Luminous Soul") { bg = "rgba(255, 182, 193, 0.25)"; border = "#ffb6c1"; icon = "💖"; }
-            else if (key === "Monster Soul") { bg = "rgba(170, 170, 170, 0.25)"; border = "#888"; icon = "💀"; }
-            else if (key === "Catalyst Core") { bg = "rgba(46, 204, 113, 0.25)"; border = "#2ecc71"; icon = "💚"; }
-
-            return `<span style="background: ${bg}; border: 1px solid ${border}; border-radius: 4px; padding: 4px; margin-right: 12px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.6);">${icon}</span>`;
-        };
-
-        const getUseIconHtml = (key) => {
-            let bg = "rgba(170, 170, 170, 0.12)";
-            let border = "#444";
-            let icon = "🍶";
-
-            if (key === "SP Reset Scroll") { bg = "rgba(155, 89, 182, 0.25)"; border = "#9b59b6"; icon = "📜"; }
-            else if (key === "PP Reset Scroll") { bg = "rgba(230, 126, 34, 0.25)"; border = "#e67e22"; icon = "📜"; }
-            else if (key.includes("Attack")) { bg = "rgba(46, 204, 113, 0.25)"; border = "#2ecc71"; icon = "🧪"; }
-            else if (key.includes("Vitality")) { bg = "rgba(231, 76, 60, 0.25)"; border = "#e74c3c"; icon = "🧪"; }
-            else if (key.includes("Armored")) { bg = "rgba(52, 152, 219, 0.25)"; border = "#3498db"; icon = "🧪"; }
-            else if (key.includes("Haste")) { bg = "rgba(241, 196, 15, 0.25)"; border = "#f1c40f"; icon = "🧪"; }
-
-            return `<span style="background: ${bg}; border: 1px solid ${border}; border-radius: 4px; padding: 4px; margin-right: 12px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.6);">${icon}</span>`;
-        };
-
-        const ETC_SORT_ORDER = [
+     const ETC_SORT_ORDER = [
             "Ancient Core", "Gacha Key", "Eridium Shard", "Astral Essence", "Catalyst Core",
             "Overlord's Sigil", "Luminous Soul", "Monster Soul", "Mythic Scrap",
             "Legendary Scrap", "Epic Scrap", "Magic Scrap", "Rare Scrap"
@@ -2385,10 +2941,17 @@ window.generateItemCardHtml = function(item, compareItem = null, isEquipped = fa
     html += badge;
 
     let isUnique = item.isUniqueStaff || item.isUniqueSword || item.isUniqueSingularity || item.isUniqueMaelstrom || item.isUniqueAegis || item.isUniqueWatch || item.isUniqueChronicle || item.isUniqueWarpCore || item.isUniqueTempest;
-    let uniqueStyle = window.getUniqueItemStyle(item);
-    let runicBadge = isUnique ? `<div style="color: #f1c40f; font-family: monospace; font-weight: 800; font-size: 10px; margin-bottom: 6px; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);">⚡ UBER UNIQUE ⚡</div>` : ``;
+        let uniqueStyle = window.getUniqueItemStyle(item);
+        let runicBadge = isUnique ? `<div style="color: #f1c40f; font-family: monospace; font-weight: 800; font-size: 10px; margin-bottom: 6px; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);">⚡ UBER UNIQUE ⚡</div>` : ``;
 
-    let tierColor = window.getTierColor(item.statsRolled);
+        let iconIllustration = "";
+        if (item.type === "artifact") {
+            iconIllustration = `<div style="text-align:center; margin: 10px 0;">${window.getArtifactIconHtml(item.trait, 56)}</div>`;
+        } else if (isUnique) {
+            iconIllustration = `<div style="text-align:center; margin: 10px 0;">${window.getUniqueIconHtml(item, 56)}</div>`;
+        }
+
+        let tierColor = window.getTierColor(item.statsRolled);
     let titleColor = item.type === "artifact" ? "#1abc9c" : tierColor;
     let labelDisplay = item.type.toUpperCase();
     if (item.type === "subweapon" && item.subType) {
@@ -2403,8 +2966,10 @@ window.generateItemCardHtml = function(item, compareItem = null, isEquipped = fa
     let temperTag = item.temperLevel > 0 ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>` : "";
     let lockTag = item.locked ? " 🔒" : "";
 
-    html += `<div class="tt-title" style="color:${isUnique ? '#1abc9c' : titleColor}; white-space:normal;">${item.name}${temperTag}${lockTag}</div>`;
-    html += `<div class="tt-subtitle">${subtitle}</div>`;
+        html += `<div class="tt-title" style="color:${isUnique ? '#1abc9c' : titleColor}; white-space:normal;">${item.name}${temperTag}${lockTag}</div>`;
+        html += runicBadge;
+        html += iconIllustration;
+        html += `<div class="tt-subtitle">${subtitle}</div>`;
 
     if (item.id !== "dummy" && item.type === "subweapon") {
         if (item.subType === "shield") {
@@ -2671,27 +3236,27 @@ window.showEtcTooltip = function(e, keyName) {
     let desc = window.etcDex[keyName] || "Unknown material.";
 
     let color = "#bdc3c7";
-    let icon = "📦";
+    if (keyName === "Eridium Shard") { color = "#8e44ad"; }
+    else if (keyName === "Gacha Key") { color = "#f1c40f"; }
+    else if (keyName === "Ancient Core") { color = "#e74c3c"; }
+    else if (keyName === "Overlord's Sigil") { color = "#1abc9c"; }
+    else if (keyName === "Astral Essence") { color = "#8e44ad"; }
+    else if (keyName === "Mythic Scrap") { color = "#e74c3c"; }
+    else if (keyName === "Legendary Scrap") { color = "#f1c40f"; }
+    else if (keyName === "Epic Scrap") { color = "#e67e22"; }
+    else if (keyName === "Magic Scrap") { color = "#9b59b6"; }
+    else if (keyName === "Rare Scrap") { color = "#3498db"; }
+    else if (keyName === "Luminous Soul") { color = "#ffb6c1"; }
+    else if (keyName === "Monster Soul") { color = "#888888"; }
+    else if (keyName === "Catalyst Core") { color = "#2ecc71"; }
 
-    if (keyName === "Eridium Shard") { color = "#8e44ad"; icon = "🔮"; }
-    else if (keyName === "Gacha Key") { color = "#f1c40f"; icon = "🔑"; }
-    else if (keyName === "Ancient Core") { color = "#e74c3c"; icon = "🔴"; }
-    else if (keyName === "Overlord's Sigil") { color = "#1abc9c"; icon = "🔱"; }
-    else if (keyName === "Astral Essence") { color = "#8e44ad"; icon = "🌌"; }
-    else if (keyName === "Mythic Scrap") { color = "#e74c3c"; icon = "🟥"; }
-    else if (keyName === "Legendary Scrap") { color = "#f1c40f"; icon = "🟨"; }
-    else if (keyName === "Epic Scrap") { color = "#e67e22"; icon = "🟧"; }
-    else if (keyName === "Magic Scrap") { color = "#9b59b6"; icon = "🟪"; }
-    else if (keyName === "Rare Scrap") { color = "#3498db"; icon = "🟦"; }
-    else if (keyName === "Luminous Soul") { color = "#ffb6c1"; icon = "💖"; }
-    else if (keyName === "Monster Soul") { color = "#888888"; icon = "💀"; }
-    else if (keyName === "Catalyst Core") { color = "#2ecc71"; icon = "💚"; }
+    let iconHtml = getEtcIconHtml(keyName).replace('margin-right: 12px;', 'margin-right: 8px;');
 
-    tt.innerHTML = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:${color};">${icon} ${keyName}</div><div style="color:#aaa; font-size:11px; white-space:normal; line-height:1.4;">${desc}</div></div>`;
-        tt.style.borderColor = color;
-        tt.style.display = "block";
-        window.positionTooltip(e, tt);
-    };
+    tt.innerHTML = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:${color}; display:flex; align-items:center; gap:8px;">${iconHtml}<span>${keyName}</span></div><div style="color:#aaa; font-size:11px; white-space:normal; line-height:1.4; margin-top:8px;">${desc}</div></div>`;
+    tt.style.borderColor = color;
+    tt.style.display = "block";
+    window.positionTooltip(e, tt);
+};
 
     // Procedurally refresh Gold Shop items at designated timestamps
     window.refreshMarketShopIfNeeded = function() {
@@ -2748,7 +3313,6 @@ window.showUseTooltip = function(e, keyName) {
 
     let desc = "Consumable item.";
     let color = "#bdc3c7";
-    let icon = "🍶";
 
     if (useDex[keyName]) {
         desc = useDex[keyName].desc;
@@ -2761,18 +3325,23 @@ window.showUseTooltip = function(e, keyName) {
         }
     }
 
-    if (keyName === "SP Reset Scroll") { color = "#9b59b6"; icon = "📜"; }
-        else if (keyName === "PP Reset Scroll") { color = "#e67e22"; icon = "📜"; }
-        else if (keyName.includes("Attack")) { color = "#2ecc71"; icon = "🧪"; }
-        else if (keyName.includes("Vitality")) { color = "#e74c3c"; icon = "🧪"; }
-        else if (keyName.includes("Armored")) { color = "#3498db"; icon = "🧪"; }
-        else if (keyName.includes("Haste")) { color = "#f1c40f"; icon = "🧪"; }
+    if (keyName === "SP Reset Scroll") { color = "#9b59b6"; }
+    else if (keyName === "PP Reset Scroll") { color = "#e67e22"; }
+    else if (keyName.includes("Attack")) { color = "#2ecc71"; }
+    else if (keyName.includes("Vitality")) { color = "#e74c3c"; }
+    else if (keyName.includes("Armored")) { color = "#3498db"; }
+    else if (keyName.includes("Haste")) { color = "#f1c40f"; }
+    else if (keyName.includes("XP") || keyName.includes("Double XP")) { color = "#a855f7"; }
+    else if (keyName.includes("Drop Rate") || keyName.includes("Double Drop") || keyName.includes("Drop Elixir")) { color = "#22c55e"; }
+    else if (keyName.includes("Quality")) { color = "#ec4899"; }
 
-        tt.innerHTML = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:${color};">${icon} ${keyName}</div><div style="color:#aaa; font-size:11px; white-space:normal; line-height:1.4;">${desc}</div></div>`;
-        tt.style.borderColor = color;
-        tt.style.display = "block";
-        window.positionTooltip(e, tt);
-    };
+    let iconHtml = getUseIconHtml(keyName).replace('margin-right: 12px;', 'margin-right: 8px;');
+
+    tt.innerHTML = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:${color}; display:flex; align-items:center; gap:8px;">${iconHtml}<span>${keyName}</span></div><div style="color:#aaa; font-size:11px; white-space:normal; line-height:1.4; margin-top:8px;">${desc}</div></div>`;
+    tt.style.borderColor = color;
+    tt.style.display = "block";
+    window.positionTooltip(e, tt);
+};
 
     // --- TAB TRANSITIONS ---
 
@@ -4152,32 +4721,32 @@ window.updateArchitectRanges = function() {
                     }
 
                     let slidesHtml = window.riftBossesMetadata.map((boss, idx) => {
-                        let lvl = isRiftActive ? activeLvl : selectedLvl;
-                        let equivalentStage = 50 + lvl * 10;
-                        let gRate = 1.045 + ((equivalentStage * 0.04) / (equivalentStage + 200));
-                        let rScale = Math.pow(gRate, equivalentStage);
+                                            let lvl = isRiftActive ? activeLvl : selectedLvl;
+                                            let equivalentStage = 50 + lvl * 10;
+                                            let gRate = 1.045 + ((equivalentStage * 0.04) / (equivalentStage + 200));
+                                            let rScale = Math.pow(gRate, equivalentStage);
 
-                        let hpVal = Math.floor(boss.hpMult * (60 * rScale));
-                        let dmgVal = Math.floor(20 * rScale * boss.dmgMult);
-                        let defVal = Math.floor(boss.defMult * rScale);
+                                            let hpVal = Math.floor(boss.hpMult * (60 * rScale));
+                                            let dmgVal = Math.floor(20 * rScale * boss.dmgMult);
+                                            let defVal = Math.floor(boss.defMult * rScale);
 
-                        let lootHtml = boss.artifacts.map(art => {
-                            let artDetails = window.ARTIFACT_POOL.find(a => a.name === art.name);
-                            let trait = artDetails ? artDetails.trait : art.trait;
-                            return `
-                                <div class="rift-loot-icon" onmouseenter="window.showDummyArtifact(event, '${trait}')" ontouchstart="window.showDummyArtifact(event, '${trait}')" onmouseleave="window.hideTooltip()">
-                                    <span>${window.getArtifactIcon(trait)}</span>
-                                </div>
-                            `;
-                        }).join("");
+                                            let lootHtml = boss.artifacts.map(art => {
+                                                let artDetails = window.ARTIFACT_POOL.find(a => a.name === art.name);
+                                                let trait = artDetails ? artDetails.trait : art.trait;
+                                                return `
+                                                    <div class="rift-loot-icon" onmouseenter="window.showDummyArtifact(event, '${trait}')" ontouchstart="window.showDummyArtifact(event, '${trait}')" onmouseleave="window.hideTooltip()">
+                                                        <span>${window.getArtifactIconHtml(trait, 28)}</span>
+                                                    </div>
+                                                `;
+                                            }).join("");
 
-                        return `
-                            <div class="rift-slide">
-                                <div style="text-align:center;">
-                                    <div style="font-size:45px; margin: 4px 0;">${boss.avatar}</div>
-                                    <div class="rift-boss-badge" style="border-color:#9b59b6; background:rgba(155, 89, 182, 0.15); color:#df9ffb;">${boss.name}</div>
-                                    <div style="font-style:italic; font-size:10.5px; color:#aaa; margin-bottom:8px;">"${boss.title}"</div>
-                                </div>
+                                            return `
+                                                <div class="rift-slide">
+                                                    <div style="text-align:center;">
+                                                        <div style="margin: 8px 0;">${window.getBossIconHtml(boss.type)}</div>
+                                                        <div class="rift-boss-badge" style="border-color:#9b59b6; background:rgba(155, 89, 182, 0.15); color:#df9ffb;">${boss.name}</div>
+                                                        <div style="font-style:italic; font-size:10.5px; color:#aaa; margin-bottom:8px;">"${boss.title}"</div>
+                                                    </div>
                                 <div style="font-size:11px; color:#ddd; line-height:1.4; text-align:center; padding: 0 10px; margin-bottom:10px; min-height:34px; white-space:normal;">
                                     ${boss.desc}
                                 </div>
