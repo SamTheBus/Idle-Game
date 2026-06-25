@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Idle SAQ: Slaying and Questing</title>
     <link rel="stylesheet" href="style.css?v=1.4">
-</</head>
-<body>
+</head>
 
 <!-- Portable Notification Toasts -->
 <div id="toast-container"></div>
@@ -277,6 +276,13 @@
                     <div style="display:flex; gap:4px;">
                         <input type="number" id="dev-pp-val" value="5" style="width:100%; background:#111; color:#fff; border:1px solid #444; padding:2px;">
                         <button onclick="window.devAddCurrency('pp')" class="btn-action" style="background:var(--accent-green);">+ADD</button>
+                    </div>
+                </div>
+                <div style="background:#222; padding:6px; border-radius:4px;">
+                    <label for="dev-tokens-val" style="display:block; font-size:11px; color:#f1c40f; font-weight:bold; margin-bottom:4px;">Mission Tokens (MP)</label>
+                    <div style="display:flex; gap:4px;">
+                        <input type="number" id="dev-tokens-val" value="10" style="width:100%; background:#111; color:#fff; border:1px solid #444; padding:2px;">
+                        <button onclick="window.devAddCurrency('tokens')" class="btn-action" style="background:var(--accent-green);">+ADD</button>
                     </div>
                 </div>
             </div>

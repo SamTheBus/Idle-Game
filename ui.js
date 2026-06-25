@@ -3074,17 +3074,43 @@ window.submitConsoleCommand = function() {
         if (typeof window.pushLog === "function") window.pushLog(`<span style="color:#2ecc71;">[DEV] Granted +${amt} Keys!</span>`);
         if (typeof window.updateUI === "function") window.updateUI();
         if (typeof window.saveGame === "function") window.saveGame();
-    } else if (mainCmd === "/clear") {
-        window.logsHistory = [];
-        let logBox = document.getElementById('log-box');
-        if (logBox) logBox.innerHTML = "";
-        if (typeof window.pushLog === "function") window.pushLog("<span style='color:#aaa;'>Logs cleared.</span>");
-    } else {
-        if (typeof window.pushLog === "function") window.pushLog(`<span style="color:#e74c3c;">Unknown command. Type /dev to open full Debug GUI panel, or try: /gold, /level, /sp, /prestige, /keys, /clear</span>`);
-    }
-};
+    } else if (mainCmd === "/tokens" || mainCmd === "/missiontokens") {
+            let amt = parseInt(args[1], 10) || 10;
+            window.playerStats.missionTokens = (window.playerStats.missionTokens || 0) + amt;
+            if (typeof window.pushLog === "function") window.pushLog(`<span style="color:#2ecc71;">[DEV] Granted +${amt} Mission Tokens!</span>`);
+            if (typeof window.updateUI === "function") window.updateUI();
+            if (typeof window.renderMissionsWindow === "function") window.renderMissionsWindow();
+            if (typeof window.saveGame === "function") window.saveGame();
+        } else if (mainCmd === "/mup") {
+            let upType = args[1] ? args[1].toLowerCase() : null;
+            let lvl = parseInt(args[2], 10);
+            if (upType && !isNaN(lvl)) {
+                window.playerStats.missionUpgrades = window.playerStats.missionUpgrades || { gold: 0, atk: 0, hp: 0, bag: 0 };
+                if (window.playerStats.missionUpgrades[upType] !== undefined) {
+                    window.playerStats.missionUpgrades[upType] = lvl;
+                    if (typeof window.pushLog === "function") window.pushLog(`<span style="color:#2ecc71;">[DEV] Set Mission Upgrade ${upType.toUpperCase()} to Level ${lvl}!</span>`);
+                    if (typeof window.updateUI === "function") window.updateUI();
+                    if (typeof window.renderMissionsWindow === "function") window.renderMissionsWindow();
+                    if (typeof window.saveGame === "function") window.saveGame();
+                } else {
+                    if (typeof window.pushLog === "function") window.pushLog(`<span style="color:#e74c3c;">[DEV] Unknown upgrade type "${upType}". Eligible: bag, gold, atk, hp</span>`);
+                }
+            } else {
+                if (typeof window.pushLog === "function") window.pushLog(`<span style="color:#e74c3c;">Usage: /mup [bag|gold|atk|hp] [level]</span>`);
+            }
+        } else if (mainCmd === "/clear") {
+                    window.logsHistory = [];
+                    let logBox = document.getElementById('log-box');
+                    if (logBox) logBox.innerHTML = "";
+                    if (typeof window.pushLog === "function") window.pushLog("<span style='color:#aaa;'>Logs cleared.</span>");
+                } else {
+                    if (typeof window.pushLog === "function") {
+                        window.pushLog(`<span style="color:#e74c3c;">Unknown command. Type /dev to open full Debug GUI panel, or try: /gold, /level, /sp, /prestige, /keys, /tokens, /mup, /clear</span>`);
+                    }
+                }
+            };
 
-// --- TROPHY / ACHIEVEMENT NAVIGATION ---
+        // --- TROPHY / ACHIEVEMENT NAVIGATION ---
 
 window.toggleAchievements = function() {
     let modal = document.getElementById('achievements-modal');
@@ -3386,13 +3412,18 @@ window.updateArchitectRanges = function() {
                 window.addEtcDrop("Gacha Key", val);
                 window.pushLog(`<span style='color:#e67e22;'>[DEV] Granted +${val} Gacha Keys</span>`);
             } else if (type === 'pp') {
-                val = parseInt(document.getElementById('dev-pp-val').value, 10) || 0;
-                window.playerStats.prestigePoints += val;
-                window.pushLog(`<span style='color:#e67e22;'>[DEV] Granted +${val} Prestige Points (PP)</span>`);
-                window.renderPrestigeTab();
-            }
-            window.updateUI();
-        };
+                            val = parseInt(document.getElementById('dev-pp-val').value, 10) || 0;
+                            window.playerStats.prestigePoints += val;
+                            window.pushLog(`<span style='color:#e67e22;'>[DEV] Granted +${val} Prestige Points (PP)</span>`);
+                            window.renderPrestigeTab();
+                        } else if (type === 'tokens') {
+                            val = parseInt(document.getElementById('dev-tokens-val').value, 10) || 0;
+                            window.playerStats.missionTokens = (window.playerStats.missionTokens || 0) + val;
+                            window.pushLog(`<span style='color:#e67e22;'>[DEV] Granted +${val} Mission Tokens</span>`);
+                            if (typeof window.renderMissionsWindow === "function") window.renderMissionsWindow();
+                        }
+                        window.updateUI();
+                    };
 
         window.devQuickSpawn = function(stars) {
             let types = ["weapon", "subweapon", "helmet", "chest", "leggings", "overall", "boots"];
