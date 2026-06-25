@@ -565,17 +565,22 @@ window.loadGame = function() {
                                     if (typeof window.checkAndResetMissions === "function") window.checkAndResetMissions();
 
                                     if (window.inventory.ETC["Iron Scrap"]) { if(typeof window.addEtcDrop === "function") window.addEtcDrop("Monster Soul", window.inventory.ETC["Iron Scrap"]); delete window.inventory.ETC["Iron Scrap"]; }
-            if (window.inventory.ETC["Sticky Gel"]) { if(typeof window.addEtcDrop === "function") window.addEtcDrop("Monster Soul", window.inventory.ETC["Sticky Gel"]); delete window.inventory.ETC["Sticky Gel"]; }
+                                                if (window.inventory.ETC["Sticky Gel"]) { if(typeof window.addEtcDrop === "function") window.addEtcDrop("Monster Soul", window.inventory.ETC["Sticky Gel"]); delete window.inventory.ETC["Sticky Gel"]; }
 
-            let box = document.getElementById('log-box');
-            if (box) box.innerHTML = window.logsHistory.join("<br><br>");
+                                                let box = document.getElementById('log-box');
+                                                if (box) box.innerHTML = window.logsHistory.join("<br><br>");
 
-            if (typeof window.recalculateAchievementTotals === "function") window.recalculateAchievementTotals();
-            if (typeof window.checkAchievements === "function") window.checkAchievements();
-            if (typeof window.updateAudioUI === "function") window.updateAudioUI();
-            if (window.SoundManager && window.SoundManager.ctx) window.SoundManager.updateVolumes();
+                                                if (typeof window.recalculateAchievementTotals === "function") window.recalculateAchievementTotals();
+                                                if (typeof window.checkAchievements === "function") window.checkAchievements();
+                                                if (typeof window.updateAudioUI === "function") window.updateAudioUI();
+                                                if (window.SoundManager && window.SoundManager.ctx) window.SoundManager.updateVolumes();
 
-            if (parsed.lastSaveTime) {
+                                                // Run automated background check for live server updates
+                                                if (typeof window.checkForUpdates === "function") {
+                                                    setTimeout(window.checkForUpdates, 1500);
+                                                }
+
+                                                if (parsed.lastSaveTime) {
                 let now = Date.now();
                 let offlineMs = now - parsed.lastSaveTime;
 

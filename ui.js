@@ -2868,6 +2868,52 @@ window.toggleFullscreen = function() {
     }
 };
 
+window.forceCacheClear = function() {
+    if (typeof window.showCustomConfirm === "function") {
+        window.showCustomConfirm(
+            "🔄 Force Refresh?",
+            "This will save your progress and force-refresh the game directly from the server. Use this to ensure you have loaded the latest features and visual styles.",
+            "Save & Reload", "Cancel", "#e67e22",
+            function() {
+                if (typeof window.saveGame === "function") window.saveGame();
+                // Strip existing parameters and force a unique query string reload
+                let cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+                window.location.href = cleanUrl + "?update=" + Date.now();
+            }
+        );
+    } else {
+        if (typeof window.saveGame === "function") window.saveGame();
+        let cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+        window.location.href = cleanUrl + "?update=" + Date.now();
+    }
+};
+
+window.checkForUpdates = function() {
+    // Check version.json with a cache buster parameter to guarantee live server data
+    fetch('version.json?cb=' + Date.now(), { cache: 'no-store' })
+        .then(response => {
+            if (!response.ok) throw new Error("Could not reach update manifest");
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.version && data.version > window.GAME_VERSION) {
+                window.showCustomConfirm(
+                    "🚀 Update Found!",
+                    `A new version of SAQ (v${data.version}) has been deployed! Would you like to update the game to download the latest features and styles? Your progress is saved automatically.`,
+                    "Update Now", "Later", "#2ecc71",
+                    function() {
+                        if (typeof window.saveGame === "function") window.saveGame();
+                        let cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+                        window.location.href = cleanUrl + "?update=" + Date.now();
+                    }
+                );
+            }
+        })
+        .catch(err => {
+            console.log("Update check bypassed (Offline or Manifest Missing):", err);
+        });
+};
+
 // --- LOG SYSTEM BOX ---
 
 window.toggleLogPanel = function() {

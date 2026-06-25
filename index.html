@@ -118,6 +118,15 @@
 
             <button id="btn-audio-mute" onclick="window.toggleMute()" style="width: 100%; background: #c0392b; color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; transition: background 0.2s;">Mute Audio</button>
         </div>
+
+        <!-- Cache/Update Section -->
+        <div style="background:#151515; border:1px solid #333; padding:10px; border-radius:6px; margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <span style="font-size:12px; font-weight:bold; color:#fff; display:block;">🔄 Force Update</span>
+                <span style="font-size:9.5px; color:#aaa;">Clears stale style/script cache</span>
+            </div>
+            <button class="btn-action un" style="font-size:11px;" onclick="window.forceCacheClear()">Reload Game</button>
+        </div>
     </div>
 
     <!-- Artifacts Database Portal -->

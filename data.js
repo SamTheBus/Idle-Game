@@ -3,6 +3,9 @@
    initial global state, and system utility functions.
    ========================================================================= */
 
+window.GAME_VERSION = 0.4; // Pre-release Alpha 0.4.0 // Increment this whenever you push a new release
+
+
 // --- SYSTEM UTILS ---
 
 window.formatNumber = function(num) {
