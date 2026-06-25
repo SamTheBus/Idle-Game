@@ -3384,6 +3384,8 @@ window.resolvePlayerStats = function (useDraft = false) {
     dex: window.playerStats.baseDex,
     int: window.playerStats.baseInt,
     fairySpawn: window.playerStats.baseFairySpawn,
+    arcaneBarrier: 0.0,
+    xpRate: 1.0,
   };
 
   if (!window.playerStats.cachedAchievementBonusTotals) {
@@ -3786,6 +3788,46 @@ window.resolvePlayerStats = function (useDraft = false) {
   if (window.playerStats.qlyPotionTimer > 0) {
     p.qly += window.playerStats.qlyPotionStrength || 0.5;
   }
+
+  // Centralized real-time XP rate multiplier calculation
+  let expBonusMult =
+    1.0 + (window.playerStats.prestigeUpgrades?.exp || 0) * 0.1;
+  if (
+    window.equippedSlots.subweapon &&
+    window.equippedSlots.subweapon.isUniqueChronicle &&
+    !window.playerStats.isDungeonMode &&
+    !window.playerStats.isCrucibleMode
+  ) {
+    let historicalPeakLvl =
+      window.playerStats.historicalPeakLvl || window.playerStats.level;
+    if (window.playerStats.level < Math.floor(historicalPeakLvl * 0.75)) {
+      expBonusMult += 2.0;
+    }
+  }
+  if (window.playerStats.unlockedAchievements && window.AchievementsData) {
+    window.playerStats.unlockedAchievements.forEach((id) => {
+      let ach = window.AchievementsData.find((a) => a.id === id);
+      if (ach && ach.stats && ach.stats.expPct) {
+        expBonusMult += ach.stats.expPct;
+      }
+    });
+  }
+  if (window.playerStats.xpPotionTimer > 0) {
+    let potStrengthMultiplier = 1.0;
+    if (window.playerStats.unlockedAchievements && window.AchievementsData) {
+      window.playerStats.unlockedAchievements.forEach((id) => {
+        let ach = window.AchievementsData.find((a) => a.id === id);
+        if (ach && ach.stats && ach.stats.potStrengthPct)
+          potStrengthMultiplier += ach.stats.potStrengthPct;
+      });
+    }
+    if (window.checkArtifactTrait("alchemist_alembic"))
+      potStrengthMultiplier += 0.3;
+
+    expBonusMult +=
+      (window.playerStats.xpPotionStrength || 1.0) * potStrengthMultiplier;
+  }
+  p.xpRate = parseFloat(expBonusMult.toFixed(2));
 
   let activeStage = window.playerStats.stage;
   if (window.playerStats.isDungeonMode && window.playerStats.currentDungeon) {

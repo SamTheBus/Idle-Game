@@ -2919,6 +2919,7 @@
                     font-family: monospace;
                   "
                 >
+                  <!-- 1. Primary Combat Fundamentals (Top) -->
                   <div
                     class="stat-hover"
                     onmouseenter="window.showStatBreakdown(event, 'atk')"
@@ -2941,6 +2942,7 @@
                       >0</span
                     >
                   </div>
+
                   <div
                     class="stat-hover"
                     onmouseenter="window.showStatBreakdown(event, 'maxHp')"
@@ -2954,22 +2956,24 @@
                   </div>
                   <div
                     class="stat-hover"
-                    onmouseenter="window.showStatBreakdown(event, 'moveSpeed')"
-                    ontouchstart="window.showStatBreakdown(event, 'moveSpeed')"
+                    onmouseenter="window.showStatHoverTooltip(event, 'idps')"
+                    ontouchstart="window.showStatHoverTooltip(event, 'idps')"
                     onmouseleave="window.hideTooltip()"
                   >
-                    👟 Move Speed:
-                    <span id="stat-mov" style="font-weight: bold; color: #fff"
-                      >10</span
+                    🔄 Idle DPS:
+                    <span id="stat-idps" style="font-weight: bold; color: #fff"
+                      >0.0</span
                     >
                   </div>
+
+                  <!-- 2. Speed Coefficients -->
                   <div
                     class="stat-hover"
                     onmouseenter="window.showStatHoverTooltip(event, 'ias')"
                     ontouchstart="window.showStatHoverTooltip(event, 'ias')"
                     onmouseleave="window.hideTooltip()"
                   >
-                    ⏱️ Idle Atk Spd:
+                    ⏱️ Idle Speed:
                     <span id="stat-ias" style="color: #fff; font-weight: bold"
                       >60f</span
                     >
@@ -2980,11 +2984,13 @@
                     ontouchstart="window.showStatHoverTooltip(event, 'aas')"
                     onmouseleave="window.hideTooltip()"
                   >
-                    ⚡ Active Atk Spd:
+                    ⚡ Active Speed:
                     <span id="stat-aas" style="color: #fff; font-weight: bold"
                       >15f</span
                     >
                   </div>
+
+                  <!-- 3. Critical strike parameters -->
                   <div
                     class="stat-hover"
                     onmouseenter="
@@ -3011,6 +3017,8 @@
                       >150%</span
                     >
                   </div>
+
+                  <!-- 4. Defensive Mitigations -->
                   <div
                     class="stat-hover"
                     onmouseenter="
@@ -3037,17 +3045,32 @@
                       >0%</span
                     >
                   </div>
+
+                  <!-- 5. Spacial Movement & Barrier -->
                   <div
                     class="stat-hover"
-                    onmouseenter="window.showStatHoverTooltip(event, 'idps')"
-                    ontouchstart="window.showStatHoverTooltip(event, 'idps')"
+                    onmouseenter="window.showStatBreakdown(event, 'moveSpeed')"
+                    ontouchstart="window.showStatBreakdown(event, 'moveSpeed')"
                     onmouseleave="window.hideTooltip()"
                   >
-                    🔄 Idle DPS:
-                    <span id="stat-idps" style="font-weight: bold; color: #fff"
-                      >0.0</span
+                    👟 Move Speed:
+                    <span id="stat-mov" style="font-weight: bold; color: #fff"
+                      >10</span
                     >
                   </div>
+                  <div
+                    class="stat-hover"
+                    onmouseenter="window.showStatHoverTooltip(event, 'bar')"
+                    ontouchstart="window.showStatHoverTooltip(event, 'bar')"
+                    onmouseleave="window.hideTooltip()"
+                  >
+                    🔮 Arcane Barrier:
+                    <span id="stat-bar" style="color: #fff; font-weight: bold"
+                      >0%</span
+                    >
+                  </div>
+
+                  <!-- 6. Loot & Progression multipliers -->
                   <div
                     class="stat-hover"
                     onmouseenter="window.showStatHoverTooltip(event, 'drp')"
@@ -3070,6 +3093,7 @@
                       >+0%</span
                     >
                   </div>
+
                   <div
                     class="stat-hover"
                     onmouseenter="window.showStatBreakdown(event, 'gold', true)"
@@ -3081,6 +3105,19 @@
                       >x1.0</span
                     >
                   </div>
+                  <div
+                    class="stat-hover"
+                    onmouseenter="window.showStatHoverTooltip(event, 'xpr')"
+                    ontouchstart="window.showStatHoverTooltip(event, 'xpr')"
+                    onmouseleave="window.hideTooltip()"
+                  >
+                    🧠 XP Rate:
+                    <span id="stat-xpr" style="font-weight: bold; color: #fff"
+                      >x1.00</span
+                    >
+                  </div>
+
+                  <!-- 7. Wilderness Spawn Modifiers (Bottom) -->
                   <div
                     class="stat-hover"
                     onmouseenter="

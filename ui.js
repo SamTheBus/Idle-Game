@@ -1264,6 +1264,8 @@ window.updateUI = function () {
   setText("stat-drp", "+" + Math.floor((p.drop - 1) * 100) + "%");
   setText("stat-qly", "+" + Math.floor((p.qly - 1) * 100) + "%");
   setText("stat-gld", "x" + p.gold.toFixed(2));
+  setText("stat-xpr", "x" + p.xpRate.toFixed(2));
+  setText("stat-bar", Math.floor(p.arcaneBarrier * 100) + "%");
 
   let effMultiplier = 1 + p.critChance * (p.critDamage - 1);
   let idps = p.atk * effMultiplier * (60 / p.idleAttackSpeed);
@@ -1274,6 +1276,12 @@ window.updateUI = function () {
       maximumFractionDigits: 1,
     }),
   );
+
+  // Real-time updates for Guild Missions Board if currently open
+  let missionsWin = document.getElementById("missions-win-content");
+  if (missionsWin) {
+    window.renderMissionsWindow();
+  }
 
   // Draft drawer visibility
   let draftBar = document.getElementById("draft-controls-container");
@@ -3540,7 +3548,13 @@ window.showStatHoverTooltip = function (e, key) {
     html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#9b59b6;">💎 Drop Quality Modifier</div><div style="color:#aaa; font-size:11px;">Current Multiplier: x${p.qly.toFixed(2)}<br><br>Increases the probability that an item drop will roll with more bonus modifier lines (higher star rating).</div></div>`;
     tt.style.borderColor = "#9b59b6";
   } else if (key === "idps") {
-    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#9b59b6;">🔄 Idle DPS</div><div style="color:#aaa; font-size:11px;">Your calculated Damage Per Second when attacking automatically or offline.<br><br>Factors in Attack, Crit Chance, Crit Multiplier, and Idle Atk Spd. Does not account for active clicking or Adrenaline buffs.</div></div>`;
+    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#e67e22;">🔄 Idle DPS</div><div style="color:#aaa; font-size:11px;">Current Idle Damage/Sec: ${idps.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}<br><br>Represents your average damage output per second when idle (incorporates Attack, Attack Speed, Crit Chance, and Crit Multipliers).</div></div>`;
+    tt.style.borderColor = "#e67e22";
+  } else if (key === "xpr") {
+    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#a855f7;">🧠 XP Rate Multiplier</div><div style="color:#aaa; font-size:11px;">Current Multiplier: x${p.xpRate.toFixed(2)}<br><br>Multiplies all acquired experience from routing, bosses, and dungeons.<br><br><b>Boosted by:</b><br>• Prestige upgrades (+10% per level)<br>• Active XP potions / elixirs<br>• Chronicle of Past Lives Unique Tome<br>• Unlocked Achievements</div></div>`;
+    tt.style.borderColor = "#a855f7";
+  } else if (key === "bar") {
+    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#9b59b6;">🔮 Arcane Barrier</div><div style="color:#aaa; font-size:11px;">Current Absorption: ${Math.floor(p.arcaneBarrier * 100)}%<br><br><b>Passive (Requires Tome):</b><br>Absorbs a percentage of all incoming damage before defense calculations.<br><br>Base 20%, scaling up to 35% based on your Intelligence (INT) stat. Currently absorbing ${Math.floor(p.arcaneBarrier * 100)}% of incoming damage.</div></div>`;
     tt.style.borderColor = "#9b59b6";
   }
 
@@ -7439,6 +7453,17 @@ window.toggleMissions = function () {
     win.style.left = "80px";
     win.style.top = "60px";
 
+    // Structural division keeping drag handles completely separate from live content
+    win.innerHTML = `
+      <div class="draggable-header" id="missions-win-handle" style="background: linear-gradient(180deg, #181d24 0%, #0d1117 100%);">
+          <span> Guild Board & Shop</span>
+          <button onclick="document.getElementById('missions-draggable-window').remove(); window.hideTooltip();" style="background:transparent; border:none; color:#e74c3c; font-weight:bold; cursor:pointer; font-size:11px; padding:2px;">[X]</button>
+      </div>
+      <div class="draggable-content" id="missions-win-content" style="max-height: 400px; padding: 12px; background:#07030b;">
+          <!-- Live sub-tab content injected dynamically below -->
+      </div>
+    `;
+
     document.getElementById("game-container").appendChild(win);
     window.renderMissionsWindow();
     window.makeWindowDraggable(
@@ -7449,8 +7474,8 @@ window.toggleMissions = function () {
 };
 
 window.renderMissionsWindow = function () {
-  let win = document.getElementById("missions-draggable-window");
-  if (!win) return;
+  let contentEl = document.getElementById("missions-win-content");
+  if (!contentEl) return;
 
   let currentTab = window.state.missionsTab || "BOARD";
   let tokenBalance = window.playerStats.missionTokens || 0;
@@ -7753,25 +7778,17 @@ window.renderMissionsWindow = function () {
                                                                             `;
   }
 
-  win.innerHTML = `
-                                                    <div class="draggable-header" id="missions-win-handle" style="background: linear-gradient(180deg, #181d24 0%, #0d1117 100%);">
-                                                        <span> Guild Board & Shop</span>
-                                                        <button onclick="document.getElementById('missions-draggable-window').remove(); window.hideTooltip();" style="background:transparent; border:none; color:#e74c3c; font-weight:bold; cursor:pointer; font-size:11px; padding:2px;">[X]</button>
-                                                    </div>
-                                                    <div class="draggable-content" style="max-height: 400px; padding: 12px; background:#07030b;">
+  contentEl.innerHTML = `
+                                              ${tabHeaderHtml}
 
-                                            ${tabHeaderHtml}
+                                              <!-- Mission Points Balance Bar -->
+                                              <div style="background:#111; border:1px solid #333; padding:8px; border-radius:6px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; font-family:monospace; font-size:11px;">
+                                                  <span>Mission Points:</span>
+                                                  <strong style="color:#f1c40f; font-size:13px;" id="mission-point-lbl">${tokenBalance} MP</strong>
+                                              </div>
 
-                                            <!-- Mission Points Balance Bar -->
-                                            <div style="background:#111; border:1px solid #333; padding:8px; border-radius:6px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; font-family:monospace; font-size:11px;">
-                                                <span>Mission Points:</span>
-                                                <strong style="color:#f1c40f; font-size:13px;" id="mission-point-lbl">${tokenBalance} MP</strong>
-                                            </div>
-
-                                            ${contentHtml}
-
-                                        </div>
-                                    `;
+                                              ${contentHtml}
+                                      `;
 
   if (currentTab === "BOARD") {
     // Dynamic countdown timer calculations locked to Pacific Time (PST/PDT)
