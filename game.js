@@ -7,6 +7,19 @@ let canvas, ctx;
 
 // --- SYSTEM FUNCTIONS ---
 
+// Define your local computer's IP address where the Fastify server is running
+window.GAME_SERVER_URL = 'http://192.168.0.37:3000';
+
+// Generate or retrieve a persistent unique guest ID for local testing
+window.getGameUserId = function () {
+  let uId = localStorage.getItem("idle_game_user_id");
+  if (!uId) {
+    uId = "guest_" + Math.random().toString(36).substring(2, 9) + Date.now().toString(36).substring(4);
+    localStorage.setItem("idle_game_user_id", uId);
+  }
+  return uId;
+};
+
 window.saveGame = function () {
   let saveData = {
     playerStats: window.playerStats,
@@ -17,7 +30,31 @@ window.saveGame = function () {
     frozenItemDb: window.frozenItemDb,
     lastSaveTime: window.lastUpdateTime,
   };
-  localStorage.setItem("idle_game_v11", JSON.stringify(saveData));
+
+  const serializedData = JSON.stringify(saveData);
+
+  // 1. Instantly backup locally to prevent any network-loss data corruption
+  localStorage.setItem("idle_game_v11", serializedData);
+
+  // 2. Perform a non-blocking asynchronous cloud save push to your Fastify server
+  const userId = window.getGameUserId();
+  fetch(`${window.GAME_SERVER_URL}/api/save`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, saveData })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      console.log('☁️ Cloud Backup Successful!');
+    } else {
+      console.warn('⚠️ Cloud Sync Warning:', data.error);
+    }
+  })
+  .catch(err => {
+    // Gracefully fail silently in background console logs if player is offline
+    console.log('📡 Server offline or unreachable. Local save preserved.');
+  });
 };
 
 window.getDepthQualityMultiplier = function (depth) {
@@ -558,455 +595,496 @@ window.applyOfflineGains = function (offlineMs) {
   return offlineSeconds * 1000;
 };
 
-window.loadGame = function () {
-  let data = localStorage.getItem("idle_game_v11");
-  if (data) {
-    try {
-      let parsed = JSON.parse(data);
-      window.playerStats = { ...window.playerStats, ...parsed.playerStats };
-      window.equippedSlots = parsed.equippedSlots || window.equippedSlots;
+window.applySaveStatePayload = function (parsed) {
+  try {
+    window.playerStats = { ...window.playerStats, ...parsed.playerStats };
+    window.equippedSlots = parsed.equippedSlots || window.equippedSlots;
 
-      if (window.playerStats.autoSalvageThreshold === undefined) {
-        window.playerStats.autoSalvageThreshold = -1;
-      }
-      window.inventory = parsed.inventory || {
-        EQUIP: [],
-        ARTIFACT: [],
-        ETC: {},
-        USE: {},
-      };
-      if (!window.inventory.ARTIFACT) {
-        window.inventory.ARTIFACT = [];
-      }
-      if (!window.inventory.ETC) {
-        window.inventory.ETC = {};
-      }
-      if (!window.inventory.USE) {
-        window.inventory.USE = {};
-      }
+    if (window.playerStats.autoSalvageThreshold === undefined) {
+      window.playerStats.autoSalvageThreshold = -1;
+    }
+    window.inventory = parsed.inventory || {
+      EQUIP: [],
+      ARTIFACT: [],
+      ETC: {},
+      USE: {},
+    };
+    if (!window.inventory.ARTIFACT) {
+      window.inventory.ARTIFACT = [];
+    }
+    if (!window.inventory.ETC) {
+      window.inventory.ETC = {};
+    }
+    if (!window.inventory.USE) {
+      window.inventory.USE = {};
+    }
 
-      const useItemsList = [
-        "Attack Elixir",
-        "Greater Attack Elixir",
-        "Supernal Attack Elixir",
-        "Vitality Elixir",
-        "Greater Vitality Elixir",
-        "Supernal Vitality Elixir",
-        "Armored Elixir",
-        "Greater Armored Elixir",
-        "Supernal Armored Elixir",
-        "Haste Elixir",
-        "Greater Haste Elixir",
-        "Supernal Haste Elixir",
-        "SP Reset Scroll",
-        "PP Reset Scroll",
+    const useItemsList = [
+      "Attack Elixir",
+      "Greater Attack Elixir",
+      "Supernal Attack Elixir",
+      "Vitality Elixir",
+      "Greater Vitality Elixir",
+      "Supernal Vitality Elixir",
+      "Armored Elixir",
+      "Greater Armored Elixir",
+      "Supernal Armored Elixir",
+      "Haste Elixir",
+      "Greater Haste Elixir",
+      "Supernal Haste Elixir",
+      "SP Reset Scroll",
+      "PP Reset Scroll",
+    ];
+    useItemsList.forEach((item) => {
+      if (window.inventory.ETC && window.inventory.ETC[item]) {
+        if (!window.inventory.USE) window.inventory.USE = {};
+        window.inventory.USE[item] =
+          (window.inventory.USE[item] || 0) + window.inventory.ETC[item];
+        delete window.inventory.ETC[item];
+      }
+    });
+
+    if (window.inventory.EQUIP) {
+      for (let i = window.inventory.EQUIP.length - 1; i >= 0; i--) {
+        if (
+          window.inventory.EQUIP[i] &&
+          window.inventory.EQUIP[i].type === "artifact"
+        ) {
+          window.inventory.ARTIFACT.push(window.inventory.EQUIP[i]);
+          window.inventory.EQUIP.splice(i, 1);
+        }
+      }
+    }
+
+    window.idCounter = parsed.idCounter || window.idCounter;
+    window.logsHistory = parsed.logsHistory || window.logsHistory;
+    window.frozenItemDb = parsed.frozenItemDb || window.frozenItemDb;
+
+    if (window.playerStats.runKills === undefined)
+      window.playerStats.runKills = 0;
+    if (window.playerStats.runGold === undefined)
+      window.playerStats.runGold = 0;
+    if (window.playerStats.runXp === undefined) window.playerStats.runXp = 0;
+    if (window.playerStats.killedBy === undefined)
+      window.playerStats.killedBy = "Unknown Foe";
+    if (window.playerStats.killedByMob === undefined)
+      window.playerStats.killedByMob = null;
+
+    if (window.playerStats.dungeonPeaks === undefined)
+      window.playerStats.dungeonPeaks = { equip: 1, gold: 1, mat: 1 };
+    if (window.playerStats.currentDungeonStage === undefined)
+      window.playerStats.currentDungeonStage = { equip: 1, gold: 1, mat: 1 };
+    if (window.playerStats.astralShards === undefined)
+      window.playerStats.astralShards = 0;
+    if (window.playerStats.crucibleWave === undefined)
+      window.playerStats.crucibleWave = 1;
+    if (window.playerStats.cruciblePeak === undefined)
+      window.playerStats.cruciblePeak = 1;
+    if (window.playerStats.crucibleStartWave === undefined)
+      window.playerStats.crucibleStartWave = 1;
+    if (window.playerStats.isCrucibleMode === undefined)
+      window.playerStats.isCrucibleMode = false;
+    if (window.playerStats.crucibleKills === undefined)
+      window.playerStats.crucibleKills = 0;
+
+    if (!window.playerStats.level) {
+      window.playerStats.level = 1;
+      window.playerStats.xp = 0;
+      window.playerStats.sp = 0;
+    }
+
+    if (window.playerStats.spAllocations) {
+      let legacyAllocKeys = [
+        "spHp",
+        "spAtk",
+        "spDef",
+        "spCrit",
+        "spCritDmg",
+        "spBlock",
+        "spParry",
+        "spSpd",
       ];
-      useItemsList.forEach((item) => {
-        if (window.inventory.ETC && window.inventory.ETC[item]) {
-          if (!window.inventory.USE) window.inventory.USE = {};
-          window.inventory.USE[item] =
-            (window.inventory.USE[item] || 0) + window.inventory.ETC[item];
-          delete window.inventory.ETC[item];
+      let refundedSp = 0;
+      legacyAllocKeys.forEach((k) => {
+        if (window.playerStats.spAllocations[k] > 0) {
+          refundedSp += window.playerStats.spAllocations[k];
+          window.playerStats.spAllocations[k] = 0;
         }
       });
+      if (refundedSp > 0) {
+        window.playerStats.sp += refundedSp;
+        setTimeout(() => {
+          if (typeof window.pushLog === "function")
+            window.pushLog(
+              `<strong style="color:#2ecc71;">[MIGRATION] Secondary attribute direct spend is discontinued. Refunded ${refundedSp} Skill Points to spend on STR, DEX, or INT!</strong>`,
+            );
+        }, 1000);
+      }
+    }
 
+    window.playerStats.xpReq = Math.floor(
+      250 * Math.pow(1.2, window.playerStats.level - 1),
+    );
+    if (!window.playerStats.spAllocations) {
+      window.playerStats.spAllocations = {
+        spHp: 0,
+        spAtk: 0,
+        spDef: 0,
+        spCrit: 0,
+        spCritDmg: 0,
+        spBlock: 0,
+        spParry: 0,
+        spSpd: 0,
+        spStr: 0,
+        spDex: 0,
+        spInt: 0,
+      };
+    }
+    if (window.playerStats.spAllocations.spStr === undefined) {
+      window.playerStats.spAllocations.spStr = 0;
+      window.playerStats.spAllocations.spDex = 0;
+      window.playerStats.spAllocations.spInt = 0;
+      window.playerStats.baseStr = 5;
+      window.playerStats.baseDex = 5;
+      window.playerStats.baseInt = 5;
+      window.playerStats.baseFairySpawn = 1.0;
+    }
+    if (!window.playerStats.baseRareSpawn)
+      window.playerStats.baseRareSpawn = 0.01;
+    if (!window.playerStats.baseFairySpawn)
+      window.playerStats.baseFairySpawn = 1.0;
+    if (!window.playerStats.maxStage)
+      window.playerStats.maxStage = window.playerStats.stage || 1;
+    if (
+      !window.playerStats.targetsRequired ||
+      window.playerStats.targetsRequired === 7
+    )
+      window.playerStats.targetsRequired = 5;
+    if (
+      !window.playerStats.shopItems ||
+      (window.playerStats.shopItems.length > 0 &&
+        window.playerStats.shopItems[0].atk === undefined)
+    ) {
+      window.playerStats.shopItems = [];
+      window.playerStats.shopRefreshTime = 0;
+    }
+    if (window.playerStats.frenzyKillCount === undefined)
+      window.playerStats.frenzyKillCount = 0;
+
+    if (typeof window.recalculateItemStats === "function") {
+      for (let key in window.equippedSlots) {
+        if (window.equippedSlots[key])
+          window.recalculateItemStats(window.equippedSlots[key]);
+      }
       if (window.inventory.EQUIP) {
-        for (let i = window.inventory.EQUIP.length - 1; i >= 0; i--) {
-          if (
-            window.inventory.EQUIP[i] &&
-            window.inventory.EQUIP[i].type === "artifact"
-          ) {
-            window.inventory.ARTIFACT.push(window.inventory.EQUIP[i]);
-            window.inventory.EQUIP.splice(i, 1);
-          }
-        }
-      }
-
-      window.idCounter = parsed.idCounter || window.idCounter;
-      window.logsHistory = parsed.logsHistory || window.logsHistory;
-      window.frozenItemDb = parsed.frozenItemDb || window.frozenItemDb;
-
-      if (window.playerStats.runKills === undefined)
-        window.playerStats.runKills = 0;
-      if (window.playerStats.runGold === undefined)
-        window.playerStats.runGold = 0;
-      if (window.playerStats.runXp === undefined) window.playerStats.runXp = 0;
-      if (window.playerStats.killedBy === undefined)
-        window.playerStats.killedBy = "Unknown Foe";
-      if (window.playerStats.killedByMob === undefined)
-        window.playerStats.killedByMob = null;
-
-      if (window.playerStats.dungeonPeaks === undefined)
-        window.playerStats.dungeonPeaks = { equip: 1, gold: 1, mat: 1 };
-      if (window.playerStats.currentDungeonStage === undefined)
-        window.playerStats.currentDungeonStage = { equip: 1, gold: 1, mat: 1 };
-      if (window.playerStats.astralShards === undefined)
-        window.playerStats.astralShards = 0;
-      if (window.playerStats.crucibleWave === undefined)
-        window.playerStats.crucibleWave = 1;
-      if (window.playerStats.cruciblePeak === undefined)
-        window.playerStats.cruciblePeak = 1;
-      if (window.playerStats.crucibleStartWave === undefined)
-        window.playerStats.crucibleStartWave = 1;
-      if (window.playerStats.isCrucibleMode === undefined)
-        window.playerStats.isCrucibleMode = false;
-      if (window.playerStats.crucibleKills === undefined)
-        window.playerStats.crucibleKills = 0;
-
-      if (!window.playerStats.level) {
-        window.playerStats.level = 1;
-        window.playerStats.xp = 0;
-        window.playerStats.sp = 0;
-      }
-
-      if (window.playerStats.spAllocations) {
-        let legacyAllocKeys = [
-          "spHp",
-          "spAtk",
-          "spDef",
-          "spCrit",
-          "spCritDmg",
-          "spBlock",
-          "spParry",
-          "spSpd",
-        ];
-        let refundedSp = 0;
-        legacyAllocKeys.forEach((k) => {
-          if (window.playerStats.spAllocations[k] > 0) {
-            refundedSp += window.playerStats.spAllocations[k];
-            window.playerStats.spAllocations[k] = 0;
-          }
+        window.inventory.EQUIP.forEach((item) => {
+          if (item) window.recalculateItemStats(item);
         });
-        if (refundedSp > 0) {
-          window.playerStats.sp += refundedSp;
-          setTimeout(() => {
-            if (typeof window.pushLog === "function")
-              window.pushLog(
-                `<strong style="color:#2ecc71;">[MIGRATION] Secondary attribute direct spend is discontinued. Refunded ${refundedSp} Skill Points to spend on STR, DEX, or INT!</strong>`,
-              );
-          }, 1000);
-        }
       }
+      if (window.inventory.ARTIFACT) {
+        window.inventory.ARTIFACT.forEach((item) => {
+          if (item) window.recalculateItemStats(item);
+        });
+      }
+    }
+    if (window.playerStats.atkPotionTimer === undefined)
+      window.playerStats.atkPotionTimer = 0;
+    if (window.playerStats.hpPotionTimer === undefined)
+      window.playerStats.hpPotionTimer = 0;
+    if (window.playerStats.defPotionTimer === undefined)
+      window.playerStats.defPotionTimer = 0;
+    if (window.playerStats.hastePotionTimer === undefined)
+      window.playerStats.hastePotionTimer = 0;
+    if (window.playerStats.atkPotionStrength === undefined)
+      window.playerStats.atkPotionStrength = 0.1;
+    if (window.playerStats.hpPotionStrength === undefined)
+      window.playerStats.hpPotionStrength = 0.1;
+    if (window.playerStats.defPotionStrength === undefined)
+      window.playerStats.defPotionStrength = 0.1;
+    if (window.playerStats.hastePotionStrength === undefined)
+      window.playerStats.hastePotionStrength = 1;
+    if (window.playerStats.xpPotionTimer === undefined)
+      window.playerStats.xpPotionTimer = 0;
+    if (window.playerStats.xpPotionStrength === undefined)
+      window.playerStats.xpPotionStrength = 1.0;
+    if (window.playerStats.dropPotionTimer === undefined)
+      window.playerStats.dropPotionTimer = 0;
+    if (window.playerStats.dropPotionStrength === undefined)
+      window.playerStats.dropPotionStrength = 1.0;
+    if (window.playerStats.qlyPotionTimer === undefined)
+      window.playerStats.qlyPotionTimer = 0;
+    if (window.playerStats.qlyPotionStrength === undefined)
+      window.playerStats.qlyPotionStrength = 0.5;
 
-      window.playerStats.xpReq = Math.floor(
-        250 * Math.pow(1.2, window.playerStats.level - 1),
+    if (window.playerStats.unlockedAchievements === undefined)
+      window.playerStats.unlockedAchievements = [];
+    if (window.playerStats.unviewedAchievements === undefined)
+      window.playerStats.unviewedAchievements = [];
+    if (window.playerStats.totalGoldEarned === undefined)
+      window.playerStats.totalGoldEarned = window.playerStats.coins || 0;
+    if (window.playerStats.totalTempers === undefined)
+      window.playerStats.totalTempers = 0;
+    if (window.playerStats.totalEnchants === undefined)
+      window.playerStats.totalEnchants = 0;
+    if (window.playerStats.riftGuardiansSlain === undefined)
+      window.playerStats.riftGuardiansSlain = 0;
+    if (window.playerStats.elixirsConsumed === undefined)
+      window.playerStats.elixirsConsumed = 0;
+    if (window.playerStats.itemsSalvaged === undefined)
+      window.playerStats.itemsSalvaged = 0;
+    if (window.playerStats.volumeMaster === undefined)
+      window.playerStats.volumeMaster = 0.5;
+    if (window.playerStats.volumeSFX === undefined)
+      window.playerStats.volumeSFX = 0.8;
+    if (window.playerStats.mute === undefined)
+      window.playerStats.mute = false;
+
+    if (
+      window.playerStats.prestigeUpgrades &&
+      window.playerStats.prestigeUpgrades.bag > 0
+    ) {
+      let refundedPP = window.playerStats.prestigeUpgrades.bag * 10;
+      window.playerStats.prestigePoints =
+        (window.playerStats.prestigePoints || 0) + refundedPP;
+
+      window.playerStats.missionUpgrades = window.playerStats
+        .missionUpgrades || { gold: 0, atk: 0, hp: 0, bag: 0 };
+      window.playerStats.missionUpgrades.bag =
+        (window.playerStats.missionUpgrades.bag || 0) +
+        window.playerStats.prestigeUpgrades.bag;
+
+      window.playerStats.prestigeUpgrades.bag = 0;
+    }
+
+    if (window.playerStats.gachaHistory) {
+      window.playerStats.gachaHistory.forEach((item) => {
+        if (item) window.frozenItemDb[item.id] = item;
+      });
+    }
+
+    if (window.playerStats.prestigePoints === undefined)
+      window.playerStats.prestigePoints = 0;
+    if (window.playerStats.prestigeUpgrades === undefined) {
+      window.playerStats.prestigeUpgrades = {
+        bag: 0,
+        gold: 0,
+        exp: 0,
+        drop: 0,
+        atk: 0,
+        fort: 0,
+        fairy: 0,
+      };
+    } else {
+      window.playerStats.prestigeUpgrades.atk =
+        window.playerStats.prestigeUpgrades.atk || 0;
+      window.playerStats.prestigeUpgrades.fort =
+        window.playerStats.prestigeUpgrades.fort || 0;
+      window.playerStats.prestigeUpgrades.fairy =
+        window.playerStats.prestigeUpgrades.fairy || 0;
+    }
+    if (window.playerStats.missionTokens === undefined)
+      window.playerStats.missionTokens = 0;
+    if (window.playerStats.missionUpgrades === undefined) {
+      window.playerStats.missionUpgrades = { gold: 0, atk: 0, hp: 0, bag: 0 };
+    } else {
+      window.playerStats.missionUpgrades.gold =
+        window.playerStats.missionUpgrades.gold || 0;
+      window.playerStats.missionUpgrades.atk =
+        window.playerStats.missionUpgrades.atk || 0;
+      window.playerStats.missionUpgrades.hp =
+        window.playerStats.missionUpgrades.hp || 0;
+      window.playerStats.missionUpgrades.bag =
+        window.playerStats.missionUpgrades.bag || 0;
+    }
+    if (window.playerStats.prestigeCount === undefined)
+      window.playerStats.prestigeCount = 0;
+    if (window.playerStats.lifetimePeakStage === undefined)
+      window.playerStats.lifetimePeakStage = window.playerStats.maxStage || 1;
+    if (window.playerStats.highestRiftLevel === undefined)
+      window.playerStats.highestRiftLevel = 0;
+    if (window.playerStats.activeRift === undefined)
+      window.playerStats.activeRift = null;
+    if (window.playerStats.activeRiftLevel === undefined)
+      window.playerStats.activeRiftLevel = 1;
+
+    if (window.playerStats.selectedPrestigeStage === undefined)
+      window.playerStats.selectedPrestigeStage = Math.max(
+        80,
+        window.playerStats.maxStage || 80,
       );
-      if (!window.playerStats.spAllocations) {
-        window.playerStats.spAllocations = {
-          spHp: 0,
-          spAtk: 0,
-          spDef: 0,
-          spCrit: 0,
-          spCritDmg: 0,
-          spBlock: 0,
-          spParry: 0,
-          spSpd: 0,
-          spStr: 0,
-          spDex: 0,
-          spInt: 0,
-        };
-      }
-      if (window.playerStats.spAllocations.spStr === undefined) {
-        window.playerStats.spAllocations.spStr = 0;
-        window.playerStats.spAllocations.spDex = 0;
-        window.playerStats.spAllocations.spInt = 0;
-        window.playerStats.baseStr = 5;
-        window.playerStats.baseDex = 5;
-        window.playerStats.baseInt = 5;
-        window.playerStats.baseFairySpawn = 1.0;
-      }
-      if (!window.playerStats.baseRareSpawn)
-        window.playerStats.baseRareSpawn = 0.01;
-      if (!window.playerStats.baseFairySpawn)
-        window.playerStats.baseFairySpawn = 1.0;
-      if (!window.playerStats.maxStage)
-        window.playerStats.maxStage = window.playerStats.stage || 1;
-      if (
-        !window.playerStats.targetsRequired ||
-        window.playerStats.targetsRequired === 7
-      )
-        window.playerStats.targetsRequired = 5;
-      if (
-        !window.playerStats.shopItems ||
-        (window.playerStats.shopItems.length > 0 &&
-          window.playerStats.shopItems[0].atk === undefined)
-      ) {
-        window.playerStats.shopItems = [];
-        window.playerStats.shopRefreshTime = 0;
-      }
-      if (window.playerStats.frenzyKillCount === undefined)
-        window.playerStats.frenzyKillCount = 0;
 
-      if (typeof window.recalculateItemStats === "function") {
-        for (let key in window.equippedSlots) {
-          if (window.equippedSlots[key])
-            window.recalculateItemStats(window.equippedSlots[key]);
-        }
-        if (window.inventory.EQUIP) {
-          window.inventory.EQUIP.forEach((item) => {
-            if (item) window.recalculateItemStats(item);
-          });
-        }
-        if (window.inventory.ARTIFACT) {
-          window.inventory.ARTIFACT.forEach((item) => {
-            if (item) window.recalculateItemStats(item);
-          });
-        }
-      }
-      if (window.playerStats.atkPotionTimer === undefined)
-        window.playerStats.atkPotionTimer = 0;
-      if (window.playerStats.hpPotionTimer === undefined)
-        window.playerStats.hpPotionTimer = 0;
-      if (window.playerStats.defPotionTimer === undefined)
-        window.playerStats.defPotionTimer = 0;
-      if (window.playerStats.hastePotionTimer === undefined)
-        window.playerStats.hastePotionTimer = 0;
-      if (window.playerStats.atkPotionStrength === undefined)
-        window.playerStats.atkPotionStrength = 0.1;
-      if (window.playerStats.hpPotionStrength === undefined)
-        window.playerStats.hpPotionStrength = 0.1;
-      if (window.playerStats.defPotionStrength === undefined)
-        window.playerStats.defPotionStrength = 0.1;
-      if (window.playerStats.hastePotionStrength === undefined)
-        window.playerStats.hastePotionStrength = 1;
-      if (window.playerStats.xpPotionTimer === undefined)
-        window.playerStats.xpPotionTimer = 0;
-      if (window.playerStats.xpPotionStrength === undefined)
-        window.playerStats.xpPotionStrength = 1.0;
-      if (window.playerStats.dropPotionTimer === undefined)
-        window.playerStats.dropPotionTimer = 0;
-      if (window.playerStats.dropPotionStrength === undefined)
-        window.playerStats.dropPotionStrength = 1.0;
-      if (window.playerStats.qlyPotionTimer === undefined)
-        window.playerStats.qlyPotionTimer = 0;
-      if (window.playerStats.qlyPotionStrength === undefined)
-        window.playerStats.qlyPotionStrength = 0.5;
+    window.playerStats.isPrestigeBossMode = false;
+    window.playerStats.prestigeApproachTimer = 0;
 
-      if (window.playerStats.unlockedAchievements === undefined)
-        window.playerStats.unlockedAchievements = [];
-      if (window.playerStats.unviewedAchievements === undefined)
-        window.playerStats.unviewedAchievements = [];
-      if (window.playerStats.totalGoldEarned === undefined)
-        window.playerStats.totalGoldEarned = window.playerStats.coins || 0;
-      if (window.playerStats.totalTempers === undefined)
-        window.playerStats.totalTempers = 0;
-      if (window.playerStats.totalEnchants === undefined)
-        window.playerStats.totalEnchants = 0;
-      if (window.playerStats.riftGuardiansSlain === undefined)
-        window.playerStats.riftGuardiansSlain = 0;
-      if (window.playerStats.elixirsConsumed === undefined)
-        window.playerStats.elixirsConsumed = 0;
-      if (window.playerStats.itemsSalvaged === undefined)
-        window.playerStats.itemsSalvaged = 0;
-      if (window.playerStats.volumeMaster === undefined)
-        window.playerStats.volumeMaster = 0.5;
-      if (window.playerStats.volumeSFX === undefined)
-        window.playerStats.volumeSFX = 0.8;
-      if (window.playerStats.mute === undefined)
-        window.playerStats.mute = false;
+    if (window.playerStats.vendingQLevel === undefined)
+      window.playerStats.vendingQLevel = 0;
+    if (window.playerStats.vendingPity === undefined)
+      window.playerStats.vendingPity = 0;
+    if (window.playerStats.shopQLevel === undefined)
+      window.playerStats.shopQLevel = 0;
+    if (window.playerStats.globalQLevel === undefined)
+      window.playerStats.globalQLevel = 0;
+    if (window.playerStats.dailyRerollsDone === undefined)
+      window.playerStats.dailyRerollsDone = 0;
+    if (window.playerStats.fairiesClicked === undefined)
+      window.playerStats.fairiesClicked = 0;
+    if (window.playerStats.deathCount === undefined)
+      window.playerStats.deathCount = 0;
+    if (window.playerStats.stickyCanvas === undefined)
+      window.playerStats.stickyCanvas = true;
 
-      // Save-state migration: Move Prestige satchel upgrades to Mission Shop and refund spent Prestige Points (10 PP per level)
-      if (
-        window.playerStats.prestigeUpgrades &&
-        window.playerStats.prestigeUpgrades.bag > 0
-      ) {
-        let refundedPP = window.playerStats.prestigeUpgrades.bag * 10;
-        window.playerStats.prestigePoints =
-          (window.playerStats.prestigePoints || 0) + refundedPP;
+    if (window.playerStats.peakSingleHit === undefined)
+      window.playerStats.peakSingleHit = 0;
+    if (window.playerStats.maxFairyClicksInWindow === undefined)
+      window.playerStats.maxFairyClicksInWindow = 0;
+    if (window.playerStats.totalDeflections === undefined)
+      window.playerStats.totalDeflections = 0;
+    if (window.playerStats.peakSimultaneousBuffs === undefined)
+      window.playerStats.peakSimultaneousBuffs = 0;
+    if (window.playerStats.totalReforges === undefined)
+      window.playerStats.totalReforges = 0;
+    if (window.playerStats.peakSingleGoldDrop === undefined)
+      window.playerStats.peakSingleGoldDrop = 0;
+    if (window.playerStats.rareSpawnsSlain === undefined)
+      window.playerStats.rareSpawnsSlain = 0;
+    if (window.playerStats.maxCanvasClicksInWindow === undefined)
+      window.playerStats.maxCanvasClicksInWindow = 0;
+    if (window.playerStats.sessionPlaytime === undefined)
+      window.playerStats.sessionPlaytime = 0;
+    if (window.playerStats.activityTimer === undefined)
+      window.playerStats.activityTimer = 0;
 
-        // Seed and add Prestige levels straight into mission upgrades
-        window.playerStats.missionUpgrades = window.playerStats
-          .missionUpgrades || { gold: 0, atk: 0, hp: 0, bag: 0 };
-        window.playerStats.missionUpgrades.bag =
-          (window.playerStats.missionUpgrades.bag || 0) +
-          window.playerStats.prestigeUpgrades.bag;
+    window.playerStats.fairyClicksWindow =
+      window.playerStats.fairyClicksWindow || [];
+    window.playerStats.canvasClicksWindow =
+      window.playerStats.canvasClicksWindow || [];
+    window.playerStats.recentHeals = window.playerStats.recentHeals || [];
 
-        window.playerStats.prestigeUpgrades.bag = 0;
-      }
+    if (window.playerStats.dailyMissions === undefined)
+      window.playerStats.dailyMissions = [];
+    if (window.playerStats.weeklyMissions === undefined)
+      window.playerStats.weeklyMissions = [];
+    if (window.playerStats.lastDailyResetTime === undefined)
+      window.playerStats.lastDailyResetTime = 0;
+    if (window.playerStats.lastWeeklyResetTime === undefined)
+      window.playerStats.lastWeeklyResetTime = 0;
+    if (window.playerStats.dailyRewardClaimed === undefined)
+      window.playerStats.dailyRewardClaimed = false;
+    if (window.playerStats.weeklyRewardClaimed === undefined)
+      window.playerStats.weeklyRewardClaimed = false;
+    if (typeof window.checkAndResetMissions === "function")
+      window.checkAndResetMissions();
 
-      // Re-index Gacha history rolls inside memory database
-      if (window.playerStats.gachaHistory) {
-        window.playerStats.gachaHistory.forEach((item) => {
-          if (item) window.frozenItemDb[item.id] = item;
-        });
-      }
+    if (window.inventory.ETC["Iron Scrap"]) {
+      if (typeof window.addEtcDrop === "function")
+        window.addEtcDrop("Monster Soul", window.inventory.ETC["Iron Scrap"]);
+      delete window.inventory.ETC["Iron Scrap"];
+    }
+    if (window.inventory.ETC["Sticky Gel"]) {
+      if (typeof window.addEtcDrop === "function")
+        window.addEtcDrop("Monster Soul", window.inventory.ETC["Sticky Gel"]);
+      delete window.inventory.ETC["Sticky Gel"];
+    }
 
-      if (window.playerStats.prestigePoints === undefined)
-        window.playerStats.prestigePoints = 0;
-      if (window.playerStats.prestigeUpgrades === undefined) {
-        window.playerStats.prestigeUpgrades = {
-          bag: 0,
-          gold: 0,
-          exp: 0,
-          drop: 0,
-          atk: 0,
-          fort: 0,
-          fairy: 0,
-        };
-      } else {
-        window.playerStats.prestigeUpgrades.atk =
-          window.playerStats.prestigeUpgrades.atk || 0;
-        window.playerStats.prestigeUpgrades.fort =
-          window.playerStats.prestigeUpgrades.fort || 0;
-        window.playerStats.prestigeUpgrades.fairy =
-          window.playerStats.prestigeUpgrades.fairy || 0;
-      }
-      if (window.playerStats.missionTokens === undefined)
-        window.playerStats.missionTokens = 0;
-      if (window.playerStats.missionUpgrades === undefined) {
-        window.playerStats.missionUpgrades = { gold: 0, atk: 0, hp: 0, bag: 0 };
-      } else {
-        window.playerStats.missionUpgrades.gold =
-          window.playerStats.missionUpgrades.gold || 0;
-        window.playerStats.missionUpgrades.atk =
-          window.playerStats.missionUpgrades.atk || 0;
-        window.playerStats.missionUpgrades.hp =
-          window.playerStats.missionUpgrades.hp || 0;
-        window.playerStats.missionUpgrades.bag =
-          window.playerStats.missionUpgrades.bag || 0;
-      }
-      if (window.playerStats.prestigeCount === undefined)
-        window.playerStats.prestigeCount = 0;
-      if (window.playerStats.lifetimePeakStage === undefined)
-        window.playerStats.lifetimePeakStage = window.playerStats.maxStage || 1;
-      if (window.playerStats.highestRiftLevel === undefined)
-        window.playerStats.highestRiftLevel = 0;
-      if (window.playerStats.activeRift === undefined)
-        window.playerStats.activeRift = null;
-      if (window.playerStats.activeRiftLevel === undefined)
-        window.playerStats.activeRiftLevel = 1;
+    let box = document.getElementById("log-box");
+    if (box) box.innerHTML = window.logsHistory.join("<br><br>");
 
-      if (window.playerStats.selectedPrestigeStage === undefined)
-        window.playerStats.selectedPrestigeStage = Math.max(
-          80,
-          window.playerStats.maxStage || 80,
-        );
+    if (typeof window.recalculateAchievementTotals === "function")
+      window.recalculateAchievementTotals();
+    if (typeof window.checkAchievements === "function")
+      window.checkAchievements();
+    if (typeof window.updateAudioUI === "function") window.updateAudioUI();
+    if (window.SoundManager && window.SoundManager.ctx)
+      window.SoundManager.updateVolumes();
 
-      window.playerStats.isPrestigeBossMode = false;
-      window.playerStats.prestigeApproachTimer = 0;
+    if (typeof window.checkForUpdates === "function") {
+      setTimeout(window.checkForUpdates, 1500);
+    }
 
-      if (window.playerStats.vendingQLevel === undefined)
-        window.playerStats.vendingQLevel = 0;
-      if (window.playerStats.vendingPity === undefined)
-        window.playerStats.vendingPity = 0;
-      if (window.playerStats.shopQLevel === undefined)
-        window.playerStats.shopQLevel = 0;
-      if (window.playerStats.globalQLevel === undefined)
-        window.playerStats.globalQLevel = 0;
-      if (window.playerStats.dailyRerollsDone === undefined)
-        window.playerStats.dailyRerollsDone = 0;
-      if (window.playerStats.fairiesClicked === undefined)
-        window.playerStats.fairiesClicked = 0;
-      if (window.playerStats.deathCount === undefined)
-        window.playerStats.deathCount = 0;
-      if (window.playerStats.stickyCanvas === undefined)
-        window.playerStats.stickyCanvas = true;
+    if (parsed.lastSaveTime) {
+      let now = Date.now();
+      let offlineMs = now - parsed.lastSaveTime;
 
-      if (window.playerStats.peakSingleHit === undefined)
-        window.playerStats.peakSingleHit = 0;
-      if (window.playerStats.maxFairyClicksInWindow === undefined)
-        window.playerStats.maxFairyClicksInWindow = 0;
-      if (window.playerStats.totalDeflections === undefined)
-        window.playerStats.totalDeflections = 0;
-      if (window.playerStats.peakSimultaneousBuffs === undefined)
-        window.playerStats.peakSimultaneousBuffs = 0;
-      if (window.playerStats.totalReforges === undefined)
-        window.playerStats.totalReforges = 0;
-      if (window.playerStats.peakSingleGoldDrop === undefined)
-        window.playerStats.peakSingleGoldDrop = 0;
-      if (window.playerStats.rareSpawnsSlain === undefined)
-        window.playerStats.rareSpawnsSlain = 0;
-      if (window.playerStats.maxCanvasClicksInWindow === undefined)
-        window.playerStats.maxCanvasClicksInWindow = 0;
-      if (window.playerStats.sessionPlaytime === undefined)
-        window.playerStats.sessionPlaytime = 0;
-      if (window.playerStats.activityTimer === undefined)
-        window.playerStats.activityTimer = 0;
-
-      window.playerStats.fairyClicksWindow =
-        window.playerStats.fairyClicksWindow || [];
-      window.playerStats.canvasClicksWindow =
-        window.playerStats.canvasClicksWindow || [];
-      window.playerStats.recentHeals = window.playerStats.recentHeals || []; // Safe back-compatibility initialization
-
-      if (window.playerStats.dailyMissions === undefined)
-        window.playerStats.dailyMissions = [];
-      if (window.playerStats.weeklyMissions === undefined)
-        window.playerStats.weeklyMissions = [];
-      if (window.playerStats.lastDailyResetTime === undefined)
-        window.playerStats.lastDailyResetTime = 0;
-      if (window.playerStats.lastWeeklyResetTime === undefined)
-        window.playerStats.lastWeeklyResetTime = 0;
-      if (window.playerStats.dailyRewardClaimed === undefined)
-        window.playerStats.dailyRewardClaimed = false;
-      if (window.playerStats.weeklyRewardClaimed === undefined)
-        window.playerStats.weeklyRewardClaimed = false;
-      if (typeof window.checkAndResetMissions === "function")
-        window.checkAndResetMissions();
-
-      if (window.inventory.ETC["Iron Scrap"]) {
-        if (typeof window.addEtcDrop === "function")
-          window.addEtcDrop("Monster Soul", window.inventory.ETC["Iron Scrap"]);
-        delete window.inventory.ETC["Iron Scrap"];
-      }
-      if (window.inventory.ETC["Sticky Gel"]) {
-        if (typeof window.addEtcDrop === "function")
-          window.addEtcDrop("Monster Soul", window.inventory.ETC["Sticky Gel"]);
-        delete window.inventory.ETC["Sticky Gel"];
-      }
-
-      let box = document.getElementById("log-box");
-      if (box) box.innerHTML = window.logsHistory.join("<br><br>");
-
-      if (typeof window.recalculateAchievementTotals === "function")
-        window.recalculateAchievementTotals();
-      if (typeof window.checkAchievements === "function")
-        window.checkAchievements();
-      if (typeof window.updateAudioUI === "function") window.updateAudioUI();
-      if (window.SoundManager && window.SoundManager.ctx)
-        window.SoundManager.updateVolumes();
-
-      // Run automated background check for live server updates
-      if (typeof window.checkForUpdates === "function") {
-        setTimeout(window.checkForUpdates, 1500);
-      }
-
-      if (parsed.lastSaveTime) {
-        let now = Date.now();
-        let offlineMs = now - parsed.lastSaveTime;
-
-        let keyTypes = ["equip", "gold", "mat"];
-        keyTypes.forEach((k) => {
-          let count = k + "Keys";
-          let time =
-            "next" + k.charAt(0).toUpperCase() + k.slice(1) + "KeyTime";
-          if (window.playerStats[count] < 3) {
-            let keyTime = window.playerStats[time] || now;
-            let msSinceNextKey = now - keyTime;
-            if (msSinceNextKey >= 0) {
-              let keysEarned = 1 + Math.floor(msSinceNextKey / 21600000); // 6 Hours
-              window.playerStats[count] = Math.min(
-                3,
-                window.playerStats[count] + keysEarned,
-              );
-              window.playerStats[time] =
-                now + (21600000 - (msSinceNextKey % 21600000));
-            }
+      let keyTypes = ["equip", "gold", "mat"];
+      keyTypes.forEach((k) => {
+        let count = k + "Keys";
+        let time =
+          "next" + k.charAt(0).toUpperCase() + k.slice(1) + "KeyTime";
+        if (window.playerStats[count] < 3) {
+          let keyTime = window.playerStats[time] || now;
+          let msSinceNextKey = now - keyTime;
+          if (msSinceNextKey >= 0) {
+            let keysEarned = 1 + Math.floor(msSinceNextKey / 21600000);
+            window.playerStats[count] = Math.min(
+              3,
+              window.playerStats[count] + keysEarned,
+            );
+            window.playerStats[time] =
+              now + (21600000 - (msSinceNextKey % 21600000));
           }
-        });
-        if (typeof window.applyOfflineGains === "function")
-          window.applyOfflineGains(offlineMs);
-      }
-      setTimeout(() => {
-        if (typeof window.pushLog === "function")
-          window.pushLog(
-            `<span style='color:#3498db; font-weight:bold;'>[SYSTEM] Local save loaded successfully.</span>`,
-          );
-      }, 500);
+        }
+      });
+      if (typeof window.applyOfflineGains === "function")
+        window.applyOfflineGains(offlineMs);
+    }
+    setTimeout(() => {
+      if (typeof window.pushLog === "function")
+        window.pushLog(
+          `<span style='color:#3498db; font-weight:bold;'>[SYSTEM] Local save loaded successfully.</span>`,
+        );
+    }, 500);
+
+    if (typeof window.refreshMarketShopIfNeeded === "function")
+      window.refreshMarketShopIfNeeded();
+  } catch (e) {
+    console.error("Save load failed", e);
+  }
+};
+
+window.loadGame = function () {
+  window.loadGameAndSyncCloud();
+};
+
+window.loadGameAndSyncCloud = function () {
+  let localDataRaw = localStorage.getItem("idle_game_v11");
+  let localParsed = null;
+
+  if (localDataRaw) {
+    try {
+      localParsed = JSON.parse(localDataRaw);
+      window.applySaveStatePayload(localParsed);
     } catch (e) {
-      console.error("Save load failed", e);
+      console.error("Local save load failed", e);
     }
   }
+
+  const userId = window.getGameUserId();
+  fetch(`${window.GAME_SERVER_URL}/api/load`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success && data.saveData) {
+      let cloudTime = data.timestamp || 0;
+      let localTime = (localParsed && localParsed.lastSaveTime) || 0;
+
+      if (cloudTime > localTime) {
+        console.log('☁️ Newer Cloud Save found! Syncing state...');
+        window.applySaveStatePayload(data.saveData);
+        if (typeof window.updateUI === "function") window.updateUI();
+        if (typeof window.renderInventory === "function") window.renderInventory();
+        localStorage.setItem("idle_game_v11", JSON.stringify(data.saveData));
+      } else {
+        console.log('📱 Local progress is up to date.');
+      }
+    }
+  })
+  .catch(err => {
+    console.log('📡 Could not reach Cloud server for sync check. Running off local cache.');
+  });
+
   let autoSalvageSelect = document.getElementById("auto-salvage-setting");
   if (
     autoSalvageSelect &&
