@@ -896,20 +896,20 @@ window.renderRiftConsole = function () {
             </div>
         `;
   } else {
-    levelSelectorHtml = `
-            <div style="background:rgba(155, 89, 182, 0.1); border:1px solid #4a154b; border-radius:6px; padding:10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <strong style="color:#df9ffb; font-size:11.5px; display:block;">CHOOSE RIFT TIER / LEVEL:</strong>
-                    <span style="font-size:10px; color:#aaa;">Max Unlocked: Level ${maxLvl}</span>
-                </div>
-                <div style="display:flex; align-items:center; gap:6px;">
-                    <button class="btn-action" style="padding:4px 10px; background:#4a154b;" onclick="window.changeRiftLevel(-1)">-</button>
-                    <strong style="font-size:14px; font-family:monospace; min-width:30px; text-align:center; color:#fff;" id="rift-console-level-val">${selectedLvl}</strong>
-                    <button class="btn-action" style="padding:4px 10px; background:#4a154b;" onclick="window.changeRiftLevel(1)">+</button>
-                </div>
-            </div>
-        `;
-  }
+      levelSelectorHtml = `
+              <div style="background:rgba(155, 89, 182, 0.1); border:1px solid #4a154b; border-radius:6px; padding:10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; cursor:help;" onmouseenter="window.showRiftRewardBreakdownTooltip(event, ${selectedLvl})" onmouseleave="window.hideTooltip()" ontouchstart="window.showRiftRewardBreakdownTooltip(event, ${selectedLvl})">
+                  <div>
+                      <strong style="color:#df9ffb; font-size:11.5px; display:block;">CHOOSE RIFT TIER / LEVEL: ⓘ</strong>
+                      <span style="font-size:10px; color:#aaa;">Max Unlocked: Level ${maxLvl}</span>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:6px;" onclick="event.stopPropagation();">
+                      <button class="btn-action" style="padding:4px 10px; background:#4a154b;" onclick="window.changeRiftLevel(-1)">-</button>
+                      <strong style="font-size:14px; font-family:monospace; min-width:30px; text-align:center; color:#fff;" id="rift-console-level-val">${selectedLvl}</strong>
+                      <button class="btn-action" style="padding:4px 10px; background:#4a154b;" onclick="window.changeRiftLevel(1)">+</button>
+                  </div>
+              </div>
+          `;
+    }
 
   let slidesHtml = window.riftBossesMetadata
     .map((boss, idx) => {
@@ -1063,6 +1063,11 @@ window.changeRiftLevel = function (direction) {
   if (newLvl > maxLvl) newLvl = maxLvl;
   window.riftSelectedLevel = newLvl;
   window.renderRiftConsole();
+
+  let tt = document.getElementById("game-tooltip");
+  if (tt && tt.style.display === "block") {
+    window.showRiftRewardBreakdownTooltip(null, newLvl);
+  }
 };
 
 window.changeRiftSlide = function (direction) {
@@ -2410,42 +2415,42 @@ window.showStatBreakdown = function (e, statKey, isPct = false) {
   let effectiveInt = Math.max(0, p.int - 5);
 
   let map = {
-    str: {
-      title: "💪 STR (Strength)",
-      base: window.playerStats.baseStr,
-      lvl: alloc.spStr || 0,
-      color: "#fff",
-    },
-    dex: {
-      title: "🎯 DEX (Dexterity)",
-      base: window.playerStats.baseDex,
-      lvl: alloc.spDex || 0,
-      color: "#fff",
-    },
-    int: {
-      title: "🧠 INT (Intelligence)",
-      base: window.playerStats.baseInt,
-      lvl: alloc.spInt || 0,
-      color: "#fff",
-    },
-    atk: {
-      title: "⚔️ Total Attack",
-      base: window.playerStats.baseAtk,
-      lvl: alloc.spAtk * 6,
-      color: "#fff",
-    },
-    maxHp: {
-      title: "❤️ Max Health",
-      base: window.playerStats.baseMaxHp,
-      lvl: alloc.spHp * 45,
-      color: "#fff",
-    },
-    def: {
-      title: "🛡️ Total Defense",
-      base: window.playerStats.baseDef,
-      lvl: alloc.spDef * 4,
-      color: "#fff",
-    },
+      str: {
+        title: "💪 STR (Strength)",
+        base: window.playerStats.baseStr,
+        lvl: (alloc.spStr || 0) * 3,
+        color: "#fff",
+      },
+      dex: {
+        title: "🎯 DEX (Dexterity)",
+        base: window.playerStats.baseDex,
+        lvl: (alloc.spDex || 0) * 3,
+        color: "#fff",
+      },
+      int: {
+        title: "🧠 INT (Intelligence)",
+        base: window.playerStats.baseInt,
+        lvl: (alloc.spInt || 0) * 3,
+        color: "#fff",
+      },
+      atk: {
+        title: "⚔️ Total Attack",
+        base: window.playerStats.baseAtk,
+        lvl: alloc.spAtk * 6,
+        color: "#fff",
+      },
+      maxHp: {
+        title: "❤️ Max Health",
+        base: window.playerStats.baseMaxHp,
+        lvl: alloc.spHp * 50,
+        color: "#fff",
+      },
+      def: {
+        title: "🛡️ Total Defense",
+        base: window.playerStats.baseDef,
+        lvl: alloc.spDef * 5,
+        color: "#fff",
+      },
     moveSpeed: {
       title: "👟 Move Speed",
       base: window.playerStats.baseMoveSpeed,
@@ -2668,71 +2673,83 @@ window.showStatBreakdown = function (e, statKey, isPct = false) {
     html += `<div class="tt-stat-line" style="color:#9b59b6;">• Intelligence Scaling (INT): ${formatVal(intScaleTotal)}</div>`;
 
   let totalVal =
-    data.base +
-    data.lvl +
-    gearTotal +
-    artTotal +
-    achTotal +
-    intScaleTotal +
-    prestigeTotal +
-    setFlatBonus;
-  if (statKey === "atk" && effectiveStr > 0) {
-    html += `<div class="tt-stat-line" style="color:#e67e22;">• Strength Scaling (STR): +${Math.floor(totalVal * (effectiveStr * 0.01))}</div>`;
-    html += `<div class="tt-stat-line" style="color:#e67e22; font-style:italic;">  (+${effectiveStr}% Multiplier)</div>`;
-  }
-  if (statKey === "maxHp" && effectiveStr > 0) {
-    html += `<div class="tt-stat-line" style="color:#e67e22;">• Strength Scaling (STR): +${Math.floor(totalVal * (effectiveStr * 0.01))}</div>`;
-    html += `<div class="tt-stat-line" style="color:#e67e22; font-style:italic;">  (+${effectiveStr}% Multiplier)</div>`;
-  }
-  if (statKey === "def" && effectiveInt > 0) {
-    html += `<div class="tt-stat-line" style="color:#9b59b6;">• Intelligence Scaling (INT): +${Math.floor(totalVal * (effectiveInt * 0.01))}</div>`;
-    html += `<div class="tt-stat-line" style="color:#9b59b6; font-style:italic;">  (+${effectiveInt}% Multiplier)</div>`;
-  }
-  if (statKey === "moveSpeed" && effectiveDex > 0) {
-    html += `<div class="tt-stat-line" style="color:#3498db;">• Dexterity Scaling (DEX): +${(effectiveDex * 0.25).toFixed(1)}</div>`;
-  }
-  if (statKey === "critChance" && effectiveDex > 0) {
-    let scaleVal = (effectiveDex * 0.3) / (effectiveDex + 250);
-    html += `<div class="tt-stat-line" style="color:#3498db;">• Dexterity Scaling (DEX): +${Math.floor(scaleVal * 100)}%</div>`;
-  }
-  if (statKey === "critDamage" && effectiveDex > 0) {
-    let scaleVal = effectiveDex * 0.003;
-    html += `<div class="tt-stat-line" style="color:#3498db;">• Dexterity Scaling (DEX): +${Math.floor(scaleVal * 100)}%</div>`;
-  }
-  if (statKey === "block" && effectiveInt > 0) {
-    let scaleVal = (effectiveInt * 0.12) / (effectiveInt + 150);
-    html += `<div class="tt-stat-line" style="color:#9b59b6;">• Intelligence Scaling (INT): +${Math.floor(scaleVal * 100)}%</div>`;
-  }
-  if (statKey === "parry" && effectiveInt > 0) {
-    let scaleVal = (effectiveInt * 0.12) / (effectiveInt + 150);
-    html += `<div class="tt-stat-line" style="color:#9b59b6;">• Intelligence Scaling (INT): +${Math.floor(scaleVal * 100)}%</div>`;
-  }
-  if (statKey === "critChance" || statKey === "critDamage") {
-    if (window.playerStats.frenzyTimer > 0)
-      html += `<div class="tt-stat-line" style="color:#e67e22; font-weight:bold; margin-top:5px;">• FRENZY BUFF ACTIVE!</div>`;
-  }
-  if (statKey === "block" || statKey === "parry") {
-    let rawSum = statKey === "block" ? p.rawBlock : p.rawParry;
-    html += `<div style="margin: 6px 0; border-top: 1px dashed #444; padding-top: 4px; color: #ffb6c1; font-weight: bold;">Asymptotic Diminishing Returns:</div>`;
-    html += `<div class="tt-stat-line" style="color:#aaa;">• Raw Accumulated Sum: <strong style="color:#fff;">${Math.round(rawSum * 100)}%</strong></div>`;
-    html += `<div class="tt-stat-line" style="color:#2ecc71;">• Effective Avoidance: <strong style="color:#2ecc71;">${Math.floor(p[statKey] * 100)}%</strong></div>`;
-  }
-  if (statKey === "str") {
-    html += `<div style="margin: 6px 0; border-top: 1px dashed #444; padding-top: 4px; color: #ffb6c1; font-weight: bold;">Scaling Contributions:</div>`;
-    html += `<div class="tt-stat-line" style="color:#2ecc71;">• Attack: +${Math.max(0, totalVal - 5)}% Multiplier</div>`;
-    html += `<div class="tt-stat-line" style="color:#e74c3c;">• Max HP: +${Math.max(0, totalVal - 5)}% Multiplier</div>`;
-  } else if (statKey === "dex") {
-    html += `<div style="margin: 6px 0; border-top: 1px dashed #444; padding-top: 4px; color: #ffb6c1; font-weight: bold;">Scaling Contributions:</div>`;
-    html += `<div class="tt-stat-line" style="color:#e67e22;">• Crit Chance: +${(totalVal * 0.2).toFixed(1)}%</div>`;
-    html += `<div class="tt-stat-line" style="color:#f1c40f;">• Crit Multi: +${(totalVal * 1.0).toFixed(1)}%</div>`;
-    html += `<div class="tt-stat-line" style="color:#3498db;">• Move Speed: +${(totalVal * 0.25).toFixed(1)}</div>`;
-  } else if (statKey === "int") {
-    html += `<div style="margin: 6px 0; border-top: 1px dashed #444; padding-top: 4px; color: #ffb6c1; font-weight: bold;">Scaling Contributions:</div>`;
-    html += `<div class="tt-stat-line" style="color:#3498db;">• Block Rate: +${(totalVal * 0.2).toFixed(1)}%</div>`;
-    html += `<div class="tt-stat-line" style="color:#e74c3c;">• Parry Rate: +${(totalVal * 0.2).toFixed(1)}%</div>`;
-    html += `<div class="tt-stat-line" style="color:#2ecc71;">• Defense: +${Math.max(0, totalVal - 5)}% Multiplier</div>`;
-    html += `<div class="tt-stat-line" style="color:#9b59b6;">• Potion Dur: +${(totalVal * 0.1).toFixed(1)}%</div>`;
-  }
+      data.base +
+      data.lvl +
+      gearTotal +
+      artTotal +
+      achTotal +
+      intScaleTotal +
+      prestigeTotal +
+      setFlatBonus;
+    if (statKey === "atk" && effectiveStr > 0) {
+          let actualDmgAdded = Math.floor(totalVal * (effectiveStr * 0.003));
+          html += `<div class="tt-stat-line" style="color:#e67e22;">• Strength Scaling (STR): +${actualDmgAdded} Damage</div>`;
+          html += `<div class="tt-stat-line" style="color:#e67e22; font-style:italic;">  (+${(effectiveStr * 0.3).toFixed(1)}% Multiplier)</div>`;
+        }
+        if (statKey === "maxHp" && effectiveStr > 0) {
+              let hpBonus = Math.floor(totalVal * (effectiveStr * 0.003));
+              html += `<div class="tt-stat-line" style="color:#e74c3c;">• Strength Scaling (STR): +${hpBonus.toLocaleString()} HP</div>`;
+              html += `<div class="tt-stat-line" style="color:#e74c3c; font-style:italic;">  (+${(effectiveStr * 0.3).toFixed(1)}% Multiplier)</div>`;
+            }
+            if (statKey === "def" && effectiveInt > 0) {
+          let logarithmicIntPct = Math.log10(effectiveInt + 1) * 0.15;
+          html += `<div class="tt-stat-line" style="color:#9b59b6;">• Intelligence Scaling (INT): +${Math.floor(totalVal * logarithmicIntPct)} Defense</div>`;
+          html += `<div class="tt-stat-line" style="color:#9b59b6; font-style:italic;">  (+${(logarithmicIntPct * 100).toFixed(1)}% Multiplier)</div>`;
+        }
+        if (statKey === "moveSpeed" && effectiveDex > 0) {
+      let scaleVal = (effectiveDex * 20) / (effectiveDex + 150);
+      html += `<div class="tt-stat-line" style="color:#3498db;">• Dexterity Scaling (DEX): +${scaleVal.toFixed(1)} Speed</div>`;
+    }
+    if (statKey === "critChance" && effectiveDex > 0) {
+      let scaleVal = (effectiveDex * 0.3) / (effectiveDex + 250);
+      html += `<div class="tt-stat-line" style="color:#3498db;">• Dexterity Scaling (DEX): +${(scaleVal * 100).toFixed(1)}%</div>`;
+    }
+    if (statKey === "critDamage" && effectiveDex > 0) {
+      let scaleVal = effectiveDex * 0.003;
+      html += `<div class="tt-stat-line" style="color:#3498db;">• Dexterity Scaling (DEX): +${(scaleVal * 100).toFixed(1)}%</div>`;
+    }
+    if (statKey === "block" && effectiveInt > 0) {
+      let scaleVal = (effectiveInt * 0.12) / (effectiveInt + 150);
+      html += `<div class="tt-stat-line" style="color:#9b59b6;">• Intelligence Scaling (INT): +${(scaleVal * 100).toFixed(1)}%</div>`;
+    }
+    if (statKey === "parry" && effectiveInt > 0) {
+      let scaleVal = (effectiveInt * 0.12) / (effectiveInt + 150);
+      html += `<div class="tt-stat-line" style="color:#9b59b6;">• Intelligence Scaling (INT): +${(scaleVal * 100).toFixed(1)}%</div>`;
+    }
+    if (statKey === "critChance" || statKey === "critDamage") {
+      if (window.playerStats.frenzyTimer > 0)
+        html += `<div class="tt-stat-line" style="color:#e67e22; font-weight:bold; margin-top:5px;">• FRENZY BUFF ACTIVE!</div>`;
+    }
+    if (statKey === "block" || statKey === "parry") {
+      let rawSum = statKey === "block" ? p.rawBlock : p.rawParry;
+      html += `<div style="margin: 6px 0; border-top: 1px dashed #444; padding-top: 4px; color: #ffb6c1; font-weight: bold;">Asymptotic Diminishing Returns:</div>`;
+      html += `<div class="tt-stat-line" style="color:#aaa;">• Raw Accumulated Sum: <strong style="color:#fff;">${Math.round(rawSum * 100)}%</strong></div>`;
+      html += `<div class="tt-stat-line" style="color:#2ecc71;">• Effective Avoidance: <strong style="color:#2ecc71;">${Math.floor(p[statKey] * 100)}%</strong></div>`;
+    }
+    if (statKey === "str") {
+      let effStr = Math.max(0, totalVal - 5);
+      html += `<div style="margin: 6px 0; border-top: 1px dashed #444; padding-top: 4px; color: #ffb6c1; font-weight: bold;">Scaling Contributions:</div>`;
+      html += `<div class="tt-stat-line" style="color:#2ecc71;">• Attack Multiplier: +${(effStr * 0.3).toFixed(1)}%</div>`;
+      html += `<div class="tt-stat-line" style="color:#e74c3c;">• Max HP Multiplier: +${(effStr * 0.3).toFixed(1)}%</div>`;
+    } else if (statKey === "dex") {
+      let effDex = Math.max(0, totalVal - 5);
+      let critChScale = (effDex * 0.3) / (effDex + 250);
+      let moveSpdScale = (effDex * 20) / (effDex + 150);
+      html += `<div style="margin: 6px 0; border-top: 1px dashed #444; padding-top: 4px; color: #ffb6c1; font-weight: bold;">Scaling Contributions:</div>`;
+      html += `<div class="tt-stat-line" style="color:#e67e22;">• Crit Chance: +${(critChScale * 100).toFixed(1)}%</div>`;
+      html += `<div class="tt-stat-line" style="color:#f1c40f;">• Crit Multiplier: +${(effDex * 0.3).toFixed(1)}%</div>`;
+      html += `<div class="tt-stat-line" style="color:#3498db;">• Move Speed Boost: +${moveSpdScale.toFixed(1)}</div>`;
+    } else if (statKey === "int") {
+      let effInt = Math.max(0, totalVal - 5);
+      let blockChScale = (effInt * 0.12) / (effInt + 150);
+      let intDefPct = Math.log10(effInt + 1) * 0.15;
+      let potDurScale = effInt * 0.0001;
+      html += `<div style="margin: 6px 0; border-top: 1px dashed #444; padding-top: 4px; color: #ffb6c1; font-weight: bold;">Scaling Contributions:</div>`;
+      html += `<div class="tt-stat-line" style="color:#3498db;">• Block Rate Boost: +${(blockChScale * 100).toFixed(1)}%</div>`;
+      html += `<div class="tt-stat-line" style="color:#e74c3c;">• Parry Rate Boost: +${(blockChScale * 100).toFixed(1)}%</div>`;
+      html += `<div class="tt-stat-line" style="color:#2ecc71;">• Defense Multiplier: +${(intDefPct * 100).toFixed(1)}%</div>`;
+      html += `<div class="tt-stat-line" style="color:#9b59b6;">• Potion Duration: +${potDurScale.toFixed(4)}%</div>`;
+    }
 
   html += `</div>`;
   tt.style.borderColor = data.color;
@@ -3578,12 +3595,14 @@ window.showStatHoverTooltip = function (e, key) {
     html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#2ecc71;">🍀 Drop Rate Modifier</div><div style="color:#aaa; font-size:11px;">Current Multiplier: x${(p.drop * eff).toFixed(2)} ${eff > 1.0 ? "(Manual Play Bonus Active)" : ""}<br><br><b>Exact Chances:</b><br>• Standard Mob Drop: ${(4.5 * p.drop * eff).toFixed(2)}%<br>• Rare Mob Drop: ${(15.0 * p.drop * eff).toFixed(2)}%<br>• Boss Drop: ${(25.0 * p.drop * eff).toFixed(2)}%<br>• Dungeon Mob: ${(10.0 * p.drop * eff).toFixed(2)}%</div></div>`;
     tt.style.borderColor = "#2ecc71";
   } else if (key === "qly") {
-    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#9b59b6;">💎 Drop Quality Modifier</div><div style="color:#aaa; font-size:11px;">Current Multiplier: x${p.qly.toFixed(2)}<br><br>Increases the probability that an item drop will roll with more bonus modifier lines (higher star rating).</div></div>`;
-    tt.style.borderColor = "#9b59b6";
-  } else if (key === "idps") {
-    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#e67e22;">🔄 Idle DPS</div><div style="color:#aaa; font-size:11px;">Current Idle Damage/Sec: ${idps.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}<br><br>Represents your average damage output per second when idle (incorporates Attack, Attack Speed, Crit Chance, and Crit Multipliers).</div></div>`;
-    tt.style.borderColor = "#e67e22";
-  } else if (key === "xpr") {
+      html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#9b59b6;">💎 Drop Quality Modifier</div><div style="color:#aaa; font-size:11px;">Current Multiplier: x${p.qly.toFixed(2)}<br><br>Increases the probability that an item drop will roll with more bonus modifier lines (higher star rating).</div></div>`;
+      tt.style.borderColor = "#9b59b6";
+    } else if (key === "idps") {
+      let effMultiplier = 1 + p.critChance * (p.critDamage - 1);
+      let idps = p.atk * effMultiplier * (60 / p.idleAttackSpeed);
+      html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#e67e22;">🔄 Idle DPS</div><div style="color:#aaa; font-size:11px;">Current Idle Damage/Sec: ${idps.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}<br><br>Represents your average damage output per second when idle (incorporates Attack, Attack Speed, Crit Chance, and Crit Multipliers).</div></div>`;
+      tt.style.borderColor = "#e67e22";
+    } else if (key === "xpr") {
     html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#a855f7;">🧠 XP Rate Multiplier</div><div style="color:#aaa; font-size:11px;">Current Multiplier: x${p.xpRate.toFixed(2)}<br><br>Multiplies all acquired experience from routing, bosses, and dungeons.<br><br><b>Boosted by:</b><br>• Prestige upgrades (+10% per level)<br>• Active XP potions / elixirs<br>• Chronicle of Past Lives Unique Tome<br>• Unlocked Achievements</div></div>`;
     tt.style.borderColor = "#a855f7";
   } else if (key === "bar") {
@@ -6696,6 +6715,60 @@ window.showRatesLockTooltip = function (e, lockType) {
   window.positionTooltip(e, tt);
 };
 
+window.showRiftRewardBreakdownTooltip = function (e, lvl) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  let tt = document.getElementById("game-tooltip");
+  if (!tt) return;
+
+  // Track coordinates for seamless live updating
+  if (e && e.clientX !== undefined) {
+    window.lastRiftTooltipEvent = e;
+  }
+
+  let minStars = Math.min(5, Math.floor(lvl / 4));
+  let keys = 1 + Math.floor(lvl / 10);
+  let shards = 1 + Math.floor(lvl / 3);
+
+  let coresMin = Math.floor(lvl / 5);
+  let coresMax = coresMin;
+  if ((lvl % 5) > 0) coresMax++;
+
+  let essenceMin = Math.floor(lvl / 6);
+  let essenceMax = essenceMin;
+  if ((lvl % 6) > 0) essenceMax++;
+
+  let legendary = Math.floor(lvl / 2);
+  let mythic = Math.floor(lvl / 3);
+
+  let starsName = window.getTierName(minStars);
+  let starsColor = window.getTierColor(minStars);
+
+  let html = `
+    <div style="padding: 12px; width: 250px; box-sizing: border-box; font-family: sans-serif;">
+        <div class="tt-title" style="color:#9b59b6; font-size:12px; font-weight:bold; margin-bottom:4px; border-bottom:1px solid #333; padding-bottom:4px;">🌌 Rift Level ${lvl} Payouts</div>
+        <div class="tt-subtitle" style="margin-bottom:8px; color:#aaa; font-size:10px; font-style: italic;">Scaling reward projections for this Tier:</div>
+        <div style="display:flex; flex-direction:column; gap:4px; font-size:11px; font-family: monospace;">
+            <div class="tt-stat-line" style="color:#fff;">• 👑 Min Quality: <strong style="color:${starsColor};">${starsName} (${minStars}★)</strong></div>
+            <div class="tt-stat-line" style="color:#fff;">• 🔑 Gacha Keys: <strong style="color:#f1c40f;">x${keys}</strong></div>
+            <div class="tt-stat-line" style="color:#fff;">• 🔮 Eridium Shards: <strong style="color:#8e44ad;">x${shards}</strong></div>
+            <div class="tt-stat-line" style="color:#fff;">• 🔋 Catalyst Cores: <strong style="color:#2ecc71;">x${coresMin === coresMax ? coresMin : coresMin + "-" + coresMax}</strong></div>
+            <div class="tt-stat-line" style="color:#fff;">• 🌌 Astral Essence: <strong style="color:#9b59b6;">x${essenceMin === essenceMax ? essenceMin : essenceMin + "-" + essenceMax}</strong></div>
+            <div class="tt-stat-line" style="color:#fff;">• 🟨 Legendary Scraps: <strong style="color:#f1c40f;">x${legendary}</strong></div>
+            <div class="tt-stat-line" style="color:#fff;">• 🟥 Mythic Scraps: <strong style="color:#e74c3c;">x${mythic}</strong></div>
+        </div>
+        <div style="margin-top:8px; border-top:1px dashed #444; padding-top:6px; font-size:9.5px; color:#7f8c8d; line-height:1.35; white-space:normal; font-family:sans-serif;">
+            Defeating this Rift Guardian guarantees equipment of the listed minimum quality or higher.
+        </div>
+    </div>
+  `;
+  tt.style.borderColor = "#9b59b6";
+  tt.innerHTML = html;
+  tt.style.display = "block";
+  if (window.lastRiftTooltipEvent) {
+    window.positionTooltip(window.lastRiftTooltipEvent, tt);
+  }
+};
+
 window.makeWindowDraggable = function (el, handle) {
   let pos1 = 0,
     pos2 = 0,
@@ -6776,20 +6849,20 @@ window.renderAltarTab = function () {
                             </div>
                         `;
   } else {
-    lvlSelectorHtml = `
-                            <div style="background:rgba(155, 89, 182, 0.1); border:1px solid #4a154b; border-radius:6px; padding:10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-                                <div>
-                                    <strong style="color:#df9ffb; font-size:11.5px; display:block;">CHOOSE RIFT TIER / LEVEL:</strong>
-                                    <span style="font-size:10px; color:#aaa;">Max Unlocked: Level ${maxLvl}</span>
-                                </div>
-                                <div style="display:flex; align-items:center; gap:6px;">
-                                    <button class="btn-action" style="padding:4px 10px; background:#4a154b;" onclick="window.changeAltarRiftLevel(-1)">-</button>
-                                    <strong style="font-size:14px; font-family:monospace; min-width:30px; text-align:center; color:#fff;">${selectedLvl}</strong>
-                                    <button class="btn-action" style="padding:4px 10px; background:#4a154b;" onclick="window.changeAltarRiftLevel(1)">+</button>
-                                </div>
-                            </div>
-                        `;
-  }
+      lvlSelectorHtml = `
+                              <div style="background:rgba(155, 89, 182, 0.1); border:1px solid #4a154b; border-radius:6px; padding:10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; cursor:help;" onmouseenter="window.showRiftRewardBreakdownTooltip(event, ${selectedLvl})" onmouseleave="window.hideTooltip()" ontouchstart="window.showRiftRewardBreakdownTooltip(event, ${selectedLvl})">
+                                  <div>
+                                      <strong style="color:#df9ffb; font-size:11.5px; display:block;">CHOOSE RIFT TIER / LEVEL: ⓘ</strong>
+                                      <span style="font-size:10px; color:#aaa;">Max Unlocked: Level ${maxLvl}</span>
+                                  </div>
+                                  <div style="display:flex; align-items:center; gap:6px;" onclick="event.stopPropagation();">
+                                      <button class="btn-action" style="padding:4px 10px; background:#4a154b;" onclick="window.changeAltarRiftLevel(-1)">-</button>
+                                      <strong style="font-size:14px; font-family:monospace; min-width:30px; text-align:center; color:#fff;">${selectedLvl}</strong>
+                                      <button class="btn-action" style="padding:4px 10px; background:#4a154b;" onclick="window.changeAltarRiftLevel(1)">+</button>
+                                  </div>
+                              </div>
+                          `;
+    }
 
   let slidesHtml = window.riftBossesMetadata
     .map((boss, idx) => {
@@ -6953,6 +7026,11 @@ window.changeAltarRiftLevel = function (direction) {
   if (newLvl > maxLvl) newLvl = maxLvl;
   window.riftSelectedLevel = newLvl;
   window.renderAltarTab();
+
+  let tt = document.getElementById("game-tooltip");
+  if (tt && tt.style.display === "block") {
+    window.showRiftRewardBreakdownTooltip(null, newLvl);
+  }
 };
 
 window.changeAltarSlide = function (direction) {

@@ -2476,16 +2476,16 @@ window.executeHitCalculations = function () {
 
     // Peak single-hit check
     window.playerStats.peakSingleHit = Math.max(
-      window.playerStats.peakSingleHit || 0,
-      finalDamage,
-    );
-    if (isCrit) {
-      window.playerStats.recentCritTime = Date.now();
-      // Overkill check (deals critical hit exceeding mob's remaining HP by 1000%+)
-      if (finalDamage > window.mob.hp * 11) {
-        window.playerStats.hasTriggeredOverkill = true;
-      }
-    }
+          window.playerStats.peakSingleHit || 0,
+          finalDamage,
+        );
+        if (isCrit) {
+          window.playerStats.recentCritTime = Date.now();
+          // Overkill check (deals critical hit exceeding mob's maximum HP by 1,000,000%)
+          if (finalDamage >= window.mob.maxHp * 10000) {
+            window.playerStats.hasTriggeredOverkill = true;
+          }
+        }
     if (typeof window.checkAchievements === "function") {
       window.checkAchievements();
     }

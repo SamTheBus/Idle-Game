@@ -3,7 +3,7 @@
    initial global state, and system utility functions.
    ========================================================================= */
 
-window.GAME_VERSION = 0.87; // Pre-release Alpha 0.8.7 // Increment this whenever you push a new release
+window.GAME_VERSION = 0.89; // Pre-release Alpha 0.8.9 // Increment this whenever you push a new release
 
 // --- SYSTEM UTILS ---
 
@@ -2821,13 +2821,13 @@ window.AchievementsData = [
     stats: { parry: 0.02, block: 0.02, defPct: 0.05 },
   },
   {
-    id: "sing_overkill",
-    name: "Overkill",
-    icon: "💥",
-    desc: "Deal a critical hit that exceeds a route monster's remaining HP by 1000%+",
-    isSingleTier: true,
-    stats: { critDamage: 0.15, atkPct: 0.05 },
-  },
+      id: "sing_overkill",
+      name: "Overkill",
+      icon: "💥",
+      desc: "Deal a critical hit that exceeds a route monster's max HP by 1,000,000%+",
+      isSingleTier: true,
+      stats: { critDamage: 0.15, atkPct: 0.05 },
+    },
   {
     id: "sing_speedrun",
     name: "Speedrunner's Delight",
