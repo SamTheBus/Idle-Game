@@ -3030,13 +3030,13 @@ window.rollGachaCrateItem = function () {
     delete window.inventory.ETC["Gacha Key"];
 
   // --- PITY COUNTER ENGINE ---
-  window.playerStats.vendingPity = (window.playerStats.vendingPity || 0) + 1;
-  let isPityTriggered = false;
+    window.playerStats.vendingPity = (window.playerStats.vendingPity || 0) + 1;
+    let isPityTriggered = false;
 
-  if (window.playerStats.vendingPity >= 20) {
-    isPityTriggered = true;
-    window.playerStats.vendingPity = 0; // Reset pity
-  }
+    if (window.playerStats.vendingPity >= 50) { // Increased from 20 to 50
+      isPityTriggered = true;
+      window.playerStats.vendingPity = 0; // Reset pity
+    }
 
   let statLinesCount = 1;
   if (isPityTriggered) {

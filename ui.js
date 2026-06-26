@@ -1537,16 +1537,10 @@ window.updateUI = function () {
   }
 
   // Update Vending Subtab variables if active
-  let gachaSec = document.getElementById("market-sec-gacha");
-  if (gachaSec && gachaSec.style.display !== "none") {
-    window.setText(
-      "vending-lvl-display",
-      window.playerStats.vendingQLevel || 0,
-    );
-    window.setText(
-      "vending-keys-counter",
-      window.inventory.ETC["Gacha Key"] || 0,
-    );
+      let gachaSec = document.getElementById("market-sec-gacha");
+      if (gachaSec && gachaSec.style.display !== "none") {
+          window.setText("gachapon-lvl-display", window.playerStats.vendingQLevel || 0);
+          window.setText("gacha-key-count-lbl", window.inventory.ETC["Gacha Key"] || 0);
     window.updateGachaRecentList();
     window.renderGachaShowcaseMarquee();
 
@@ -2957,15 +2951,15 @@ window.renderPrestigeTab = function () {
     return `<button class="btn-action" style="margin-top:8px; background:${color}; color:${fontColor}; font-weight:bold;" ${disabled} onclick="window.buyPrestigeUpgrade('${type}')">Upgrade (${cost} PP)</button>`;
   };
 
-  // Stage 80 on first run, Stage 1 onwards (decoupled from peak stage as requested)
-  let requiredStage = p.prestigeCount === 0 ? 80 : 1;
-  let challengeBtnHtml = "";
-  if (p.level < 25)
-    challengeBtnHtml = `<button class="btn-action" style="background:#333; color:#777; border: 1px solid #444; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:not-allowed;" disabled>🔒 Requires Level 25 to Re-Challenge</button>`;
-  else if (p.stage < requiredStage)
-    challengeBtnHtml = `<button class="btn-action" style="background:#2c1a1a; color:#e74c3c; border: 1px solid #781c1c; font-weight:bold; font-size:11px; padding:8px 16px; border-radius:4px; cursor:not-allowed;" disabled>🔒 Push to Stage ${requiredStage} (Current: ${p.stage})</button>`;
-  else
-    challengeBtnHtml = `<button class="btn-action" style="background:#e74c3c; color:white; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:pointer;" onclick="window.challengeHooktail()">Challenge Prestige Boss</button>`;
+  // Stage 80 on first run, Stage 1 onwards after first prestige
+    let requiredStage = window.playerStats.prestigeCount === 0 ? 80 : 1;
+    let challengeBtnHtml = "";
+    if (p.level < 25)
+      challengeBtnHtml = `<button class="btn-action" style="background:#333; color:#777; border: 1px solid #444; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:not-allowed;" disabled>🔒 Requires Level 25 to Re-Challenge</button>`;
+    else if (p.stage < requiredStage)
+      challengeBtnHtml = `<button class="btn-action" style="background:#2c1a1a; color:#e74c3c; border: 1px solid #781c1c; font-weight:bold; font-size:11px; padding:8px 16px; border-radius:4px; cursor:not-allowed;" disabled>🔒 Push to Stage ${requiredStage} (Current: ${p.stage})</button>`;
+    else
+          challengeBtnHtml = `<button class="btn-action" style="background:#e74c3c; color:white; font-weight:bold; font-size:12px; padding:8px 24px; border-radius:4px; cursor:pointer;" onclick="window.challengeHooktail()">Challenge Prestige Boss</button>`;
 
   el.innerHTML = `
                                                                                           <div style="display:flex; flex-direction:column; gap:12px;">
@@ -4532,15 +4526,15 @@ window.generateItemCardHtml = function (
       }
 
       eligibleSetSlots.forEach((slot) => {
-        let eqItem = window.equippedSlots[slot];
-        if (eqItem) {
-          let eqSetName = window.getItemSetName(eqItem);
-          if (slot === "overall" && overallAdoptedSet)
-            eqSetName = overallAdoptedSet;
-          if (eqSetName === setName)
-            currentEquippedCount += slot === "overall" ? 2 : 1;
-        }
-      });
+              let eqItem = window.equippedSlots[slot];
+              if (eqItem) {
+                let eqSetName = window.getItemSetName(eqItem);
+                if (slot === "overall" && overallAdoptedSet)
+                  eqSetName = overallAdoptedSet;
+                if (eqSetName === setName)
+                  currentEquippedCount += (slot === "overall" ? 2 : 1);
+              }
+            });
 
       html += `<div style="margin-top:10px; padding-top:6px; border-top:1px dashed #555;">`;
       let displayCount = Math.min(3, currentEquippedCount);
@@ -4674,6 +4668,13 @@ function getCombinedEquippedTorso() {
     str: (chest?.str || 0) + (leggings?.str || 0),
     dex: (chest?.dex || 0) + (leggings?.dex || 0),
     int: (chest?.int || 0) + (leggings?.int || 0),
+    baseAtk: (chest?.baseAtk || 0) + (leggings?.baseAtk || 0),
+    baseMaxHp: (chest?.baseMaxHp || 0) + (leggings?.baseMaxHp || 0),
+    baseDef: (chest?.baseDef || 0) + (leggings?.baseDef || 0),
+    baseMoveSpeed: (chest?.baseMoveSpeed || 0) + (leggings?.baseMoveSpeed || 0),
+    baseBlock: (chest?.baseBlock || 0) + (leggings?.baseBlock || 0),
+    baseParry: (chest?.baseParry || 0) + (leggings?.baseParry || 0),
+    baseInt: (chest?.baseInt || 0) + (leggings?.baseInt || 0)
   };
 }
 
@@ -5139,18 +5140,18 @@ window.rerollDailyMission = function (missionId) {
 
   window.playerStats.dailyRerollsDone++;
 
-  // Replace inline parameters with the new selection
-  mList[mIndex] = {
-    id: targetMission.id,
-    type: newSelect.type,
-    desc: `${newSelect.label} (${finalTarget.toLocaleString()} ${newSelect.unit})`,
-    current: 0,
-    target: finalTarget,
-    treat: newSelect.treat,
-    treatQty: newSelect.treatQty,
-    completed: false,
-    claimed: false,
-  };
+  // Replace inline parameters with the new selection while ensuring Daily Sacks are preserved
+    mList[mIndex] = {
+      id: targetMission.id,
+      type: newSelect.type,
+      desc: `${newSelect.label} (${finalTarget.toLocaleString()} ${newSelect.unit})`,
+      current: 0,
+      target: finalTarget,
+      treat: "Guild Reward Sack",
+      treatQty: 1,
+      completed: false,
+      claimed: false,
+    };
 
   window.pushHeaderToast("🔄 Mission Re-rolled!", "#2ecc71");
   window.SoundManager.play("swing");
@@ -7773,20 +7774,16 @@ window.renderMissionsWindow = function () {
     p.missionUpgrades = p.missionUpgrades || { gold: 0, atk: 0, hp: 0 };
 
     let lvlGold = p.missionUpgrades.gold || 0;
-    let costGold = 5 + lvlGold * 3;
+        let costGold = 2; // Flat 2 MP
 
-    let lvlAtk = p.missionUpgrades.atk || 0;
-    let costAtk = 8 + lvlAtk * 4;
+        let lvlAtk = p.missionUpgrades.atk || 0;
+        let costAtk = 2; // Flat 2 MP
 
-    let lvlHp = p.missionUpgrades.hp || 0;
-    let costHp = 8 + lvlHp * 4;
+        let lvlHp = p.missionUpgrades.hp || 0;
+        let costHp = 2; // Flat 2 MP
 
-    let canAffordGold = tokenBalance >= costGold;
-    let canAffordAtk = tokenBalance >= costAtk;
-    let canAffordHp = tokenBalance >= costHp;
-
-    let lvlBag = p.missionUpgrades.bag || 0;
-    let costBag = 4 + lvlBag * 3;
+        let lvlBag = p.missionUpgrades.bag || 0;
+        let costBag = 2; // Flat 2 MP
     let canAffordBag = tokenBalance >= costBag;
 
     contentHtml = `
@@ -7862,7 +7859,7 @@ window.renderMissionsWindow = function () {
                                                                                                             <strong style="color:#e74c3c; font-size:10.5px;">🔴 Ancient Core</strong>
                                                                                                             <div style="font-size:9px; color:#aaa;">Activate the Altar of Rifts</div>
                                                                                                         </div>
-                                                                                                        <button class="btn-action" style="background:#bdc3c7; color:#111; padding:3px 8px; font-size:9.5px;" ${tokenBalance >= 5 ? "" : "disabled"} onclick="window.buyMissionItem('Ancient Core', 5)">Buy (5 MP)</button>
+                                                                                                        <button class="btn-action" style="background:#bdc3c7; color:#111; padding:3px 8px; font-size:9.5px;" ${tokenBalance >= 3 ? "" : "disabled"} onclick="window.buyMissionItem('Ancient Core', 2)">Buy (2 MP)</button>
                                                                                                     </div>
 
                                                                                                     <!-- Overlord's Sigil -->
@@ -7880,7 +7877,8 @@ window.renderMissionsWindow = function () {
                                                                                                 <strong style="color:#f1c40f; font-size:10.5px;">🔑 Gacha Key</strong>
                                                                                                 <div style="font-size:9px; color:#aaa;">Roll standard vending crate</div>
                                                                                             </div>
-                                                                                            <button class="btn-action" style="background:#bdc3c7; color:#111; padding:3px 8px; font-size:9.5px;" ${tokenBalance >= 2 ? "" : "disabled"} onclick="window.buyMissionItem('Gacha Key', 2)">Buy (2 MP)</button>
+                                                                                            <button class="btn-action" style="background:#bdc3c7; color:#111; padding:3px 8px; font-size:9.5px;" ${tokenBalance >= 2 ? "" : "disabled"} onclick="window.buyMissionItem('Gacha Key', 4)">Buy (4 MP)</button>
+
                                                                                         </div>
 
                                                                                         <!-- Catalyst Core -->
@@ -8205,8 +8203,14 @@ window.updateGachaRecentList = function () {
 // --- UNBOXING ANIMATIONS AND ENGAGING REWARD FLOWS ---
 
 window.openGuildRewardSack = function () {
-  let owned = window.inventory.USE["Guild Reward Sack"] || 0;
-  if (owned <= 0) return;
+    let owned = window.inventory.USE["Guild Reward Sack"] || 0; // Keep this
+    if (owned <= 0) return;
+
+    let maxBag = window.getMaxBagSlots();
+    if (window.inventory.EQUIP.length >= maxBag) {
+        window.pushHeaderToast("❌ Equipment bag is full!", "#e74c3c");
+        return;
+    }
 
   // Consume 1 Guild Reward Sack
   window.inventory.USE["Guild Reward Sack"]--;
@@ -8415,11 +8419,23 @@ window.openGuildWeeklySack = function () {
     (window.playerStats.missionTokens || 0) + 3;
 
   let receivedRewards = [
-    { name: "Ancient Core", qty: 1, color: "#e74c3c", type: "etc" },
-    { name: "Overlord's Sigil", qty: 1, color: "#1abc9c", type: "etc" },
-    { name: "Eridium Shard", qty: 1, color: "#8e44ad", type: "etc" },
-    { name: "Legendary Scrap", qty: 3, color: "#f1c40f", type: "etc" },
-  ];
+      { name: "Ancient Core", qty: 1, color: "#e74c3c", type: "etc" },
+      { name: "Overlord's Sigil", qty: 1, color: "#1abc9c", type: "etc" },
+      { name: "Eridium Shard", qty: 1, color: "#8e44ad", type: "etc" },
+      { name: "Legendary Scrap", qty: 3, color: "#f1c40f", type: "etc" },
+    ];
+
+    // 5% chance for a random Artifact
+    if (Math.random() < 0.05) {
+        let art = window.createItemObject("artifact", 3, window.playerStats.lifetimePeakStage || 1, 0);
+        window.inventory.ARTIFACT.push(art);
+        receivedRewards.push({ name: art.name, qty: 1, color: "#1abc9c", type: "etc" });
+    }
+
+    receivedRewards.forEach((r) => {
+      if (r.type === "use") window.addUseDrop(r.name, r.qty);
+      else window.addEtcDrop(r.name, r.qty);
+    });
 
   // Credit rewards
   receivedRewards.forEach((r) => {
