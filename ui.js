@@ -2897,9 +2897,8 @@ window.renderGoldUpgrades = function () {
 };
 
 window.getPrestigeUpgradeCost = function (type, currentLevel) {
-  if (type === "bag") return 10; // Bag upgrade is flat 10 PP
-  let cost = currentLevel + 1;
-  return cost > 10 ? 10 : cost; // Caps at 10 PP max
+  if (type === "bag") return 10; // Bag upgrade remains flat 10 PP
+  return currentLevel + 1; // Uncapped linear cost progression (1 PP, 2 PP, 3 PP...)
 };
 
 window.renderPrestigeTab = function () {
@@ -3714,44 +3713,31 @@ window.renderPaperDoll = function () {
         if (item.int > 0) s.push(`🧠I:${item.int}`);
 
         let setLabelHtml = "";
-        let setName = window.getItemSetName(item);
-        if (setName) {
-          let matchingCount = 0;
-          const setSlots = [
-            "weapon",
-            "subweapon",
-            "helmet",
-            "chest",
-            "leggings",
-            "overall",
-            "boots",
-          ];
-          let overallAdoptedSet = null;
-          if (window.equippedSlots.overall) {
-            overallAdoptedSet =
-              (window.equippedSlots.helmet &&
-                window.getItemSetName(window.equippedSlots.helmet)) ||
-              (window.equippedSlots.boots &&
-                window.getItemSetName(window.equippedSlots.boots)) ||
-              (window.equippedSlots.weapon &&
-                window.getItemSetName(window.equippedSlots.weapon)) ||
-              null;
-          }
-          setSlots.forEach((sKey) => {
-            let eqItem = window.equippedSlots[sKey];
-            if (eqItem) {
-              let eqSetName = window.getItemSetName(eqItem);
-              if (sKey === "overall" && overallAdoptedSet)
-                eqSetName = overallAdoptedSet;
-              if (eqSetName === setName)
-                matchingCount += sKey === "overall" ? 2 : 1;
-            }
-          });
-          if (matchingCount >= 2) {
-            let displayCount = Math.min(3, matchingCount);
-            setLabelHtml = `<div style="font-size:8px; color:#2ecc71; font-weight:bold; margin-top:2px; text-transform:uppercase; letter-spacing:0.5px;">✨ ${setName} Set (${displayCount}/3)</div>`;
-          }
-        }
+                let setName = window.getItemSetName(item);
+                if (setName) {
+                  let matchingCount = 0;
+                  const setSlots = [
+                    "weapon",
+                    "subweapon",
+                    "helmet",
+                    "chest",
+                    "leggings",
+                    "overall",
+                    "boots",
+                  ];
+                  setSlots.forEach((sKey) => {
+                    let eqItem = window.equippedSlots[sKey];
+                    if (eqItem) {
+                      let eqSetName = window.getItemSetName(eqItem);
+                      if (eqSetName === setName)
+                        matchingCount += sKey === "overall" ? 2 : 1;
+                    }
+                  });
+                  if (matchingCount >= 2) {
+                    let displayCount = Math.min(3, matchingCount);
+                    setLabelHtml = `<div style="font-size:8px; color:#2ecc71; font-weight:bold; margin-top:2px; text-transform:uppercase; letter-spacing:0.5px;">✨ ${setName} Set (${displayCount}/3)</div>`;
+                  }
+                }
         el.innerHTML = `${iconBox}<strong style="font-size:10px;">${item.name}${temperTag}${lockTag}</strong><div style="font-size:8px; color:${color}; font-weight:bold; margin:2px 0;">${tierLabel}</div>${setLabelHtml}<div style="font-size:9px;color:#bbb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${s.join(" ")}">${s.join(" ")}</div><button class="btn-action un" style="margin-top:2px;padding:1px 3px;" onclick="window.unequipItem('${slot}')">Remove</button>`;
       }
     } else {
@@ -4500,43 +4486,29 @@ window.generateItemCardHtml = function (
     }
 
     let setName = window.getItemSetName ? window.getItemSetName(item) : null;
-    if (setName && window.SET_DEFINITIONS[setName]) {
-      let setDef = window.SET_DEFINITIONS[setName];
-      let currentEquippedCount = 0;
-      const eligibleSetSlots = [
-        "weapon",
-        "subweapon",
-        "helmet",
-        "chest",
-        "leggings",
-        "overall",
-        "boots",
-      ];
+        if (setName && window.SET_DEFINITIONS[setName]) {
+          let setDef = window.SET_DEFINITIONS[setName];
+          let currentEquippedCount = 0;
+          const eligibleSetSlots = [
+            "weapon",
+            "subweapon",
+            "helmet",
+            "chest",
+            "leggings",
+            "overall",
+            "boots",
+          ];
 
-      let overallAdoptedSet = null;
-      if (window.equippedSlots.overall) {
-        overallAdoptedSet =
-          (window.equippedSlots.helmet &&
-            window.getItemSetName(window.equippedSlots.helmet)) ||
-          (window.equippedSlots.boots &&
-            window.getItemSetName(window.equippedSlots.boots)) ||
-          (window.equippedSlots.weapon &&
-            window.getItemSetName(window.equippedSlots.weapon)) ||
-          null;
-      }
+          eligibleSetSlots.forEach((slot) => {
+                  let eqItem = window.equippedSlots[slot];
+                  if (eqItem) {
+                    let eqSetName = window.getItemSetName(eqItem);
+                    if (eqSetName === setName)
+                      currentEquippedCount += (slot === "overall" ? 2 : 1);
+                  }
+                });
 
-      eligibleSetSlots.forEach((slot) => {
-              let eqItem = window.equippedSlots[slot];
-              if (eqItem) {
-                let eqSetName = window.getItemSetName(eqItem);
-                if (slot === "overall" && overallAdoptedSet)
-                  eqSetName = overallAdoptedSet;
-                if (eqSetName === setName)
-                  currentEquippedCount += (slot === "overall" ? 2 : 1);
-              }
-            });
-
-      html += `<div style="margin-top:10px; padding-top:6px; border-top:1px dashed #555;">`;
+          html += `<div style="margin-top:10px; padding-top:6px; border-top:1px dashed #555;">`;
       let displayCount = Math.min(3, currentEquippedCount);
       html += `<div style="font-weight:bold; color:#f1c40f; font-size:10px;">🌟 SET: ${setDef.name} (${displayCount}/3 equipped)</div>`;
       setDef.bonuses.forEach((b) => {
@@ -7394,9 +7366,10 @@ window.buyMissionUpgrade = function (type) {
   let p = window.playerStats;
   p.missionUpgrades = p.missionUpgrades || { gold: 0, atk: 0, hp: 0, bag: 0 };
   let curLevel = p.missionUpgrades[type] || 0;
-  let baseCost = type === "gold" ? 5 : type === "bag" ? 4 : 8;
-  let scalingFactor = type === "gold" ? 3 : type === "bag" ? 3 : 4;
-  let cost = baseCost + curLevel * scalingFactor;
+  let cost = 5; // Flat cost of 5 for gold, atk, and hp
+  if (type === "bag") {
+    cost = 4 + curLevel * 3; // Scales: Lvl 0 costs 4, Lvl 1 costs 7, Lvl 2 costs 10...
+  }
 
   if ((p.missionTokens || 0) < cost) {
     window.pushHeaderToast("❌ Insufficient Mission Tokens!", "#e74c3c");
@@ -7774,22 +7747,22 @@ window.renderMissionsWindow = function () {
     p.missionUpgrades = p.missionUpgrades || { gold: 0, atk: 0, hp: 0 };
 
     let lvlGold = p.missionUpgrades.gold || 0;
-            let costGold = 2;
-            let canAffordGold = tokenBalance >= costGold;
+                let costGold = 5; // Flat cost
+                let canAffordGold = tokenBalance >= costGold;
 
-            let lvlAtk = p.missionUpgrades.atk || 0;
-            let costAtk = 2;
-            let canAffordAtk = tokenBalance >= costAtk;
+                let lvlAtk = p.missionUpgrades.atk || 0;
+                let costAtk = 5; // Flat cost (down from 8)
+                let canAffordAtk = tokenBalance >= costAtk;
 
-            let lvlHp = p.missionUpgrades.hp || 0;
-            let costHp = 2;
-            let canAffordHp = tokenBalance >= costHp;
+                let lvlHp = p.missionUpgrades.hp || 0;
+                let costHp = 5; // Flat cost (down from 8)
+                let canAffordHp = tokenBalance >= costHp;
 
-            let lvlBag = p.missionUpgrades.bag || 0;
-            let costBag = 2;
-            let canAffordBag = tokenBalance >= costBag;
+                let lvlBag = p.missionUpgrades.bag || 0;
+                let costBag = 4 + lvlBag * 3; // Scaling cost: 4, 7, 10, 13...
+                let canAffordBag = tokenBalance >= costBag;
 
-    contentHtml = `
+        contentHtml = `
                                                                                 <div style="display:flex; flex-direction:column; gap:8px;">
                                                                                     <div style="background:#111; border:1px solid #2ecc71; border-radius:6px; padding:10px;">
                                                                                         <strong style="color:#2ecc71; font-size:12px; display:block; margin-bottom:4px;">🎖️ PERMANENT GUILD UPGRADES</strong>

@@ -3,7 +3,7 @@
    initial global state, and system utility functions.
    ========================================================================= */
 
-window.GAME_VERSION = 0.91; // Pre-release Alpha 0.9.1 // Increment this whenever you push a new release
+window.GAME_VERSION = 0.92; // Pre-release Alpha 0.9.2 // Increment this whenever you push a new release
 
 // --- SYSTEM UTILS ---
 
@@ -3485,36 +3485,24 @@ window.resolvePlayerStats = function (useDraft = false) {
     itemAtkPct += 0.2;
 
   let setCounts = {};
-  const eligibleSetSlots = [
-    "weapon",
-    "subweapon",
-    "helmet",
-    "chest",
-    "leggings",
-    "overall",
-    "boots",
-  ];
-  let overallAdoptedSet = null;
-  if (window.equippedSlots.overall) {
-    overallAdoptedSet =
-      (window.equippedSlots.helmet &&
-        window.getItemSetName(window.equippedSlots.helmet)) ||
-      (window.equippedSlots.boots &&
-        window.getItemSetName(window.equippedSlots.boots)) ||
-      (window.equippedSlots.weapon &&
-        window.getItemSetName(window.equippedSlots.weapon)) ||
-      null;
-  }
-  eligibleSetSlots.forEach((slot) => {
-    let item = window.equippedSlots[slot];
-    if (item) {
-      let setName = window.getItemSetName(item);
-      if (slot === "overall" && overallAdoptedSet) setName = overallAdoptedSet;
-      if (setName)
-        setCounts[setName] =
-          (setCounts[setName] || 0) + (slot === "overall" ? 2 : 1);
-    }
-  });
+    const eligibleSetSlots = [
+      "weapon",
+      "subweapon",
+      "helmet",
+      "chest",
+      "leggings",
+      "overall",
+      "boots",
+    ];
+    eligibleSetSlots.forEach((slot) => {
+      let item = window.equippedSlots[slot];
+      if (item) {
+        let setName = window.getItemSetName(item);
+        if (setName)
+          setCounts[setName] =
+            (setCounts[setName] || 0) + (slot === "overall" ? 2 : 1);
+      }
+    });
 
   let setCtx = {
     atk: 0,
