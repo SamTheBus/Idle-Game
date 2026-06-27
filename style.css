@@ -1261,9 +1261,22 @@ canvas {
     order: 2; /* Automatically places stats underneath the command row on mobile */
   }
   .brand-title {
-    font-size: 9.5px;
-    letter-spacing: 0.5px;
-    padding-left: 6px;
+    display: none !important; /* Hides the logo title completely on mobile to maximize button space */
+  }
+  .sub-tabs {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 4px !important;
+  }
+  .sub-tab-btn {
+    flex: 1 1 auto !important;
+    font-size: 8.5px !important;
+    padding: 5px 8px !important;
+    white-space: nowrap !important;
+  }
+  .market-card {
+    padding: 10px !important;
   }
 }
 
