@@ -3088,14 +3088,18 @@ window.rollGachaCrateItem = function () {
   }
 
   // Store inside active pull history log
-  window.playerStats.gachaHistory = window.playerStats.gachaHistory || [];
-  window.playerStats.gachaHistory.unshift(newItem);
-  if (window.playerStats.gachaHistory.length > 5) {
-    window.playerStats.gachaHistory.pop();
-  }
-  window.frozenItemDb[newItem.id] = JSON.parse(JSON.stringify(newItem));
+    window.playerStats.gachaHistory = window.playerStats.gachaHistory || [];
+    window.playerStats.gachaHistory.unshift(newItem);
+    if (window.playerStats.gachaHistory.length > 5) {
+      window.playerStats.gachaHistory.pop();
+    }
+    window.frozenItemDb[newItem.id] = JSON.parse(JSON.stringify(newItem));
 
-  window.checkAchievements();
+    if (typeof window.logHighTierPull === "function") {
+      window.logHighTierPull(newItem);
+    }
+
+    window.checkAchievements();
   window.saveGame();
   return { item: newItem };
 };

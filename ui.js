@@ -8569,32 +8569,71 @@ window.updateGachaRecentList = function () {
   let listEl = document.getElementById("gacha-recent-list");
   if (!listEl) return;
 
-  window.playerStats.gachaHistory = window.playerStats.gachaHistory || [];
-  if (window.playerStats.gachaHistory.length === 0) {
-    listEl.innerHTML = `<div style="color:#666; text-align:center; padding-top:40px; font-size:10px; font-style:italic; line-height: 1.4; white-space:normal;">No recent pulls.<br>Crank the handle inside the dispensary!</div>`;
+  if (!window.GAME_SERVER_URL) {
+    window.playerStats.gachaHistory = window.playerStats.gachaHistory || [];
+    if (window.playerStats.gachaHistory.length === 0) {
+      listEl.innerHTML = `<div style="color:#666; text-align:center; padding-top:40px; font-size:10px; font-style:italic; line-height: 1.4; white-space:normal;">No recent pulls.<br>Crank the handle inside the dispensary!</div>`;
+      return;
+    }
+    listEl.innerHTML = window.playerStats.gachaHistory
+      .map((item) => {
+        let col = window.getTierColor(item.statsRolled);
+        let starDisplay = item.statsRolled === "UNIQUE" ? "★" : `${item.statsRolled}★`;
+        let shortName = item.name.replace(/⭐ UNIQUE |(Common|Rare|Magic|Epic|Legendary|Mythic) /g, "");
+        return `
+            <div style="background:#07030b; border: 1px solid #222; border-left: 3.5px solid ${col}; border-radius:3px; padding:4px 8px; display:flex; justify-content:space-between; align-items:center; cursor:help; font-family:sans-serif;"
+                 onmouseenter="window.showInventoryTooltip(event, ${item.id})"
+                 ontouchstart="window.showInventoryTooltip(event, ${item.id})"
+                 onmouseleave="window.hideTooltip()">
+                <span style="color:${col}; font-weight:bold; font-size:10.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:110px;">${shortName}</span>
+                <span style="color:#888; font-size:9.5px; font-family:monospace;">${starDisplay}</span>
+            </div>
+        `;
+      })
+      .join("");
     return;
   }
 
-  listEl.innerHTML = window.playerStats.gachaHistory
-    .map((item) => {
-      let col = window.getTierColor(item.statsRolled);
-      let starDisplay =
-        item.statsRolled === "UNIQUE" ? "★" : `${item.statsRolled}★`;
-      let shortName = item.name.replace(
-        /⭐ UNIQUE |(Common|Rare|Magic|Epic|Legendary|Mythic) /g,
-        "",
-      );
-      return `
-                                    <div style="background:#07030b; border: 1px solid #222; border-left: 3.5px solid ${col}; border-radius:3px; padding:4px 8px; display:flex; justify-content:space-between; align-items:center; cursor:help; font-family:sans-serif;"
-                                         onmouseenter="window.showInventoryTooltip(event, ${item.id})"
-                                         ontouchstart="window.showInventoryTooltip(event, ${item.id})"
-                                         onmouseleave="window.hideTooltip()">
-                                        <span style="color:${col}; font-weight:bold; font-size:10.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:110px;">${shortName}</span>
-                                        <span style="color:#888; font-size:9.5px; font-family:monospace;">${starDisplay}</span>
-                                    </div>
-                                `;
+  fetch(`${window.GAME_SERVER_URL}/api/gacha/global-pulls`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.success && data.pulls) {
+        if (data.pulls.length === 0) {
+          listEl.innerHTML = `<div style="color:#666; text-align:center; padding-top:40px; font-size:10px; font-style:italic; line-height: 1.4; white-space:normal;">No legendary, mythic, or unique pulls logged globally yet!</div>`;
+          return;
+        }
+        listEl.innerHTML = data.pulls
+          .map((pull) => {
+            let item = pull.item;
+            window.frozenItemDb[item.id] = item; // Cache inside client db so standard tooltips resolve on hover
+
+            let col = window.getTierColor(item.statsRolled);
+            let starDisplay = item.statsRolled === "UNIQUE" ? "★" : `${item.statsRolled}★`;
+            let shortName = item.name.replace(/⭐ UNIQUE |(Common|Rare|Magic|Epic|Legendary|Mythic) /g, "");
+            let pName = pull.playerName || "Unknown";
+
+            return `
+                <div style="background:#07030b; border: 1px solid #222; border-left: 3.5px solid ${col}; border-radius:3px; padding:4px 6px; display:flex; justify-content:space-between; align-items:center; cursor:help; font-family:sans-serif; gap:6px;"
+                     onmouseenter="window.showInventoryTooltip(event, ${item.id})"
+                     ontouchstart="window.showInventoryTooltip(event, ${item.id})"
+                     onmouseleave="window.hideTooltip()">
+                    <div style="text-align:left; min-width:0; flex:1;">
+                        <span style="color:#888; font-size:8.5px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">[${pName}] rolled:</span>
+                        <span style="color:${col}; font-weight:bold; font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block;">${shortName}</span>
+                    </div>
+                    <span style="color:#666; font-size:9px; font-family:monospace; align-self:flex-end;">${starDisplay}</span>
+                </div>
+            `;
+          })
+          .join("");
+      } else {
+        listEl.innerHTML = `<div style="color:#e74c3c; text-align:center; padding-top:40px; font-size:10px;">Failed to load global pulls feed.</div>`;
+      }
     })
-    .join("");
+    .catch(err => {
+      console.error("Failed to fetch global pulls:", err);
+      listEl.innerHTML = `<div style="color:#e74c3c; text-align:center; padding-top:40px; font-size:10px;">Connection error.</div>`;
+    });
 };
 
 // --- UNBOXING ANIMATIONS AND ENGAGING REWARD FLOWS ---

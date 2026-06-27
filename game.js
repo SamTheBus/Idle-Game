@@ -85,6 +85,68 @@ window.getDepthQualityMultiplier = function (depth) {
 setInterval(() => {
   window.saveGame();
 }, 60000);
+
+window.requestRename = function () {
+  let input = document.getElementById("settings-player-name");
+  if (!input) return;
+  let newName = input.value.trim();
+
+  if (!newName) {
+    window.pushHeaderToast("❌ Name cannot be empty!", "#e74c3c");
+    return;
+  }
+  if (newName.length > 14) {
+    window.pushHeaderToast("❌ Name is too long (Max 14 chars)!", "#e74c3c");
+    return;
+  }
+
+  if (!window.GAME_SERVER_URL) {
+    window.playerStats.playerName = newName;
+    window.pushHeaderToast(`🎉 Renamed to ${newName}!`, "#2ecc71");
+    window.updateUI();
+    window.saveGame();
+    return;
+  }
+
+  let userId = window.getGameUserId();
+  fetch(`${window.GAME_SERVER_URL}/api/register-name`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId, name: newName })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      window.playerStats.playerName = newName;
+      window.pushHeaderToast(`🎉 Renamed to ${newName}!`, "#2ecc71");
+      window.updateUI();
+      window.saveGame();
+    } else {
+      window.pushHeaderToast(`❌ Error: ${data.error}`, "#e74c3c");
+    }
+  })
+  .catch(err => {
+    console.error("Rename failed:", err);
+    window.pushHeaderToast("❌ Connection error renaming character.", "#e74c3c");
+  });
+};
+
+window.logHighTierPull = function (item) {
+  if (!window.GAME_SERVER_URL) return;
+
+  let isHighTier = item.type === "artifact" || item.statsRolled >= 4;
+  if (!isHighTier) return;
+
+  let userId = window.getGameUserId();
+  let playerName = window.playerStats.playerName || "Guest";
+
+  fetch(`${window.GAME_SERVER_URL}/api/gacha/log-pull`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId, playerName, item })
+  })
+  .catch(err => console.error("Failed to log high tier pull:", err));
+};
 window.addEventListener("beforeunload", window.saveGame);
 
 window.hardResetGame = function () {
