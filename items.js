@@ -3045,31 +3045,32 @@ window.rollGachaCrateItem = function () {
     delete window.inventory.ETC["Gacha Key"];
 
   // --- PITY COUNTER ENGINE ---
-  window.playerStats.vendingPity = (window.playerStats.vendingPity || 0) + 1;
-  let isPityTriggered = false;
+    window.playerStats.vendingPity = (window.playerStats.vendingPity || 0) + 1;
+    let isPityTriggered = false;
 
-  if (window.playerStats.vendingPity >= 50) {
-    // Increased from 20 to 50
-    isPityTriggered = true;
-    window.playerStats.vendingPity = 0; // Reset pity
-  }
+    if (window.playerStats.vendingPity >= 50) {
+      // Keeping pity threshold at 50 as desired
+      isPityTriggered = true;
+      window.playerStats.vendingPity = 0; // Reset pity
+    }
 
-  let statLinesCount = 1;
-  if (isPityTriggered) {
-    statLinesCount = 5; // Guaranteed Mythic
-  } else {
-    // Decoupled from active equip qly (re-balanced at flat +2.5% per level of Gacha Calibration)
-    let luckMultiplier = 1.0 + (window.playerStats.vendingQLevel || 0) * 0.025;
-    let roll = Math.random() * 100;
+    let statLinesCount = 1;
+    if (isPityTriggered) {
+      statLinesCount = 5; // Guaranteed Mythic
+    } else {
+      // Decoupled from active equip qly (re-balanced at flat +2.5% per level of Gacha Calibration)
+      let luckMultiplier = 1.0 + (window.playerStats.vendingQLevel || 0) * 0.025;
+      let roll = Math.random() * 100;
 
-    if (roll < 0.02 * luckMultiplier) {
-      statLinesCount = 5;
-      window.playerStats.vendingPity = 0; // Natural pull resets pity
-    } else if (roll < 0.18 * luckMultiplier) statLinesCount = 4;
-    else if (roll < 0.8 * luckMultiplier) statLinesCount = 3;
-    else if (roll < 4.0 * luckMultiplier) statLinesCount = 2;
-    else statLinesCount = 1;
-  }
+      // Upgraded rates: 1.0% Mythic (5★), 5.0% Legendary (4★), 15.0% Epic (3★), 25.0% Magic (2★)
+      if (roll < 1.0 * luckMultiplier) {
+        statLinesCount = 5;
+        window.playerStats.vendingPity = 0; // Natural pull resets pity
+      } else if (roll < 6.0 * luckMultiplier) statLinesCount = 4;
+      else if (roll < 21.0 * luckMultiplier) statLinesCount = 3;
+      else if (roll < 46.0 * luckMultiplier) statLinesCount = 2;
+      else statLinesCount = 1;
+    }
 
   let peakRunStage = window.playerStats.lifetimePeakStage || 1;
   let stageScale = Math.floor((peakRunStage - 1) / 10) + 1;
