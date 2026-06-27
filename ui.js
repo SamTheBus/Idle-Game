@@ -9300,11 +9300,12 @@ window.fetchMailboxData = function () {
   const userId = window.getGameUserId ? window.getGameUserId() : "guest_local";
   listEl.innerHTML = `<div style="color:#aaa; text-align:center; padding: 20px 0; font-size:11px;">Checking incoming transmissions...</div>`;
 
-  fetch(`${window.GAME_SERVER_URL}/api/mailbox`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId })
-  })
+  const claimedMailIds = window.playerStats.claimedMailIds || [];
+    fetch(`${window.GAME_SERVER_URL}/api/mailbox`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, claimedMailIds })
+    })
   .then(response => response.json())
   .then(data => {
     if (data.success && data.mailbox) {
@@ -9459,21 +9460,27 @@ window.claimMailReward = function (mailId) {
               window.playerStats.equippedTitle = tKey; // Auto-equip it!
             }
 
-      // Visual / Audio Feedback
-      if (typeof window.spawnPurchaseCelebration === "function") {
-        window.spawnPurchaseCelebration("gacha", "#e74c3c", 5); // Crimson celebration burst
-      }
-      if (window.SoundManager) window.SoundManager.play("revive");
+      // Register the claimed ID locally on success to prevent double claims if the server restarts
+            window.playerStats.claimedMailIds = window.playerStats.claimedMailIds || [];
+            if (!window.playerStats.claimedMailIds.includes(mailId)) {
+              window.playerStats.claimedMailIds.push(mailId);
+            }
 
-      window.pushHeaderToast("🎁 Mailbox Rewards Claimed!", "#2ecc71");
+            // Visual / Audio Feedback
+            if (typeof window.spawnPurchaseCelebration === "function") {
+              window.spawnPurchaseCelebration("gacha", "#e74c3c", 5); // Crimson celebration burst
+            }
+            if (window.SoundManager) window.SoundManager.play("revive");
 
-      // Update UI & save the state immediately
-      window.updateUI();
-      window.renderInventory();
-      window.saveGame();
+            window.pushHeaderToast("🎁 Mailbox Rewards Claimed!", "#2ecc71");
 
-      // Refresh current mailbox state
-      window.fetchMailboxData();
+            // Update UI & save the state immediately
+            window.updateUI();
+            window.renderInventory();
+            window.saveGame();
+
+            // Refresh current mailbox state
+            window.fetchMailboxData();
     } else {
       window.pushHeaderToast(`❌ Error: ${data.error || 'Could not claim.'}`, "#e74c3c");
     }

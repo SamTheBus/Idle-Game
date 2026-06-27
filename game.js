@@ -997,13 +997,16 @@ window.applySaveStatePayload = function (parsed) {
           );
 
         if (window.playerStats.unlockedTitles === undefined) {
-              window.playerStats.unlockedTitles = [];
-            }
-            if (window.playerStats.equippedTitle === undefined) {
-              window.playerStats.equippedTitle = null;
-            }
+                      window.playerStats.unlockedTitles = [];
+                    }
+                    if (window.playerStats.equippedTitle === undefined) {
+                      window.playerStats.equippedTitle = null;
+                    }
+                    if (window.playerStats.claimedMailIds === undefined) {
+                      window.playerStats.claimedMailIds = [];
+                    }
 
-        window.playerStats.isPrestigeBossMode = false;
+                window.playerStats.isPrestigeBossMode = false;
         window.playerStats.prestigeApproachTimer = 0;
 
     if (window.playerStats.vendingQLevel === undefined)

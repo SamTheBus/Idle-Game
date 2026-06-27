@@ -4056,11 +4056,12 @@ window.playerStats = {
   dailyRewardClaimed: false,
   weeklyRewardClaimed: false,
   unviewedAchievements: [],
-      selectedPrestigeStage: 80,
-      unlockedTitles: [],
-      equippedTitle: null,
-      playerName: "Guest",
-    };
+    selectedPrestigeStage: 80,
+    unlockedTitles: [],
+    equippedTitle: null,
+    claimedMailIds: [],
+    playerName: "Guest",
+  };
 
   // --- CLIENT-SIDE TITLE DATABASE ---
   window.TITLES_DATA = {
