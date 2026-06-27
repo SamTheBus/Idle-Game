@@ -9211,3 +9211,230 @@ window.openGuildWeeklySack = function () {
     `;
   }, 1000);
 };
+
+// ==========================================================================
+// --- ROYAL MAILBOX CLIENT ENGINE ---
+// ==========================================================================
+
+window.toggleMailbox = function () {
+  let modal = document.getElementById("mailbox-modal");
+  if (!modal) return;
+
+  if (modal.style.display === "none" || modal.style.display === "") {
+    window.hideTooltip();
+    modal.style.display = "block";
+    window.fetchMailboxData();
+  } else {
+    modal.style.display = "none";
+    window.hideTooltip();
+  }
+};
+
+window.fetchMailboxData = function () {
+  const listEl = document.getElementById("mailbox-list");
+  if (!listEl) return;
+
+  if (!window.GAME_SERVER_URL) {
+    listEl.innerHTML = `<div style="color:#666; text-align:center; padding: 20px 0; font-size:11px; font-style:italic;">Mailbox unavailable in offline/GitHub mode.</div>`;
+    return;
+  }
+
+  const userId = window.getGameUserId ? window.getGameUserId() : "guest_local";
+  listEl.innerHTML = `<div style="color:#aaa; text-align:center; padding: 20px 0; font-size:11px;">Checking incoming transmissions...</div>`;
+
+  fetch(`${window.GAME_SERVER_URL}/api/mailbox`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success && data.mailbox) {
+      window.renderMailboxItems(data.mailbox);
+      const hasUnclaimed = data.mailbox.some(m => !m.claimed);
+      window.updateMailboxBadge(hasUnclaimed);
+    } else {
+      listEl.innerHTML = `<div style="color:#e74c3c; text-align:center; padding: 20px 0; font-size:11px;">Error loading mailbox data.</div>`;
+    }
+  })
+  .catch(err => {
+    console.error("Mailbox fetch failed:", err);
+    listEl.innerHTML = `<div style="color:#e74c3c; text-align:center; padding: 20px 0; font-size:11px;">Could not connect to the mail server.</div>`;
+  });
+};
+
+window.renderMailboxItems = function (mailbox) {
+  const listEl = document.getElementById("mailbox-list");
+  if (!listEl) return;
+
+  if (mailbox.length === 0) {
+    listEl.innerHTML = `<div style="color:#666; text-align:center; padding: 20px 0; font-size:11px; font-style:italic;">Your mailbox is currently empty.</div>`;
+    return;
+  }
+
+  listEl.innerHTML = mailbox.map(mail => {
+    let buttonHtml = "";
+    if (mail.claimed) {
+      buttonHtml = `<span style="color:#7f8c8d; font-weight:bold; font-size:11px;">Claimed ✓</span>`;
+    } else {
+      buttonHtml = `<button class="btn-action" style="background:#e74c3c; color:white; font-size:11px; padding:4px 10px;" onclick="window.claimMailReward('${mail.id}')">Claim</button>`;
+    }
+
+    // Build highly optimized, stylized HTML badges using native visual generators
+    let rewardsHtml = "";
+
+    if (mail.rewards.coins) {
+      rewardsHtml += `
+        <div style="display:inline-flex; align-items:center; background:rgba(241,196,15,0.06); border:1px solid #f1c40f; padding:3px 8px; border-radius:4px; font-family:monospace; font-size:10px; color:#fff; font-weight:bold;">
+            <span style="background:rgba(241,196,15,0.18); border-radius:4px; width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center; margin-right:6px; font-size:11px; border:1px solid #d4af37;">🟡</span>
+            <span>+${mail.rewards.coins.toLocaleString()} Gold</span>
+        </div>
+      `;
+    }
+
+    if (mail.rewards.etc) {
+      Object.keys(mail.rewards.etc).forEach(k => {
+        let iconHtml = typeof window.getEtcIconHtml === "function" ? window.getEtcIconHtml(k) : "📦";
+        // Shrink the standard 32px inventory icon down to 22px to fit the compact mailbox layout cleanly
+        iconHtml = iconHtml.replace('width: 32px; height: 32px;', 'width: 22px; height: 22px; padding: 2px; margin-right: 6px;');
+        iconHtml = iconHtml.replace('margin-right: 12px;', 'margin-right: 6px;');
+
+        rewardsHtml += `
+          <div style="display:inline-flex; align-items:center; background:rgba(255,255,255,0.015); border:1px solid #374151; padding:3px 8px; border-radius:4px; font-family:monospace; font-size:10px; color:#fff; font-weight:bold;">
+              ${iconHtml}
+              <span>+${mail.rewards.etc[k]} ${k}</span>
+          </div>
+        `;
+      });
+    }
+
+    if (mail.rewards.use) {
+      Object.keys(mail.rewards.use).forEach(k => {
+        let iconHtml = typeof window.getUseIconHtml === "function" ? window.getUseIconHtml(k) : "🧪";
+        iconHtml = iconHtml.replace('width: 32px; height: 32px;', 'width: 22px; height: 22px; padding: 2px; margin-right: 6px;');
+        iconHtml = iconHtml.replace('margin-right: 12px;', 'margin-right: 6px;');
+
+        rewardsHtml += `
+          <div style="display:inline-flex; align-items:center; background:rgba(255,255,255,0.015); border:1px solid #374151; padding:3px 8px; border-radius:4px; font-family:monospace; font-size:10px; color:#fff; font-weight:bold;">
+              ${iconHtml}
+              <span>+${mail.rewards.use[k]} ${k}</span>
+          </div>
+        `;
+      });
+    }
+
+    return `
+      <div class="bag-item" style="border-left: 3px solid #e74c3c; background:#181c22; padding:8px 12px; margin-bottom:0; display:flex; flex-direction:column; gap:4px; text-align:left; cursor:default;">
+          <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+              <strong style="color:#e74c3c; font-size:12.5px;">${mail.title}</strong>
+              <div>${buttonHtml}</div>
+          </div>
+          <div style="font-size:11px; color:#ddd; white-space:normal; line-height:1.4; margin-bottom:4px;">${mail.message}</div>
+          <div style="background:#0c0f12; border:1px solid #222; border-radius:4px; padding:8px 6px; display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+              ${rewardsHtml}
+          </div>
+      </div>
+    `;
+  }).join("");
+};
+
+window.claimMailReward = function (mailId) {
+  if (!window.GAME_SERVER_URL) return;
+  const userId = window.getGameUserId();
+
+  fetch(`${window.GAME_SERVER_URL}/api/claim-mail`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, mailId })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success && data.rewards) {
+      const rewards = data.rewards;
+
+      // 1. Claim Gold
+      if (rewards.coins) {
+        window.playerStats.coins += rewards.coins;
+        window.playerStats.totalGoldEarned = (window.playerStats.totalGoldEarned || 0) + rewards.coins;
+      }
+
+      // 2. Claim Materials
+      if (rewards.etc) {
+        Object.keys(rewards.etc).forEach(k => {
+          if (typeof window.addEtcDrop === "function") {
+            window.addEtcDrop(k, rewards.etc[k]);
+          }
+        });
+      }
+
+      // 3. Claim Consumables
+      if (rewards.use) {
+        Object.keys(rewards.use).forEach(k => {
+          if (typeof window.addUseDrop === "function") {
+            window.addUseDrop(k, rewards.use[k]);
+          }
+        });
+      }
+
+      // Visual / Audio Feedback
+      if (typeof window.spawnPurchaseCelebration === "function") {
+        window.spawnPurchaseCelebration("gacha", "#e74c3c", 5); // Crimson celebration burst
+      }
+      if (window.SoundManager) window.SoundManager.play("revive");
+
+      window.pushHeaderToast("🎁 Mailbox Rewards Claimed!", "#2ecc71");
+
+      // Update UI & save the state immediately
+      window.updateUI();
+      window.renderInventory();
+      window.saveGame();
+
+      // Refresh current mailbox state
+      window.fetchMailboxData();
+    } else {
+      window.pushHeaderToast(`❌ Error: ${data.error || 'Could not claim.'}`, "#e74c3c");
+    }
+  })
+  .catch(err => {
+    console.error("Mail claim failed:", err);
+    window.pushHeaderToast("❌ Connection error claiming reward.", "#e74c3c");
+  });
+};
+
+window.updateMailboxBadge = function (hasUnclaimed) {
+  const btn = document.getElementById("btn-mailbox-top");
+  if (!btn) return;
+
+  if (hasUnclaimed) {
+    btn.style.animation = "glowRed 1.8s infinite";
+    btn.style.borderColor = "#e74c3c";
+    if (!btn.querySelector(".badge-exclamation")) {
+      btn.insertAdjacentHTML("beforeend", ' <span class="badge-exclamation" style="color:#e74c3c; font-weight:bold; margin-left:3px;">!</span>');
+    }
+  } else {
+    btn.style.animation = "";
+    btn.style.borderColor = "";
+    const b = btn.querySelector(".badge-exclamation");
+    if (b) b.remove();
+  }
+};
+
+window.checkUnreadMail = function () {
+  if (!window.GAME_SERVER_URL) return;
+  const userId = window.getGameUserId ? window.getGameUserId() : null;
+  if (!userId) return;
+
+  fetch(`${window.GAME_SERVER_URL}/api/mailbox`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success && data.mailbox) {
+      const hasUnclaimed = data.mailbox.some(m => !m.claimed);
+      window.updateMailboxBadge(hasUnclaimed);
+    }
+  })
+  .catch(() => {});
+};

@@ -9,15 +9,15 @@ let canvas, ctx;
 
 // Automatically detect if the game is running locally (development) or natively (Capacitor)
 window.detectGameServer = function () {
-  const isLocalHost =
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1";
-  const isCapacitor = window.location.protocol === "capacitor:";
+  const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-  if (isLocalHost || isCapacitor) {
-    return "http://192.168.0.37:3000";
+  if (isLocalHost) {
+    return 'http://192.168.0.37:3000'; // Use local computer IP for ultra-fast local testing
   }
-  return null; // Gracefully disables network saves on public browsers (like GitHub Pages)
+
+  // If running publicly on GitHub Pages or running natively as an app on your phone,
+  // route everything securely to your live Render Cloud server!
+  return 'https://idlesaq-backend.onrender.com';
 };
 
 window.GAME_SERVER_URL = window.detectGameServer();
@@ -1120,8 +1120,11 @@ window.loadGameAndSyncCloud = function () {
     autoSalvageSelect.value = window.playerStats.autoSalvageThreshold;
   }
   if (typeof window.refreshMarketShopIfNeeded === "function")
-    window.refreshMarketShopIfNeeded();
-};
+      window.refreshMarketShopIfNeeded();
+
+    if (typeof window.checkUnreadMail === "function")
+      window.checkUnreadMail();
+  };
 
 window.adjustCanvasDimensions = function () {
   let cvs = window.canvas || document.getElementById("gameCanvas");
