@@ -7,7 +7,7 @@
             content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>Idle SAQ: Slaying and Questing</title>
-    <link rel="stylesheet" href="style.css?v=1.4"/>
+    <link rel="stylesheet" href="style.css?v=0.95"/>
 </head>
 <body>
 <!-- Portable Notification Toasts -->
@@ -625,48 +625,6 @@
                 Reload Game
             </button>
         </div>
-    </div>
-
-    <!-- Artifacts Database Portal -->
-    <div id="altar-modal">
-        <div
-                style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #333;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
-          "
-        >
-            <h3 style="margin: 0; color: #1abc9c">🔮 Artifact Database</h3>
-            <button
-                    onclick="
-              document.getElementById('altar-modal').style.display = 'none'
-            "
-                    style="
-              background: #e74c3c;
-              color: white;
-              border: none;
-              border-radius: 4px;
-              padding: 6px 12px;
-              font-weight: bold;
-              cursor: pointer;
-            "
-            >
-                Close
-            </button>
-        </div>
-        <div style="color: #aaa; font-size: 11px; margin-bottom: 12px">
-            Tap any artifact to view its unique trait details and base parameters.
-            All artifacts now drop with 3 randomized stat lines!
-        </div>
-        <div
-                id="altar-list"
-                style="display: flex; flex-direction: column; gap: 8px"
-                onscroll="window.hideTooltip()"
-                ontouchmove="window.hideTooltip()"
-        ></div>
     </div>
 
     <!-- Reality Rift Tactical Console Modal -->
@@ -2724,7 +2682,7 @@
                         ></span
                       >
                                 </div>
-                                <div style="display: inline-flex; gap: 3px">
+                                <div style="display: inline-flex; gap: 4px">
                                     <button
                                             class="btn-action sp"
                                             id="btn-minus-spStr"
@@ -2733,10 +2691,11 @@
                                             onpointerleave="window.stopSPDraftHold(event)"
                                             style="
                           background: #e74c3c;
-                          width: 16px;
-                          height: 16px;
-                          line-height: 16px;
-                          font-size: 9px;
+                          width: 28px;
+                          height: 28px;
+                          line-height: 26px;
+                          font-size: 14px;
+                          font-weight: bold;
                           padding: 0;
                           text-align: center;
                           display: none;
@@ -2753,10 +2712,11 @@
                                             onmouseenter="window.showSPPreview(event, 'spStr')"
                                             onmouseleave="window.hideTooltip()"
                                             style="
-                          width: 16px;
-                          height: 16px;
-                          line-height: 16px;
-                          font-size: 9px;
+                          width: 28px;
+                          height: 28px;
+                          line-height: 26px;
+                          font-size: 14px;
+                          font-weight: bold;
                           padding: 0;
                           text-align: center;
                         "
@@ -2792,7 +2752,7 @@
                         ></span
                       >
                                 </div>
-                                <div style="display: inline-flex; gap: 3px">
+                                <div style="display: inline-flex; gap: 4px">
                                     <button
                                             class="btn-action sp"
                                             id="btn-minus-spDex"
@@ -2801,10 +2761,11 @@
                                             onpointerleave="window.stopSPDraftHold(event)"
                                             style="
                           background: #e74c3c;
-                          width: 16px;
-                          height: 16px;
-                          line-height: 16px;
-                          font-size: 9px;
+                          width: 28px;
+                          height: 28px;
+                          line-height: 26px;
+                          font-size: 14px;
+                          font-weight: bold;
                           padding: 0;
                           text-align: center;
                           display: none;
@@ -2821,10 +2782,11 @@
                                             onmouseenter="window.showSPPreview(event, 'spDex')"
                                             onmouseleave="window.hideTooltip()"
                                             style="
-                          width: 16px;
-                          height: 16px;
-                          line-height: 16px;
-                          font-size: 9px;
+                          width: 28px;
+                          height: 28px;
+                          line-height: 26px;
+                          font-size: 14px;
+                          font-weight: bold;
                           padding: 0;
                           text-align: center;
                         "
@@ -2860,7 +2822,7 @@
                         ></span
                       >
                                 </div>
-                                <div style="display: inline-flex; gap: 3px">
+                                <div style="display: inline-flex; gap: 4px">
                                     <button
                                             class="btn-action sp"
                                             id="btn-minus-spInt"
@@ -2869,10 +2831,11 @@
                                             onpointerleave="window.stopSPDraftHold(event)"
                                             style="
                           background: #e74c3c;
-                          width: 16px;
-                          height: 16px;
-                          line-height: 16px;
-                          font-size: 9px;
+                          width: 28px;
+                          height: 28px;
+                          line-height: 26px;
+                          font-size: 14px;
+                          font-weight: bold;
                           padding: 0;
                           text-align: center;
                           display: none;
@@ -2889,10 +2852,11 @@
                                             onmouseenter="window.showSPPreview(event, 'spInt')"
                                             onmouseleave="window.hideTooltip()"
                                             style="
-                          width: 16px;
-                          height: 16px;
-                          line-height: 16px;
-                          font-size: 9px;
+                          width: 28px;
+                          height: 28px;
+                          line-height: 26px;
+                          font-size: 14px;
+                          font-weight: bold;
                           padding: 0;
                           text-align: center;
                         "
@@ -4256,11 +4220,11 @@
 </div>
 
 <!-- Core Modular JavaScript Hierarchy Load Sequence -->
-<script src="data.js?v=0.94"></script>
-<script src="audio.js?v=0.94"></script>
-<script src="items.js?v=0.94"></script>
-<script src="entities.js?v=0.94"></script>
-<script src="ui.js?v=0.94"></script>
-<script src="game.js?v=0.94"></script>
+<script src="data.js?v=0.95"></script>
+<script src="audio.js?v=0.95"></script>
+<script src="items.js?v=0.95"></script>
+<script src="entities.js?v=0.95"></script>
+<script src="ui.js?v=0.95"></script>
+<script src="game.js?v=0.95"></script>
 </body>
 </html>

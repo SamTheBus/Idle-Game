@@ -3,7 +3,7 @@
    initial global state, and system utility functions.
    ========================================================================= */
 
-window.GAME_VERSION = 0.94; // Pre-release Alpha 0.9.4 // Increment this whenever you push a new release
+window.GAME_VERSION = 0.95; // Pre-release Alpha 0.9.5 // Increment this whenever you push a new release
 
 // --- SYSTEM UTILS ---
 
@@ -183,8 +183,12 @@ window.etcDex = {
 };
 
 window.useDex = {
+  "Daily Reward Sack": {
+    desc: "Standardised Daily Reward. Consume to initiate untying. Guarantees 1 MP, 1x Equipment scaled to Lifetime Peak Stage, and rolls extra loot with consecutive item chances!",
+    color: "#f1c40f",
+  },
   "Guild Reward Sack": {
-    desc: "Standardised Guild Reward. Consume to initiate untying. Guarantees 1 MP and rolls daily loot with consecutive extra item chances!",
+    desc: "Standardised Daily Reward. Consume to initiate untying. Guarantees 1 MP, 1x Equipment scaled to Lifetime Peak Stage, and rolls extra loot with consecutive item chances!",
     color: "#f1c40f",
   },
   "Guild Weekly Sack": {
@@ -4118,7 +4122,7 @@ window.generateDailyMissions = function () {
       desc: `${m.label} (${target.toLocaleString()} ${m.unit})`,
       current: 0,
       target: target,
-      treat: "Guild Reward Sack",
+      treat: "Daily Reward Sack",
       treatQty: 1,
       completed: false,
       claimed: false,

@@ -3,34 +3,147 @@
    tooltips, and modal displays.
    ========================================================================= */
 
+window.getEquipIconHtml = function (item, size = 32) {
+  if (!item) return "";
+  let isUnique =
+    item.isUniqueStaff ||
+    item.isUniqueSword ||
+    item.isUniqueSingularity ||
+    item.isUniqueMaelstrom ||
+    item.isUniqueAegis ||
+    item.isUniqueWatch ||
+    item.isUniqueChronicle ||
+    item.isUniqueWarpCore ||
+    item.isUniqueTempest;
+
+  if (item.type === "artifact" || item.statsRolled === "UNIQUE") {
+    return window.getArtifactIconHtml(item.trait, size);
+  }
+  if (isUnique) {
+    return window.getUniqueIconHtml(item, size);
+  }
+
+  // Draw custom procedural generic equipment icons based on slot!
+  let color = window.getTierColor(item.statsRolled);
+  let id = item.id || Math.floor(Math.random() * 100000);
+  let svg = "";
+
+  if (item.type === "weapon") {
+    svg = `<svg viewBox="0 0 32 32" width="100%" height="100%">
+                <defs>
+                    <linearGradient id="gen_w_blade_${id}" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stop-color="#ffffff"/>
+                        <stop offset="50%" stop-color="${color}"/>
+                        <stop offset="100%" stop-color="#555555"/>
+                    </linearGradient>
+                </defs>
+                <path d="M16 3 L19 8 L18 21 L14 21 L13 8 Z" fill="url(#gen_w_blade_${id})" stroke="#000" stroke-width="1.8" />
+                <rect x="11" y="21" width="10" height="2.5" rx="0.5" fill="#f1c40f" stroke="#000" stroke-width="1.2" />
+                <rect x="14.5" y="23.5" width="3" height="5" fill="#5c3a21" stroke="#000" stroke-width="1" />
+                <circle cx="16" cy="29.5" r="1.5" fill="#f1c40f" stroke="#000" stroke-width="1" />
+            </svg>`;
+  } else if (item.type === "subweapon") {
+    if (item.subType === "shield") {
+      svg = `<svg viewBox="0 0 32 32" width="100%" height="100%">
+                    <defs>
+                        <linearGradient id="gen_w_sh_${id}" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="${color}"/>
+                            <stop offset="100%" stop-color="#2c3e50"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M6 6 Q16 4, 26 6 Q25 18, 16 28 Q7 18, 6 6 Z" fill="url(#gen_w_sh_${id})" stroke="#000" stroke-width="1.8" />
+                    <path d="M11 11 Q16 9, 21 11 L19 19 Q16 23, 16 23 Q16 23, 13 19 Z" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.55" />
+                </svg>`;
+    } else if (item.subType === "dagger") {
+      svg = `<svg viewBox="0 0 32 32" width="100%" height="100%">
+                    <path d="M16 4 L18 9 L17 19 L15 19 L14 9 Z" fill="#bdc3c7" stroke="#000" stroke-width="1.8" />
+                    <rect x="12" y="19" width="8" height="2" fill="${color}" stroke="#000" stroke-width="1.2" />
+                    <rect x="14.5" y="21" width="3" height="4" fill="#3b2f2f" stroke="#000" stroke-width="1" />
+                </svg>`;
+    } else {
+      // tome
+      svg = `<svg viewBox="0 0 32 32" width="100%" height="100%">
+                    <rect x="8" y="6" width="16" height="20" rx="1.5" fill="${color}" stroke="#000" stroke-width="2" />
+                    <rect x="10" y="8" width="12" height="16" fill="#ffffff" opacity="0.9" rx="1" />
+                    <line x1="12" y1="12" x2="20" y2="12" stroke="#444444" stroke-width="1.2" />
+                    <line x1="12" y1="16" x2="18" y2="16" stroke="#444444" stroke-width="1.2" />
+                </svg>`;
+    }
+  } else if (item.type === "helmet") {
+    svg = `<svg viewBox="0 0 32 32" width="100%" height="100%">
+                <defs>
+                    <linearGradient id="gen_w_helm_${id}" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#bdc3c7"/>
+                        <stop offset="100%" stop-color="#34495e"/>
+                    </linearGradient>
+                </defs>
+                <path d="M16 4 C10 4, 6 10, 6 18 L26 18 C26 10, 22 4, 16 4 Z" fill="url(#gen_w_helm_${id})" stroke="#000" stroke-width="1.8" />
+                <path d="M7 18 L10 26 L22 26 L25 18 Z" fill="#2c3e50" stroke="#000" stroke-width="1.8" />
+                <rect x="9" y="12" width="14" height="4" fill="${color}" stroke="#000" stroke-width="1" />
+            </svg>`;
+  } else if (item.type === "chest") {
+    svg = `<svg viewBox="0 0 32 32" width="100%" height="100%">
+                <path d="M6 7 L26 7 L24 22 C22 26, 10 26, 8 22 Z" fill="#7f8c8d" stroke="#000" stroke-width="1.8" />
+                <path d="M12 7 Q16 12, 20 7" fill="#111111" stroke="#000" stroke-width="1.2" />
+                <rect x="10" y="13" width="12" height="4" fill="${color}" opacity="0.85" rx="1" stroke="#000" stroke-width="1" />
+            </svg>`;
+  } else if (item.type === "leggings") {
+    svg = `<svg viewBox="0 0 32 32" width="100%" height="100%">
+                <path d="M7 6 L25 6 L23 16 L20 28 L17 28 L18 16 L14 16 L15 28 L12 28 L9 16 Z" fill="#7f8c8d" stroke="#000" stroke-width="1.8" stroke-linejoin="round" />
+                <rect x="9" y="10" width="14" height="3" fill="${color}" stroke="#000" stroke-width="1" />
+            </svg>`;
+  } else if (item.type === "overall") {
+    svg = `<svg viewBox="0 0 32 32" width="100%" height="100%">
+                <path d="M10 6 L22 6 L27 28 L5 28 Z" fill="${color}" stroke="#000" stroke-width="2" />
+                <path d="M8 8 L13 6 L12 12 Z M24 8 L19 6 L20 12 Z" fill="#bdc3c7" stroke="#000" stroke-width="1.5" />
+            </svg>`;
+  } else if (item.type === "boots") {
+    svg = `<svg viewBox="0 0 32 32" width="100%" height="100%">
+                <path d="M4 10 L10 6 L11 18 L16 24 L16 27 L4 27 Z" fill="#7f8c8d" stroke="#000" stroke-width="1.8" stroke-linejoin="round" />
+                <path d="M16 10 L22 6 L23 18 L28 24 L28 27 L16 27 Z" fill="#7f8c8d" stroke="#000" stroke-width="1.8" stroke-linejoin="round" />
+                <rect x="4" y="14" width="6" height="2.5" fill="${color}" stroke="#000" stroke-width="1" />
+                <rect x="16" y="14" width="6" height="2.5" fill="${color}" stroke="#000" stroke-width="1" />
+            </svg>`;
+  } else {
+    svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="10" fill="${color}" stroke="#000000" stroke-width="1.5"/>
+            </svg>`;
+  }
+
+  let bg = "rgba(170, 170, 170, 0.12)";
+  let border = "#444";
+  return `<span style="background: ${bg}; border: 1px solid ${border}; border-radius: 4px; padding: 4px; display: inline-flex; align-items: center; justify-content: center; width: ${size}px; height: ${size}px; box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.6);">${svg}</span>`;
+};
+
 window.getBossIconHtml = function (bossType) {
+  let uid = Math.floor(Math.random() * 10000000);
   if (bossType === "guardian") {
     return `
             <svg width="56" height="56" viewBox="0 0 64 64" style="display:block; margin: 0 auto; filter: drop-shadow(0 0 6px rgba(52, 152, 219, 0.45));">
                 <defs>
-                    <linearGradient id="g_goliath" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#34495e"/><stop offset="100%" stop-color="#1a252f"/></linearGradient>
-                    <radialGradient id="g_core" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffffff"/><stop offset="40%" stop-color="#00d2ff"/><stop offset="100%" stop-color="#003755"/></radialGradient>
+                    <linearGradient id="g_goliath_${uid}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#34495e"/><stop offset="100%" stop-color="#1a252f"/></linearGradient>
+                    <radialGradient id="g_core_${uid}" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffffff"/><stop offset="40%" stop-color="#00d2ff"/><stop offset="100%" stop-color="#003755"/></radialGradient>
                 </defs>
-                <path d="M32 4 L52 14 L46 44 L32 58 L18 44 L12 14 Z" fill="url(#g_goliath)" stroke="#00d2ff" stroke-width="2.5" stroke-linejoin="round" />
-                <circle cx="32" cy="30" r="10" fill="url(#g_core)" stroke="#fff" stroke-width="1.5" />
+                <path d="M32 4 L52 14 L46 44 L32 58 L18 44 L12 14 Z" fill="url(#g_goliath_${uid})" stroke="#00d2ff" stroke-width="2.5" stroke-linejoin="round" />
+                <circle cx="32" cy="30" r="10" fill="url(#g_core_${uid})" stroke="#fff" stroke-width="1.5" />
                 <polygon points="26,24 20,22 24,28" fill="#e74c3c" />
                 <polygon points="38,24 44,22 40,28" fill="#e74c3c" />
             </svg>`;
   } else if (bossType === "chronos") {
     return `
             <svg width="56" height="56" viewBox="0 0 64 64" style="display:block; margin: 0 auto; filter: drop-shadow(0 0 6px rgba(241, 196, 15, 0.45));">
-                <defs><linearGradient id="g_chron" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffd700"/><stop offset="100%" stop-color="#b7950b"/></linearGradient></defs>
-                <circle cx="32" cy="32" r="24" fill="none" stroke="url(#g_chron)" stroke-width="3" />
-                <g stroke="url(#g_chron)" stroke-width="3" stroke-linecap="round"><line x1="32" y1="4" x2="32" y2="8" /><line x1="32" y1="56" x2="32" y2="60" /><line x1="4" y1="32" x2="8" y2="32" /><line x1="56" y1="32" x2="60" y2="32" /></g>
-                <circle cx="32" cy="32" r="16" fill="#111" stroke="url(#g_chron)" stroke-width="1.5" />
+                <defs><linearGradient id="g_chron_${uid}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffd700"/><stop offset="100%" stop-color="#b7950b"/></linearGradient></defs>
+                <circle cx="32" cy="32" r="24" fill="none" stroke="url(#g_chron_${uid})" stroke-width="3" />
+                <g stroke="url(#g_chron_${uid})" stroke-width="3" stroke-linecap="round"><line x1="32" y1="4" x2="32" y2="8" /><line x1="32" y1="56" x2="32" y2="60" /><line x1="4" y1="32" x2="8" y2="32" /><line x1="56" y1="32" x2="60" y2="32" /></g>
+                <circle cx="32" cy="32" r="16" fill="#111" stroke="url(#g_chron_${uid})" stroke-width="1.5" />
                 <line x1="32" y1="32" x2="32" y2="20" stroke="#fff" stroke-width="2" stroke-linecap="round" />
                 <line x1="32" y1="32" x2="40" y2="32" stroke="#e67e22" stroke-width="1.5" stroke-linecap="round" />
             </svg>`;
   } else if (bossType === "nexus") {
     return `
             <svg width="56" height="56" viewBox="0 0 64 64" style="display:block; margin: 0 auto; filter: drop-shadow(0 0 6px rgba(255, 0, 127, 0.45));">
-                <defs><linearGradient id="g_nex" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ff007f"/><stop offset="100%" stop-color="#00d2ff"/></linearGradient></defs>
-                <rect x="14" y="14" width="36" height="36" fill="none" stroke="url(#g_nex)" stroke-width="2" />
+                <defs><linearGradient id="g_nex_${uid}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ff007f"/><stop offset="100%" stop-color="#00d2ff"/></linearGradient></defs>
+                <rect x="14" y="14" width="36" height="36" fill="none" stroke="url(#g_nex_${uid})" stroke-width="2" />
                 <rect x="20" y="20" width="24" height="24" fill="none" stroke="#00b894" stroke-width="1.5" />
                 <circle cx="32" cy="32" r="4" fill="#fff" stroke="#ff007f" stroke-width="1" />
             </svg>`;
@@ -39,6 +152,7 @@ window.getBossIconHtml = function (bossType) {
 };
 
 window.getEtcIconHtml = function (key) {
+  let uid = Math.floor(Math.random() * 10000000);
   let bg = "rgba(170, 170, 170, 0.12)";
   let border = "#444";
   let svgContent = "";
@@ -49,12 +163,12 @@ window.getEtcIconHtml = function (key) {
     svgContent = `
         <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
             <defs>
-                <linearGradient id="grad_EridiumShard" x1="0%" y1="0%" x2="0%" y2="100%">
+                <linearGradient id="grad_EridiumShard_${uid}" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" stop-color="#e84393" />
                     <stop offset="100%" stop-color="#8e44ad" />
                 </linearGradient>
             </defs>
-            <path d="M16 2 L26 16 L16 30 L6 16 Z" fill="url(#grad_EridiumShard)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M16 2 L26 16 L16 30 L6 16 Z" fill="url(#grad_EridiumShard_${uid})" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
             <path d="M16 2 L16 30" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
             <path d="M6 16 L26 16" stroke="rgba(0,0,0,0.25)" stroke-width="1.5"/>
         </svg>`;
@@ -64,16 +178,16 @@ window.getEtcIconHtml = function (key) {
     svgContent = `
         <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
             <defs>
-                <linearGradient id="grad_GachaKey" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id="grad_GachaKey_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stop-color="#ffd700" />
                     <stop offset="100%" stop-color="#b7950b" />
                 </linearGradient>
             </defs>
-            <circle cx="11" cy="21" r="6" fill="url(#grad_GachaKey)" stroke="#000" stroke-width="2" />
+            <circle cx="11" cy="21" r="6" fill="url(#grad_GachaKey_${uid})" stroke="#000" stroke-width="2" />
             <circle cx="11" cy="21" r="2.5" fill="#111" stroke="#000" stroke-width="1.5" />
             <path d="M15 17 L27 5 L30 8 L28 10 L26 8 L24 12 L22 10" stroke="#000" stroke-width="2" stroke-linejoin="round" fill="none" />
-            <path d="M15.5 16.5 L26.5 5.5" stroke="url(#grad_GachaKey)" stroke-width="3" stroke-linecap="round" fill="none"/>
-            <path d="M26.5 5.5 L28.5 7.5 M24.5 7.5 L26.5 9.5" stroke="url(#grad_GachaKey)" stroke-width="2" stroke-linecap="round"/>
+            <path d="M15.5 16.5 L26.5 5.5" stroke="url(#grad_GachaKey_${uid})" stroke-width="3" stroke-linecap="round" fill="none"/>
+            <path d="M26.5 5.5 L28.5 7.5 M24.5 7.5 L26.5 9.5" stroke="url(#grad_GachaKey_${uid})" stroke-width="2" stroke-linecap="round"/>
         </svg>`;
   } else if (key === "Ancient Core") {
     bg = "rgba(231, 76, 60, 0.25)";
@@ -81,13 +195,13 @@ window.getEtcIconHtml = function (key) {
     svgContent = `
         <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
             <defs>
-                <radialGradient id="grad_AncientCore" cx="50%" cy="50%" r="50%">
+                <radialGradient id="grad_AncientCore_${uid}" cx="50%" cy="50%" r="50%">
                     <stop offset="0%" stop-color="#ffffff" />
                     <stop offset="30%" stop-color="#e74c3c" />
                     <stop offset="100%" stop-color="#960018" />
                 </radialGradient>
             </defs>
-            <circle cx="16" cy="16" r="11" fill="url(#grad_AncientCore)" stroke="#000" stroke-width="2" />
+            <circle cx="16" cy="16" r="11" fill="url(#grad_AncientCore_${uid})" stroke="#000" stroke-width="2" />
             <path d="M5 16 L27 16" stroke="#000" stroke-width="2" />
             <path d="M16 5 L16 27" stroke="#000" stroke-width="2" />
             <circle cx="16" cy="16" r="4" fill="#fff" opacity="0.8" />
@@ -98,12 +212,12 @@ window.getEtcIconHtml = function (key) {
     svgContent = `
         <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
             <defs>
-                <linearGradient id="grad_OverlordsSigil" x1="0%" y1="0%" x2="0%" y2="100%">
+                <linearGradient id="grad_OverlordsSigil_${uid}" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" stop-color="#1abc9c" />
                     <stop offset="100%" stop-color="#16a085" />
                 </linearGradient>
             </defs>
-            <path d="M16 4 L19 14 L27 10 L24 20 L16 28 L8 20 L5 10 L13 14 Z" fill="url(#grad_OverlordsSigil)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M16 4 L19 14 L27 10 L24 20 L16 28 L8 20 L5 10 L13 14 Z" fill="url(#grad_OverlordsSigil_${uid})" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
             <circle cx="16" cy="16" r="3.5" fill="#fff" stroke="#000" stroke-width="1.5" />
         </svg>`;
   } else if (key === "Astral Essence") {
@@ -112,13 +226,13 @@ window.getEtcIconHtml = function (key) {
     svgContent = `
         <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
             <defs>
-                <linearGradient id="grad_AstralEssence" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id="grad_AstralEssence_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stop-color="#e84393" />
                     <stop offset="50%" stop-color="#9b59b6" />
                     <stop offset="100%" stop-color="#3498db" />
                 </linearGradient>
             </defs>
-            <path d="M16 3 L19 13 L29 16 L19 19 L16 29 L13 19 L3 16 L13 13 Z" fill="url(#grad_AstralEssence)" stroke="#000" stroke-width="2" stroke-linejoin="round" />
+            <path d="M16 3 L19 13 L29 16 L19 19 L16 29 L13 19 L3 16 L13 13 Z" fill="url(#grad_AstralEssence_${uid})" stroke="#000" stroke-width="2" stroke-linejoin="round" />
             <circle cx="16" cy="16" r="3" fill="#ffffff" opacity="0.9" />
         </svg>`;
   } else if (key === "Mythic Scrap") {
@@ -127,12 +241,12 @@ window.getEtcIconHtml = function (key) {
     svgContent = `
         <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
             <defs>
-                <linearGradient id="grad_MythicScrap" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id="grad_MythicScrap_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stop-color="#ff7675" />
                     <stop offset="100%" stop-color="#d63031" />
                 </linearGradient>
             </defs>
-            <path d="M6 10 L18 4 L28 14 L24 26 L10 28 L4 18 Z" fill="url(#grad_MythicScrap)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M6 10 L18 4 L28 14 L24 26 L10 28 L4 18 Z" fill="url(#grad_MythicScrap_${uid})" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
             <path d="M14 8 L24 16 M10 18 L20 22" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
         </svg>`;
   } else if (key === "Legendary Scrap") {
@@ -141,12 +255,12 @@ window.getEtcIconHtml = function (key) {
     svgContent = `
         <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
             <defs>
-                <linearGradient id="grad_LegendaryScrap" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id="grad_LegendaryScrap_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stop-color="#ffeaa7" />
                     <stop offset="100%" stop-color="#fdcb6e" />
                 </linearGradient>
             </defs>
-            <path d="M8 6 L22 8 L26 22 L14 28 L4 16 Z" fill="url(#grad_LegendaryScrap)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M8 6 L22 8 L26 22 L14 28 L4 16 Z" fill="url(#grad_LegendaryScrap_${uid})" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
             <path d="M12 10 L20 18" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round"/>
         </svg>`;
   } else if (key === "Epic Scrap") {
@@ -155,13 +269,13 @@ window.getEtcIconHtml = function (key) {
     svgContent = `
         <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
             <defs>
-                <linearGradient id="grad_EpicScrap" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id="grad_EpicScrap_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stop-color="#ffbe76" />
                     <stop offset="100%" stop-color="#e67e22" />
                 </linearGradient>
             </defs>
-            <path d="M10 4 L26 8 L22 24 L8 26 Z" fill="url(#grad_EpicScrap)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
-            <path d="M12 12 L20 16" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M10 4 L26 8 L22 24 L8 26 Z" fill="url(#grad_EpicScrap_${uid})" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M12 12 L20 16" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
         </svg>`;
   } else if (key === "Magic Scrap") {
     bg = "rgba(155, 89, 182, 0.25)";
@@ -169,12 +283,12 @@ window.getEtcIconHtml = function (key) {
     svgContent = `
         <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
             <defs>
-                <linearGradient id="grad_MagicScrap" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id="grad_MagicScrap_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stop-color="#a29bfe" />
                     <stop offset="100%" stop-color="#6c5ce7" />
                 </linearGradient>
             </defs>
-            <path d="M6 14 L16 4 L28 12 L22 26 L10 24 Z" fill="url(#grad_MagicScrap)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M6 14 L16 4 L28 12 L22 26 L10 24 Z" fill="url(#grad_MagicScrap_${uid})" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
             <path d="M12 10 L18 20" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round"/>
         </svg>`;
   } else if (key === "Rare Scrap") {
@@ -183,12 +297,12 @@ window.getEtcIconHtml = function (key) {
     svgContent = `
         <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
             <defs>
-                <linearGradient id="grad_RareScrap" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id="grad_RareScrap_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stop-color="#74b9ff" />
                     <stop offset="100%" stop-color="#0984e3" />
                 </linearGradient>
             </defs>
-            <path d="M4 8 L18 6 L28 16 L16 28 L6 20 Z" fill="url(#grad_RareScrap)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M4 8 L18 6 L28 16 L16 28 L6 20 Z" fill="url(#grad_RareScrap_${uid})" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
             <path d="M10 12 L20 18" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round"/>
         </svg>`;
   } else if (key === "Luminous Soul") {
@@ -197,12 +311,12 @@ window.getEtcIconHtml = function (key) {
     svgContent = `
         <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
             <defs>
-                <linearGradient id="grad_LuminousSoul" x1="0%" y1="100%" x2="0%" y2="0%">
+                <linearGradient id="grad_LuminousSoul_${uid}" x1="0%" y1="100%" x2="0%" y2="0%">
                     <stop offset="0%" stop-color="#fd79a8" />
                     <stop offset="100%" stop-color="#ffb6c1" />
                 </linearGradient>
             </defs>
-            <path d="M16 3 C16 3, 6 15, 6 22 C6 27, 10.5 30, 16 30 C21.5 30, 26 27, 26 22 C26 15, 16 3, 16 3 Z" fill="url(#grad_LuminousSoul)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M16 3 C16 3, 6 15, 6 22 C6 27, 10.5 30, 16 30 C21.5 30, 26 27, 26 22 C26 15, 16 3, 16 3 Z" fill="url(#grad_LuminousSoul_${uid})" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
             <circle cx="13" cy="20" r="3" fill="#fff" opacity="0.6"/>
         </svg>`;
   } else if (key === "Monster Soul") {
@@ -211,12 +325,12 @@ window.getEtcIconHtml = function (key) {
     svgContent = `
         <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
             <defs>
-                <linearGradient id="grad_MonsterSoul" x1="0%" y1="100%" x2="0%" y2="0%">
+                <linearGradient id="grad_MonsterSoul_${uid}" x1="0%" y1="100%" x2="0%" y2="0%">
                     <stop offset="0%" stop-color="#2d3436" />
                     <stop offset="100%" stop-color="#636e72" />
                 </linearGradient>
             </defs>
-            <path d="M16 3 C16 3, 6 15, 6 22 C6 27, 10.5 30, 16 30 C21.5 30, 26 27, 26 22 C26 15, 16 3, 16 3 Z" fill="url(#grad_MonsterSoul)" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M16 3 C16 3, 6 15, 6 22 C6 27, 10.5 30, 16 30 C21.5 30, 26 27, 26 22 C26 15, 16 3, 16 3 Z" fill="url(#grad_MonsterSoul_${uid})" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
             <path d="M11 19 L14 17" stroke="#e74c3c" stroke-width="1.8" stroke-linecap="round"/>
             <path d="M21 19 L18 17" stroke="#e74c3c" stroke-width="1.8" stroke-linecap="round"/>
         </svg>`;
@@ -226,13 +340,13 @@ window.getEtcIconHtml = function (key) {
     svgContent = `
         <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
             <defs>
-                <linearGradient id="grad_CatalystCore" x1="0%" y1="0%" x2="100%" y2="0%">
+                <linearGradient id="grad_CatalystCore_${uid}" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stop-color="#2ecc71" />
                     <stop offset="50%" stop-color="#a3fd83" />
                     <stop offset="100%" stop-color="#27ae60" />
                 </linearGradient>
             </defs>
-            <rect x="9" y="4" width="14" height="24" rx="3" fill="url(#grad_CatalystCore)" stroke="#000" stroke-width="2"/>
+            <rect x="9" y="4" width="14" height="24" rx="3" fill="url(#grad_CatalystCore_${uid})" stroke="#000" stroke-width="2"/>
             <line x1="9" y1="10" x2="23" y2="10" stroke="#000" stroke-width="2"/>
             <line x1="9" y1="22" x2="23" y2="22" stroke="#000" stroke-width="2"/>
             <rect x="13" y="13" width="6" height="6" fill="#fff" opacity="0.9" rx="1"/>
@@ -255,22 +369,38 @@ window.getUseIconHtml = function (key) {
   let svgContent = "";
 
   const getPotionSvg = (liquidColor) => {
-    let uniqueId = "liq_" + liquidColor.replace("#", "");
-    return `
-        <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
-            <defs>
-                <linearGradient id="${uniqueId}" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stop-color="${liquidColor}" />
-                    <stop offset="70%" stop-color="${liquidColor}" />
-                    <stop offset="100%" stop-color="rgba(255,255,255,0.4)" />
-                </linearGradient>
-            </defs>
-            <path d="M13 5 L19 5 L19 12 L26 23 C28 26, 26 29, 21 29 L11 29 C6 29, 4 26, 6 23 L13 12 Z" fill="none" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
-            <path d="M8.5 21 L23.5 21 L25 24 C26.2 26.2, 25 28, 21 28 L11 28 C7 28, 5.8 26.2, 7 24 Z" fill="url(#${uniqueId})" stroke="#000" stroke-width="1.5"/>
-            <rect x="13.5" y="2" width="5" height="4" fill="#a0522d" stroke="#000" stroke-width="1.5"/>
-            <path d="M9 22 C8 24, 9 26, 11 27" stroke="#fff" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.65"/>
-        </svg>`;
-  };
+      let uid = Math.floor(Math.random() * 10000000);
+      let uniqueId = "liq_" + liquidColor.replace("#", "") + "_" + uid;
+      let glassId = "glass_base_" + uid;
+      return `
+          <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
+              <defs>
+                  <linearGradient id="${glassId}" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#475569" />
+                      <stop offset="50%" stop-color="#334155" />
+                      <stop offset="100%" stop-color="#1e293b" />
+                  </linearGradient>
+                  <linearGradient id="${uniqueId}" x1="0%" y1="100%" x2="0%" y2="0%">
+                      <stop offset="0%" stop-color="rgba(0,0,0,0.3)" />
+                      <stop offset="30%" stop-color="${liquidColor}" />
+                      <stop offset="85%" stop-color="${liquidColor}" />
+                      <stop offset="100%" stop-color="#ffffff" />
+                  </linearGradient>
+              </defs>
+              <!-- Bottle Glass Body with Solid Glass Gradient -->
+              <path d="M13 5 L19 5 L19 12 L26 23 C28 26, 26 29, 21 29 L11 29 C6 29, 4 26, 6 23 L13 12 Z" fill="url(#${glassId})" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+              <!-- Liquid Fill -->
+              <path d="M8.5 21 L23.5 21 L25 24 C26.2 26.2, 25 28, 21 28 L11 28 C7 28, 5.8 26.2, 7 24 Z" fill="url(#${uniqueId})" stroke="#000" stroke-width="1.5"/>
+              <!-- Cork Stopper -->
+              <rect x="13.5" y="2" width="5" height="4" fill="#a0522d" stroke="#000" stroke-width="1.5"/>
+              <!-- Left Neck Specular Highlight -->
+              <path d="M14.5 6 L14.5 11" stroke="rgba(255, 255, 255, 0.45)" stroke-width="1" stroke-linecap="round" fill="none" />
+              <!-- Right Shoulder Specular Highlight -->
+              <path d="M22 14 C23.5 17, 23.5 21, 22 24" stroke="rgba(255, 255, 255, 0.25)" stroke-width="1" stroke-linecap="round" fill="none" />
+              <!-- Bottom Liquid Glow Highlight -->
+              <path d="M9 22 C8 24, 9 26, 11 27" stroke="#fff" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.65"/>
+          </svg>`;
+    };
 
   if (key === "SP Reset Scroll") {
     bg = "rgba(155, 89, 182, 0.25)";
@@ -445,73 +575,74 @@ window.getBossIconHtml = function (bossType) {
 };
 
 window.getArtifactIconHtml = function (trait, size = 24) {
+  let uid = Math.floor(Math.random() * 10000000);
   let svg = "";
   if (trait === "frenzy") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><radialGradient id="g_frenzy" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ff5555"/><stop offset="100%" stop-color="#4a0008"/></radialGradient></defs>
-                <rect x="3" y="3" width="26" height="26" rx="6" fill="url(#g_frenzy)" stroke="#111" stroke-width="1.8"/>
+                <defs><radialGradient id="g_frenzy_${uid}" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ff5555"/><stop offset="100%" stop-color="#4a0008"/></radialGradient></defs>
+                <rect x="3" y="3" width="26" height="26" rx="6" fill="url(#g_frenzy_${uid})" stroke="#111" stroke-width="1.8"/>
                 <path d="M16 6 L12 16 L20 18 L16 26" fill="none" stroke="#f1c40f" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" style="filter: drop-shadow(0 0 3px #ff3300);"/>
                 <circle cx="16" cy="16" r="3" fill="#ffffff" stroke="#ff3333" stroke-width="1"/>
             </svg>`;
   } else if (trait === "vampirism") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
                 <defs>
-                    <linearGradient id="g_gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fff59d"/><stop offset="50%" stop-color="#f1c40f"/><stop offset="100%" stop-color="#9a7d0a"/></linearGradient>
-                    <radialGradient id="g_blood" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ff4d4d"/><stop offset="100%" stop-color="#7a0010"/></radialGradient>
+                    <linearGradient id="g_gold_${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fff59d"/><stop offset="50%" stop-color="#f1c40f"/><stop offset="100%" stop-color="#9a7d0a"/></linearGradient>
+                    <radialGradient id="g_blood_${uid}" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ff4d4d"/><stop offset="100%" stop-color="#7a0010"/></radialGradient>
                 </defs>
-                <path d="M8 6 L24 6 L22 16 C22 22, 16 24, 16 24 C16 24, 10 22, 10 16 Z" fill="url(#g_gold)" stroke="#111" stroke-width="2" stroke-linejoin="round"/>
-                <path d="M9.5 8 L22.5 8 C21 13, 11 13, 9.5 8 Z" fill="url(#g_blood)" stroke="#111" stroke-width="1"/>
-                <line x1="16" y1="24" x2="16" y2="28" stroke="url(#g_gold)" stroke-width="3" stroke-linecap="round"/>
-                <path d="M9 28 L23 28 Q16 31, 9 28 Z" fill="url(#g_gold)" stroke="#111" stroke-width="1.5" stroke-linejoin="round"/>
+                <path d="M8 6 L24 6 L22 16 C22 22, 16 24, 16 24 C16 24, 10 22, 10 16 Z" fill="url(#g_gold_${uid})" stroke="#111" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M9.5 8 L22.5 8 C21 13, 11 13, 9.5 8 Z" fill="url(#g_blood_${uid})" stroke="#111" stroke-width="1"/>
+                <line x1="16" y1="24" x2="16" y2="28" stroke="url(#g_gold_${uid})" stroke-width="3" stroke-linecap="round"/>
+                <path d="M9 28 L23 28 Q16 31, 9 28 Z" fill="url(#g_gold_${uid})" stroke="#111" stroke-width="1.5" stroke-linejoin="round"/>
             </svg>`;
   } else if (trait === "gold_hoard") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="g_bronze" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffd54f"/><stop offset="100%" stop-color="#a77c00"/></linearGradient></defs>
-                <circle cx="16" cy="8" r="4.5" fill="none" stroke="url(#g_bronze)" stroke-width="2.5"/>
-                <line x1="16" y1="11" x2="16" y2="25" stroke="url(#g_bronze)" stroke-width="3.5" stroke-linecap="round"/>
-                <line x1="9" y1="15" x2="23" y2="15" stroke="url(#g_bronze)" stroke-width="3" stroke-linecap="round"/>
-                <path d="M7 20 C7 27, 25 27, 25 20" fill="none" stroke="url(#g_bronze)" stroke-width="3.5" stroke-linecap="round"/>
-                <polygon points="7,19 4,22 9,21" fill="url(#g_bronze)" stroke="#111" stroke-width="1"/>
-                <polygon points="25,19 28,22 23,21" fill="url(#g_bronze)" stroke="#111" stroke-width="1"/>
+                <defs><linearGradient id="g_bronze_${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffd54f"/><stop offset="100%" stop-color="#a77c00"/></linearGradient></defs>
+                <circle cx="16" cy="8" r="4.5" fill="none" stroke="url(#g_bronze_${uid})" stroke-width="2.5"/>
+                <line x1="16" y1="11" x2="16" y2="25" stroke="url(#g_bronze_${uid})" stroke-width="3.5" stroke-linecap="round"/>
+                <line x1="9" y1="15" x2="23" y2="15" stroke="url(#g_bronze_${uid})" stroke-width="3" stroke-linecap="round"/>
+                <path d="M7 20 C7 27, 25 27, 25 20" fill="none" stroke="url(#g_bronze_${uid})" stroke-width="3.5" stroke-linecap="round"/>
+                <polygon points="7,19 4,22 9,21" fill="url(#g_bronze_${uid})" stroke="#111" stroke-width="1"/>
+                <polygon points="25,19 28,22 23,21" fill="url(#g_bronze_${uid})" stroke="#111" stroke-width="1"/>
             </svg>`;
   } else if (trait === "magic_find") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
                 <defs>
-                    <linearGradient id="g_sc_gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fff1a8"/><stop offset="100%" stop-color="#d4af37"/></linearGradient>
-                    <linearGradient id="g_sc_emerald" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#55efc4"/><stop offset="100%" stop-color="#00b894"/></linearGradient>
+                    <linearGradient id="g_sc_gold_${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fff1a8"/><stop offset="100%" stop-color="#d4af37"/></linearGradient>
+                    <linearGradient id="g_sc_emerald_${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#55efc4"/><stop offset="100%" stop-color="#00b894"/></linearGradient>
                 </defs>
-                <ellipse cx="16" cy="18" rx="8" ry="10" fill="url(#g_sc_gold)" stroke="#111" stroke-width="2"/>
-                <circle cx="16" cy="10" r="4.2" fill="url(#g_sc_gold)" stroke="#111" stroke-width="1.8"/>
+                <ellipse cx="16" cy="18" rx="8" ry="10" fill="url(#g_sc_gold_${uid})" stroke="#111" stroke-width="2"/>
+                <circle cx="16" cy="10" r="4.2" fill="url(#g_sc_gold_${uid})" stroke="#111" stroke-width="1.8"/>
                 <line x1="16" y1="10" x2="16" y2="28" stroke="#111" stroke-width="1.8"/>
-                <rect x="13.2" y="13.5" width="5.6" height="8.5" rx="1.5" fill="url(#g_sc_emerald)" stroke="#111" stroke-width="1"/>
+                <rect x="13.2" y="13.5" width="5.6" height="8.5" rx="1.5" fill="url(#g_sc_emerald_${uid})" stroke="#111" stroke-width="1"/>
                 <path d="M8 14 Q3 15, 6 9.5 M24 14 Q29 15, 26 9.5 M7 21 Q3 23, 5 27 M25 21 Q29 23, 27 27" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round"/>
             </svg>`;
   } else if (trait === "move_speed") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
                 <defs>
-                    <linearGradient id="g_silver_metal" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#7f8c8d"/></linearGradient>
-                    <linearGradient id="g_sky_wings" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#81ecec"/><stop offset="100%" stop-color="#0984e3"/></linearGradient>
+                    <linearGradient id="g_silver_metal_${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#7f8c8d"/></linearGradient>
+                    <linearGradient id="g_sky_wings_${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#81ecec"/><stop offset="100%" stop-color="#0984e3"/></linearGradient>
                 </defs>
                 <!-- Heavy metallic winged greave -->
-                <path d="M10 24 L15 9 L24 15 L19 26 Z" fill="url(#g_silver_metal)" stroke="#111" stroke-width="1.8"/>
-                <path d="M5 14 C5 10, 11 8, 14 15 C11 15, 7 13, 5 14 Z" fill="url(#g_sky_wings)" stroke="#111" stroke-width="1.2"/>
-                <path d="M3 18 C3 14, 9 12, 12 19 C9 19, 5 17, 3 18 Z" fill="url(#g_sky_wings)" stroke="#111" stroke-width="1.2"/>
+                <path d="M10 24 L15 9 L24 15 L19 26 Z" fill="url(#g_silver_metal_${uid})" stroke="#111" stroke-width="1.8"/>
+                <path d="M5 14 C5 10, 11 8, 14 15 C11 15, 7 13, 5 14 Z" fill="url(#g_sky_wings_${uid})" stroke="#111" stroke-width="1.2"/>
+                <path d="M3 18 C3 14, 9 12, 12 19 C9 19, 5 17, 3 18 Z" fill="url(#g_sky_wings_${uid})" stroke="#111" stroke-width="1.2"/>
             </svg>`;
   } else if (trait === "defense") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
                 <defs>
-                    <linearGradient id="g_cob_inner" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#4ba3e3"/><stop offset="100%" stop-color="#1c304a"/></linearGradient>
+                    <linearGradient id="g_cob_inner_${uid}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#4ba3e3"/><stop offset="100%" stop-color="#1c304a"/></linearGradient>
                 </defs>
                 <!-- Cobalt shield matrix -->
-                <path d="M16 3 L27 9 L23 23 L16 29 L9 23 L5 9 Z" fill="url(#g_cob_inner)" stroke="#111" stroke-width="2.2" stroke-linejoin="round"/>
+                <path d="M16 3 L27 9 L23 23 L16 29 L9 23 L5 9 Z" fill="url(#g_cob_inner_${uid})" stroke="#111" stroke-width="2.2" stroke-linejoin="round"/>
                 <path d="M16 7 L23 11 L20 20 L16 25 L12 20 L9 11 Z" fill="none" stroke="#fff" opacity="0.3" stroke-width="1.8"/>
                 <circle cx="16" cy="15" r="3.2" fill="#fff" style="filter: drop-shadow(0 0 4px #fff);"/>
             </svg>`;
   } else if (trait === "parry_strike") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="g_riposte" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#555555"/></linearGradient></defs>
+                <defs><linearGradient id="g_riposte_${uid}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#555555"/></linearGradient></defs>
                 <!-- Heavy counter gauntlet -->
-                <path d="M7 10 L16 5 L25 10 L23 22 L16 28 L9 22 Z" fill="url(#g_riposte)" stroke="#111" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M7 10 L16 5 L25 10 L23 22 L16 28 L9 22 Z" fill="url(#g_riposte_${uid})" stroke="#111" stroke-width="2" stroke-linejoin="round"/>
                 <line x1="8" y1="14" x2="24" y2="14" stroke="#c0392b" stroke-width="3" stroke-linecap="round"/>
                 <path d="M16 10 L16 22" stroke="#111" stroke-width="3" stroke-linecap="round"/>
                 <path d="M16 10 L16 22" stroke="#fff" stroke-width="1" stroke-linecap="round"/>
@@ -519,18 +650,18 @@ window.getArtifactIconHtml = function (trait, size = 24) {
   } else if (trait === "echo_strike") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
                 <defs>
-                    <linearGradient id="g_blue_echo" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#020d1a"/><stop offset="100%" stop-color="#00ffcc"/></linearGradient>
+                    <linearGradient id="g_blue_echo_${uid}" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#020d1a"/><stop offset="100%" stop-color="#00ffcc"/></linearGradient>
                 </defs>
                 <!-- Translucent phantom twin blades -->
-                <path d="M4 28 L24 8 L28 12 L8 32 Z" fill="url(#g_blue_echo)" stroke="rgba(0, 255, 204, 0.4)" stroke-width="1.5" style="opacity:0.45;"/>
-                <path d="M8 24 L24 8 L28 12 L12 28 Z" fill="url(#g_blue_echo)" stroke="#111" stroke-width="1.8"/>
+                <path d="M4 28 L24 8 L28 12 L8 32 Z" fill="url(#g_blue_echo_${uid})" stroke="rgba(0, 255, 204, 0.4)" stroke-width="1.5" style="opacity:0.45;"/>
+                <path d="M8 24 L24 8 L28 12 L12 28 Z" fill="url(#g_blue_echo_${uid})" stroke="#111" stroke-width="1.8"/>
                 <path d="M12 28 L28 12" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
             </svg>`;
   } else if (trait === "idle_spd") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="g_obsid" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2c3e50"/><stop offset="100%" stop-color="#07090c"/></linearGradient></defs>
+                <defs><linearGradient id="g_obsid_${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2c3e50"/><stop offset="100%" stop-color="#07090c"/></linearGradient></defs>
                 <!-- Clockwork suspended inside obsidian ring -->
-                <circle cx="16" cy="16" r="11" fill="url(#g_obsid)" stroke="#ffd700" stroke-width="2.2"/>
+                <circle cx="16" cy="16" r="11" fill="url(#g_obsid_${uid})" stroke="#ffd700" stroke-width="2.2"/>
                 <circle cx="16" cy="16" r="8" fill="none" stroke="#e67e22" stroke-width="1" stroke-dasharray="3 3"/>
                 <line x1="16" y1="16" x2="16" y2="9.5" stroke="#f1c40f" stroke-width="2.2" stroke-linecap="round"/>
                 <line x1="16" y1="16" x2="21.5" y2="16" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
@@ -538,19 +669,19 @@ window.getArtifactIconHtml = function (trait, size = 24) {
   } else if (trait === "active_spd") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
                 <defs>
-                    <linearGradient id="g_fever_flare" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fff9a6"/><stop offset="50%" stop-color="#f39c12"/><stop offset="100%" stop-color="#d35400"/></linearGradient>
+                    <linearGradient id="g_fever_flare_${uid}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fff9a6"/><stop offset="50%" stop-color="#f39c12"/><stop offset="100%" stop-color="#d35400"/></linearGradient>
                 </defs>
                 <!-- Sun-spiked active crest -->
-                <path d="M16 2 L20 10 L28 10 L22 16 L25 24 L16 19 L7 24 L10 16 L4 10 L12 10 Z" fill="url(#g_fever_flare)" stroke="#111" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M16 2 L20 10 L28 10 L22 16 L25 24 L16 19 L7 24 L10 16 L4 10 L12 10 Z" fill="url(#g_fever_flare_${uid})" stroke="#111" stroke-width="1.8" stroke-linejoin="round"/>
                 <circle cx="16" cy="13.5" r="4.2" fill="#fff" opacity="0.3"/>
             </svg>`;
   } else if (trait === "dodge_buff") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
                 <defs>
-                    <linearGradient id="g_adrenaline_core" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#2ecc71"/><stop offset="100%" stop-color="#145a32"/></linearGradient>
+                    <linearGradient id="g_adrenaline_core_${uid}" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#2ecc71"/><stop offset="100%" stop-color="#145a32"/></linearGradient>
                 </defs>
                 <!-- Emerald adrenaline injector -->
-                <rect x="11.5" y="4" width="9" height="22" rx="4.5" fill="url(#g_adrenaline_core)" stroke="#111" stroke-width="1.8"/>
+                <rect x="11.5" y="4" width="9" height="22" rx="4.5" fill="url(#g_adrenaline_core_${uid})" stroke="#111" stroke-width="1.8"/>
                 <rect x="13.5" y="7" width="5" height="16" fill="#fff" opacity="0.25"/>
                 <line x1="10" y1="12" x2="22" y2="12" stroke="#111" stroke-width="2"/>
                 <line x1="10" y1="18" x2="22" y2="18" stroke="#111" stroke-width="2"/>
@@ -559,41 +690,41 @@ window.getArtifactIconHtml = function (trait, size = 24) {
   } else if (trait === "extend_buffs") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
                 <defs>
-                    <linearGradient id="g_chrono_glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffeaa7"/><stop offset="100%" stop-color="#d35400"/></linearGradient>
+                    <linearGradient id="g_chrono_glass_${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffeaa7"/><stop offset="100%" stop-color="#d35400"/></linearGradient>
                 </defs>
                 <!-- Glowing starry hourglass -->
-                <path d="M7 6 L25 6 L16 16 Z" fill="url(#g_chrono_glass)" stroke="#111" stroke-width="1.8" stroke-linejoin="round"/>
-                <path d="M16 16 L7 26 L25 26 Z" fill="url(#g_chrono_glass)" stroke="#111" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M7 6 L25 6 L16 16 Z" fill="url(#g_chrono_glass_${uid})" stroke="#111" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M16 16 L7 26 L25 26 Z" fill="url(#g_chrono_glass_${uid})" stroke="#111" stroke-width="1.8" stroke-linejoin="round"/>
                 <circle cx="16" cy="11" r="2.2" fill="#fff" style="filter: drop-shadow(0 0 3px #fff);"/>
                 <path d="M13 23 Q16 18, 19 23 Z" fill="#fff" opacity="0.8"/>
             </svg>`;
   } else if (trait === "bag_space") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="g_dim_bag" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#a29bfe"/><stop offset="100%" stop-color="#6c5ce7"/></linearGradient></defs>
+                <defs><linearGradient id="g_dim_bag_${uid}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#a29bfe"/><stop offset="100%" stop-color="#6c5ce7"/></linearGradient></defs>
                 <!-- Violet runic satchel -->
-                <rect x="6.5" y="11" width="19" height="15" rx="3.5" fill="url(#g_dim_bag)" stroke="#111" stroke-width="1.8"/>
+                <rect x="6.5" y="11" width="19" height="15" rx="3.5" fill="url(#g_dim_bag_${uid})" stroke="#111" stroke-width="1.8"/>
                 <path d="M11.5 11 C11.5 6, 20.5 6, 20.5 11" fill="none" stroke="#111" stroke-width="2.2"/>
                 <circle cx="16" cy="18.5" r="3" fill="#111" stroke="#fff" stroke-width="1.2"/>
             </svg>`;
   } else if (trait === "second_wind") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="g_solar_ankh" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ff7675"/><stop offset="100%" stop-color="#d63031"/></linearGradient></defs>
+                <defs><linearGradient id="g_solar_ankh_${uid}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ff7675"/><stop offset="100%" stop-color="#d63031"/></linearGradient></defs>
                 <!-- Radiant solar sun-ankh -->
-                <circle cx="16" cy="10" r="5" fill="none" stroke="url(#g_solar_ankh)" stroke-width="2.5" style="filter: drop-shadow(0 0 3px #ff3300);"/>
-                <path d="M11 15.5 L21 15.5 L16 28.5 Z" fill="url(#g_solar_ankh)" stroke="#111" stroke-width="1.8" stroke-linejoin="round"/>
+                <circle cx="16" cy="10" r="5" fill="none" stroke="url(#g_solar_ankh_${uid})" stroke-width="2.5" style="filter: drop-shadow(0 0 3px #ff3300);"/>
+                <path d="M11 15.5 L21 15.5 L16 28.5 Z" fill="url(#g_solar_ankh_${uid})" stroke="#111" stroke-width="1.8" stroke-linejoin="round"/>
             </svg>`;
   } else if (trait === "golem_stance") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="g_granite" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#95a5a6"/><stop offset="100%" stop-color="#34495e"/></linearGradient></defs>
+                <defs><linearGradient id="g_granite_${uid}" x1="0%" y1="0%" x2="1" y2="1"><stop offset="0%" stop-color="#95a5a6"/><stop offset="100%" stop-color="#34495e"/></linearGradient></defs>
                 <!-- Runic stone core -->
-                <polygon points="16,3 27,10.5 27,23.5 16,29 5,23.5 5,10.5" fill="url(#g_granite)" stroke="#111" stroke-width="2" stroke-linejoin="round"/>
+                <polygon points="16,3 27,10.5 27,23.5 16,29 5,23.5 5,10.5" fill="url(#g_granite_${uid})" stroke="#111" stroke-width="2" stroke-linejoin="round"/>
                 <path d="M16 7 L23 11 L23 19 M9 19 L9 11 L16 7" fill="none" stroke="#e74c3c" stroke-width="1.8" style="filter: drop-shadow(0 0 2px #ff2200);"/>
             </svg>`;
   } else if (trait === "fairy_wealth") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="g_pixie" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ff9ff3"/><stop offset="100%" stop-color="#f368e0"/></linearGradient></defs>
+                <defs><linearGradient id="g_pixie_${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ff9ff3"/><stop offset="100%" stop-color="#f368e0"/></linearGradient></defs>
                 <!-- Flower Crown with gems -->
-                <circle cx="16" cy="16" r="10" fill="none" stroke="url(#g_pixie)" stroke-width="2.8"/>
+                <circle cx="16" cy="16" r="10" fill="none" stroke="url(#g_pixie_${uid})" stroke-width="2.8"/>
                 <path d="M12 9 Q16 3, 20 9 M9 16 Q16 23, 23 16" fill="none" stroke="#fff" opacity="0.65" stroke-width="1.8" stroke-linecap="round"/>
                 <circle cx="16" cy="16" r="3.2" fill="#ffd700" stroke="#111" stroke-width="1.2"/>
             </svg>`;
@@ -605,33 +736,33 @@ window.getArtifactIconHtml = function (trait, size = 24) {
             </svg>`;
   } else if (trait === "titan_grip") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="g_rivets" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#bdc3c7"/><stop offset="100%" stop-color="#2c3e50"/></linearGradient></defs>
+                <defs><linearGradient id="g_rivets_${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#bdc3c7"/><stop offset="100%" stop-color="#2c3e50"/></linearGradient></defs>
                 <!-- Heavy gauntlet built with rivets -->
-                <rect x="8.5" y="11" width="15" height="11.5" rx="3" fill="url(#g_rivets)" stroke="#111" stroke-width="1.8"/>
+                <rect x="8.5" y="11" width="15" height="11.5" rx="3" fill="url(#g_rivets_${uid})" stroke="#111" stroke-width="1.8"/>
                 <path d="M11 11 C11 5, 21 5, 21 11" fill="none" stroke="#ffd700" stroke-width="2.2"/>
                 <circle cx="11.5" cy="16.5" r="1" fill="#fff"/><circle cx="20.5" cy="16.5" r="1" fill="#fff"/>
             </svg>`;
   } else if (trait === "alchemist_alembic") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="g_chem" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#1abc9c"/><stop offset="100%" stop-color="#a3fd83"/></linearGradient></defs>
+                <defs><linearGradient id="g_chem_${uid}" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#1abc9c"/><stop offset="100%" stop-color="#a3fd83"/></linearGradient></defs>
                 <!-- Copper distillation beaker with heat glows -->
-                <circle cx="16" cy="19.5" r="8.2" fill="url(#g_chem)" stroke="#111" stroke-width="1.8"/>
+                <circle cx="16" cy="19.5" r="8.2" fill="url(#g_chem_${uid})" stroke="#111" stroke-width="1.8"/>
                 <rect x="14.5" y="6.5" width="3" height="6.5" fill="#bdc3c7" stroke="#111" stroke-width="1.2"/>
                 <path d="M12 21 C12 21, 14 24, 16 24 C18 24, 20 21, 20 21" fill="none" stroke="#fff" opacity="0.4" stroke-width="1.2"/>
             </svg>`;
   } else if (trait === "philosopher_catalyst") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="g_catalyst" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2ecc71"/><stop offset="100%" stop-color="#27ae60"/></linearGradient></defs>
+                <defs><linearGradient id="g_catalyst_${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2ecc71"/><stop offset="100%" stop-color="#27ae60"/></linearGradient></defs>
                 <!-- Jade triangular talisman -->
-                <polygon points="16,3.5 27.5,25 4.5,25" fill="url(#g_catalyst)" stroke="#111" stroke-width="2" stroke-linejoin="round"/>
+                <polygon points="16,3.5 27.5,25 4.5,25" fill="url(#g_catalyst_${uid})" stroke="#111" stroke-width="2" stroke-linejoin="round"/>
                 <circle cx="16" cy="17.8" r="4.2" fill="#fff" stroke="#111" stroke-width="1.2" style="filter: drop-shadow(0 0 3px #fff);"/>
             </svg>`;
   } else if (trait === "cauldron_eternity") {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="g_cauld_purple" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#3a045c"/><stop offset="100%" stop-color="#9b59b6"/></linearGradient></defs>
+                <defs><linearGradient id="g_cauld_purple_${uid}" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#3a045c"/><stop offset="100%" stop-color="#9b59b6"/></linearGradient></defs>
                 <!-- Boiling iron cauldron of starlight broth -->
                 <path d="M8 10.5 C8 10.5, 4 23, 16 25.5 C28 23, 24 10.5, 24 10.5 Z" fill="#1b212c" stroke="#111" stroke-width="1.8" stroke-linejoin="round"/>
-                <ellipse cx="16" cy="10.5" rx="10" ry="2.8" fill="url(#g_cauld_purple)" stroke="#111" stroke-width="1.8"/>
+                <ellipse cx="16" cy="10.5" rx="10" ry="2.8" fill="url(#g_cauld_purple_${uid})" stroke="#111" stroke-width="1.8"/>
                 <circle cx="12" cy="10" r="1.2" fill="#fff" opacity="0.6"/><circle cx="18" cy="11" r="1.5" fill="#fff" opacity="0.8"/>
             </svg>`;
   } else {
@@ -643,74 +774,75 @@ window.getArtifactIconHtml = function (trait, size = 24) {
 };
 
 window.getUniqueIconHtml = function (item, size = 32) {
+  let uid = Math.floor(Math.random() * 10000000);
   let svg = "";
   if (item.isUniqueStaff) {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="u_staff_ruby" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffd700"/><stop offset="100%" stop-color="#e67e22"/></linearGradient></defs>
+                <defs><linearGradient id="u_staff_ruby_${uid}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffd700"/><stop offset="100%" stop-color="#e67e22"/></linearGradient></defs>
                 <!-- Gold-coiled staff with ruby solar gem -->
                 <line x1="6" y1="26" x2="26" y2="6" stroke="#853c00" stroke-width="3" stroke-linecap="round"/>
-                <line x1="6" y1="26" x2="26" y2="6" stroke="url(#u_staff_ruby)" stroke-width="1" stroke-linecap="round" style="opacity:0.4;"/>
+                <line x1="6" y1="26" x2="26" y2="6" stroke="url(#u_staff_ruby_${uid})" stroke-width="1" stroke-linecap="round" style="opacity:0.4;"/>
                 <circle cx="26" cy="6" r="5.2" fill="#e74c3c" stroke="#111" stroke-width="1.5" style="filter: drop-shadow(0 0 4px #e74c3c);"/>
                 <circle cx="25" cy="5" r="1.2" fill="#fff"/>
             </svg>`;
   } else if (item.isUniqueSword) {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="u_reaver" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#3a0202"/><stop offset="100%" stop-color="#ff0000"/></linearGradient></defs>
+                <defs><linearGradient id="u_reaver_${uid}" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#3a0202"/><stop offset="100%" stop-color="#ff0000"/></linearGradient></defs>
                 <!-- Red Damascus blade with bleeding runs -->
-                <path d="M5 27 L25 7 L27 9 L7 29 Z" fill="url(#u_reaver)" stroke="#111" stroke-width="1.8"/>
+                <path d="M5 27 L25 7 L27 9 L7 29 Z" fill="url(#u_reaver_${uid})" stroke="#111" stroke-width="1.8"/>
                 <line x1="8" y1="24" x2="24" y2="8" stroke="#ff3333" stroke-width="1"/>
                 <rect x="3.5" y="25" width="7" height="3.5" rx="0.5" fill="#f1c40f" stroke="#111" stroke-width="1.2" transform="rotate(45 7 27)"/>
             </svg>`;
   } else if (item.isUniqueSingularity) {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="u_sing_purple" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#0b0116"/><stop offset="100%" stop-color="#8e44ad"/></linearGradient></defs>
+                <defs><linearGradient id="u_sing_purple_${uid}" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#0b0116"/><stop offset="100%" stop-color="#8e44ad"/></linearGradient></defs>
                 <!-- Star Core sword -->
-                <path d="M5 27 L25 7 L27 9 L7 29 Z" fill="url(#u_sing_purple)" stroke="#111" stroke-width="1.8"/>
+                <path d="M5 27 L25 7 L27 9 L7 29 Z" fill="url(#u_sing_purple_${uid})" stroke="#111" stroke-width="1.8"/>
                 <circle cx="26" cy="6" r="4" fill="#ff007f" style="filter: drop-shadow(0 0 4px #ff007f);"/>
             </svg>`;
   } else if (item.isUniqueMaelstrom) {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="u_mael" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#55efc4"/><stop offset="100%" stop-color="#00b894"/></linearGradient></defs>
+                <defs><linearGradient id="u_mael_${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#55efc4"/><stop offset="100%" stop-color="#00b894"/></linearGradient></defs>
                 <!-- Curved tempest polearm -->
                 <line x1="6" y1="26" x2="26" y2="6" stroke="#2c3e50" stroke-width="2.5" stroke-linecap="round"/>
-                <path d="M22 10 Q28 6, 28 4 Q25 4, 18 8 Z" fill="url(#u_mael)" stroke="#111" stroke-width="1.5" stroke-linejoin="round"/>
+                <path d="M22 10 Q28 6, 28 4 Q25 4, 18 8 Z" fill="url(#u_mael_${uid})" stroke="#111" stroke-width="1.5" stroke-linejoin="round"/>
             </svg>`;
   } else if (item.isUniqueAegis) {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="u_aegis_blue" x1="0" y1="0" x2="0" y2="100%"><stop offset="0%" stop-color="#0984e3"/><stop offset="100%" stop-color="#1b1c1e"/></linearGradient></defs>
+                <defs><linearGradient id="u_aegis_blue_${uid}" x1="0" y1="0" x2="0" y2="100%"><stop offset="0%" stop-color="#0984e3"/><stop offset="100%" stop-color="#1b1c1e"/></linearGradient></defs>
                 <!-- Heavy event horizon barrier shield -->
-                <path d="M16 3 L27 9 L23 23 L16 29 L9 23 L5 9 Z" fill="url(#u_aegis_blue)" stroke="#3498db" stroke-width="2" stroke-linejoin="round" style="filter: drop-shadow(0 0 3px #3498db);"/>
+                <path d="M16 3 L27 9 L23 23 L16 29 L9 23 L5 9 Z" fill="url(#u_aegis_blue_${uid})" stroke="#3498db" stroke-width="2" stroke-linejoin="round" style="filter: drop-shadow(0 0 3px #3498db);"/>
                 <circle cx="16" cy="16" r="3.2" fill="#fff" opacity="0.8"/>
             </svg>`;
   } else if (item.isUniqueWatch) {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="u_watch_dial" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#d5dbdb"/></linearGradient></defs>
+                <defs><linearGradient id="u_watch_dial_${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#d5dbdb"/></linearGradient></defs>
                 <!-- Temporal dial pocket-watch -->
                 <circle cx="16" cy="16" r="10" fill="#221c03" stroke="#f1c40f" stroke-width="1.8"/>
-                <circle cx="16" cy="16" r="7.5" fill="url(#u_watch_dial)" stroke="#111" stroke-width="1"/>
+                <circle cx="16" cy="16" r="7.5" fill="url(#u_watch_dial_${uid})" stroke="#111" stroke-width="1"/>
                 <line x1="16" y1="16" x2="16" y2="10.5" stroke="#111" stroke-width="1.8" stroke-linecap="round"/>
                 <line x1="16" y1="16" x2="20" y2="16" stroke="#c0392b" stroke-width="1.2" stroke-linecap="round"/>
             </svg>`;
   } else if (item.isUniqueChronicle) {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="u_chron" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fdf6e2"/><stop offset="100%" stop-color="#d5dbdb"/></linearGradient></defs>
+                <defs><linearGradient id="u_chron_${uid}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fdf6e2"/><stop offset="100%" stop-color="#d5dbdb"/></linearGradient></defs>
                 <!-- Leather bound lexicon with gold inlays -->
                 <rect x="7.5" y="5" width="17" height="22" rx="2.5" fill="#2c1d11" stroke="#ffd700" stroke-width="1.8" style="filter: drop-shadow(0 0 3px #f1c40f);"/>
-                <rect x="11.5" y="8" width="9" height="16" fill="url(#u_chron)" stroke="#111" stroke-width="1"/>
+                <rect x="11.5" y="8" width="9" height="16" fill="url(#u_chron_${uid})" stroke="#111" stroke-width="1"/>
             </svg>`;
   } else if (item.isUniqueWarpCore) {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="u_core_teal" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#002b2b"/><stop offset="100%" stop-color="#1abc9c"/></linearGradient></defs>
+                <defs><linearGradient id="u_core_teal_${uid}" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#002b2b"/><stop offset="100%" stop-color="#1abc9c"/></linearGradient></defs>
                 <!-- High tech spatial thruster boots -->
-                <path d="M8 23 L14 8 L22 14 L16 27 Z" fill="url(#u_core_teal)" stroke="#111" stroke-width="1.8"/>
+                <path d="M8 23 L14 8 L22 14 L16 27 Z" fill="url(#u_core_teal_${uid})" stroke="#111" stroke-width="1.8"/>
                 <rect x="10" y="16" width="3" height="5" rx="0.5" fill="#fff" style="filter: drop-shadow(0 0 3px #00ffcc);"/>
             </svg>`;
   } else if (item.isUniqueTempest) {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
-                <defs><linearGradient id="u_tempest_crown" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#a0f0ff"/><stop offset="100%" stop-color="#0080b0"/></linearGradient></defs>
+                <defs><linearGradient id="u_tempest_crown_${uid}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#a0f0ff"/><stop offset="100%" stop-color="#0080b0"/></linearGradient></defs>
                 <!-- Spiked lightning thunder crown -->
-                <path d="M6 21 L10 7 L14 15 L16 4 L18 15 L22 7 L26 21 Z" fill="url(#u_tempest_crown)" stroke="#111" stroke-width="1.8" stroke-linejoin="round" style="filter: drop-shadow(0 0 4px #00d2ff);"/>
-                <rect x="6" y="21" width="20" height="4" fill="url(#u_tempest_crown)" stroke="#111" stroke-width="1.8"/>
+                <path d="M6 21 L10 7 L14 15 L16 4 L18 15 L22 7 L26 21 Z" fill="url(#u_tempest_crown_${uid})" stroke="#111" stroke-width="1.8" stroke-linejoin="round" style="filter: drop-shadow(0 0 4px #00d2ff);"/>
+                <rect x="6" y="21" width="20" height="4" fill="url(#u_tempest_crown_${uid})" stroke="#111" stroke-width="1.8"/>
             </svg>`;
   } else {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
@@ -1990,6 +2122,7 @@ window.pushToast = function (
   quantity = 1,
   customText = null,
   clickAction = null,
+  isMilestone = false,
 ) {
   let container = document.getElementById("toast-container");
   if (!container) return;
@@ -2019,7 +2152,25 @@ window.pushToast = function (
     toast.style.pointerEvents = "none";
   }
 
-  if (customText) {
+  if (isMilestone) {
+    let stageNum =
+      typeof isMilestone === "number"
+        ? isMilestone
+        : window.playerStats.maxStage;
+    toast.style.border = `2px solid #f1c40f`;
+    let starsLabel = stars === "UNIQUE" ? "UNIQUE" : `${stars}★`;
+    toast.innerHTML = `
+      <div style="color: #f1c40f; font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px; font-weight: 900; text-shadow: 0 0 4px rgba(241, 196, 15, 0.4);">
+        🏆 MILESTONE DROP (Stage ${stageNum} Cleared!)
+      </div>
+      <div style="font-size: 12px; color: ${color}; font-weight: bold; margin-bottom: 3px;">
+        ${name}
+      </div>
+      <div style="font-size: 9px; color: #aaa;">
+        Quality: ${starsLabel} • Level ${Math.floor(((stageNum || 1) - 1) / 10) + 1}
+      </div>
+    `;
+  } else if (customText) {
     toast.innerHTML = customText;
   } else {
     let label = isEtc
@@ -3510,70 +3661,6 @@ window.showGoldUpgradeTooltip = function (e, upId) {
   window.positionTooltip(e, tt);
 };
 
-window.buildAltarModal = function () {
-  let listEl = document.getElementById("altar-list");
-  let aegisArts = [
-    "Blood-Soaked Chalice",
-    "Aegis Core",
-    "Riposte Gauntlet",
-    "Phoenix Ankh",
-    "Golem's Core",
-    "Titan's Shield Grip",
-    "Survivor's Adrenaline",
-  ];
-  let chronoArts = [
-    "Philosopher's Anchor",
-    "Windwalker Boots",
-    "Sloth's Blessing",
-    "Chrono Hourglass",
-    "Fairy Queen's Crown",
-    "Alchemist's Alembic",
-    "Philosopher's Catalyst",
-  ];
-  let cyberArts = [
-    "Berserker Stone",
-    "Gilded Scarab",
-    "Phantom Blade",
-    "Zealot's Charm",
-    "Dimensional Pouch",
-    "Void Core",
-    "Cauldron of Eternity",
-  ];
-
-  let renderGroup = (title, bossName, itemsType, allowedList, color) => {
-    let filtered = window.ARTIFACT_POOL.filter((a) =>
-      allowedList.includes(a.name),
-    );
-    let html = `
-                                                   <div style="border: 1px solid ${color}; border-radius:6px; padding:10px; background: rgba(0,0,0,0.4); margin-bottom:12px;">
-                                                       <div style="color:${color}; font-weight:bold; font-size:13px; margin-bottom:4px; text-transform:uppercase; display:flex; justify-content:space-between; flex-wrap:wrap; gap:4px;">
-                                                           <span>🛡️ ${title}</span><span style="font-size:10px; color:#aaa; font-weight:normal;">Equip: ${itemsType}</span>
-                                                       </div>
-                                                       <div style="font-size:10px; color:#888; font-style:italic; margin-bottom:8px;">Boss Target: ${bossName}</div>
-                                                       <div style="display:flex; flex-direction:column; gap:6px;">
-                                               `;
-    html += filtered
-      .map((art) => {
-        let iconBox = `<div style="margin-right:8px; display:inline-flex; align-items:center;">${window.getArtifactIconHtml(art.trait, 28)}</div>`;
-        return `
-                                                                                                      <div class="bag-item" style="cursor:help; border-left: 3px solid ${color}; margin-bottom:0; background:#18181c; padding:6px 10px; display:flex; align-items:center;" onmouseenter="window.showDummyArtifact(event, '${art.trait}')" ontouchstart="window.showDummyArtifact(event, '${art.trait}')" onmouseleave="window.hideTooltip()">
-                                                                                                          ${iconBox}
-                                                                                                          <div><strong style="color:${color};">${art.name}</strong><br><span style="font-size:9.5px;color:#aaa;">${art.desc}</span></div>
-                                                                                                      </div>
-                                                                                                  `;
-      })
-      .join("");
-    html += `</div></div>`;
-    return html;
-  };
-
-  listEl.innerHTML = `
-                                               ${renderGroup("Aegis Rift Vault", "Aegis Goliath", "Overall / Chest / Leggings", aegisArts, "#3498db")}
-                                               ${renderGroup("Chrono Rift Vault", "Chronos Arbitrator", "Boots / Helmet", chronoArts, "#f1c40f")}
-                                               ${renderGroup("Cyber Rift Vault", "Nexus Overseer", "Weapon / Sub-weapon", cyberArts, "#ff007f")}
-                                           `;
-};
-
 window.showAltarTooltip = function (e) {
   e.stopPropagation();
   let cores = window.inventory.ETC["Ancient Core"] || 0;
@@ -3814,14 +3901,10 @@ window.renderPaperDoll = function () {
         item.isUniqueWarpCore ||
         item.isUniqueTempest;
 
-      let iconBox = "";
+      let iconBox = `<div style="text-align:center; margin-bottom:4px;">${window.getEquipIconHtml(item, 32)}</div>`;
       if (isArt) {
-        iconBox = `<div style="text-align:center; margin-bottom:4px;">${window.getArtifactIconHtml(item.trait, 32)}</div>`;
         el.innerHTML = `${iconBox}<strong style="font-size:10px; color:#1abc9c;">${item.name}${lockTag}</strong><br><span style="font-size:8px;color:#aaa;line-height:1;">${item.desc}</span><button class="btn-action un" style="margin-top:2px;padding:1px 3px;" onclick="window.unequipItem('${slot}')">Remove</button>`;
       } else {
-        if (isUnique) {
-          iconBox = `<div style="text-align:center; margin-bottom:4px;">${window.getUniqueIconHtml(item, 32)}</div>`;
-        }
         let s = [];
         if (item.atk > 0) s.push(`⚔️${item.atk}`);
         if (item.maxHp > 0) s.push(`❤️${item.maxHp}`);
@@ -3923,38 +4006,29 @@ window.renderInventory = function () {
         }
         let details = `<span style="font-size:10px;color:#aaa;">Slot: ${typeText} | <span style="color:${nameColor};font-weight:bold;">${tierStr}</span></span>${lockWarning}`;
         let uniqueStyle = window.getUniqueItemStyle(item);
-        let uniqueStyleStr = uniqueStyle
-          ? `style="background: ${uniqueStyle.bg}; border: 1px solid ${uniqueStyle.border}; box-shadow: inset 0 0 6px ${uniqueStyle.shadow}, 0 0 8px ${uniqueStyle.glow};"`
-          : "";
-        let isUnique =
-          item.isUniqueStaff ||
-          item.isUniqueSword ||
-          item.isUniqueSingularity ||
-          item.isUniqueMaelstrom ||
-          item.isUniqueAegis ||
-          item.isUniqueWatch ||
-          item.isUniqueChronicle ||
-          item.isUniqueWarpCore ||
-          item.isUniqueTempest;
+        let itemStyleStr = uniqueStyle
+          ? `background: ${uniqueStyle.bg}; border: 1.5px solid ${uniqueStyle.border}; box-shadow: inset 0 0 6px ${uniqueStyle.shadow}, 0 0 8px ${uniqueStyle.glow};`
+          : `border-left: 4.5px solid ${nameColor} !important; background: rgba(15, 17, 26, 0.65);`;
 
-        let iconBox = "";
-        if (isUnique) {
-          iconBox = `<div style="margin-right:8px; display:inline-flex; align-items:center;">${window.getUniqueIconHtml(item, 28)}</div>`;
-        }
+        let iconBox = `<div style="margin-right:8px; display:inline-flex; align-items:center; flex-shrink:0;">${window.getEquipIconHtml(item, 28)}</div>`;
 
-        return `<div class="bag-item" ${uniqueStyleStr}>
-                                    <div style="flex:1; cursor:help; text-align:left; display:flex; align-items:center;" onmouseenter="window.showInventoryTooltip(event, ${item.id})" ontouchstart="window.showInventoryTooltip(event, ${item.id})" onmouseleave="window.hideTooltip()">
-                                        ${iconBox}
-                                        <div style="flex:1;">
-                                            <strong style="color:${nameColor};">${item.name}${temperTag}${lockTag}</strong>${comparisonBadge}<br>${details}
-                                        </div>
-                                    </div>
-                    <div style="position:relative; z-index:10; white-space:nowrap; margin-left: 10px;">
-                        <button class="btn-action" ${disabledAttr} onclick="window.equipItem(${item.id})">Equip</button>
-                        <button class="btn-action" style="background:${lockBg}; margin-left:2px;" onclick="window.toggleLock(${item.id})">${lockIcon}</button>
-                        <button class="btn-action un" style="margin-left:12px;" onclick="window.salvageItem(${item.id})">Salvage</button>
-                    </div>
-                </div>`;
+        return `<div class="bag-item" style="display:flex; align-items:center; ${itemStyleStr}">
+                                      <div style="flex:1; min-width:0; cursor:help; text-align:left; display:flex; align-items:center;" onmouseenter="window.showInventoryTooltip(event, ${item.id})" ontouchstart="window.showInventoryTooltip(event, ${item.id})" onmouseleave="window.hideTooltip()">
+                                          ${iconBox}
+                                          <div style="flex:1; min-width:0;">
+                                              <div style="display:flex; align-items:center; gap:4px; margin-bottom:1px; flex-wrap:wrap;">
+                                                  <strong style="color:${nameColor}; font-size:11.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;">${item.name}${temperTag}${lockTag}</strong>
+                                                  ${comparisonBadge}
+                                              </div>
+                                              ${details}
+                                          </div>
+                                      </div>
+                      <div class="bag-item-actions" style="position:relative; z-index:10; display:inline-flex; gap:3px; margin-left: 8px; flex-shrink:0;">
+                          <button class="btn-action" ${disabledAttr} style="padding:4px 8px; font-size:10px;" onclick="window.equipItem(${item.id})">Equip</button>
+                          <button class="btn-action" style="background:${lockBg}; padding:4px 6px; font-size:10px;" onclick="window.toggleLock(${item.id})">${lockIcon}</button>
+                          <button class="btn-action un" style="padding:4px 8px; font-size:10px;" onclick="window.salvageItem(${item.id})">Salvage</button>
+                      </div>
+                  </div>`;
       }).join("");
     }
   }
@@ -4397,9 +4471,9 @@ window.generateItemCardHtml = function (
     );
   }
   let subtitle =
-    item.type === "artifact"
-      ? "Unique Boss Trophy Slot"
-      : `${labelDisplay} | <span style="color:${tierColor}; font-weight:bold;">${tierStrDisplay(item)}</span>`;
+      item.type === "artifact"
+        ? "Unique Artifact"
+        : `${labelDisplay} | <span style="color:${tierColor}; font-weight:bold;">${tierStrDisplay(item)}</span>`;
   if (reqLvl > 1) {
     let reqColor = window.playerStats.level >= reqLvl ? "#2ecc71" : "#e74c3c";
     subtitle += `<br><span style="color:${reqColor}; font-weight:bold;">Required Level: ${reqLvl}</span>`;
@@ -4490,18 +4564,17 @@ window.generateItemCardHtml = function (
   }
 
   if (item.type === "artifact") {
-    html += `<div class="tt-stat-line" style="color:#d2b4de; margin-bottom: 6px; white-space:normal;">• Effect: ${item.desc}</div>`;
-    html += `<div class="tt-trait">${item.breakdown}</div>`;
+      html += `<div class="tt-trait">${item.breakdown}</div>`;
 
-    // Display potential extra rolls for Unique Artifacts
-    html += `<div style="margin-top:10px; border-top:1.5px dashed #1abc9c; padding-top:6px;">`;
-    html += `<div style="font-weight:bold; color:#1abc9c; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">🎰 Potential Extra Affixes (Rolls 3):</div>`;
-    html += `<div style="font-size:9.5px; color:#aaa; line-height:1.45; white-space:normal; font-family:monospace;">`;
-    html += `Can roll 3 extra random affixes: Drop Rate, Drop Quality, Gold Multiplier, Rare Spawn, Fairy Spawn, Strength, Dexterity, or Intelligence.`;
-    html += `</div></div>`;
-
-    html += `<div style="font-weight:bold; color:#aaa; margin-top:8px; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Bonus Parameters:</div>`;
-  } else {
+      // Only display potential extra rolls on preview (dummy) items to prevent clutter on equipped items
+      if (item.id === "dummy") {
+        html += `<div style="margin-top:10px; border-top:1.5px dashed #1abc9c; padding-top:6px;">`;
+        html += `<div style="font-weight:bold; color:#1abc9c; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">🎰 Potential Extra Affixes (Rolls 3):</div>`;
+        html += `<div style="font-size:9.5px; color:#aaa; line-height:1.45; white-space:normal; font-family:monospace;">`;
+        html += `Can roll 3 extra random affixes: Drop Rate, Drop Quality, Gold Multiplier, Rare Spawn, Fairy Spawn, Strength, Dexterity, or Intelligence.`;
+        html += `</div></div>`;
+      }
+    } else {
     if (isUnique && item.desc) {
       html += `<div class="tt-stat-line" style="color:#ffeaa7; margin-bottom: 10px; white-space:normal; line-height:1.4; padding:6px; border:1px dashed #1abc9c; background:rgba(0,0,0,0.4); border-radius:4px;"><strong>• Unique Effect:</strong> ${item.desc}</div>`;
     }
@@ -4512,99 +4585,104 @@ window.generateItemCardHtml = function (
   }
 
   // --- EXPLICIT AFFIXES SECTION ---
-  if (item.id !== "dummy") {
-    let affixes = [];
+    if (item.id !== "dummy") {
+      let affixes = [];
 
-    const statsKeys = [
-      { key: "atk", icon: "⚔️", label: "Attack", baseKey: "baseAtk" },
-      { key: "maxHp", icon: "❤️", label: "Max HP", baseKey: "baseMaxHp" },
-      { key: "def", icon: "🛡️", label: "Defense", baseKey: "baseDef" },
-      {
-        key: "moveSpeed",
-        icon: "👟",
-        label: "Move Speed",
-        baseKey: "baseMoveSpeed",
-      },
-      { key: "str", icon: "💪", label: "STR", baseKey: "baseStr" },
-      { key: "dex", icon: "🎯", label: "DEX", baseKey: "baseDex" },
-      { key: "int", icon: "🧠", label: "INT", baseKey: "baseInt" },
-      { key: "critChance", icon: "✨", label: "Crit Chance", isPct: true },
-      { key: "critDamage", icon: "💥", label: "Crit Multi", isPct: true },
-      {
-        key: "block",
-        icon: "🛡️",
-        label: "Block Rate",
-        isPct: true,
-        baseKey: "baseBlock",
-      },
-      {
-        key: "parry",
-        icon: "⚡",
-        label: "Parry Rate",
-        isPct: true,
-        baseKey: "baseParry",
-      },
-      {
-        key: "activeAttackSpeed",
-        icon: "⚡",
-        label: "Active Atk Spd",
-        isPct: true,
-        baseKey: "baseActiveSpeed",
-      },
-      {
-        key: "idleAttackSpeed",
-        icon: "⏱️",
-        label: "Idle Atk Spd",
-        isPct: true,
-        baseKey: "baseIdleSpeed",
-      },
-      { key: "dropRate", icon: "🍀", label: "Drop Rate", isPct: true },
-      { key: "quality", icon: "💎", label: "Drop Quality", isPct: true },
-      { key: "goldMulti", icon: "🟡", label: "Gold Multi", isPct: true },
-      {
-        key: "rareSpawn",
-        icon: "✨",
-        label: "Rare Spawn",
-        isPct: true,
-        isDoublePct: true,
-      },
-      { key: "fairySpawn", icon: "🧚", label: "Fairy Spawn", isPct: true },
-    ];
+      const statsKeys = [
+        { key: "atk", icon: "⚔️", label: "Attack", baseKey: "baseAtk" },
+        { key: "maxHp", icon: "❤️", label: "Max HP", baseKey: "baseMaxHp" },
+        { key: "def", icon: "🛡️", label: "Defense", baseKey: "baseDef" },
+        {
+          key: "moveSpeed",
+          icon: "👟",
+          label: "Move Speed",
+          baseKey: "baseMoveSpeed",
+        },
+        { key: "str", icon: "💪", label: "STR", baseKey: "baseStr" },
+        { key: "dex", icon: "🎯", label: "DEX", baseKey: "baseDex" },
+        { key: "int", icon: "🧠", label: "INT", baseKey: "baseInt" },
+        { key: "critChance", icon: "✨", label: "Crit Chance", isPct: true },
+        { key: "critDamage", icon: "💥", label: "Crit Multi", isPct: true },
+        {
+          key: "block",
+          icon: "🛡️",
+          label: "Block Rate",
+          isPct: true,
+          baseKey: "baseBlock",
+        },
+        {
+          key: "parry",
+          icon: "⚡",
+          label: "Parry Rate",
+          isPct: true,
+          baseKey: "baseParry",
+        },
+        {
+          key: "activeAttackSpeed",
+          icon: "⚡",
+          label: "Active Atk Spd",
+          isPct: true,
+          baseKey: "baseActiveSpeed",
+        },
+        {
+          key: "idleAttackSpeed",
+          icon: "⏱️",
+          label: "Idle Atk Spd",
+          isPct: true,
+          baseKey: "baseIdleSpeed",
+        },
+        { key: "dropRate", icon: "🍀", label: "Drop Rate", isPct: true },
+        { key: "quality", icon: "💎", label: "Drop Quality", isPct: true },
+        { key: "goldMulti", icon: "🟡", label: "Gold Multi", isPct: true },
+        {
+          key: "rareSpawn",
+          icon: "✨",
+          label: "Rare Spawn",
+          isPct: true,
+          isDoublePct: true,
+        },
+        { key: "fairySpawn", icon: "🧚", label: "Fairy Spawn", isPct: true },
+      ];
 
-    statsKeys.forEach((s) => {
-      let totalVal = item[s.key] || 0;
-      let baseVal =
-        item.type !== "artifact" && s.baseKey ? item[s.baseKey] || 0 : 0;
-      let affixVal = totalVal - baseVal;
+      statsKeys.forEach((s) => {
+        let totalVal = item[s.key] || 0;
+        let baseVal =
+          item.type !== "artifact" && s.baseKey ? item[s.baseKey] || 0 : 0;
+        let affixVal = totalVal - baseVal;
 
-      if (
-        affixVal > 0.0001 ||
-        ((s.key === "activeAttackSpeed" || s.key === "idleAttackSpeed") &&
-          affixVal > 0)
-      ) {
-        let displayVal = "";
-        if (s.isDoublePct) {
-          displayVal = `+${(affixVal * 100).toFixed(2)}%`;
-        } else if (s.isPct) {
-          displayVal = `+${Math.floor(affixVal * 100)}%`;
-        } else {
-          displayVal = `+${Math.round(affixVal).toLocaleString()}`;
+        if (
+          affixVal > 0.0001 ||
+          ((s.key === "activeAttackSpeed" || s.key === "idleAttackSpeed") &&
+            affixVal > 0)
+        ) {
+          let displayVal = "";
+          if (s.isDoublePct) {
+            displayVal = `+${(affixVal * 100).toFixed(2)}%`;
+          } else if (s.isPct) {
+            displayVal = `+${Math.floor(affixVal * 100)}%`;
+          } else {
+            displayVal = `+${Math.round(affixVal).toLocaleString()}`;
+          }
+
+          let rangeStr = window.formatStatRangeStr
+            ? window.formatStatRangeStr(item, s.key, s.isPct || s.isDoublePct)
+            : "";
+          affixes.push(
+            `<div class="tt-stat-line" style="color:${s.key === "critChance" || s.key === "critDamage" ? "#e67e22" : "#ecf0f1"};">• ${s.icon} ${s.label}: ${displayVal}${window.getStatEnchantSuffix ? window.getStatEnchantSuffix(item, s.key) : ""}${rangeStr}</div>`,
+          );
         }
+      });
 
-        let rangeStr = window.formatStatRangeStr
-          ? window.formatStatRangeStr(item, s.key, s.isPct || s.isDoublePct)
-          : "";
-        affixes.push(
-          `<div class="tt-stat-line" style="color:${s.key === "critChance" || s.key === "critDamage" ? "#e67e22" : "#ecf0f1"};">• ${s.icon} ${s.label}: ${displayVal}${window.getStatEnchantSuffix ? window.getStatEnchantSuffix(item, s.key) : ""}${rangeStr}</div>`,
-        );
+      if (affixes.length > 0) {
+        if (item.type === "artifact") {
+          html += `<div style="font-weight:bold; color:#aaa; margin-top:8px; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Bonus Parameters:</div>`;
+        }
+        html += affixes.join("");
+      } else {
+        if (item.type !== "artifact") {
+          html += `<div class="tt-stat-line" style="color:#7f8c8d; font-style:italic;">No extra affixes.</div>`;
+        }
       }
-    });
-
-    if (affixes.length > 0) {
-      html += affixes.join("");
-    } else {
-      html += `<div class="tt-stat-line" style="color:#7f8c8d; font-style:italic;">No extra affixes.</div>`;
-    }
 
     let setName = window.getItemSetName ? window.getItemSetName(item) : null;
     if (setName && window.SET_DEFINITIONS[setName]) {
@@ -5471,9 +5549,9 @@ window.submitConsoleCommand = function () {
     let type = args[1] ? args[1].toLowerCase() : "all";
     let amt = parseInt(args[2], 10) || 1;
     if (type === "daily") {
-      window.addUseDrop("Guild Reward Sack", amt);
+      window.addUseDrop("Daily Reward Sack", amt);
       window.pushLog(
-        `<span style="color:#2ecc71;">[DEV] Added +${amt} Guild Reward Sack(s)!</span>`,
+        `<span style="color:#2ecc71;">[DEV] Added +${amt} Daily Reward Sack(s)!</span>`,
       );
     } else if (type === "weekly") {
       window.addUseDrop("Guild Weekly Sack", amt);
@@ -5481,7 +5559,7 @@ window.submitConsoleCommand = function () {
         `<span style="color:#2ecc71;">[DEV] Added +${amt} Guild Weekly Sack(s)!</span>`,
       );
     } else {
-      window.addUseDrop("Guild Reward Sack", amt);
+      window.addUseDrop("Daily Reward Sack", amt);
       window.addUseDrop("Guild Weekly Sack", amt);
       window.pushLog(
         `<span style="color:#2ecc71;">[DEV] Added +${amt} of each Guild Sack!</span>`,
@@ -7132,13 +7210,12 @@ window.renderAltarTab = function () {
   let highestRiftText = `🏆 Highest Rift Cleared: Level ${window.playerStats.highestRiftLevel || 0}`;
 
   sec.innerHTML = `
-                        <div class="market-card" style="border-color: #9b59b6; background: #0d0615; text-align: left; padding: 15px; border-radius: 8px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding-bottom:8px; margin-bottom:10px;">
-                                <h3 style="margin:0; color:#9b59b6; font-size:14px; display:flex; align-items:center; gap:6px;">🔮 ANCIENT ALTAR</h3>
-                                <button class="btn-action" style="background:#2c3e50; border: 1px solid #9b59b6; font-weight:bold; font-size:10px;" onclick="document.getElementById('altar-modal').style.display='block'; window.buildAltarModal();">View Artifact Pool</button>
-                            </div>
+                          <div class="market-card" style="border-color: #9b59b6; background: #0d0615; text-align: left; padding: 15px; border-radius: 8px;">
+                              <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding-bottom:8px; margin-bottom:10px;">
+                                  <h3 style="margin:0; color:#9b59b6; font-size:14px; display:flex; align-items:center; gap:6px; width:100%; justify-content:center;">🔮 ANCIENT ALTAR</h3>
+                              </div>
 
-                            ${lvlSelectorHtml}
+                              ${lvlSelectorHtml}
 
                             <div class="rift-carousel-container" style="margin-top: 10px; margin-bottom: 10px;">
                                             ${
@@ -8509,8 +8586,10 @@ window.updateGachaRecentList = function () {
 
 // --- UNBOXING ANIMATIONS AND ENGAGING REWARD FLOWS ---
 
-window.openGuildRewardSack = function () {
-  let owned = window.inventory.USE["Guild Reward Sack"] || 0; // Keep this
+window.openDailyRewardSack = function () {
+  let ownedDaily = window.inventory.USE["Daily Reward Sack"] || 0;
+  let ownedGuild = window.inventory.USE["Guild Reward Sack"] || 0;
+  let owned = ownedDaily + ownedGuild;
   if (owned <= 0) return;
 
   let maxBag = window.getMaxBagSlots();
@@ -8519,10 +8598,17 @@ window.openGuildRewardSack = function () {
     return;
   }
 
-  // Consume 1 Guild Reward Sack
-  window.inventory.USE["Guild Reward Sack"]--;
-  if (window.inventory.USE["Guild Reward Sack"] === 0) {
-    delete window.inventory.USE["Guild Reward Sack"];
+  // Consume 1
+  if (ownedDaily > 0) {
+    window.inventory.USE["Daily Reward Sack"]--;
+    if (window.inventory.USE["Daily Reward Sack"] === 0) {
+      delete window.inventory.USE["Daily Reward Sack"];
+    }
+  } else {
+    window.inventory.USE["Guild Reward Sack"]--;
+    if (window.inventory.USE["Guild Reward Sack"] === 0) {
+      delete window.inventory.USE["Guild Reward Sack"];
+    }
   }
 
   // Play opening sound
@@ -8532,6 +8618,45 @@ window.openGuildRewardSack = function () {
   // Determine rewards (Standardized Daily MP and randomized pool rolls)
   window.playerStats.missionTokens =
     (window.playerStats.missionTokens || 0) + 1;
+
+  // Always give a piece of equipment at your lifetime peak stage
+  let pCurrent = window.resolvePlayerStats();
+  let types = [
+    "weapon",
+    "subweapon",
+    "helmet",
+    "chest",
+    "leggings",
+    "overall",
+    "boots",
+  ];
+  let chosenType = types[Math.floor(Math.random() * types.length)];
+
+  let statLinesCount = 0;
+  let luckMultiplier = pCurrent.qly;
+  let roll = Math.random() * 100;
+  let chance5 = luckMultiplier >= 2.0 ? 0.02 * luckMultiplier : 0;
+  let chance4 = luckMultiplier >= 1.5 ? 0.16 * luckMultiplier : 0;
+  if (roll < chance5) statLinesCount = 5;
+  else if (roll < chance5 + chance4) statLinesCount = 4;
+  else if (roll < 0.8 * luckMultiplier) statLinesCount = 3;
+  else if (roll < 4.0 * luckMultiplier) statLinesCount = 2;
+  else if (roll < 15.0 * luckMultiplier) statLinesCount = 1;
+  else statLinesCount = 0;
+
+  let stageLvl = Math.max(
+    1,
+    Math.floor(((window.playerStats.lifetimePeakStage || 1) - 1) / 10) + 1,
+  );
+  let newEquip = window.createItemObject(
+    chosenType,
+    statLinesCount,
+    stageLvl,
+    0,
+  );
+
+  window.inventory.EQUIP.push(newEquip);
+  window.frozenItemDb[newEquip.id] = JSON.parse(JSON.stringify(newEquip));
 
   const sackPool = [
     {
@@ -8591,6 +8716,15 @@ window.openGuildRewardSack = function () {
 
   let receivedRewards = [];
 
+  // Add the guaranteed equipment!
+  receivedRewards.push({
+    name: newEquip.name,
+    qty: 1,
+    color: window.getTierColor(newEquip.statsRolled),
+    type: "equip",
+    item: newEquip,
+  });
+
   // Roll 1: 100% chance
   let reward1 = rollFromPool();
   receivedRewards.push(reward1);
@@ -8613,7 +8747,7 @@ window.openGuildRewardSack = function () {
   receivedRewards.forEach((r) => {
     if (r.type === "use") {
       window.addUseDrop(r.name, r.qty);
-    } else {
+    } else if (r.type === "etc") {
       window.addEtcDrop(r.name, r.qty);
     }
   });
@@ -8647,32 +8781,146 @@ window.openGuildRewardSack = function () {
       vx: Math.cos(angle) * vel,
       vy: Math.sin(angle) * vel - 2,
       radius: window.randFloat(2, 5),
-      color: receivedRewards[0].color,
+      color: window.getTierColor(newEquip.statsRolled),
       alpha: 1,
       life: window.randInt(30, 50),
     });
   }
 
   overlay.innerHTML = `
-    <div style="text-align:center; color:white; animation: toastFadeIn 0.3s ease-out;">
-      <div id="sack-anim-bag" style="font-size: 80px; margin-bottom: 20px; animation: cabinetRattle 0.5s ease-in-out infinite;">🎒</div>
-      <div style="font-size: 16px; font-weight: bold; color:#f1c40f; letter-spacing: 2px;">UNTYING SACK...</div>
-    </div>
-  `;
+          <style>
+            .sack-anim-container {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 180px;
+              margin-bottom: 10px;
+            }
+            .sack-svg {
+                        animation: sackShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+                        overflow: visible !important;
+                      }
+            .sack-string {
+              animation: stringUntie 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+              animation-delay: 0.42s;
+            }
+            .sack-neck {
+              animation: neckOpen 0.5s cubic-bezier(0.25, 0.8, 0.25, 1.25) forwards;
+              animation-delay: 0.44s;
+            }
+            .sparkle {
+              opacity: 0;
+              animation: sparkleUp 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+              animation-delay: 0.5s;
+              transform-origin: 50px 42px;
+            }
+            .s1 { --dx: 0px; --dy: -38px; --ds: 1.4; }
+            .s2 { --dx: -28px; --dy: -28px; --ds: 1.2; }
+            .s3 { --dx: 28px; --dy: -28px; --ds: 1.2; }
+            .s4 { --dx: -14px; --dy: -42px; --ds: 1.1; }
+            .s5 { --dx: 14px; --dy: -42px; --ds: 1.1; }
+
+            @keyframes sackShake {
+              0%, 100% { transform: rotate(0deg) scale(1); }
+              15% { transform: rotate(-8deg) scale(1.08); }
+              30% { transform: rotate(9deg) scale(1.08); }
+              45% { transform: rotate(-9deg) scale(1.08); }
+              60% { transform: rotate(6deg) scale(1.04); }
+              75% { transform: rotate(-4deg) scale(1.02); }
+              90% { transform: rotate(2deg) scale(1.01); }
+            }
+            @keyframes stringUntie {
+              0% { transform: translateY(0) scale(1); opacity: 1; }
+              100% { transform: translateY(14px) scale(0.5); opacity: 0; }
+            }
+            @keyframes neckOpen {
+              0% { transform: scaleX(1) scaleY(1); }
+              100% { transform: scaleX(1.4) scaleY(0.7) translateY(2px); }
+            }
+            @keyframes sparkleUp {
+              0% { transform: translate(0, 15px) scale(0); opacity: 0; }
+              40% { opacity: 1; }
+              100% { transform: translate(var(--dx), var(--dy)) scale(var(--ds)); opacity: 0; }
+            }
+          </style>
+          <div style="text-align:center; color:white; animation: toastFadeIn 0.3s ease-out;">
+            <div class="sack-anim-container">
+              <svg class="sack-svg" width="150" height="150" viewBox="0 0 100 100">
+                <!-- Drop Shadow -->
+                <ellipse cx="50" cy="92" rx="34" ry="5.5" fill="rgba(0,0,0,0.45)" />
+
+                <!-- Sack Body -->
+                <path class="sack-body" d="M30,42 C20,42 12,50 12,72 C12,88 25,92 50,92 C75,92 88,88 88,72 C88,50 80,42 70,42 Z" fill="#d35400" stroke="#000" stroke-width="2.5" />
+
+                <!-- Sack Neck -->
+                <g class="sack-neck" style="transform-origin: 50px 42px;">
+                  <!-- Left Flap -->
+                  <path d="M30,42 L24,25 C28,21 38,20 46,25 L46,42 Z" fill="#e67e22" stroke="#000" stroke-width="2.5" />
+                  <!-- Right Flap -->
+                  <path d="M70,42 L76,25 C72,21 62,20 54,25 L54,42 Z" fill="#e67e22" stroke="#000" stroke-width="2.5" />
+                </g>
+
+                <!-- Tied Cord -->
+                <g class="sack-string" style="transform-origin: 50px 42px;">
+                  <path d="M28,42 Q50,47 72,42" fill="none" stroke="#f1c40f" stroke-width="3" stroke-linecap="round" />
+                  <!-- Bow Knot -->
+                  <circle cx="50" cy="43.5" r="3.5" fill="#f1c40f" stroke="#000" stroke-width="1.5" />
+                  <path d="M50,43.5 Q42,52 38,55 M50,43.5 Q58,52 62,55" fill="none" stroke="#f1c40f" stroke-width="2.5" stroke-linecap="round" />
+                </g>
+
+                <!-- Particle Burst -->
+                <g>
+                  <path class="sparkle s1" d="M50,25 L50,15 M45,20 L55,20" stroke="#fff" stroke-width="2" stroke-linecap="round" />
+                  <path class="sparkle s2" d="M35,30 L31,22 M28,27 L38,25" stroke="#f1c40f" stroke-width="1.5" stroke-linecap="round" />
+                  <path class="sparkle s3" d="M65,30 L69,22 M62,25 L72,27" stroke="#f1c40f" stroke-width="1.5" stroke-linecap="round" />
+                  <circle class="sparkle s4" cx="42" cy="15" r="2.5" fill="#fff" />
+                  <circle class="sparkle s5" cx="58" cy="15" r="2" fill="#fff" />
+                </g>
+              </svg>
+            </div>
+            <div style="font-size: 15px; font-weight: 900; color:#f1c40f; letter-spacing: 2px; text-shadow: 0 0 6px rgba(241,196,15,0.3);">UNTYING SACK...</div>
+          </div>
+        `;
 
   setTimeout(() => {
     let listHtml = receivedRewards
       .map((r) => {
-        let icon =
-          r.type === "use"
-            ? window.getUseIconHtml(r.name)
-            : window.getEtcIconHtml(r.name);
+        let icon = "";
+        let hoverEvents = "";
+        let escapedName = r.name.replace(/'/g, "\\'");
+
+        if (r.type === "equip") {
+          icon = window.getEquipIconHtml(r.item, 28);
+          hoverEvents = `
+                    onmouseenter="window.showInventoryTooltip(event, ${r.item.id})"
+                    onmouseleave="window.hideTooltip()"
+                    ontouchstart="window.showInventoryTooltip(event, ${r.item.id})"
+                  `;
+        } else if (r.type === "use") {
+          icon = window.getUseIconHtml(r.name);
+          hoverEvents = `
+            onmouseenter="window.showUseTooltip(event, '${escapedName}')"
+            onmouseleave="window.hideTooltip()"
+            ontouchstart="window.showUseTooltip(event, '${escapedName}')"
+          `;
+        } else {
+          icon = window.getEtcIconHtml(r.name);
+          hoverEvents = `
+            onmouseenter="window.showEtcTooltip(event, '${escapedName}')"
+            onmouseleave="window.hideTooltip()"
+            ontouchstart="window.showEtcTooltip(event, '${escapedName}')"
+          `;
+        }
         icon = icon.replace("margin-right: 12px;", "margin-right: 8px;");
+
         return `
-        <div style="background:#111; border:1px solid #333; border-left: 3px solid ${r.color}; border-radius:4px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
-          <div style="display:flex; align-items:center;">
+        <div class="bag-item" style="cursor:help; background:#111; border:1px solid #333; border-left: 3px solid ${r.color}; border-radius:4px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;" ${hoverEvents}>
+          <div style="display:flex; align-items:center; text-align:left;">
             ${icon}
-            <strong style="color:${r.color}; font-size:12.5px;">${r.name}</strong>
+            <div style="display:flex; flex-direction:column;">
+              <strong style="color:${r.color}; font-size:12px;">${r.name}</strong>
+              ${r.type === "equip" ? `<span style="font-size:9px; color:#888;">${r.item.statsRolled === "UNIQUE" ? "UNIQUE" : r.item.statsRolled + "★"} Equipment (Lv. ${r.item.stageLevel})</span>` : ""}
+            </div>
           </div>
           <strong style="color:#fff; font-size:13px; font-family:monospace;">+${r.qty}</strong>
         </div>
@@ -8681,21 +8929,20 @@ window.openGuildRewardSack = function () {
       .join("");
 
     overlay.innerHTML = `
-      <div style="background:#1a1a1a; border:2px solid #f1c40f; border-radius:8px; width:90%; max-width:380px; box-shadow:0 10px 30px rgba(0,0,0,0.95); animation: toastFadeIn 0.3s ease-out; overflow:hidden;">
+      <div style="background:#1a1a1a; border:2px solid #f1c40f; border-radius:8px; width:95%; max-width:400px; box-shadow:0 10px 30px rgba(0,0,0,0.95); animation: toastFadeIn 0.3s ease-out; overflow:hidden;">
         <div style="background:#0b0f12; border-bottom:1px solid #333; padding:12px 15px; text-align:center;">
           <h3 style="margin:0; color:#f1c40f; font-size:15px; font-weight:bold; letter-spacing:1.5px; text-transform:uppercase;">🎒 SACK OPENED!</h3>
         </div>
-        <div style="padding:15px;">
-          <div style="background:#111; border:1px solid #222; border-radius:6px; padding:8px; display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-            <div style="display:flex; align-items:center;">
-              <span style="background:rgba(241,196,15,0.1); border:1px solid #f1c40f; border-radius:4px; padding:4px; display:inline-flex; width:32px; height:32px; align-items:center; justify-content:center; font-size:16px;">🎖️</span>
-              <strong style="color:#f1c40f; font-size:12.5px; margin-left:8px;">Mission Tokens</strong>
-            </div>
-            <strong style="color:#fff; font-size:13px; font-family:monospace;">+1 MP</strong>
-          </div>
+        <div style="background:#111; border:1px solid #222; border-radius:6px; padding:8px; display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                        <div style="display:flex; align-items:center;">
+                          <span style="background:rgba(241,196,15,0.1); border:1px solid #f1c40f; border-radius:4px; padding:4px; display:inline-flex; width:32px; height:32px; align-items:center; justify-content:center; font-size:16px;">🎖️</span>
+                          <strong style="color:#f1c40f; font-size:12.5px; margin-left:8px;">Mission Points</strong>
+                        </div>
+                        <strong style="color:#fff; font-size:13px; font-family:monospace;">+1 MP</strong>
+                      </div>
 
-          <div style="font-size:10px; color:#aaa; font-weight:bold; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.5px;">📦 Additional Loot Yield:</div>
-          <div style="max-height: 200px; overflow-y:auto; overscroll-behavior:contain;">
+          <div style="font-size:10px; color:#aaa; font-weight:bold; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.5px;">📦 Loot & Equipment Yield (Hover for Info):</div>
+          <div>
             ${listHtml}
           </div>
         </div>
@@ -8741,24 +8988,21 @@ window.openGuildWeeklySack = function () {
       0,
     );
     window.inventory.ARTIFACT.push(art);
+    window.frozenItemDb[art.id] = JSON.parse(JSON.stringify(art));
     receivedRewards.push({
       name: art.name,
       qty: 1,
       color: "#1abc9c",
-      type: "etc",
+      type: "equip",
+      item: art,
     });
   }
 
-  receivedRewards.forEach((r) => {
-    if (r.type === "use") window.addUseDrop(r.name, r.qty);
-    else window.addEtcDrop(r.name, r.qty);
-  });
-
-  // Credit rewards
+  // Credit rewards safely once
   receivedRewards.forEach((r) => {
     if (r.type === "use") {
       window.addUseDrop(r.name, r.qty);
-    } else {
+    } else if (r.type === "etc") {
       window.addEtcDrop(r.name, r.qty);
     }
   });
@@ -8800,25 +9044,141 @@ window.openGuildWeeklySack = function () {
 
   // Draw the animation phase first
   overlay.innerHTML = `
+    <style>
+      .sack-anim-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 180px;
+        margin-bottom: 10px;
+      }
+      .sack-svg {
+                  animation: sackShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+                  overflow: visible !important;
+                }
+      .sack-string {
+        animation: stringUntie 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+        animation-delay: 0.42s;
+      }
+      .sack-neck {
+        animation: neckOpen 0.5s cubic-bezier(0.25, 0.8, 0.25, 1.25) forwards;
+        animation-delay: 0.44s;
+      }
+      .sparkle {
+        opacity: 0;
+        animation: sparkleUp 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        animation-delay: 0.5s;
+        transform-origin: 50px 42px;
+      }
+      .s1 { --dx: 0px; --dy: -38px; --ds: 1.4; }
+      .s2 { --dx: -28px; --dy: -28px; --ds: 1.2; }
+      .s3 { --dx: 28px; --dy: -28px; --ds: 1.2; }
+      .s4 { --dx: -14px; --dy: -42px; --ds: 1.1; }
+      .s5 { --dx: 14px; --dy: -42px; --ds: 1.1; }
+
+      @keyframes sackShake {
+        0%, 100% { transform: rotate(0deg) scale(1); }
+        15% { transform: rotate(-8deg) scale(1.08); }
+        30% { transform: rotate(9deg) scale(1.08); }
+        45% { transform: rotate(-9deg) scale(1.08); }
+        60% { transform: rotate(6deg) scale(1.04); }
+        75% { transform: rotate(-4deg) scale(1.02); }
+        90% { transform: rotate(2deg) scale(1.01); }
+      }
+      @keyframes stringUntie {
+        0% { transform: translateY(0) scale(1); opacity: 1; }
+        100% { transform: translateY(14px) scale(0.5); opacity: 0; }
+      }
+      @keyframes neckOpen {
+        0% { transform: scaleX(1) scaleY(1); }
+        100% { transform: scaleX(1.4) scaleY(0.7) translateY(2px); }
+      }
+      @keyframes sparkleUp {
+        0% { transform: translate(0, 15px) scale(0); opacity: 0; }
+        40% { opacity: 1; }
+        100% { transform: translate(var(--dx), var(--dy)) scale(var(--ds)); opacity: 0; }
+      }
+    </style>
     <div style="text-align:center; color:white; animation: toastFadeIn 0.3s ease-out;">
-      <div id="sack-anim-bag" style="font-size: 80px; margin-bottom: 20px; animation: cabinetRattle 0.5s ease-in-out infinite;">💼</div>
-      <div style="font-size: 16px; font-weight: bold; color:#9b59b6; letter-spacing: 2px;">BREAKING SEAL OF THE ASCENDED...</div>
+      <div class="sack-anim-container">
+        <svg class="sack-svg" width="150" height="150" viewBox="0 0 100 100">
+          <!-- Drop Shadow -->
+          <ellipse cx="50" cy="92" rx="34" ry="5.5" fill="rgba(0,0,0,0.45)" />
+
+          <!-- Sack Body -->
+          <path class="sack-body" d="M30,42 C20,42 12,50 12,72 C12,88 25,92 50,92 C75,92 88,88 88,72 C88,50 80,42 70,42 Z" fill="#6c5ce7" stroke="#000" stroke-width="2.5" />
+
+          <!-- Sack Neck -->
+          <g class="sack-neck" style="transform-origin: 50px 42px;">
+            <!-- Left Flap -->
+            <path d="M30,42 L24,25 C28,21 38,20 46,25 L46,42 Z" fill="#a29bfe" stroke="#000" stroke-width="2.5" />
+            <!-- Right Flap -->
+            <path d="M70,42 L76,25 C72,21 62,20 54,25 L54,42 Z" fill="#a29bfe" stroke="#000" stroke-width="2.5" />
+          </g>
+
+          <!-- Sealed Rope with Wax Seal -->
+          <g class="sack-string" style="transform-origin: 50px 42px;">
+            <path d="M28,42 Q50,47 72,42" fill="none" stroke="#ffd32a" stroke-width="3" stroke-linecap="round" />
+            <!-- Imperial Wax Seal -->
+            <circle cx="50" cy="43.5" r="5.5" fill="#ff5e57" stroke="#000" stroke-width="1.5" />
+            <path d="M48,42.5 L52,45 M52,42.5 L48,45" stroke="#fff" stroke-width="1" />
+          </g>
+
+          <!-- Astral Particle Burst -->
+          <g>
+            <path class="sparkle s1" d="M50,25 L50,15 M45,20 L55,20" stroke="#fff" stroke-width="2" stroke-linecap="round" />
+            <path class="sparkle s2" d="M35,30 L31,22 M28,27 L38,25" stroke="#a29bfe" stroke-width="1.5" stroke-linecap="round" />
+            <path class="sparkle s3" d="M65,30 L69,22 M62,25 L72,27" stroke="#a29bfe" stroke-width="1.5" stroke-linecap="round" />
+            <circle class="sparkle s4" cx="42" cy="15" r="2.5" fill="#fff" />
+            <circle class="sparkle s5" cx="58" cy="15" r="2" fill="#fff" />
+          </g>
+        </svg>
+      </div>
+      <div style="font-size: 15px; font-weight: 900; color:#a29bfe; letter-spacing: 2px; text-shadow: 0 0 6px rgba(162,155,254,0.3);">BREAKING SEAL OF THE ASCENDED...</div>
     </div>
   `;
 
   setTimeout(() => {
     let listHtml = receivedRewards
       .map((r) => {
-        let icon =
-          r.type === "use"
-            ? window.getUseIconHtml(r.name)
-            : window.getEtcIconHtml(r.name);
+        let icon = "";
+        let hoverEvents = "";
+        let escapedName = r.name.replace(/'/g, "\\'");
+
+        if (r.type === "equip") {
+          icon = window.getArtifactIconHtml
+            ? window.getArtifactIconHtml(r.item.trait, 28)
+            : window.getUseIconHtml(r.name);
+          hoverEvents = `
+            onmouseenter="window.showInventoryTooltip(event, ${r.item.id})"
+            onmouseleave="window.hideTooltip()"
+            ontouchstart="window.showInventoryTooltip(event, ${r.item.id})"
+          `;
+        } else if (r.type === "use") {
+          icon = window.getUseIconHtml(r.name);
+          hoverEvents = `
+            onmouseenter="window.showUseTooltip(event, '${escapedName}')"
+            onmouseleave="window.hideTooltip()"
+            ontouchstart="window.showUseTooltip(event, '${escapedName}')"
+          `;
+        } else {
+          icon = window.getEtcIconHtml(r.name);
+          hoverEvents = `
+            onmouseenter="window.showEtcTooltip(event, '${escapedName}')"
+            onmouseleave="window.hideTooltip()"
+            ontouchstart="window.showEtcTooltip(event, '${escapedName}')"
+          `;
+        }
         icon = icon.replace("margin-right: 12px;", "margin-right: 8px;");
+
         return `
-        <div style="background:#111; border:1px solid #333; border-left: 3px solid ${r.color}; border-radius:4px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
-          <div style="display:flex; align-items:center;">
+        <div class="bag-item" style="cursor:help; background:#111; border:1px solid #333; border-left: 3px solid ${r.color}; border-radius:4px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;" ${hoverEvents}>
+          <div style="display:flex; align-items:center; text-align:left;">
             ${icon}
-            <strong style="color:${r.color}; font-size:12.5px;">${r.name}</strong>
+            <div style="display:flex; flex-direction:column;">
+              <strong style="color:${r.color}; font-size:12px;">${r.name}</strong>
+              ${r.type === "equip" ? `<span style="font-size:9px; color:#888;">Artifact Relic (Lv. ${r.item.stageLevel})</span>` : ""}
+            </div>
           </div>
           <strong style="color:#fff; font-size:13px; font-family:monospace;">+${r.qty}</strong>
         </div>
@@ -8827,56 +9187,27 @@ window.openGuildWeeklySack = function () {
       .join("");
 
     overlay.innerHTML = `
-          <div style="background:#1a1a1a; border:2px solid #9b59b6; border-radius:8px; width:90%; max-width:380px; box-shadow:0 10px 30px rgba(0,0,0,0.95); animation: toastFadeIn 0.3s ease-out; overflow:hidden;">
-            <div style="background:#0b0f12; border-bottom:1px solid #333; padding:12px 15px; text-align:center;">
-              <h3 style="margin:0; color:#9b59b6; font-size:15px; font-weight:bold; letter-spacing:1.5px; text-transform:uppercase;">💼 WEEKLY SACK OPENED!</h3>
-            </div>
-            <div style="padding:15px;">
-              <div style="background:#111; border:1px solid #222; border-radius:6px; padding:8px; display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-                <div style="display:flex; align-items:center;">
-                  <span style="background:rgba(155,89,182,0.1); border:1px solid #9b59b6; border-radius:4px; padding:4px; display:inline-flex; width:32px; height:32px; align-items:center; justify-content:center; font-size:16px;">🎖️</span>
-                  <strong style="color:#9b59b6; font-size:12.5px; margin-left:8px;">Mission Tokens</strong>
-                </div>
-                <strong style="color:#fff; font-size:13px; font-family:monospace;">+3 MP</strong>
-              </div>
+      <div style="background:#1a1a1a; border:2px solid #9b59b6; border-radius:8px; width:95%; max-width:400px; box-shadow:0 10px 30px rgba(0,0,0,0.95); animation: toastFadeIn 0.3s ease-out; overflow:hidden;">
+        <div style="background:#0b0f12; border-top: 1px solid #333; padding:12px 15px; text-align:center;">
+          <h3 style="margin:0; color:#9b59b6; font-size:15px; font-weight:bold; letter-spacing:1.5px; text-transform:uppercase;">💼 WEEKLY SACK OPENED!</h3>
+        </div>
+        <div style="background:#111; border:1px solid #222; border-radius:6px; padding:8px; display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                        <div style="display:flex; align-items:center;">
+                          <span style="background:rgba(155,89,182,0.1); border:1px solid #9b59b6; border-radius:4px; padding:4px; display:inline-flex; width:32px; height:32px; align-items:center; justify-content:center; font-size:16px;">🎖️</span>
+                          <strong style="color:#9b59b6; font-size:12.5px; margin-left:8px;">Mission Points</strong>
+                        </div>
+                        <strong style="color:#fff; font-size:13px; font-family:monospace;">+3 MP</strong>
+                      </div>
 
-              <div style="font-size:10px; color:#aaa; font-weight:bold; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.5px;">📦 Guaranteed Relic Yields:</div>
-              <div style="max-height: 200px; overflow-y:auto; overscroll-behavior:contain;">
-                ${listHtml}
-              </div>
-            </div>
-            <div style="background:#0b0f12; border-top:1px solid #333; padding:12px; text-align:center;">
-              <button onclick="document.getElementById('sack-opening-overlay').remove(); window.setPauseState(false); window.updateUI(); window.renderInventory();" style="background:#9b59b6; color:#fff; border:none; padding:10px; font-weight:bold; font-size:12px; border-radius:4px; cursor:pointer; width:100%;">Claim Relics</button>
-            </div>
+          <div style="font-size:10px; color:#aaa; font-weight:bold; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.5px;">📦 Guaranteed Relic Yields (Hover for Info):</div>
+          <div>
+            ${listHtml}
           </div>
-        `;
+        </div>
+        <div style="background:#0b0f12; border-top:1px solid #333; padding:12px; text-align:center;">
+          <button onclick="document.getElementById('sack-opening-overlay').remove(); window.setPauseState(false); window.updateUI(); window.renderInventory();" style="background:#9b59b6; color:#fff; border:none; padding:10px; font-weight:bold; font-size:12px; border-radius:4px; cursor:pointer; width:100%;">Claim Relics</button>
+        </div>
+      </div>
+    `;
   }, 1000);
-};
-
-window.devRefreshQuests = function () {
-  window.generateDailyMissions();
-  if (window.playerStats.prestigeCount > 0) {
-    window.generateWeeklyMissions();
-  }
-  window.playerStats.dailyRewardClaimed = false;
-  window.playerStats.weeklyRewardClaimed = false;
-  window.playerStats.dailyRerollsDone = 0;
-  window.pushHeaderToast("📋 Force Quests Refreshed!", "#2ecc71");
-  window.pushLog(
-    "<span style='color:#2ecc71;'>[DEV] Force-refreshed Daily and Weekly Quest Boards.</span>",
-  );
-  window.updateUI();
-  if (document.getElementById("missions-draggable-window")) {
-    window.renderMissionsWindow();
-  }
-};
-
-window.devGiveSacks = function () {
-  window.addUseDrop("Guild Reward Sack", 5);
-  window.addUseDrop("Guild Weekly Sack", 5);
-  window.pushHeaderToast("🎒 Added 5x Daily & 5x Weekly Sacks!", "#f1c40f");
-  window.pushLog(
-    "<span style='color:#2ecc71;'>[DEV] Granted 5x Guild Reward Sacks and 5x Guild Weekly Sacks.</span>",
-  );
-  window.updateUI();
 };

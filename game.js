@@ -9,11 +9,13 @@ let canvas, ctx;
 
 // Automatically detect if the game is running locally (development) or natively (Capacitor)
 window.detectGameServer = function () {
-  const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  const isCapacitor = window.location.protocol === 'capacitor:';
+  const isLocalHost =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+  const isCapacitor = window.location.protocol === "capacitor:";
 
   if (isLocalHost || isCapacitor) {
-    return 'http://192.168.0.37:3000';
+    return "http://192.168.0.37:3000";
   }
   return null; // Gracefully disables network saves on public browsers (like GitHub Pages)
 };
@@ -24,7 +26,10 @@ window.GAME_SERVER_URL = window.detectGameServer();
 window.getGameUserId = function () {
   let uId = localStorage.getItem("idle_game_user_id");
   if (!uId) {
-    uId = "guest_" + Math.random().toString(36).substring(2, 9) + Date.now().toString(36).substring(4);
+    uId =
+      "guest_" +
+      Math.random().toString(36).substring(2, 9) +
+      Date.now().toString(36).substring(4);
     localStorage.setItem("idle_game_user_id", uId);
   }
   return uId;
@@ -53,22 +58,22 @@ window.saveGame = function () {
 
   const userId = window.getGameUserId();
   fetch(`${window.GAME_SERVER_URL}/api/save`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, saveData })
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId, saveData }),
   })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      console.log('☁️ Cloud Backup Successful!');
-    } else {
-      console.warn('⚠️ Cloud Sync Warning:', data.error);
-    }
-  })
-  .catch(err => {
-    // Gracefully fail silently in background console logs if player is offline
-    console.log('📡 Server offline or unreachable. Local save preserved.');
-  });
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        console.log("☁️ Cloud Backup Successful!");
+      } else {
+        console.warn("⚠️ Cloud Sync Warning:", data.error);
+      }
+    })
+    .catch((err) => {
+      // Gracefully fail silently in background console logs if player is offline
+      console.log("📡 Server offline or unreachable. Local save preserved.");
+    });
 };
 
 window.getDepthQualityMultiplier = function (depth) {
@@ -648,6 +653,9 @@ window.applySaveStatePayload = function (parsed) {
       "Supernal Haste Elixir",
       "SP Reset Scroll",
       "PP Reset Scroll",
+      "Daily Reward Sack",
+      "Guild Reward Sack",
+      "Guild Weekly Sack",
     ];
     useItemsList.forEach((item) => {
       if (window.inventory.ETC && window.inventory.ETC[item]) {
@@ -850,8 +858,7 @@ window.applySaveStatePayload = function (parsed) {
       window.playerStats.volumeMaster = 0.5;
     if (window.playerStats.volumeSFX === undefined)
       window.playerStats.volumeSFX = 0.8;
-    if (window.playerStats.mute === undefined)
-      window.playerStats.mute = false;
+    if (window.playerStats.mute === undefined) window.playerStats.mute = false;
 
     if (
       window.playerStats.prestigeUpgrades &&
@@ -1022,8 +1029,7 @@ window.applySaveStatePayload = function (parsed) {
       let keyTypes = ["equip", "gold", "mat"];
       keyTypes.forEach((k) => {
         let count = k + "Keys";
-        let time =
-          "next" + k.charAt(0).toUpperCase() + k.slice(1) + "KeyTime";
+        let time = "next" + k.charAt(0).toUpperCase() + k.slice(1) + "KeyTime";
         if (window.playerStats[count] < 3) {
           let keyTime = window.playerStats[time] || now;
           let msSinceNextKey = now - keyTime;
@@ -1078,30 +1084,33 @@ window.loadGameAndSyncCloud = function () {
 
   const userId = window.getGameUserId();
   fetch(`${window.GAME_SERVER_URL}/api/load`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId })
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId }),
   })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success && data.saveData) {
-      let cloudTime = data.timestamp || 0;
-      let localTime = (localParsed && localParsed.lastSaveTime) || 0;
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success && data.saveData) {
+        let cloudTime = data.timestamp || 0;
+        let localTime = (localParsed && localParsed.lastSaveTime) || 0;
 
-      if (cloudTime > localTime) {
-        console.log('☁️ Newer Cloud Save found! Syncing state...');
-        window.applySaveStatePayload(data.saveData);
-        if (typeof window.updateUI === "function") window.updateUI();
-        if (typeof window.renderInventory === "function") window.renderInventory();
-        localStorage.setItem("idle_game_v11", JSON.stringify(data.saveData));
-      } else {
-        console.log('📱 Local progress is up to date.');
+        if (cloudTime > localTime) {
+          console.log("☁️ Newer Cloud Save found! Syncing state...");
+          window.applySaveStatePayload(data.saveData);
+          if (typeof window.updateUI === "function") window.updateUI();
+          if (typeof window.renderInventory === "function")
+            window.renderInventory();
+          localStorage.setItem("idle_game_v11", JSON.stringify(data.saveData));
+        } else {
+          console.log("📱 Local progress is up to date.");
+        }
       }
-    }
-  })
-  .catch(err => {
-    console.log('📡 Could not reach Cloud server for sync check. Running off local cache.');
-  });
+    })
+    .catch((err) => {
+      console.log(
+        "📡 Could not reach Cloud server for sync check. Running off local cache.",
+      );
+    });
 
   let autoSalvageSelect = document.getElementById("auto-salvage-setting");
   if (
@@ -3493,13 +3502,8 @@ window.handleMobDeath = function () {
           window.pushLog(
             `<strong style="color:#f1c40f;">🏆 [MILESTONE] Stage ${oldMax} Beaten! Guaranteed random equip dropped!</strong>`,
           );
-        if (typeof window.pushHeaderToast === "function")
-          window.pushHeaderToast(
-            `🏆 Milestone Drop: Stage ${oldMax} Cleared!`,
-            "#f1c40f",
-          );
         if (typeof window.rollEquipmentDrop === "function")
-          window.rollEquipmentDrop(true, false, 0, false);
+          window.rollEquipmentDrop(true, false, 0, false, oldMax);
       }
     }
     window.playerStats.killCount = 0;
@@ -4031,9 +4035,9 @@ window.useItem = function (itemName) {
   if (!window.inventory.USE[itemName] || window.inventory.USE[itemName] <= 0)
     return;
 
-  if (itemName === "Guild Reward Sack") {
-    if (typeof window.openGuildRewardSack === "function") {
-      window.openGuildRewardSack();
+  if (itemName === "Daily Reward Sack" || itemName === "Guild Reward Sack") {
+    if (typeof window.openDailyRewardSack === "function") {
+      window.openDailyRewardSack();
     }
     return;
   }
@@ -4333,7 +4337,8 @@ window.triggerFairyLoot = function (targetFairy) {
   else if (roll < 10.0 * luckMultiplier) statLinesCount = 1;
   else statLinesCount = 0;
 
-  let activeStage = window.playerStats.stage;
+  let activeStage =
+    window.playerStats.lifetimePeakStage || window.playerStats.stage || 1;
   if (window.playerStats.isDungeonMode && window.playerStats.currentDungeon) {
     activeStage =
       window.playerStats.currentDungeonStage[
@@ -4541,6 +4546,7 @@ window.rollEquipmentDrop = function (
   silent = false,
   minStars = 0,
   isRareMob = false,
+  isMilestone = false,
 ) {
   let p = window.resolvePlayerStats();
   let maxBag = window.getMaxBagSlots();
@@ -4714,6 +4720,11 @@ window.rollEquipmentDrop = function (
       newItem.name,
       newItem.statsRolled,
       window.getTierColor(newItem.statsRolled),
+      false,
+      1,
+      null,
+      null,
+      isMilestone,
     );
   if (newItem.type === "artifact") window.inventory.ARTIFACT.push(newItem);
   else window.inventory.EQUIP.push(newItem);
@@ -4841,10 +4852,7 @@ window.rollGachaDrop = function () {
   else if (roll < 4.0 * luckMultiplier) statLinesCount = 2;
   else statLinesCount = 1;
 
-  let peakRunStage = Math.max(
-    window.playerStats.stage,
-    window.playerStats.maxStage || 1,
-  );
+  let peakRunStage = window.playerStats.lifetimePeakStage || 1;
   let stageScale = Math.floor((peakRunStage - 1) / 10) + 1;
   window.generateEquipment(chosenType, statLinesCount, stageScale, "Gacha");
 };

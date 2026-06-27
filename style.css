@@ -342,17 +342,27 @@ canvas {
 }
 
 .bag-item {
-  background: #333333;
-  border: 1px solid #444444;
-  padding: 8px;
+  background: rgba(15, 17, 26, 0.65);
+  border: 1.5px solid #202632;
+  padding: 8px 10px;
   margin-bottom: 6px;
-  border-radius: 4px;
-  font-size: 13px; /* Upscaled from 11.5px */
+  border-radius: 6px;
+  font-size: 13px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   position: relative;
   cursor: help;
+  transition:
+    border-color 0.15s ease-in-out,
+    background 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
+}
+
+.bag-item:hover {
+  background: rgba(22, 26, 38, 0.85);
+  border-color: #3b4252;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .btn-action {
@@ -385,10 +395,10 @@ canvas {
   background: var(--accent-blue);
   margin-left: 5px;
   border-radius: 50%;
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 28px;
   padding: 0;
-  line-height: 20px;
+  line-height: 26px;
   text-align: center;
 }
 
@@ -607,7 +617,7 @@ canvas {
   border-radius: 6px;
   font-size: 11px;
   line-height: 1.4;
-  z-index: 25000;
+  z-index: 50000;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.85);
   pointer-events: none; /* Prevents cursor collisions and flickering spasms */
 }
@@ -1186,25 +1196,28 @@ canvas {
 }
 
 @media (max-width: 480px) {
-  .bag-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 10px;
+  .bag-item,
+  .bag-item-forge {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    padding: 10px !important;
   }
 
-  .bag-item > div:last-child {
-    width: 100%;
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 4px;
-    gap: 6px;
+  .bag-item .bag-item-actions {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    margin-top: 4px !important;
+    margin-left: 0 !important;
+    gap: 6px !important;
   }
 
-  .bag-item .btn-action {
-    margin: 0 !important;
-    padding: 6px 12px;
-    font-size: 11px;
+  .bag-item .bag-item-actions button {
+    flex: 1 !important;
+    text-align: center !important;
+    font-size: 10.5px !important;
+    padding: 6px 4px !important;
   }
 }
 

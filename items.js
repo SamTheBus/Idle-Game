@@ -6,6 +6,14 @@
 window.forgeSelectedItem = null;
 window.forgeMode = "temper";
 
+window.hexToRgbValues = function (hex) {
+  if (!hex || hex.charAt(0) !== "#") return "30, 41, 59";
+  let r = parseInt(hex.slice(1, 3), 16);
+  let g = parseInt(hex.slice(3, 5), 16);
+  let b = parseInt(hex.slice(5, 7), 16);
+  return `${r}, ${g}, ${b}`;
+};
+
 // Universal Set generation roller with targeted theme biases for Dungeons and Rift hunts
 window.rollSetForItem = function (isBoss, isRare, isDungeon, currentDungeon) {
   let setChance = 0.15; // 15% base rate
@@ -194,28 +202,45 @@ window.renderForgeTab = function () {
         let nameColor = window.getTierColor(item.statsRolled);
         let temperTag = item.temperLevel > 0 ? ` [+${item.temperLevel}]` : "";
         let lockTag = item.locked ? " 🔒" : "";
-        let bgStyle =
-          window.forgeSelectedItem && window.forgeSelectedItem.id === item.id
-            ? "background:#1e2a38; border: 1px solid #1abc9c;"
-            : "";
+
+        let isSelected =
+          window.forgeSelectedItem && window.forgeSelectedItem.id === item.id;
+        let itemBorderColor = isSelected ? nameColor : "#202632";
+        let itemBg = isSelected
+          ? `background: rgba(${window.hexToRgbValues(nameColor)}, 0.15); box-shadow: inset 0 0 10px rgba(${window.hexToRgbValues(nameColor)}, 0.22), 0 0 12px rgba(${window.hexToRgbValues(nameColor)}, 0.15);`
+          : "background: rgba(15, 17, 26, 0.65);";
 
         // Set Diablo Uber Unique visual profiles in Forge Selection Lists
         let uniqueStyleStr = "";
         let uniqueStyle = window.getUniqueItemStyle(item);
         if (uniqueStyle) {
-          uniqueStyleStr = `background: ${uniqueStyle.bg}; border: 1px solid ${uniqueStyle.border}; box-shadow: inset 0 0 6px ${uniqueStyle.shadow}, 0 0 8px ${uniqueStyle.glow};`;
+          uniqueStyleStr = isSelected
+            ? `background: ${uniqueStyle.bg}; border: 1.5px solid ${nameColor}; box-shadow: inset 0 0 10px ${nameColor}55, 0 0 14px ${nameColor}33;`
+            : `background: ${uniqueStyle.bg}; border: 1.5px solid ${uniqueStyle.border}; box-shadow: inset 0 0 6px ${uniqueStyle.shadow}, 0 0 8px ${uniqueStyle.glow};`;
         }
-        let finalStyle = bgStyle
-          ? `${bgStyle} ${uniqueStyleStr}`
-          : uniqueStyleStr;
-        let inlineStyle = finalStyle ? `style="${finalStyle}"` : "";
+        let finalStyle = uniqueStyleStr
+          ? uniqueStyleStr
+          : `border: 1.5px solid ${itemBorderColor}; border-left: 4px solid ${nameColor} !important; ${itemBg}`;
+        let inlineStyle = `style="${finalStyle} display: flex; align-items: center; padding: 6px 10px; margin-bottom: 6px; border-radius: 6px; cursor: pointer; transition: all 0.18s ease-in-out;"`;
 
         let eqBadge = item.isEquippedSlot
-          ? `<span style="background:#c0392b; color:white; padding:1px 3px; border-radius:2px; font-size:8px;">[EQUIPPED]</span> `
+          ? `<span style="background:#c0392b; color:white; padding:1px 3px; border-radius:2px; font-size:8px; font-weight:bold; margin-right:4px;">EQ</span> `
           : "";
         let rarityLabel = isArt ? "UNIQUE" : `${item.statsRolled}★`;
-        return `<div class="bag-item" ${inlineStyle} onclick="window.selectForgeItem(${item.id})" onmouseenter="window.showForgeTooltip(event, ${item.id})" onmouseleave="window.hideTooltip()" ontouchstart="window.showForgeTooltip(event, ${item.id})">
-                <div>${eqBadge}<strong style="color:${nameColor};">${item.name}${temperTag}${lockTag}</strong><br><span style="font-size:10px;color:#aaa;">${item.type.toUpperCase()} | ${rarityLabel}</span></div>
+        let iconBox = `<div style="margin-right:8px; display:inline-flex; align-items:center; flex-shrink:0;">${window.getEquipIconHtml(item, 28)}</div>`;
+
+        return `<div class="bag-item-forge" ${inlineStyle} onclick="window.selectForgeItem(${item.id})" onmouseenter="window.showForgeTooltip(event, ${item.id})" onmouseleave="window.hideTooltip()" ontouchstart="window.showForgeTooltip(event, ${item.id})">
+                ${iconBox}
+                <div style="flex:1; min-width:0; text-align:left;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:4px; margin-bottom:1px;">
+                        <span style="font-weight:bold; color:${nameColor}; font-size:11.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;">${item.name}${temperTag}</span>
+                        ${lockTag ? `<span style="font-size:9.5px;">${lockTag}</span>` : ""}
+                    </div>
+                    <div style="font-size:9.5px; color:#aaa; display:flex; align-items:center; gap:4px; font-family:monospace; line-height:1;">
+                        ${eqBadge}
+                        <span>${item.type.toUpperCase()} • ${rarityLabel}</span>
+                    </div>
+                </div>
             </div>`;
       })
       .join("");
@@ -3046,10 +3071,7 @@ window.rollGachaCrateItem = function () {
     else statLinesCount = 1;
   }
 
-  let peakRunStage = Math.max(
-    window.playerStats.stage,
-    window.playerStats.maxStage || 1,
-  );
+  let peakRunStage = window.playerStats.lifetimePeakStage || 1;
   let stageScale = Math.floor((peakRunStage - 1) / 10) + 1;
 
   let newItem = window.createItemObject(
