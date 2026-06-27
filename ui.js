@@ -1400,21 +1400,26 @@ window.updateUI = function () {
     setText("char-level", window.playerStats.level);
 
     let titleEl = document.getElementById("equipped-title");
-      if (titleEl) {
-        let activeTitle = window.playerStats.equippedTitle;
-        if (activeTitle && window.TITLES_DATA[activeTitle]) {
-          let tData = window.TITLES_DATA[activeTitle];
-          let iconHtml = tData.icon || "";
-          titleEl.innerHTML = ` ${iconHtml}<span style="color: ${tData.color || '#ff007f'};">[${tData.name}]</span>`;
-        } else {
-          titleEl.innerHTML = "";
-        }
-      }
+          if (titleEl) {
+            let activeTitle = window.playerStats.equippedTitle;
+            if (activeTitle && window.TITLES_DATA[activeTitle]) {
+              let tData = window.TITLES_DATA[activeTitle];
+              let iconHtml = tData.icon || "";
+              titleEl.innerHTML = ` ${iconHtml}<span style="color: ${tData.color || '#ff007f'};">[${tData.name}]</span>`;
+            } else {
+              titleEl.innerHTML = "";
+            }
+          }
 
-    setText(
-      "char-sp",
-      window.draftAllocations !== null ? window.draftSP : window.playerStats.sp,
-    );
+        let nameLabel = document.getElementById("current-name-label");
+        if (nameLabel) {
+          nameLabel.innerText = `(Current: ${window.playerStats.playerName || "Guest"})`;
+        }
+
+        setText(
+          "char-sp",
+          window.draftAllocations !== null ? window.draftSP : window.playerStats.sp,
+        );
 
   let xpPct = (window.playerStats.xp / window.playerStats.xpReq) * 100;
   setText(
@@ -1691,30 +1696,27 @@ window.updateUI = function () {
     window.renderGachaShowcaseMarquee();
 
     // Update live vending rates board (Decoupled from active equip Qly)
-    let luckMultiplier = 1.0 + (window.playerStats.vendingQLevel || 0) * 0.025;
-    let chance5 = 0.02 * luckMultiplier;
-    let chance4 = 0.16 * luckMultiplier;
+        let luckMultiplier = 1.0 + (window.playerStats.vendingQLevel || 0) * 0.025;
+        let chance5 = 1.0 * luckMultiplier;
+        let chance4 = 5.0 * luckMultiplier;
+        let chance3 = 15.0 * luckMultiplier;
+        let chance2 = 25.0 * luckMultiplier;
+        let chance1 = Math.max(0, 100 - (chance5 + chance4 + chance3 + chance2));
 
-    window.setText("vending-rate-5", chance5.toFixed(2) + "%");
-    window.setText("vending-rate-4", chance4.toFixed(2) + "%");
-    window.setText(
-      "vending-rate-3",
-      (0.8 * luckMultiplier - (chance5 + chance4)).toFixed(2) + "%",
-    );
-    window.setText("vending-rate-2", (3.2 * luckMultiplier).toFixed(2) + "%");
-    window.setText(
-      "vending-rate-1",
-      (100 - 4.0 * luckMultiplier).toFixed(2) + "%",
-    );
+        window.setText("vending-rate-5", chance5.toFixed(2) + "%");
+        window.setText("vending-rate-4", chance4.toFixed(2) + "%");
+        window.setText("vending-rate-3", chance3.toFixed(2) + "%");
+        window.setText("vending-rate-2", chance2.toFixed(2) + "%");
+        window.setText("vending-rate-1", chance1.toFixed(2) + "%");
   }
 
   // Refresh Gacha Pity Elements if present
-  let pityProgress = window.playerStats.vendingPity || 0;
-  let pityTextBadge = document.getElementById("vending-pity-text");
-  let pityBarFill = document.getElementById("vending-pity-fill");
-  if (pityTextBadge)
-    pityTextBadge.innerText = `Pity progress: ${pityProgress} / 20`;
-  if (pityBarFill) pityBarFill.style.width = `${(pityProgress / 20) * 100}%`;
+    let pityProgress = window.playerStats.vendingPity || 0;
+    let pityTextBadge = document.getElementById("vending-pity-text");
+    let pityBarFill = document.getElementById("vending-pity-fill");
+    if (pityTextBadge)
+      pityTextBadge.innerText = `Pity progress: ${pityProgress} / 50`;
+    if (pityBarFill) pityBarFill.style.width = `${(pityProgress / 50) * 100}%`;
 
   // Buff trackers HUD
   let activeBuffs = [];
@@ -2437,6 +2439,16 @@ window.toggleSettings = function () {
     modal.style.display = "block";
     window.updateAudioUI();
     window.updateStickyCanvasStyle();
+
+    // Populate and display current character name
+    let nameInput = document.getElementById("settings-player-name");
+    if (nameInput) {
+      nameInput.value = window.playerStats.playerName || "Guest";
+    }
+    let nameLabel = document.getElementById("current-name-label");
+    if (nameLabel) {
+      nameLabel.innerText = `(Current: ${window.playerStats.playerName || "Guest"})`;
+    }
   } else {
     modal.style.display = "none";
     window.hideTooltip();
@@ -3698,22 +3710,22 @@ window.showGachaTooltip = function (e) {
   e.stopPropagation();
   let p = window.resolvePlayerStats();
   let qly = 1.0 + (window.playerStats.vendingQLevel || 0) * 0.025;
-  let mythic = 0.5 * qly;
-  let leg = 2.0 * qly - mythic;
-  let epic = 10.0 * qly - 2.0 * qly;
-  let magic = 30.0 * qly - 10.0 * qly;
-  let rare = 100 - 30.0 * qly;
+  let mythic = 1.0 * qly;
+  let leg = 5.0 * qly;
+  let epic = 15.0 * qly;
+  let magic = 25.0 * qly;
+  let rare = Math.max(0, 100 - (mythic + leg + epic + magic));
   let keysHeld = window.inventory.ETC["Gacha Key"] || 0;
 
   let tt = document.getElementById("game-tooltip");
   tt.innerHTML = `<div style="padding: 10px; width: 250px; box-sizing: border-box;">
                                                <div class="tt-title" style="color:#f1c40f;">🎰 Vending Machine Rates</div>
                                                <div class="tt-subtitle">Gacha Rarity Distribution</div>
-                                               <div class="tt-stat-line" style="color:#3498db;">• 1★ Rare: ${Math.max(0, rare).toFixed(2)}%</div>
-                                               <div class="tt-stat-line" style="color:#9b59b6;">• 2★ Magic: ${Math.max(0, magic).toFixed(2)}%</div>
-                                               <div class="tt-stat-line" style="color:#e67e22;">• 3★ Epic: ${Math.max(0, epic).toFixed(2)}%</div>
-                                               <div class="tt-stat-line" style="color:#f1c40f;">• 4★ Legendary: ${Math.max(0, leg).toFixed(2)}%</div>
-                                               <div class="tt-stat-line" style="color:#e74c3c;">• 5★ Mythic: ${Math.max(0, mythic).toFixed(2)}%</div>
+                                               <div class="tt-stat-line" style="color:#3498db;">• 1★ Rare: ${rare.toFixed(2)}%</div>
+                                               <div class="tt-stat-line" style="color:#9b59b6;">• 2★ Magic: ${magic.toFixed(2)}%</div>
+                                               <div class="tt-stat-line" style="color:#e67e22;">• 3★ Epic: ${epic.toFixed(2)}%</div>
+                                               <div class="tt-stat-line" style="color:#f1c40f;">• 4★ Legendary: ${leg.toFixed(2)}%</div>
+                                               <div class="tt-stat-line" style="color:#e74c3c;">• 5★ Mythic: ${mythic.toFixed(2)}%</div>
                                                <div class="tt-stat-line" style="color:#1abc9c; margin-top:4px;">• Bonus: 1% flat chance for Unique Artifact!</div>
                                                <div class="tt-subtitle" style="margin-top:6px; border-top:1px solid #333; padding-top:4px;">Guaranteed 1★ to 5★ gear. Influenced by Drop Quality.</div>
                                                <div style="margin-top:8px; border-top: 1px dashed #444; padding-top:6px; font-family:monospace; font-size:10px;">
@@ -4362,6 +4374,10 @@ window.showInventoryTooltip = function (e, itemId) {
   tt.style.borderColor = window.getTierColor(item.statsRolled);
   tt.style.display = "block";
   window.positionTooltip(e, tt);
+};
+
+window.showLogTooltip = function (e, itemId) {
+  window.showInventoryTooltip(e, itemId);
 };
 
 // Generates and positions item comparison tooltips inside the Blacksmith Forge interface
@@ -7454,15 +7470,15 @@ window.renderGachaModal = function () {
                                             </div>
 
                                             <!-- PITY TRACKER PROGRESS -->
-                                            <div style="width: 100%; margin: 8px 0; background:rgba(0,0,0,0.5); border:1px solid #333; padding:8px; border-radius:6px; text-align:center;">
-                                                <div style="display:flex; justify-content:space-between; font-size:10px; color:#cbd5e1; font-weight:bold; margin-bottom:4px; font-family:monospace;">
-                                                    <span id="vending-pity-text">Pity progress: ${pityProgress} / 20</span>
-                                                    <span style="color:#e74c3c;">Guaranteed 5★ on 20</span>
-                                                </div>
-                                                <div style="width:100%; height:6px; background:#222; border-radius:3px; overflow:hidden; border:1px solid #444;">
-                                                    <div id="vending-pity-fill" style="width:${(pityProgress / 20) * 100}%; height:100%; background:linear-gradient(90deg, #ff007f, #e74c3c); transition:width 0.3s ease;"></div>
-                                                </div>
-                                            </div>
+                                                                                        <div style="width: 100%; margin: 8px 0; background:rgba(0,0,0,0.5); border:1px solid #333; padding:8px; border-radius:6px; text-align:center;">
+                                                                                            <div style="display:flex; justify-content:space-between; font-size:10px; color:#cbd5e1; font-weight:bold; margin-bottom:4px; font-family:monospace;">
+                                                                                                <span id="vending-pity-text">Pity progress: ${pityProgress} / 50</span>
+                                                                                                <span style="color:#e74c3c;">Guaranteed 5★ on 50</span>
+                                                                                            </div>
+                                                                                            <div style="width:100%; height:6px; background:#222; border-radius:3px; overflow:hidden; border:1px solid #444;">
+                                                                                                <div id="vending-pity-fill" style="width:${(pityProgress / 50) * 100}%; height:100%; background:linear-gradient(90deg, #ff007f, #e74c3c); transition:width 0.3s ease;"></div>
+                                                                                            </div>
+                                                                                        </div>
 
                                             <!-- CONTROL PANEL & CRANK -->
                                             <div class="gacha-control-panel">

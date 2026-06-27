@@ -4915,14 +4915,15 @@ window.rollGachaDrop = function () {
   }
 
   let statLinesCount = 1;
-  let luckMultiplier = p.qly + (window.playerStats.vendingQLevel || 0) * 0.01;
-  let roll = Math.random() * 100;
+    let luckMultiplier = p.qly + (window.playerStats.vendingQLevel || 0) * 0.01;
+    let roll = Math.random() * 100;
 
-  if (roll < 0.02 * luckMultiplier) statLinesCount = 5;
-  else if (roll < 0.18 * luckMultiplier) statLinesCount = 4;
-  else if (roll < 0.8 * luckMultiplier) statLinesCount = 3;
-  else if (roll < 4.0 * luckMultiplier) statLinesCount = 2;
-  else statLinesCount = 1;
+    // Upgraded rates: 1.0% Mythic (5★), 5.0% Legendary (4★), 15.0% Epic (3★), 25.0% Magic (2★)
+    if (roll < 1.0 * luckMultiplier) statLinesCount = 5;
+    else if (roll < 6.0 * luckMultiplier) statLinesCount = 4;
+    else if (roll < 21.0 * luckMultiplier) statLinesCount = 3;
+    else if (roll < 46.0 * luckMultiplier) statLinesCount = 2;
+    else statLinesCount = 1;
 
   let peakRunStage = window.playerStats.lifetimePeakStage || 1;
   let stageScale = Math.floor((peakRunStage - 1) / 10) + 1;
