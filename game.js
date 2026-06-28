@@ -11,8 +11,13 @@ let canvas, ctx;
 window.detectGameServer = function () {
   const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-  if (isLocalHost) {
-    return 'http://192.168.0.37:3000'; // Use local computer IP for ultra-fast local testing
+  // SET THIS TO:
+  // - false: To connect to your local backend server (running node server.js on port 3000)
+  // - true: To connect your local browser tab directly to your live Render/Supabase cloud!
+  const useLiveCloudInLocalhost = false;
+
+  if (isLocalHost && !useLiveCloudInLocalhost) {
+    return 'http://localhost:3000'; // Universal local loopback for offline testing
   }
 
   // If running publicly on GitHub Pages or running natively as an app on your phone,
