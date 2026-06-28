@@ -3133,39 +3133,38 @@ window.drawSingleMob = function (c, m) {
         c.fill();
       }
 
-      // 6. Multi-Layer Foliage Canopy
-      let cx = m.x + m.w / 2;
-      let cy = m.y + m.h * 0.08;
-      let r = m.w * 0.9;
+      // 6. Multi-Layer Foliage Canopy (Isolated sub-paths to prevent intersecting connecting lines)
+            let cx = m.x + m.w / 2;
+            let cy = m.y + m.h * 0.08;
+            let r = m.w * 0.9;
 
-      // Layer 1: Base Deep Forest Green
-      c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#1a461e";
-      c.beginPath();
-      c.arc(cx, cy, r, 0, Math.PI * 2);
-      c.arc(cx - r * 0.5, cy - r * 0.2, r * 0.75, 0, Math.PI * 2);
-      c.arc(cx + r * 0.5, cy - r * 0.2, r * 0.75, 0, Math.PI * 2);
-      c.arc(cx, cy - r * 0.5, r * 0.85, 0, Math.PI * 2);
-      c.fill();
-      c.stroke();
+            let drawCleanClump = (x, y, radius, color) => {
+              c.fillStyle = m.flashTimer > 0 ? "#ffffff" : color;
+              c.beginPath();
+              c.arc(x, y, radius, 0, Math.PI * 2);
+              c.fill();
+              c.stroke();
+            };
 
-      // Layer 2: Vibrant Mid-Green
-      c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#2ecc71";
-      c.beginPath();
-      c.arc(cx, cy, r * 0.8, 0, Math.PI * 2);
-      c.arc(cx - r * 0.4, cy - r * 0.5, r * 0.6, 0, Math.PI * 2);
-      c.arc(cx + r * 0.4, cy - r * 0.5, r * 0.6, 0, Math.PI * 2);
-      c.fill();
-      c.stroke();
+            // Layer 1: Base Deep Forest Green
+            let color1 = "#1a461e";
+            drawCleanClump(cx, cy, r, color1);
+            drawCleanClump(cx - r * 0.5, cy - r * 0.2, r * 0.75, color1);
+            drawCleanClump(cx + r * 0.5, cy - r * 0.2, r * 0.75, color1);
+            drawCleanClump(cx, cy - r * 0.5, r * 0.85, color1);
 
-      // Layer 3: Highlighted vibrant light-green (Adds foliage depth)
-      c.fillStyle = m.flashTimer > 0 ? "#ffffff" : "#52be80";
-      c.beginPath();
-      c.arc(cx - r * 0.2, cy - r * 0.3, r * 0.4, 0, Math.PI * 2);
-      c.arc(cx + r * 0.2, cy - r * 0.3, r * 0.4, 0, Math.PI * 2);
-      c.fill();
-      c.stroke();
+            // Layer 2: Vibrant Mid-Green
+            let color2 = "#2ecc71";
+            drawCleanClump(cx, cy, r * 0.8, color2);
+            drawCleanClump(cx - r * 0.4, cy - r * 0.5, r * 0.6, color2);
+            drawCleanClump(cx + r * 0.4, cy - r * 0.5, r * 0.6, color2);
 
-      // 7. Hanging moss/ivy strands swaying dynamically
+            // Layer 3: Highlighted vibrant light-green (Adds foliage depth)
+            let color3 = "#52be80";
+            drawCleanClump(cx - r * 0.2, cy - r * 0.3, r * 0.4, color3);
+            drawCleanClump(cx + r * 0.2, cy - r * 0.3, r * 0.4, color3);
+
+            // 7. Hanging moss/ivy strands swaying dynamically
       if (m.flashTimer === 0) {
         c.fillStyle = "#164d1f";
         for (let i = 0; i < 5; i++) {
@@ -3762,19 +3761,11 @@ window.drawSingleMob = function (c, m) {
           c.fillRect(px - 1.2, py - 4, 2.4, 8);
         }
       }
-    }
-
-    if (m.flashTimer === 0) {
-      c.fillStyle = "#ff007f";
-      c.beginPath();
-      c.rect(m.x + 12, m.y + 7 + bounce, m.w - 24, 2);
-      c.fill();
-      c.stroke();
-    }
-  }
-  c.restore();
-};
-// --- MISSING DPS CALCULATOR ---
+          }
+        }
+        c.restore();
+      };
+      // --- MISSING DPS CALCULATOR ---
 window.calculateActiveDps = function () {
   let now = Date.now();
   window.damageHistory = window.damageHistory.filter(
