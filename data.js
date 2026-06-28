@@ -3,7 +3,81 @@
    initial global state, and system utility functions.
    ========================================================================= */
 
-window.GAME_VERSION = 0.95; // Pre-release Alpha 0.9.5 // Increment this whenever you push a new release
+window.GAME_VERSION = 0.96; // Pre-release Alpha 0.9.6 // Increment this whenever you push a new release
+
+window.getUiIconSvg = function (key, size = 12) {
+  const colors = {
+    atk: "#e74c3c",
+    maxHp: "#e74c3c",
+    def: "#3498db",
+    moveSpeed: "#3498db",
+    critChance: "#f1c40f",
+    critDamage: "#e67e22",
+    block: "#3498db",
+    parry: "#9b59b6",
+    str: "#e74c3c",
+    dex: "#e67e22",
+    int: "#9b59b6",
+    activeAttackSpeed: "#e74c3c",
+    idleAttackSpeed: "#3498db",
+    dropRate: "#2ecc71",
+    quality: "#ec4899",
+    goldMulti: "#f1c40f",
+    gold: "#f1c40f",
+    rareSpawn: "#e67e22",
+    fairySpawn: "#ffb6c1",
+    barrier: "#9b59b6",
+    xpRate: "#a855f7",
+  };
+
+  const svgPaths = {
+    atk: `<path d="M14.5 17.5L3 6V3h3l11.5 11.5 M13 19l6-6 M16 16l4 4 M19 21l2-2" />`,
+    maxHp: `<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />`,
+    def: `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />`,
+    moveSpeed: `<path d="M6 5h5v6l8 4c2 1 2 4-1 4H6V5zm3 2h2M9 9h2" />`,
+    critChance: `<path d="M12 2 Q12 12, 2 12 Q12 12, 12 22 Q12 12, 22 12 Z" />`,
+    critDamage: `<path d="M12 2l3 5.5 5.5-3-3 5.5 5.5 3-5.5 3 3 5.5-5.5-3-3 5.5-3-5.5-5.5 3 3-5.5-5.5-3 5.5-3-3-5.5 5.5 3z" />`,
+        block: `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />`,
+        parry: `<path d="M4 20L20 4M4 20L2 22M5 15L9 19M20 20L4 4M20 20L22 22M15 19L19 15" />`,
+        str: `<path d="M18 10h-2V8c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H6c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h2v2c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2v-2h2c1.1 0 2-.9 2-2v-2c0-1.1-.9-2-2-2z" />`,
+    dex: `<circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="3" /><path d="M12 1v4 M12 19v4 M1 12h4 M19 12h4" />`,
+    int: `<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" /><circle cx="12" cy="12" r="3" /><path d="M12 8v8 M8 12h8" />`,
+    activeAttackSpeed: `<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />`,
+    idleAttackSpeed: `<circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />`,
+    dropRate: `<path d="M16 10c-1-1.5-2.5-2-4-2s-3 .5-4 2C6 12, 4 15, 4 19c0 4 3.5 6 8 6s8-2 8-6C20 15, 18 12, 16 10z M12 6a1.5 1.5 0 1 1 1.5-1.5A1.5 1.5 0 0 1 12 6z" />`,
+    quality: `<path d="M6 3h12l4 6-10 12L2 9z" />`,
+    goldMulti: `<circle cx="12" cy="12" r="10" /><path d="M12 8v8M9 10h6M9 13h6" />`,
+    gold: `<circle cx="12" cy="12" r="10" /><path d="M12 8v8M9 10h6M9 13h6" />`,
+    rareSpawn: `<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-5.82 2.15L7 14.14 2 9.27l6.91-1.01L12 2z" />`,
+    fairySpawn: `<path d="M12 2c-.5 5-4 8-8 8 4 0 7.5 3 8 8 .5-5 4-8 8-8-4 0-7.5-3-8-8z" />`,
+    barrier: `<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />`,
+    xpRate: `<circle cx="12" cy="12" r="10" /><path d="M17 13l-5-5-5 5M17 17l-5-5-5 5" />`,
+  };
+
+  let c = colors[key] || "#ffffff";
+  let p = svgPaths[key] || "";
+  let fillOpacity = [
+    "def",
+    "block",
+    "maxHp",
+    "dex",
+    "int",
+    "str",
+    "activeAttackSpeed",
+    "dropRate",
+    "quality",
+    "goldMulti",
+    "gold",
+    "rareSpawn",
+    "fairySpawn",
+    "barrier",
+    "xpRate",
+  ].includes(key)
+    ? "0.15"
+    : "0";
+
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="${c}" fill-opacity="${fillOpacity}" stroke="${c}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; transform: translateY(-1.5px); line-height: 1; margin-right: 3px;">${p}</svg>`;
+};
 
 // --- SYSTEM UTILS ---
 
@@ -3264,22 +3338,23 @@ window.checkAchievements = function () {
   );
 
   let unlockedAny = false;
-    window.AchievementsData.forEach((ach) => {
-      if (window.playerStats.unlockedAchievements.includes(ach.id)) return;
-      let progress = window.getAchievementProgress(ach);
-      let targetValue = ach.isSingleTier ? 1 : ach.reqValue;
-      if (progress >= targetValue) {
-        window.playerStats.unlockedAchievements.push(ach.id);
-        window.playerStats.achievementTimestamps = window.playerStats.achievementTimestamps || {};
-        window.playerStats.achievementTimestamps[ach.id] = Date.now();
-        if (!window.playerStats.unviewedAchievements)
-          window.playerStats.unviewedAchievements = [];
-        if (!window.playerStats.unviewedAchievements.includes(ach.id)) {
-          window.playerStats.unviewedAchievements.push(ach.id);
-        }
-        unlockedAny = true;
+  window.AchievementsData.forEach((ach) => {
+    if (window.playerStats.unlockedAchievements.includes(ach.id)) return;
+    let progress = window.getAchievementProgress(ach);
+    let targetValue = ach.isSingleTier ? 1 : ach.reqValue;
+    if (progress >= targetValue) {
+      window.playerStats.unlockedAchievements.push(ach.id);
+      window.playerStats.achievementTimestamps =
+        window.playerStats.achievementTimestamps || {};
+      window.playerStats.achievementTimestamps[ach.id] = Date.now();
+      if (!window.playerStats.unviewedAchievements)
+        window.playerStats.unviewedAchievements = [];
+      if (!window.playerStats.unviewedAchievements.includes(ach.id)) {
+        window.playerStats.unviewedAchievements.push(ach.id);
+      }
+      unlockedAny = true;
 
-        let currentAchId = ach.id;
+      let currentAchId = ach.id;
       if (typeof window.pushLog === "function")
         window.pushLog(
           `<strong style="color:#f1c40f;">🏆 CHALLENGE ACHIEVED: [${ach.name}]!</strong> - ${ach.desc}`,
@@ -3740,22 +3815,22 @@ window.resolvePlayerStats = function (useDraft = false) {
   }
 
   p.rawBlock = p.block;
-    p.rawParry = p.parry;
+  p.rawParry = p.parry;
 
-    if (p.block > maxBlockCap) p.block = maxBlockCap;
-    if (p.parry > maxParryCap) p.parry = maxParryCap;
+  if (p.block > maxBlockCap) p.block = maxBlockCap;
+  if (p.parry > maxParryCap) p.parry = maxParryCap;
 
-    // Apply diminishing returns to raw accumulated Rare Spawn rates to prevent key hyper-inflation
-    let rawRare = p.rareSpawn;
-    let limit = window.checkArtifactTrait("void_pull") ? 0.10 : 0.075; // 7.5% base cap, 10.0% elevated with Void Core
-    let excessRare = Math.max(0, rawRare - 0.01);
-    let scale = limit - 0.01;
-    p.rareSpawn = 0.01 + (excessRare * scale) / (excessRare + scale);
+  // Apply diminishing returns to raw accumulated Rare Spawn rates to prevent key hyper-inflation
+  let rawRare = p.rareSpawn;
+  let limit = window.checkArtifactTrait("void_pull") ? 0.1 : 0.075; // 7.5% base cap, 10.0% elevated with Void Core
+  let excessRare = Math.max(0, rawRare - 0.01);
+  let scale = limit - 0.01;
+  p.rareSpawn = 0.01 + (excessRare * scale) / (excessRare + scale);
 
-    p.atk = Math.floor(p.atk);
-    p.maxHp = Math.floor(p.maxHp);
-    p.def = Math.floor(p.def);
-    p.moveSpeed = parseFloat(p.moveSpeed.toFixed(1));
+  p.atk = Math.floor(p.atk);
+  p.maxHp = Math.floor(p.maxHp);
+  p.def = Math.floor(p.def);
+  p.moveSpeed = parseFloat(p.moveSpeed.toFixed(1));
 
   if (
     window.equippedSlots.boots &&
@@ -4062,30 +4137,30 @@ window.playerStats = {
   dailyMissions: [],
   weeklyMissions: [],
   dailyRerollsDone: 0, // Reset daily at 12:00 AM PST/PDT
-    lastDailyResetTime: 0,
-    lastWeeklyResetTime: 0,
-    dailyRewardClaimed: false,
-    weeklyRewardClaimed: false,
-    unviewedAchievements: [],
-      selectedPrestigeStage: 80,
-      unlockedTitles: [],
-      equippedTitle: null,
-      achievementTimestamps: {},
-      claimedMailIds: [],
-      playerName: "Guest",
-    };
+  lastDailyResetTime: 0,
+  lastWeeklyResetTime: 0,
+  dailyRewardClaimed: false,
+  weeklyRewardClaimed: false,
+  unviewedAchievements: [],
+  selectedPrestigeStage: 80,
+  unlockedTitles: [],
+  equippedTitle: null,
+  achievementTimestamps: {},
+  claimedMailIds: [],
+  playerName: "Guest",
+};
 
-  // --- CLIENT-SIDE TITLE DATABASE ---
-  window.TITLES_DATA = {
-      "hoors_beta_boi": {
-        name: "Hoor's Beta Boi",
-        desc: "A prestigious badge of honor for Hoor's elite close-circle testers.",
-        received: "Participating in the Closed Beta Phase (June 2026)",
-        color: "#ff007f", // Hot Neon Pink
-        stats: { drop: 0.50, qly: 0.50 },
-        icon: `<svg width="14" height="14" viewBox="0 0 16 16" style="vertical-align: middle; margin-right: 3px; filter: drop-shadow(0 0 4px #ff007f);"><polygon points="5,0 11,0 11,6 8,4 5,6" fill="#ff007f" /><polygon points="6,0 10,0 10,6 8,4.5 6,6" fill="#d946ef" /><circle cx="8" cy="9" r="4.5" fill="#f1c40f" stroke="#000" stroke-width="0.8" /><polygon points="8,7 8.5,8.5 10,8.7 8.8,9.7 9.2,11 8,10.2 6.8,11 7.2,9.7 6,8.7 7.5,8.5" fill="#fff" /></svg>`
-      }
-    };
+// --- CLIENT-SIDE TITLE DATABASE ---
+window.TITLES_DATA = {
+  hoors_beta_boi: {
+    name: "Hoor's Beta Boi",
+    desc: "A prestigious badge of honor for Hoor's elite close-circle testers.",
+    received: "Participating in the Closed Beta Phase (June 2026)",
+    color: "#ff007f", // Hot Neon Pink
+    stats: { drop: 0.5, qly: 0.5 },
+    icon: `<svg width="14" height="14" viewBox="0 0 16 16" style="vertical-align: middle; margin-right: 3px; filter: drop-shadow(0 0 4px #ff007f);"><polygon points="5,0 11,0 11,6 8,4 5,6" fill="#ff007f" /><polygon points="6,0 10,0 10,6 8,4.5 6,6" fill="#d946ef" /><circle cx="8" cy="9" r="4.5" fill="#f1c40f" stroke="#000" stroke-width="0.8" /><polygon points="8,7 8.5,8.5 10,8.7 8.8,9.7 9.2,11 8,10.2 6.8,11 7.2,9.7 6,8.7 7.5,8.5" fill="#fff" /></svg>`,
+  },
+};
 
 // --- PROCEDURAL MISSION & QUEST SYSTEM ---
 
@@ -4362,8 +4437,7 @@ window.projectiles = [];
 window.groundScroll = 0;
 window.logicClock = 0;
 window.spacePressed = false;
-window.state = { autoAttack: true, efficiency: 1.0, currentSubTab: "EQUIP" };
-window.isGamePaused = false;
+window.state = { autoAttack: true, efficiency: 1.0, currentSubTab: "EQUIP", currentActivitiesSubTab: "DUNGEONS" };window.isGamePaused = false;
 window.isCloudSynced = false;
 window.reviveTimer = 0;
 window.deathAnimationTimer = 0;

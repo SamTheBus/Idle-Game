@@ -73,10 +73,26 @@ window.getForgeDiffLines = function (item, previewItem) {
 
   // 1. Render Base parameters comparative
   let baseStatsToCompare = [
-    { key: "baseAtk", icon: "⚔️", label: "Base Weapon Damage" },
-    { key: "baseDef", icon: "🛡️", label: "Base Armor" },
-    { key: "baseMaxHp", icon: "❤️", label: "Base Max Life" },
-    { key: "baseInt", icon: "🧠", label: "Base Intelligence" },
+    {
+      key: "baseAtk",
+      icon: window.getUiIconSvg("atk", 11),
+      label: "Base Weapon Damage",
+    },
+    {
+      key: "baseDef",
+      icon: window.getUiIconSvg("def", 11),
+      label: "Base Armor",
+    },
+    {
+      key: "baseMaxHp",
+      icon: window.getUiIconSvg("maxHp", 11),
+      label: "Base Max Life",
+    },
+    {
+      key: "baseInt",
+      icon: window.getUiIconSvg("int", 11),
+      label: "Base Intelligence",
+    },
   ];
   baseStatsToCompare.forEach((s) => {
     let curVal = item[s.key] || 0;
@@ -98,35 +114,115 @@ window.getForgeDiffLines = function (item, previewItem) {
 
   // 2. Render combined total / affix parameters comparative
   let statsToCompare = [
-    { key: "atk", icon: "⚔️", label: "Attack Total", isPct: false },
-    { key: "maxHp", icon: "❤️", label: "Max HP Total", isPct: false },
-    { key: "def", icon: "🛡️", label: "Defense Total", isPct: false },
-    { key: "moveSpeed", icon: "👟", label: "Move Speed", isPct: false },
-    { key: "str", icon: "💪", label: "STR", isPct: false },
-    { key: "dex", icon: "🎯", label: "DEX", isPct: false },
-    { key: "int", icon: "🧠", label: "INT", isPct: false },
-    { key: "critChance", icon: "✨", label: "Crit Chance", isPct: true },
-    { key: "critDamage", icon: "💥", label: "Crit Multi", isPct: true },
-    { key: "block", icon: "🛡️", label: "Block Rate", isPct: true },
-    { key: "parry", icon: "⚡", label: "Parry Rate", isPct: true },
-    { key: "dropRate", icon: "🍀", label: "Drop Rate", isPct: true },
-    { key: "quality", icon: "💎", label: "Drop Quality", isPct: true },
-    { key: "goldMulti", icon: "🟡", label: "Gold Multi", isPct: true },
+    {
+      key: "atk",
+      icon: window.getUiIconSvg("atk", 11),
+      label: "Attack Total",
+      isPct: false,
+    },
+    {
+      key: "maxHp",
+      icon: window.getUiIconSvg("maxHp", 11),
+      label: "Max HP Total",
+      isPct: false,
+    },
+    {
+      key: "def",
+      icon: window.getUiIconSvg("def", 11),
+      label: "Defense Total",
+      isPct: false,
+    },
+    {
+      key: "moveSpeed",
+      icon: window.getUiIconSvg("moveSpeed", 11),
+      label: "Move Speed",
+      isPct: false,
+    },
+    {
+      key: "str",
+      icon: window.getUiIconSvg("str", 11),
+      label: "STR",
+      isPct: false,
+    },
+    {
+      key: "dex",
+      icon: window.getUiIconSvg("dex", 11),
+      label: "DEX",
+      isPct: false,
+    },
+    {
+      key: "int",
+      icon: window.getUiIconSvg("int", 11),
+      label: "INT",
+      isPct: false,
+    },
+    {
+      key: "critChance",
+      icon: window.getUiIconSvg("critChance", 11),
+      label: "Crit Chance",
+      isPct: true,
+    },
+    {
+      key: "critDamage",
+      icon: window.getUiIconSvg("critDamage", 11),
+      label: "Crit Multi",
+      isPct: true,
+    },
+    {
+      key: "block",
+      icon: window.getUiIconSvg("block", 11),
+      label: "Block Rate",
+      isPct: true,
+    },
+    {
+      key: "parry",
+      icon: window.getUiIconSvg("parry", 11),
+      label: "Parry Rate",
+      isPct: true,
+    },
+    {
+      key: "dropRate",
+      icon: window.getUiIconSvg("dropRate", 11),
+      label: "Drop Rate",
+      isPct: true,
+    },
+    {
+      key: "quality",
+      icon: window.getUiIconSvg("quality", 11),
+      label: "Drop Quality",
+      isPct: true,
+    },
+    {
+      key: "goldMulti",
+      icon: window.getUiIconSvg("goldMulti", 11),
+      label: "Gold Multi",
+      isPct: true,
+    },
     {
       key: "rareSpawn",
-      icon: "✨",
+      icon: window.getUiIconSvg("rareSpawn", 11),
       label: "Rare Spawn",
       isPct: true,
       isDoublePct: true,
     },
-    { key: "fairySpawn", icon: "🧚", label: "Fairy Spawn", isPct: true },
+    {
+      key: "fairySpawn",
+      icon: window.getUiIconSvg("fairySpawn", 11),
+      label: "Fairy Spawn",
+      isPct: true,
+    },
     {
       key: "activeAttackSpeed",
-      icon: "⚡",
+      icon: window.getUiIconSvg("activeAttackSpeed", 11),
       label: "Active Atk Spd",
       isPct: true,
     },
-    { key: "idleAttackSpeed", icon: "⏱️", label: "Idle Atk Spd", isPct: true },
+    {
+      key: "idleAttackSpeed",
+      icon: window.getUiIconSvg("idleAttackSpeed", 11),
+      label: "Idle Atk Spd",
+      isPct: true,
+    },
   ];
   statsToCompare.forEach((s) => {
     let curVal = item[s.key] || 0;
@@ -1046,7 +1142,6 @@ window.createItemObject = function (
 window.buildProceduralName = function (item) {
   if (item.statsRolled === "UNIQUE") return item.name;
   let stars = item.statsRolled;
-  let prefix = window.getTierName(stars);
 
   const nomenclature = {
     bonusAtk: "Vanguard",
@@ -1075,7 +1170,7 @@ window.buildProceduralName = function (item) {
     if (highestKey) themeName = nomenclature[highestKey];
   }
 
-  return `${prefix} ${themeName} ${item.noun} (Lv. ${item.stageLevel})`;
+  return `${themeName} ${item.noun} (Lv. ${item.stageLevel})`;
 };
 
 // --- STAT RANGES & PREVIEWS ---
@@ -2155,22 +2250,7 @@ window.getStatEnchantSuffix = function (item, statKey) {
 };
 
 window.getStatIcon = function (stat) {
-  const icons = {
-    atk: "⚔️",
-    maxHp: "❤️",
-    def: "🛡️",
-    moveSpeed: "👟",
-    critChance: "✨",
-    critDamage: "💥",
-    block: "🛡️",
-    parry: "⚡",
-    str: "💪",
-    dex: "🎯",
-    int: "🧠",
-    activeAttackSpeed: "⚡",
-    idleAttackSpeed: "⏱️",
-  };
-  return icons[stat] || "❖";
+  return window.getUiIconSvg(stat, 12) || "❖";
 };
 
 // --- FORGE UI INTERACTIONS ---
@@ -2244,15 +2324,29 @@ window.switchForgeStation = function (station) {
 window.changeAutoSalvage = function (val) {
   window.playerStats.autoSalvageThreshold = parseInt(val, 10);
   if (typeof window.saveGame === "function") window.saveGame();
-  if (typeof window.pushHeaderToast === "function")
-    window.pushHeaderToast("⚡ Auto-Salvage Filter updated!", "#2ecc71");
+  if (typeof window.updateSalvagePadUI === "function")
+    window.updateSalvagePadUI();
+  if (typeof window.pushHeaderToast === "function") {
+    let tierText = val == -1 ? "Disabled" : `${val}★ and under`;
+    window.pushHeaderToast(
+      `Auto-Salvage Threshold set to: ${tierText}`,
+      "#2ecc71",
+    );
+  }
+};
+
+window.selectBulkSalvageRarity = function (val) {
+  window.state.bulkSalvageTarget = parseInt(val, 10);
+  if (typeof window.updateSalvagePadUI === "function")
+    window.updateSalvagePadUI();
 };
 
 window.triggerBulkSalvage = function () {
   if (typeof window.hideTooltip === "function") window.hideTooltip();
-  let raritySelect = document.getElementById("bulk-salvage-rarity");
-  if (!raritySelect) return;
-  let maxStars = parseInt(raritySelect.value, 10);
+  let maxStars =
+    window.state.bulkSalvageTarget !== undefined
+      ? window.state.bulkSalvageTarget
+      : 0;
 
   let targetItems = window.inventory.EQUIP.filter(
     (item) =>
@@ -3035,38 +3129,38 @@ window.rollGachaCrateItem = function () {
     delete window.inventory.ETC["Gacha Key"];
 
   // --- PITY COUNTER ENGINE ---
-      window.playerStats.vendingPity = (window.playerStats.vendingPity || 0) + 1;
-      let isPityTriggered = false;
+  window.playerStats.vendingPity = (window.playerStats.vendingPity || 0) + 1;
+  let isPityTriggered = false;
 
-      if (window.playerStats.vendingPity >= 50) {
-        isPityTriggered = true;
-        window.playerStats.vendingPity = 0; // Reset pity
-      }
+  if (window.playerStats.vendingPity >= 50) {
+    isPityTriggered = true;
+    window.playerStats.vendingPity = 0; // Reset pity
+  }
 
-      let statLinesCount = 1;
-      if (isPityTriggered) {
-        statLinesCount = 5; // Guaranteed Mythic
-      } else {
-        let qly = p.qly; // Fully live with your stats!
-        let roll = Math.random() * 100;
-        let mythic = 1.0 * qly;
-        let leg = 5.0 * qly;
-        let epic = 15.0 * qly;
-        let magic = 25.0 * qly;
+  let statLinesCount = 1;
+  if (isPityTriggered) {
+    statLinesCount = 5; // Guaranteed Mythic
+  } else {
+    let qly = p.qly; // Fully live with your stats!
+    let roll = Math.random() * 100;
+    let mythic = 1.0 * qly;
+    let leg = 5.0 * qly;
+    let epic = 15.0 * qly;
+    let magic = 25.0 * qly;
 
-        if (roll < mythic) {
-          statLinesCount = 5;
-          window.playerStats.vendingPity = 0; // Natural pull resets pity
-        } else if (roll < mythic + leg) {
-          statLinesCount = 4;
-        } else if (roll < mythic + leg + epic) {
-          statLinesCount = 3;
-        } else if (roll < mythic + leg + epic + magic) {
-          statLinesCount = 2;
-        } else {
-          statLinesCount = 1;
-        }
-      }
+    if (roll < mythic) {
+      statLinesCount = 5;
+      window.playerStats.vendingPity = 0; // Natural pull resets pity
+    } else if (roll < mythic + leg) {
+      statLinesCount = 4;
+    } else if (roll < mythic + leg + epic) {
+      statLinesCount = 3;
+    } else if (roll < mythic + leg + epic + magic) {
+      statLinesCount = 2;
+    } else {
+      statLinesCount = 1;
+    }
+  }
 
   let peakRunStage = window.playerStats.lifetimePeakStage || 1;
   let stageScale = Math.floor((peakRunStage - 1) / 10) + 1;
@@ -3085,18 +3179,18 @@ window.rollGachaCrateItem = function () {
   }
 
   // Store inside active pull history log
-    window.playerStats.gachaHistory = window.playerStats.gachaHistory || [];
-    window.playerStats.gachaHistory.unshift(newItem);
-    if (window.playerStats.gachaHistory.length > 5) {
-      window.playerStats.gachaHistory.pop();
-    }
-    window.frozenItemDb[newItem.id] = JSON.parse(JSON.stringify(newItem));
+  window.playerStats.gachaHistory = window.playerStats.gachaHistory || [];
+  window.playerStats.gachaHistory.unshift(newItem);
+  if (window.playerStats.gachaHistory.length > 5) {
+    window.playerStats.gachaHistory.pop();
+  }
+  window.frozenItemDb[newItem.id] = JSON.parse(JSON.stringify(newItem));
 
-    if (typeof window.logHighTierPull === "function") {
-      window.logHighTierPull(newItem);
-    }
+  if (typeof window.logHighTierPull === "function") {
+    window.logHighTierPull(newItem);
+  }
 
-    window.checkAchievements();
+  window.checkAchievements();
   window.saveGame();
   return { item: newItem };
 };

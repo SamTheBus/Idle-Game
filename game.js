@@ -9,7 +9,9 @@ let canvas, ctx;
 
 // Automatically detect if the game is running locally (development) or natively (Capacitor)
 window.detectGameServer = function () {
-  const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const isLocalHost =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
 
   // SET THIS TO:
   // - false: To connect to your local backend server (running node server.js on port 3000)
@@ -17,12 +19,12 @@ window.detectGameServer = function () {
   const useLiveCloudInLocalhost = true;
 
   if (isLocalHost && !useLiveCloudInLocalhost) {
-    return 'http://localhost:3000'; // Universal local loopback for offline testing
+    return "http://localhost:3000"; // Universal local loopback for offline testing
   }
 
   // If running publicly on GitHub Pages or running natively as an app on your phone,
   // route everything securely to your live Render Cloud server!
-  return 'https://idlesaq-backend.onrender.com';
+  return "https://idlesaq-backend.onrender.com";
 };
 
 window.GAME_SERVER_URL = window.detectGameServer();
@@ -62,35 +64,35 @@ window.saveGame = function () {
   }
 
   const userId = window.getGameUserId();
-    if (typeof window.updateSyncStatus === "function") {
-      window.updateSyncStatus("syncing");
-    }
-    fetch(`${window.GAME_SERVER_URL}/api/save`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, saveData }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          console.log("☁️ Cloud Backup Successful!");
-          if (typeof window.updateSyncStatus === "function") {
-            window.updateSyncStatus("connected");
-          }
-        } else {
-          console.warn("⚠️ Cloud Sync Warning:", data.error);
-          if (typeof window.updateSyncStatus === "function") {
-            window.updateSyncStatus("offline");
-          }
+  if (typeof window.updateSyncStatus === "function") {
+    window.updateSyncStatus("syncing");
+  }
+  fetch(`${window.GAME_SERVER_URL}/api/save`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId, saveData }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        console.log("☁️ Cloud Backup Successful!");
+        if (typeof window.updateSyncStatus === "function") {
+          window.updateSyncStatus("connected");
         }
-      })
-      .catch((err) => {
-        console.log("📡 Server offline or unreachable. Local save preserved.");
+      } else {
+        console.warn("⚠️ Cloud Sync Warning:", data.error);
         if (typeof window.updateSyncStatus === "function") {
           window.updateSyncStatus("offline");
         }
-      });
-  };
+      }
+    })
+    .catch((err) => {
+      console.log("📡 Server offline or unreachable. Local save preserved.");
+      if (typeof window.updateSyncStatus === "function") {
+        window.updateSyncStatus("offline");
+      }
+    });
+};
 
 window.getDepthQualityMultiplier = function (depth) {
   // Asymptotically scales from 1.0 at depth 0, up to a 10.0x maximum ceiling at infinite depth
@@ -128,23 +130,26 @@ window.requestRename = function () {
   fetch(`${window.GAME_SERVER_URL}/api/register-name`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId, name: newName })
+    body: JSON.stringify({ userId, name: newName }),
   })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      window.playerStats.playerName = newName;
-      window.pushHeaderToast(`🎉 Renamed to ${newName}!`, "#2ecc71");
-      window.updateUI();
-      window.saveGame();
-    } else {
-      window.pushHeaderToast(`❌ Error: ${data.error}`, "#e74c3c");
-    }
-  })
-  .catch(err => {
-    console.error("Rename failed:", err);
-    window.pushHeaderToast("❌ Connection error renaming character.", "#e74c3c");
-  });
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        window.playerStats.playerName = newName;
+        window.pushHeaderToast(`🎉 Renamed to ${newName}!`, "#2ecc71");
+        window.updateUI();
+        window.saveGame();
+      } else {
+        window.pushHeaderToast(`❌ Error: ${data.error}`, "#e74c3c");
+      }
+    })
+    .catch((err) => {
+      console.error("Rename failed:", err);
+      window.pushHeaderToast(
+        "❌ Connection error renaming character.",
+        "#e74c3c",
+      );
+    });
 };
 
 window.logHighTierPull = function (item) {
@@ -159,9 +164,8 @@ window.logHighTierPull = function (item) {
   fetch(`${window.GAME_SERVER_URL}/api/gacha/log-pull`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId, playerName, item })
-  })
-  .catch(err => console.error("Failed to log high tier pull:", err));
+    body: JSON.stringify({ userId, playerName, item }),
+  }).catch((err) => console.error("Failed to log high tier pull:", err));
 };
 window.addEventListener("beforeunload", window.saveGame);
 
@@ -827,18 +831,19 @@ window.applySaveStatePayload = function (parsed) {
     }
 
     window.playerStats.xpReq = Math.floor(
-        250 * Math.pow(1.2, window.playerStats.level - 1),
-      );
+      250 * Math.pow(1.2, window.playerStats.level - 1),
+    );
 
-      // Re-map legacy completed trophies back onto live timestamp index
-      if (window.playerStats.unlockedAchievements) {
-        window.playerStats.achievementTimestamps = window.playerStats.achievementTimestamps || {};
-        window.playerStats.unlockedAchievements.forEach(id => {
-          if (!window.playerStats.achievementTimestamps[id]) {
-            window.playerStats.achievementTimestamps[id] = Date.now();
-          }
-        });
-      }
+    // Re-map legacy completed trophies back onto live timestamp index
+    if (window.playerStats.unlockedAchievements) {
+      window.playerStats.achievementTimestamps =
+        window.playerStats.achievementTimestamps || {};
+      window.playerStats.unlockedAchievements.forEach((id) => {
+        if (!window.playerStats.achievementTimestamps[id]) {
+          window.playerStats.achievementTimestamps[id] = Date.now();
+        }
+      });
+    }
     if (!window.playerStats.spAllocations) {
       window.playerStats.spAllocations = {
         spHp: 0,
@@ -1021,26 +1026,26 @@ window.applySaveStatePayload = function (parsed) {
       window.playerStats.activeRiftLevel = 1;
 
     if (window.playerStats.selectedPrestigeStage === undefined)
-              window.playerStats.selectedPrestigeStage = Math.max(
-                80,
-                window.playerStats.maxStage || 80,
-              );
+      window.playerStats.selectedPrestigeStage = Math.max(
+        80,
+        window.playerStats.maxStage || 80,
+      );
 
-            if (window.playerStats.unlockedTitles === undefined) {
-                          window.playerStats.unlockedTitles = [];
-                        }
-                        if (window.playerStats.cosmeticSkin === undefined) {
-                          window.playerStats.cosmeticSkin = "default";
-                        }
-                    if (window.playerStats.equippedTitle === undefined) {
-                      window.playerStats.equippedTitle = null;
-                    }
-                    if (window.playerStats.claimedMailIds === undefined) {
-                      window.playerStats.claimedMailIds = [];
-                    }
+    if (window.playerStats.unlockedTitles === undefined) {
+      window.playerStats.unlockedTitles = [];
+    }
+    if (window.playerStats.cosmeticSkin === undefined) {
+      window.playerStats.cosmeticSkin = "default";
+    }
+    if (window.playerStats.equippedTitle === undefined) {
+      window.playerStats.equippedTitle = null;
+    }
+    if (window.playerStats.claimedMailIds === undefined) {
+      window.playerStats.claimedMailIds = [];
+    }
 
-                window.playerStats.isPrestigeBossMode = false;
-        window.playerStats.prestigeApproachTimer = 0;
+    window.playerStats.isPrestigeBossMode = false;
+    window.playerStats.prestigeApproachTimer = 0;
 
     if (window.playerStats.vendingQLevel === undefined)
       window.playerStats.vendingQLevel = 0;
@@ -1189,66 +1194,65 @@ window.loadGameAndSyncCloud = function () {
   }
 
   const userId = window.getGameUserId();
-    if (typeof window.updateSyncStatus === "function") {
-      window.updateSyncStatus("syncing");
-    }
-    fetch(`${window.GAME_SERVER_URL}/api/load`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success && data.saveData) {
-          let cloudTime = data.timestamp || 0;
-          let localTime = (localParsed && localParsed.lastSaveTime) || 0;
+  if (typeof window.updateSyncStatus === "function") {
+    window.updateSyncStatus("syncing");
+  }
+  fetch(`${window.GAME_SERVER_URL}/api/load`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success && data.saveData) {
+        let cloudTime = data.timestamp || 0;
+        let localTime = (localParsed && localParsed.lastSaveTime) || 0;
 
-          if (cloudTime > localTime) {
-                              console.log("☁️ Newer Cloud Save found! Syncing state...");
-                              window.applySaveStatePayload(data.saveData);
-                              if (typeof window.updateUI === "function") window.updateUI();
-                              if (typeof window.renderInventory === "function")
-                                window.renderInventory();
-                              localStorage.setItem("idle_game_v11", JSON.stringify(data.saveData));
-                            } else {
-                              console.log("📱 Local progress is up to date.");
-                            }
-                            window.isCloudSynced = true;
-                            if (typeof window.updateSyncStatus === "function") {
-                              window.updateSyncStatus("connected");
-                            }
+        if (cloudTime > localTime) {
+          console.log("☁️ Newer Cloud Save found! Syncing state...");
+          window.applySaveStatePayload(data.saveData);
+          if (typeof window.updateUI === "function") window.updateUI();
+          if (typeof window.renderInventory === "function")
+            window.renderInventory();
+          localStorage.setItem("idle_game_v11", JSON.stringify(data.saveData));
         } else {
-          if (typeof window.updateSyncStatus === "function") {
-            window.updateSyncStatus("offline");
-          }
+          console.log("📱 Local progress is up to date.");
         }
-      })
-      .catch((err) => {
-        console.log(
-          "📡 Could not reach Cloud server for sync check. Running off local cache.",
-        );
+        window.isCloudSynced = true;
+        if (typeof window.updateSyncStatus === "function") {
+          window.updateSyncStatus("connected");
+        }
+      } else {
         if (typeof window.updateSyncStatus === "function") {
           window.updateSyncStatus("offline");
         }
-      });
+      }
+    })
+    .catch((err) => {
+      console.log(
+        "📡 Could not reach Cloud server for sync check. Running off local cache.",
+      );
+      if (typeof window.updateSyncStatus === "function") {
+        window.updateSyncStatus("offline");
+      }
+    });
 
   let autoSalvageSelect = document.getElementById("auto-salvage-setting");
-    if (
-      autoSalvageSelect &&
-      window.playerStats.autoSalvageThreshold !== undefined
-    ) {
-      autoSalvageSelect.value = window.playerStats.autoSalvageThreshold;
-    }
-    let skinSelect = document.getElementById("settings-cosmetic-skin");
-    if (skinSelect && window.playerStats.cosmeticSkin !== undefined) {
-      skinSelect.value = window.playerStats.cosmeticSkin;
-    }
-    if (typeof window.refreshMarketShopIfNeeded === "function")
-        window.refreshMarketShopIfNeeded();
+  if (
+    autoSalvageSelect &&
+    window.playerStats.autoSalvageThreshold !== undefined
+  ) {
+    autoSalvageSelect.value = window.playerStats.autoSalvageThreshold;
+  }
+  let skinSelect = document.getElementById("settings-cosmetic-skin");
+  if (skinSelect && window.playerStats.cosmeticSkin !== undefined) {
+    skinSelect.value = window.playerStats.cosmeticSkin;
+  }
+  if (typeof window.refreshMarketShopIfNeeded === "function")
+    window.refreshMarketShopIfNeeded();
 
-      if (typeof window.checkUnreadMail === "function")
-        window.checkUnreadMail();
-    };
+  if (typeof window.checkUnreadMail === "function") window.checkUnreadMail();
+};
 
 window.adjustCanvasDimensions = function () {
   let cvs = window.canvas || document.getElementById("gameCanvas");
@@ -1781,33 +1785,33 @@ function update() {
     }
   });
 
-  if (
-    document.getElementById("dungeon-menu") &&
-    document.getElementById("dungeon-menu").style.display === "block"
-  ) {
-    keyTypes.forEach((k) => {
-      let count = k + "Keys";
-      let time = "next" + k.charAt(0).toUpperCase() + k.slice(1) + "KeyTime";
-      let timerEl = document.getElementById("dt-" + k);
-      let keysEl = document.getElementById("dk-" + k);
-      if (window.playerStats[count] < 3) {
-        let msLeft = Math.max(0, window.playerStats[time] - now);
-        let hours = Math.floor(msLeft / 3600000);
-        let mins = Math.floor((msLeft % 3600000) / 60000);
-        let secs = Math.floor((msLeft % 60000) / 1000);
-        if (timerEl) {
-          if (hours > 0) {
-            timerEl.innerText = `(${hours}h ${mins}m)`;
-          } else {
-            timerEl.innerText = `(${mins}m ${secs}s)`;
-          }
+  // Synchronize dynamic keys and timers to both popups and native tabs
+      keyTypes.forEach((k) => {
+        let count = k + "Keys";
+        let time = "next" + k.charAt(0).toUpperCase() + k.slice(1) + "KeyTime";
+        let textKeys = window.playerStats[count];
+
+        let timerText = "";
+        if (window.playerStats[count] < 3) {
+          let msLeft = Math.max(0, window.playerStats[time] - now);
+          let hours = Math.floor(msLeft / 3600000);
+          let mins = Math.floor((msLeft % 3600000) / 60000);
+          let secs = Math.floor((msLeft % 60000) / 1000);
+          timerText = hours > 0 ? `(${hours}h ${mins}m)` : `(${mins}m ${secs}s)`;
         }
-      } else {
-        if (timerEl) timerEl.innerText = "(Full)";
-      }
-      if (keysEl) keysEl.innerText = window.playerStats[count];
+
+      // Set popup elements
+      let pTimer = document.getElementById("dt-" + k);
+      let pKeys = document.getElementById("dk-" + k);
+      if (pTimer) pTimer.innerText = timerText;
+      if (pKeys) pKeys.innerText = textKeys;
+
+      // Set native tab elements
+      let tTimer = document.getElementById("tab-dt-" + k);
+      let tKeys = document.getElementById("tab-dk-" + k);
+      if (tTimer) tTimer.innerText = timerText;
+      if (tKeys) tKeys.innerText = textKeys;
     });
-  }
 
   if (
     document.getElementById("tab-market") &&
@@ -4970,15 +4974,15 @@ window.rollGachaDrop = function () {
   }
 
   let statLinesCount = 1;
-    let luckMultiplier = p.qly + (window.playerStats.vendingQLevel || 0) * 0.01;
-    let roll = Math.random() * 100;
+  let luckMultiplier = p.qly + (window.playerStats.vendingQLevel || 0) * 0.01;
+  let roll = Math.random() * 100;
 
-    // Upgraded rates: 1.0% Mythic (5★), 5.0% Legendary (4★), 15.0% Epic (3★), 25.0% Magic (2★)
-    if (roll < 1.0 * luckMultiplier) statLinesCount = 5;
-    else if (roll < 6.0 * luckMultiplier) statLinesCount = 4;
-    else if (roll < 21.0 * luckMultiplier) statLinesCount = 3;
-    else if (roll < 46.0 * luckMultiplier) statLinesCount = 2;
-    else statLinesCount = 1;
+  // Upgraded rates: 1.0% Mythic (5★), 5.0% Legendary (4★), 15.0% Epic (3★), 25.0% Magic (2★)
+  if (roll < 1.0 * luckMultiplier) statLinesCount = 5;
+  else if (roll < 6.0 * luckMultiplier) statLinesCount = 4;
+  else if (roll < 21.0 * luckMultiplier) statLinesCount = 3;
+  else if (roll < 46.0 * luckMultiplier) statLinesCount = 2;
+  else statLinesCount = 1;
 
   let peakRunStage = window.playerStats.lifetimePeakStage || 1;
   let stageScale = Math.floor((peakRunStage - 1) / 10) + 1;
@@ -5056,10 +5060,17 @@ window.showOfflineSummaryModal = function (
 
   let stageDiffText =
     toStage > fromStage
-      ? `<span style="color:#2ecc71;">Stage ${fromStage} ➔ Stage ${toStage} (+${toStage - fromStage})</span>`
-      : `<span style="color:#aaa;">Stage ${toStage} (Farming)</span>`;
+      ? `<span style="color:#2ecc71; font-weight:bold;">Stage ${toStage}</span>`
+      : `<span style="color:#94a3b8; font-weight:bold;">Stage ${toStage} (Farming)</span>`;
+
   let deathAlert = died
-    ? `<div style="background: rgba(192, 57, 43, 0.2); border: 1px solid #c0392b; border-radius: 4px; padding: 10px; margin-bottom: 15px; font-size: 11px; text-align: left; line-height: 1.4;"><strong style="color: #e74c3c;">⚠️ PROGRESSION STALLED:</strong> Hit a survival bottleneck at Stage ${dStage}. Progression halted, hero farmed Stage ${toStage}.</div>`
+    ? `<div style="background: rgba(231, 76, 60, 0.04); border: 1.5px dashed rgba(231, 76, 60, 0.45); border-radius: 8px; padding: 12px; margin-bottom: 15px; font-size: 11.5px; text-align: left; line-height: 1.45; display: flex; align-items: flex-start; gap: 8px; color: #fff; box-shadow: 0 4px 15px rgba(231, 76, 60, 0.1);">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2.5" style="flex-shrink: 0;"><path d="m10.29 3.86 7.98 13.8a2 2 0 0 1-1.73 3H3.1a2 2 0 0 1-1.73-3l7.98-13.8a2 2 0 0 1 3.44 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div>
+            <strong style="color: #e74c3c; display:block; margin-bottom: 2px; text-transform:uppercase; letter-spacing:0.5px;">⚠️ PROGRESSION STALLED:</strong>
+            Hit a survival bottleneck at Stage ${dStage}. Progression halted, hero farmed Stage ${toStage}.
+        </div>
+       </div>`
     : "";
 
   let itemsListHtml =
@@ -5069,10 +5080,10 @@ window.showOfflineSummaryModal = function (
             let color = window.getTierColor(item.statsRolled);
             let stars =
               item.statsRolled === "UNIQUE" ? "UNIQUE" : `${item.statsRolled}★`;
-            return `<div style="background:#1a1d20; border-left: 3px solid ${color}; padding: 6px 10px; border-radius: 3px; font-size: 11px; margin-bottom: 5px; text-align:left; display: flex; justify-content: space-between; align-items: center;"><span style="color:${color}; font-weight:bold;">${item.name}</span><span style="color:#888; font-size: 10px;">${stars}</span></div>`;
+            return `<div style="background:#13151c; border:1px solid #232833; border-left: 4px solid ${color} !important; padding: 8px 12px; border-radius: 6px; font-size: 11px; margin-bottom: 6px; text-align:left; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"><span style="color:${color}; font-weight:bold;">${item.name}</span><span style="color:#888; font-size: 10px; font-family:monospace; font-weight:bold; letter-spacing:0.5px;">${stars}</span></div>`;
           })
           .join("")
-      : `<div style="color:#666; font-style:italic; font-size:11px; padding: 15px 0;">No new high-quality gear kept.</div>`;
+      : `<div style="color:#666; font-style:italic; font-size:11px; padding: 15px 0; text-align:center;">No new high-quality gear kept.</div>`;
 
   let scrapKeys = Object.keys(scraps);
   let scrapsListHtml =
@@ -5090,33 +5101,61 @@ window.showOfflineSummaryModal = function (
             else if (key.includes("Armored Elixir")) color = "#3498db";
             else if (key.includes("Haste Elixir")) color = "#f1c40f";
             else if (key === "PP Reset Scroll") color = "#e67e22";
-            return `<div class="bag-item" style="background:#111; border: 1px solid #222; padding: 5px 10px; border-radius: 3px; font-size: 11px; display:inline-block; margin: 3px;"><span style="color:#aaa;">${key}:</span> <strong style="color:${color};">+${scraps[key].toLocaleString()}</strong></div>`;
+            return `<div class="bag-item" style="background:#090a0f; border: 1px solid #222; padding: 6px 10px; border-radius: 4px; font-size: 11px; display:inline-flex; align-items:center; margin: 3px; font-family:monospace;"><span style="color:#aaa; margin-right:4px;">${key}:</span> <strong style="color:${color};">+${scraps[key].toLocaleString()}</strong></div>`;
           })
           .join("")
-      : `<div style="color:#666; font-style:italic; font-size:11px; padding: 5px 0;">No materials salvaged.</div>`;
+      : `<div style="color:#666; font-style:italic; font-size:11px; padding: 5px 0; text-align:center; width:100%;">No materials salvaged.</div>`;
 
   modal.innerHTML = `
-        <div style="background:#1a1a1a; border: 2px solid var(--accent-blue); border-radius: 8px; width:100%; max-width:460px; max-height: 85vh; display:flex; flex-direction:column; overflow:hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.95); animation: toastFadeIn 0.3s ease-out;">
-            <div style="background:#0b0f12; border-bottom: 1px solid #333; padding:12px 15px; display:flex; justify-content:space-between; align-items:center;">
-                <h3 style="margin:0; color:var(--accent-blue); font-size:15px; font-weight:bold; letter-spacing:1px;">💤 OFFLINE PROGRESS</h3>
-                <span style="background:rgba(52, 152, 219, 0.2); color:var(--accent-blue); padding:3px 10px; border-radius:10px; font-size:10px; font-weight:bold;">${timeStr}</span>
+        <div style="background:#1a1a1a; border: 2px solid var(--accent-blue); border-radius: 8px; width:100%; max-width:460px; max-height: 88vh; display:flex; flex-direction:column; overflow:hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.95); animation: toastFadeIn 0.3s ease-out; border-bottom-width: 5px;">
+            <div style="background: linear-gradient(180deg, #181d24 0%, #0d1117 100%); border-bottom: 1px solid #20262e; padding:12px 15px; display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0; color:var(--accent-blue); font-size:14px; font-weight:bold; letter-spacing:1.5px; text-transform:uppercase; text-shadow:0 0 10px rgba(52, 152, 219, 0.35); display: flex; align-items: center; gap: 6px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"/></svg>
+                    Offline Progress
+                </h3>
+                <span style="background:rgba(52, 152, 219, 0.15); color:var(--accent-blue); padding:4px 12px; border-radius:20px; font-size:10.5px; font-weight:bold; border: 1px solid var(--accent-blue);">${timeStr}</span>
             </div>
-            <div style="padding:15px; overflow-y:auto; flex: 1; text-align:center; overscroll-behavior: contain;">
+            <div style="padding:15px; overflow-y:auto; flex: 1; overscroll-behavior: contain;">
                 ${deathAlert}
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
-                    <div style="background:#111; padding:10px; border-radius:5px; border:1px solid #222;"><div style="font-size:10px; color:#aaa; margin-bottom:4px; letter-spacing:0.5px;">💰 GOLD ACCUMULATED</div><div style="font-size:16px; color:#f1c40f; font-weight:bold;">+${gold.toLocaleString()}</div></div>
-                    <div style="background:#111; padding:10px; border-radius:5px; border:1px solid #222;"><div style="font-size:10px; color:#aaa; margin-bottom:4px; letter-spacing:0.5px;">⭐ EXPERIENCE HARVESTED</div><div style="font-size:16px; color:#9b59b6; font-weight:bold;">+${xp.toLocaleString()}</div></div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:12px;">
+                    <div style="background:rgba(0,0,0,0.55); padding:10px; border-radius:6px; border:1px solid #222; text-align:center; box-shadow: inset 0 0 8px #000;">
+                        <div style="font-size:9px; color:#aaa; margin-bottom:4px; letter-spacing:0.8px; font-weight:bold; text-transform:uppercase; display:flex; align-items:center; justify-content:center; gap:4px;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f1c40f" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M9 10h6M9 13h6"/></svg>
+                            Gold Accumulated
+                        </div>
+                        <div style="font-size:18px; color:#f1c40f; font-weight:900; font-family:monospace; text-shadow:0 0 10px rgba(241, 196, 15, 0.25);">+${gold.toLocaleString()}</div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.55); padding:10px; border-radius:6px; border:1px solid #222; text-align:center; box-shadow: inset 0 0 8px #000;">
+                        <div style="font-size:9px; color:#aaa; margin-bottom:4px; letter-spacing:0.8px; font-weight:bold; text-transform:uppercase; display:flex; align-items:center; justify-content:center; gap:4px;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9b59b6" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="m17 13-5-5-5 5M17 17l-5-5-5 5"/></svg>
+                            Exp Harvested
+                        </div>
+                        <div style="font-size:18px; color:#9b59b6; font-weight:900; font-family:monospace; text-shadow:0 0 10px rgba(155, 89, 182, 0.25);">+${xp.toLocaleString()}</div>
+                    </div>
                 </div>
-                <div style="background:#111; padding:10px; border-radius:5px; margin-bottom:15px; font-size:11px; display:flex; justify-content:space-between; border:1px solid #222;">
-                    <span>⚔️ Simulated Kills: <strong style="color:#fff;">${kills}</strong></span><span>🏰 Stage Reached: ${stageDiffText}</span>
+                <div style="background:rgba(0,0,0,0.35); padding:10px; border-radius:6px; margin-bottom:15px; font-size:11.5px; display:flex; justify-content:space-between; border:1px solid #2d3748; align-items:center;">
+                    <span style="display:flex; align-items:center; gap:4px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#bdc3c7" stroke-width="2.5"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2" /></svg>
+                        Simulated Kills: <strong style="color:#fff; font-family:monospace; font-size:12.5px;">${kills}</strong>
+                    </span>
+                    <span style="display:flex; align-items:center; gap:4px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#bdc3c7" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36z"/></svg>
+                        Stage Reached: ${stageDiffText}
+                    </span>
                 </div>
-                <h4 style="margin: 0 0 8px 0; font-size:11px; color:#fff; text-align:left; text-transform:uppercase; letter-spacing:0.5px; border-bottom: 1px solid #333; padding-bottom:4px;">💼 Kept Drops</h4>
+                <h4 style="margin: 0 0 8px 0; font-size:10.5px; color:#fff; text-align:left; text-transform:uppercase; letter-spacing:1px; border-bottom: 1px solid #333; padding-bottom:5px; font-weight:bold; display:flex; align-items:center; gap:4px;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    Kept Drops
+                </h4>
                 <div style="max-height:140px; overflow-y:auto; margin-bottom:15px; padding-right:4px;">${itemsListHtml}</div>
-                <h4 style="margin: 0 0 8px 0; font-size:11px; color:#fff; text-align:left; text-transform:uppercase; letter-spacing:0.5px; border-bottom: 1px solid #333; padding-bottom:4px;">♻️ Auto-Salvage Yield</h4>
-                <div style="text-align:left; margin-bottom:10px; max-height:100px; overflow-y:auto;">${scrapsListHtml}</div>
+                <h4 style="margin: 0 0 8px 0; font-size:10.5px; color:#fff; text-align:left; text-transform:uppercase; letter-spacing:1px; border-bottom: 1px solid #333; padding-bottom:5px; font-weight:bold; display:flex; align-items:center; gap:4px;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e67e22" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                    Auto-Salvage Yield
+                </h4>
+                <div style="text-align:left; margin-bottom:10px; max-height:120px; overflow-y:auto; display:flex; flex-wrap:wrap; justify-content:flex-start;">${scrapsListHtml}</div>
             </div>
-            <div style="background:#0b0f12; border-top: 1px solid #333; padding:12px; display:flex; justify-content:center;">
-                <button id="close-offline-summary" style="background:var(--accent-blue); color:white; border:none; padding:10px 24px; font-weight:bold; font-size:12px; border-radius:4px; cursor:pointer; width:100%; transition: background 0.2s;">Claim Loot & Continue</button>
+            <div style="background:#0b0f12; border-top: 1px solid #20262e; padding:12px; display:flex; justify-content:center;">
+                <button id="close-offline-summary" style="background:linear-gradient(180deg, var(--accent-blue) 0%, #1d4ed8 100%); color:white; border:1px solid #60a5fa; padding:12px 24px; font-weight:bold; font-size:12.5px; border-radius:6px; cursor:pointer; width:100%; transition: all 0.2s ease-in-out; text-transform:uppercase; letter-spacing:1px; text-shadow:0 1px 2px rgba(0,0,0,0.5); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.35);">Claim Loot & Continue</button>
             </div>
         </div>
     `;

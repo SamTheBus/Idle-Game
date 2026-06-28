@@ -3134,37 +3134,37 @@ window.drawSingleMob = function (c, m) {
       }
 
       // 6. Multi-Layer Foliage Canopy (Isolated sub-paths to prevent intersecting connecting lines)
-            let cx = m.x + m.w / 2;
-            let cy = m.y + m.h * 0.08;
-            let r = m.w * 0.9;
+      let cx = m.x + m.w / 2;
+      let cy = m.y + m.h * 0.08;
+      let r = m.w * 0.9;
 
-            let drawCleanClump = (x, y, radius, color) => {
-              c.fillStyle = m.flashTimer > 0 ? "#ffffff" : color;
-              c.beginPath();
-              c.arc(x, y, radius, 0, Math.PI * 2);
-              c.fill();
-              c.stroke();
-            };
+      let drawCleanClump = (x, y, radius, color) => {
+        c.fillStyle = m.flashTimer > 0 ? "#ffffff" : color;
+        c.beginPath();
+        c.arc(x, y, radius, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+      };
 
-            // Layer 1: Base Deep Forest Green
-            let color1 = "#1a461e";
-            drawCleanClump(cx, cy, r, color1);
-            drawCleanClump(cx - r * 0.5, cy - r * 0.2, r * 0.75, color1);
-            drawCleanClump(cx + r * 0.5, cy - r * 0.2, r * 0.75, color1);
-            drawCleanClump(cx, cy - r * 0.5, r * 0.85, color1);
+      // Layer 1: Base Deep Forest Green
+      let color1 = "#1a461e";
+      drawCleanClump(cx, cy, r, color1);
+      drawCleanClump(cx - r * 0.5, cy - r * 0.2, r * 0.75, color1);
+      drawCleanClump(cx + r * 0.5, cy - r * 0.2, r * 0.75, color1);
+      drawCleanClump(cx, cy - r * 0.5, r * 0.85, color1);
 
-            // Layer 2: Vibrant Mid-Green
-            let color2 = "#2ecc71";
-            drawCleanClump(cx, cy, r * 0.8, color2);
-            drawCleanClump(cx - r * 0.4, cy - r * 0.5, r * 0.6, color2);
-            drawCleanClump(cx + r * 0.4, cy - r * 0.5, r * 0.6, color2);
+      // Layer 2: Vibrant Mid-Green
+      let color2 = "#2ecc71";
+      drawCleanClump(cx, cy, r * 0.8, color2);
+      drawCleanClump(cx - r * 0.4, cy - r * 0.5, r * 0.6, color2);
+      drawCleanClump(cx + r * 0.4, cy - r * 0.5, r * 0.6, color2);
 
-            // Layer 3: Highlighted vibrant light-green (Adds foliage depth)
-            let color3 = "#52be80";
-            drawCleanClump(cx - r * 0.2, cy - r * 0.3, r * 0.4, color3);
-            drawCleanClump(cx + r * 0.2, cy - r * 0.3, r * 0.4, color3);
+      // Layer 3: Highlighted vibrant light-green (Adds foliage depth)
+      let color3 = "#52be80";
+      drawCleanClump(cx - r * 0.2, cy - r * 0.3, r * 0.4, color3);
+      drawCleanClump(cx + r * 0.2, cy - r * 0.3, r * 0.4, color3);
 
-            // 7. Hanging moss/ivy strands swaying dynamically
+      // 7. Hanging moss/ivy strands swaying dynamically
       if (m.flashTimer === 0) {
         c.fillStyle = "#164d1f";
         for (let i = 0; i < 5; i++) {
@@ -3761,11 +3761,11 @@ window.drawSingleMob = function (c, m) {
           c.fillRect(px - 1.2, py - 4, 2.4, 8);
         }
       }
-          }
-        }
-        c.restore();
-      };
-      // --- MISSING DPS CALCULATOR ---
+    }
+  }
+  c.restore();
+};
+// --- MISSING DPS CALCULATOR ---
 window.calculateActiveDps = function () {
   let now = Date.now();
   window.damageHistory = window.damageHistory.filter(
@@ -3780,7 +3780,16 @@ window.calculateActiveDps = function () {
   });
 };
 
-window.drawSingleHero = function (ctx, x, y, scale, equippedSlots, playerStats, bounce, options = {}) {
+window.drawSingleHero = function (
+  ctx,
+  x,
+  y,
+  scale,
+  equippedSlots,
+  playerStats,
+  bounce,
+  options = {},
+) {
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(scale, scale);
@@ -3851,7 +3860,10 @@ window.drawSingleHero = function (ctx, x, y, scale, equippedSlots, playerStats, 
         ctx.stroke();
       }
       ctx.restore();
-      if (isAegis && (!options.deathAnimationTimer || options.deathAnimationTimer === 0)) {
+      if (
+        isAegis &&
+        (!options.deathAnimationTimer || options.deathAnimationTimer === 0)
+      ) {
         ctx.save();
         ctx.translate(8, 4 + bounce);
         let orbitTime = Date.now() / 250;
@@ -4024,7 +4036,11 @@ window.drawSingleHero = function (ctx, x, y, scale, equippedSlots, playerStats, 
   ctx.stroke();
 
   // Crown of Tempests Aura
-  if (equipped.helmet && equipped.helmet.isUniqueTempest && (!options.deathAnimationTimer || options.deathAnimationTimer === 0)) {
+  if (
+    equipped.helmet &&
+    equipped.helmet.isUniqueTempest &&
+    (!options.deathAnimationTimer || options.deathAnimationTimer === 0)
+  ) {
     ctx.save();
     ctx.translate(0, -14 + bounce);
     ctx.strokeStyle = "#00d2ff";
@@ -4213,7 +4229,8 @@ window.drawSingleHero = function (ctx, x, y, scale, equippedSlots, playerStats, 
     ctx.stroke();
     let bleedPulse = Math.sin(Date.now() / 100) * 0.15 + 0.85;
     let bladeColor = `rgba(192, 57, 43, ${bleedPulse})`;
-    ctx.fillStyle = window.mob && window.mob.flashTimer > 0 ? "#ffffff" : bladeColor;
+    ctx.fillStyle =
+      window.mob && window.mob.flashTimer > 0 ? "#ffffff" : bladeColor;
     ctx.strokeStyle = "#960018";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -4288,7 +4305,12 @@ window.drawSingleHero = function (ctx, x, y, scale, equippedSlots, playerStats, 
   }
   ctx.restore();
 
-  if (equipped.weapon && equipped.weapon.isUniqueSingularity && stats.singularityState === "pulsing" && (!options.deathAnimationTimer || options.deathAnimationTimer === 0)) {
+  if (
+    equipped.weapon &&
+    equipped.weapon.isUniqueSingularity &&
+    stats.singularityState === "pulsing" &&
+    (!options.deathAnimationTimer || options.deathAnimationTimer === 0)
+  ) {
     ctx.save();
     ctx.translate(0, -35 + bounce);
     ctx.rotate(Date.now() / 300);
@@ -4313,7 +4335,16 @@ window.drawSingleHero = function (ctx, x, y, scale, equippedSlots, playerStats, 
   ctx.restore();
 };
 
-window.drawSingleHero = function (ctx, x, y, scale, equippedSlots, playerStats, bounce, options = {}) {
+window.drawSingleHero = function (
+  ctx,
+  x,
+  y,
+  scale,
+  equippedSlots,
+  playerStats,
+  bounce,
+  options = {},
+) {
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(scale, scale);
@@ -4384,7 +4415,10 @@ window.drawSingleHero = function (ctx, x, y, scale, equippedSlots, playerStats, 
         ctx.stroke();
       }
       ctx.restore();
-      if (isAegis && (!options.deathAnimationTimer || options.deathAnimationTimer === 0)) {
+      if (
+        isAegis &&
+        (!options.deathAnimationTimer || options.deathAnimationTimer === 0)
+      ) {
         ctx.save();
         ctx.translate(8, 4 + bounce);
         let orbitTime = Date.now() / 250;
@@ -4557,7 +4591,11 @@ window.drawSingleHero = function (ctx, x, y, scale, equippedSlots, playerStats, 
   ctx.stroke();
 
   // Crown of Tempests Aura
-  if (equipped.helmet && equipped.helmet.isUniqueTempest && (!options.deathAnimationTimer || options.deathAnimationTimer === 0)) {
+  if (
+    equipped.helmet &&
+    equipped.helmet.isUniqueTempest &&
+    (!options.deathAnimationTimer || options.deathAnimationTimer === 0)
+  ) {
     ctx.save();
     ctx.translate(0, -14 + bounce);
     ctx.strokeStyle = "#00d2ff";
@@ -4746,7 +4784,8 @@ window.drawSingleHero = function (ctx, x, y, scale, equippedSlots, playerStats, 
     ctx.stroke();
     let bleedPulse = Math.sin(Date.now() / 100) * 0.15 + 0.85;
     let bladeColor = `rgba(192, 57, 43, ${bleedPulse})`;
-    ctx.fillStyle = window.mob && window.mob.flashTimer > 0 ? "#ffffff" : bladeColor;
+    ctx.fillStyle =
+      window.mob && window.mob.flashTimer > 0 ? "#ffffff" : bladeColor;
     ctx.strokeStyle = "#960018";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -4821,7 +4860,12 @@ window.drawSingleHero = function (ctx, x, y, scale, equippedSlots, playerStats, 
   }
   ctx.restore();
 
-  if (equipped.weapon && equipped.weapon.isUniqueSingularity && stats.singularityState === "pulsing" && (!options.deathAnimationTimer || options.deathAnimationTimer === 0)) {
+  if (
+    equipped.weapon &&
+    equipped.weapon.isUniqueSingularity &&
+    stats.singularityState === "pulsing" &&
+    (!options.deathAnimationTimer || options.deathAnimationTimer === 0)
+  ) {
     ctx.save();
     ctx.translate(0, -35 + bounce);
     ctx.rotate(Date.now() / 300);
@@ -6205,40 +6249,49 @@ window.draw = function () {
   });
 
   // 4. DYNAMIC HERO RENDERING
-    let hx = window.hero.x;
-    let hy = window.hero.y;
-    ctx.save();
-    let bounce = 0;
-    let slumpRotation = 0;
-    let Yoffset = 0;
-    let deathOpacity = 1.0;
+  let hx = window.hero.x;
+  let hy = window.hero.y;
+  ctx.save();
+  let bounce = 0;
+  let slumpRotation = 0;
+  let Yoffset = 0;
+  let deathOpacity = 1.0;
 
-    if (window.deathAnimationTimer > 0) {
-      let t =
-        (window.deathMaxFrames - window.deathAnimationTimer) /
-        window.deathMaxFrames;
-      slumpRotation = (t * Math.PI) / 2.2;
-      Yoffset = t * 18;
-      bounce = 0;
-      deathOpacity = Math.max(0, 1.0 - t * 0.85);
-      ctx.translate(hx + 12, hy + 15 + Yoffset);
-      ctx.rotate(-slumpRotation);
-      ctx.globalAlpha = deathOpacity;
-    } else {
-      ctx.translate(hx + 12, hy + 15);
-      bounce =
-        !window.mob || !window.mob.isStopped
-          ? Math.abs(Math.sin(Date.now() / 150)) * 3
-          : 0;
-    }
+  if (window.deathAnimationTimer > 0) {
+    let t =
+      (window.deathMaxFrames - window.deathAnimationTimer) /
+      window.deathMaxFrames;
+    slumpRotation = (t * Math.PI) / 2.2;
+    Yoffset = t * 18;
+    bounce = 0;
+    deathOpacity = Math.max(0, 1.0 - t * 0.85);
+    ctx.translate(hx + 12, hy + 15 + Yoffset);
+    ctx.rotate(-slumpRotation);
+    ctx.globalAlpha = deathOpacity;
+  } else {
+    ctx.translate(hx + 12, hy + 15);
+    bounce =
+      !window.mob || !window.mob.isStopped
+        ? Math.abs(Math.sin(Date.now() / 150)) * 3
+        : 0;
+  }
 
-    window.drawSingleHero(ctx, 0, 0, 1.0, window.equippedSlots, window.playerStats, bounce, {
+  window.drawSingleHero(
+    ctx,
+    0,
+    0,
+    1.0,
+    window.equippedSlots,
+    window.playerStats,
+    bounce,
+    {
       slashFrame: window.hero.slashFrame,
       deathAnimationTimer: window.deathAnimationTimer,
-      isMainHero: true
-    });
+      isMainHero: true,
+    },
+  );
 
-    ctx.restore();
+  ctx.restore();
 
   // 5. STYLIZED MONSTERS DRAW
   if (window.mob) {
@@ -7059,7 +7112,7 @@ window.draw = function () {
   }
 
   // 10. BUFF ICONS & DPS HUD
-    let pStats = window.resolvePlayerStats();
+  let pStats = window.resolvePlayerStats();
   let activeBuffsList = [];
   let potDurationMax = 18000 * (1 + pStats.int * 0.001);
   let normalBuffMax = window.checkArtifactTrait("extend_buffs") ? 900 : 600;
@@ -7198,102 +7251,159 @@ window.draw = function () {
   });
 
   window.particles.forEach((pt) => {
-      ctx.save();
-      if (pt.alpha !== undefined) ctx.globalAlpha = pt.alpha;
-      ctx.fillStyle = pt.color;
-      ctx.beginPath();
-      ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    });
+    ctx.save();
+    if (pt.alpha !== undefined) ctx.globalAlpha = pt.alpha;
+    ctx.fillStyle = pt.color;
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
 
-    window.effects.forEach((eff) => {
-      ctx.font = "bold 18px sans-serif";
-      ctx.strokeStyle = "#000000";
-      ctx.lineWidth = 4;
-      ctx.lineJoin = "miter";
-      ctx.miterLimit = 2;
-      ctx.strokeText(eff.text, eff.x, eff.y);
-      ctx.fillStyle = eff.color;
-      ctx.fillText(eff.text, eff.x, eff.y);
-    });
+  window.effects.forEach((eff) => {
+    ctx.font = "bold 18px sans-serif";
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 4;
+    ctx.lineJoin = "miter";
+    ctx.miterLimit = 2;
+    ctx.strokeText(eff.text, eff.x, eff.y);
+    ctx.fillStyle = eff.color;
+    ctx.fillText(eff.text, eff.x, eff.y);
+  });
 
-    if (
-        window.isGamePaused &&
-        document.getElementById("death-overlay") &&
-        document.getElementById("death-overlay").style.display === "flex"
-      ) {
-        window.renderNemesisPreview(window.playerStats.killedByMob);
-      }
+  if (
+    window.isGamePaused &&
+    document.getElementById("death-overlay") &&
+    document.getElementById("death-overlay").style.display === "flex"
+  ) {
+    window.renderNemesisPreview(window.playerStats.killedByMob);
+  }
 
-    if (typeof window.updateMedalBanner === "function") {
-        window.updateMedalBanner();
+  if (typeof window.updateMedalBanner === "function") {
+      window.updateMedalBanner();
+    }
+  };
+
+  window.toggleMenuHub = function () {
+      let overlay = document.getElementById("menu-hub-overlay");
+      let card = document.getElementById("menu-hub-card");
+      if (!overlay || !card) return;
+
+      if (overlay.style.display === "none" || overlay.style.display === "") {
+        window.hideTooltip();
+        overlay.style.display = "flex";
+        window.updateHubAlerts();
+
+        // Clear dynamic positioning on first load so it defaults to centered Flexbox
+        card.style.top = "";
+        card.style.left = "";
+
+        // Wire up dragging handlers
+        window.makeWindowDraggable(card, document.getElementById("menu-hub-handle"));
+      } else {
+        overlay.style.display = "none";
+        window.hideTooltip();
       }
     };
 
-    window.updateSyncStatus = function (status) {
-        let dot = document.getElementById("sync-dot");
-        let text = document.getElementById("sync-status-text");
-        if (!dot || !text) return;
+  window.toggleDungeonMenu = function (event) {
+    // Bypassed standalone absolute menu wrapper - simply redirect directly to native tab
+    if (event) event.stopPropagation();
+    window.switchTab('activities');
+  };
 
-        if (status === "syncing") {
-          dot.style.background = "#f1c40f";
-          text.innerText = "SYNCING";
-          text.style.color = "#f1c40f";
-        } else if (status === "connected") {
-          dot.style.background = "#2ecc71";
-          text.innerText = "CONNECTED";
-          text.style.color = "#2ecc71";
-        } else {
-          dot.style.background = "#7f8c8d";
-          text.innerText = "OFFLINE";
-          text.style.color = "#7f8c8d";
+  window.showGuidebook = function () {
+    window.toggleMenuHub(); // Dismiss the hub panel first
+
+    if (typeof window.showCustomConfirm === "function") {
+      window.showCustomConfirm(
+        "📖 Hoor\\'s Tactical Guidebook",
+        `Welcome, Hero! Optimize your build with these tactical tips:<br><br>
+         • <strong style="color:var(--accent-blue);">Deflection Mastery:</strong> Equip a Shield to enable Block Rate (capped at 20% / 30% / 40%), or a Dagger to enable Parry (capped at 15% / 25% / 35%).<br>
+         • <strong style="color:var(--accent-purple);">Arcane Barrier:</strong> Holding a Tome absorbs a base 20% of incoming damage before Defense checks. INT scales this up to a 35% cap.<br>
+         • <strong style="color:var(--accent-green);">Alchemical Synergy:</strong> High INT increases potion durations and unlocks potion sparring chances with select Relics.<br>
+         • <strong style="color:var(--text-gold);">Ascension PP:</strong> Slaying Hooktail on higher Stage challenges grants a massive amount of extra Prestige Points! Scale the slider on the Altar before initiating fights.`,
+        "Got it!",
+        "Exit",
+        "var(--accent-purple)",
+        function () {}
+      );
+    }
+  };
+
+window.updateSyncStatus = function (status) {
+  let dot = document.getElementById("sync-dot");
+  let text = document.getElementById("sync-status-text");
+  if (!dot || !text) return;
+
+  if (status === "syncing") {
+    dot.style.background = "#f1c40f";
+    text.innerText = "SYNCING";
+    text.style.color = "#f1c40f";
+  } else if (status === "connected") {
+    dot.style.background = "#2ecc71";
+    text.innerText = "CONNECTED";
+    text.style.color = "#2ecc71";
+  } else {
+    dot.style.background = "#7f8c8d";
+    text.innerText = "OFFLINE";
+    text.style.color = "#7f8c8d";
+  }
+};
+
+window.updateTitleSelector = function () {
+  let selector = document.getElementById("title-selector");
+  if (!selector) return;
+
+  let currentlySelected = window.playerStats.equippedTitle || "";
+  let unlocked = window.playerStats.unlockedTitles || [];
+
+  // Clear and rebuild
+  selector.innerHTML = '<option value="">[No Title Equipped]</option>';
+  unlocked.forEach((tKey) => {
+    let tData = window.TITLES_DATA[tKey];
+    if (tData) {
+      let opt = document.createElement("option");
+      opt.value = tKey;
+      opt.innerText = tData.name;
+      if (currentlySelected === tKey) {
+        opt.selected = true;
+      }
+      selector.appendChild(opt);
+    }
+  });
+
+  let descEl = document.getElementById("selected-title-desc");
+  if (descEl) {
+    let activeTitle = window.playerStats.equippedTitle;
+    if (activeTitle && window.TITLES_DATA[activeTitle]) {
+      let tData = window.TITLES_DATA[activeTitle];
+      let statBonusText = [];
+      if (tData.stats) {
+        for (let sKey in tData.stats) {
+          let label = window.getStatLabel(sKey);
+          let val = tData.stats[sKey];
+          let isPct = [
+            "drop",
+            "qly",
+            "critChance",
+            "critDamage",
+            "block",
+            "parry",
+            "gold",
+            "fairySpawn",
+            "rareSpawn",
+          ].includes(sKey);
+          let valStr = isPct ? `+${(val * 100).toFixed(0)}%` : `+${val}`;
+          statBonusText.push(`${label} ${valStr}`);
         }
-      };
-
-      window.updateTitleSelector = function () {
-        let selector = document.getElementById("title-selector");
-        if (!selector) return;
-
-        let currentlySelected = window.playerStats.equippedTitle || "";
-        let unlocked = window.playerStats.unlockedTitles || [];
-
-        // Clear and rebuild
-        selector.innerHTML = '<option value="">[No Title Equipped]</option>';
-        unlocked.forEach(tKey => {
-          let tData = window.TITLES_DATA[tKey];
-          if (tData) {
-            let opt = document.createElement("option");
-            opt.value = tKey;
-            opt.innerText = tData.name;
-            if (currentlySelected === tKey) {
-              opt.selected = true;
-            }
-            selector.appendChild(opt);
-          }
-        });
-
-        let descEl = document.getElementById("selected-title-desc");
-        if (descEl) {
-          let activeTitle = window.playerStats.equippedTitle;
-          if (activeTitle && window.TITLES_DATA[activeTitle]) {
-            let tData = window.TITLES_DATA[activeTitle];
-            let statBonusText = [];
-            if (tData.stats) {
-              for (let sKey in tData.stats) {
-                let label = window.getStatLabel(sKey);
-                let val = tData.stats[sKey];
-                let isPct = ["drop", "qly", "critChance", "critDamage", "block", "parry", "gold", "fairySpawn", "rareSpawn"].includes(sKey);
-                let valStr = isPct ? `+${(val * 100).toFixed(0)}%` : `+${val}`;
-                statBonusText.push(`${label} ${valStr}`);
-              }
-            }
-            let bonusStr = statBonusText.length > 0 ? ` (${statBonusText.join(", ")})` : "";
-            descEl.innerHTML = `${tData.desc}<br><span style="color:${tData.color || '#ff007f'}; font-weight:bold;">Active Bonus: ${bonusStr || "Cosmetic Only"}</span>`;
-          } else {
-            descEl.innerText = "Select an unlocked title from the drop-down to equip it.";
-          }
-        }
-      };
-
-
+      }
+      let bonusStr =
+        statBonusText.length > 0 ? ` (${statBonusText.join(", ")})` : "";
+      descEl.innerHTML = `${tData.desc}<br><span style="color:${tData.color || "#ff007f"}; font-weight:bold;">Active Bonus: ${bonusStr || "Cosmetic Only"}</span>`;
+    } else {
+      descEl.innerText =
+        "Select an unlocked title from the drop-down to equip it.";
+    }
+  }
+};

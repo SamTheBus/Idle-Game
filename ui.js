@@ -2,6 +2,79 @@
    PRIMARY PURPOSE: Manages all UI interactions, DOM updates, menus,
    tooltips, and modal displays.
    ========================================================================= */
+window.getUiIconSvg = function (key, size = 14) {
+  const colors = {
+    atk: "#e74c3c",
+    maxHp: "#e74c3c",
+    def: "#3498db",
+    moveSpeed: "#3498db",
+    critChance: "#f1c40f",
+    critDamage: "#e67e22",
+    block: "#3498db",
+    parry: "#9b59b6",
+    str: "#e74c3c",
+    dex: "#e67e22",
+    int: "#9b59b6",
+    activeAttackSpeed: "#e74c3c",
+    idleAttackSpeed: "#3498db",
+    dropRate: "#2ecc71",
+    quality: "#ec4899",
+    goldMulti: "#f1c40f",
+    gold: "#f1c40f",
+    rareSpawn: "#e67e22",
+    fairySpawn: "#ffb6c1",
+    barrier: "#9b59b6",
+    xpRate: "#a855f7",
+  };
+
+  const svgPaths = {
+    atk: `<path d="M14.5 17.5L3 6V3h3l11.5 11.5 M13 19l6-6 M16 16l4 4 M19 21l2-2" />`,
+    maxHp: `<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />`,
+    def: `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />`,
+    moveSpeed: `<path d="M6 5h5v6l8 4c2 1 2 4-1 4H6V5zm3 2h2M9 9h2" />`,
+    critChance: `<path d="M12 2 Q12 12, 2 12 Q12 12, 12 22 Q12 12, 22 12 Z" />`,
+    critDamage: `<path d="M12 2l3 5.5 5.5-3-3 5.5 5.5 3-5.5 3 3 5.5-5.5-3-3 5.5-3-5.5-5.5 3 3-5.5-5.5-3 5.5-3-3-5.5 5.5 3z" />`,
+        block: `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />`,
+        parry: `<path d="M4 20L20 4M4 20L2 22M5 15L9 19M20 20L4 4M20 20L22 22M15 19L19 15" />`,
+    str: `<path d="M18 10h-2V8c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H6c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h2v2c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2v-2h2c1.1 0 2-.9 2-2v-2c0-1.1-.9-2-2-2z" />`,
+    dex: `<circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="3" /><path d="M12 1v4 M12 19v4 M1 12h4 M19 12h4" />`,
+    int: `<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" /><circle cx="12" cy="12" r="3" /><path d="M12 8v8 M8 12h8" />`,
+    activeAttackSpeed: `<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />`,
+    idleAttackSpeed: `<circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />`,
+    dropRate: `<path d="M16 10c-1-1.5-2.5-2-4-2s-3 .5-4 2C6 12, 4 15, 4 19c0 4 3.5 6 8 6s8-2 8-6C20 15, 18 12, 16 10z M12 6a1.5 1.5 0 1 1 1.5-1.5A1.5 1.5 0 0 1 12 6z" />`,
+    quality: `<path d="M6 3h12l4 6-10 12L2 9z" />`,
+    goldMulti: `<circle cx="12" cy="12" r="10" /><path d="M12 8v8M9 10h6M9 13h6" />`,
+    gold: `<circle cx="12" cy="12" r="10" /><path d="M12 8v8M9 10h6M9 13h6" />`,
+    rareSpawn: `<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-5.82 2.15L7 14.14 2 9.27l6.91-1.01L12 2z" />`,
+    fairySpawn: `<path d="M12 2c-.5 5-4 8-8 8 4 0 7.5 3 8 8 .5-5 4-8 8-8-4 0-7.5-3-8-8z" />`,
+    barrier: `<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />`,
+    xpRate: `<circle cx="12" cy="12" r="10" /><path d="M17 13l-5-5-5 5M17 17l-5-5-5 5" />`,
+  };
+
+  let c = colors[key] || "#ffffff";
+  let p = svgPaths[key] || "";
+  let fillOpacity = [
+    "def",
+    "block",
+    "maxHp",
+    "dex",
+    "int",
+    "str",
+    "activeAttackSpeed",
+    "dropRate",
+    "quality",
+    "goldMulti",
+    "gold",
+    "rareSpawn",
+    "fairySpawn",
+    "barrier",
+    "xpRate",
+  ].includes(key)
+    ? "0.15"
+    : "0";
+
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="${c}" fill-opacity="${fillOpacity}" stroke="${c}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; transform: translateY(-1.5px); line-height: 1; margin-right: 3px;">${p}</svg>`;
+};
 
 window.getEquipIconHtml = function (item, size = 32) {
   if (!item) return "";
@@ -70,7 +143,7 @@ window.getEquipIconHtml = function (item, size = 32) {
                 </svg>`;
     }
   } else if (item.type === "helmet") {
-      svg = `<svg viewBox="0 0 32 32" width="100%" height="100%">
+    svg = `<svg viewBox="0 0 32 32" width="100%" height="100%">
                   <defs>
                       <linearGradient id="gen_w_helm_${id}" x1="0" y1="0" x2="1" y2="1">
                           <stop offset="0%" stop-color="#f8fafc"/>
@@ -95,8 +168,8 @@ window.getEquipIconHtml = function (item, size = 32) {
                   <circle cx="19" cy="26" r="1" fill="#000" />
                   <circle cx="21" cy="26" r="1" fill="#000" />
               </svg>`;
-    } else if (item.type === "chest") {
-      svg = `<svg viewBox="0 0 32 32" width="100%" height="100%">
+  } else if (item.type === "chest") {
+    svg = `<svg viewBox="0 0 32 32" width="100%" height="100%">
                   <defs>
                       <linearGradient id="gen_w_chest_${id}" x1="0" y1="0" x2="1" y2="1">
                           <stop offset="0%" stop-color="#f8fafc"/>
@@ -114,8 +187,8 @@ window.getEquipIconHtml = function (item, size = 32) {
                   <!-- Heavy Neck Collar Rim -->
                   <path d="M11 8 Q16 12, 21 8" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" />
               </svg>`;
-    } else if (item.type === "leggings") {
-      svg = `<svg viewBox="0 0 32 32" width="100%" height="100%">
+  } else if (item.type === "leggings") {
+    svg = `<svg viewBox="0 0 32 32" width="100%" height="100%">
                   <defs>
                       <linearGradient id="gen_w_legs_${id}" x1="0" y1="0" x2="1" y2="1">
                           <stop offset="0%" stop-color="#f8fafc"/>
@@ -134,8 +207,8 @@ window.getEquipIconHtml = function (item, size = 32) {
                   <path d="M18 18 L23 18 L23 28 L19 28 Z" fill="url(#gen_w_legs_${id})" stroke="#000" stroke-width="1.5" stroke-linejoin="round" />
                   <circle cx="20.5" cy="20" r="2.2" fill="${color}" stroke="#000" stroke-width="1" />
               </svg>`;
-    } else if (item.type === "overall") {
-      svg = `<svg viewBox="0 0 32 32" width="100%" height="100%">
+  } else if (item.type === "overall") {
+    svg = `<svg viewBox="0 0 32 32" width="100%" height="100%">
                   <defs>
                       <linearGradient id="gen_w_overall_${id}" x1="0" y1="0" x2="1" y2="1">
                           <stop offset="0%" stop-color="#f8fafc"/>
@@ -161,8 +234,8 @@ window.getEquipIconHtml = function (item, size = 32) {
                   <!-- High collar matching rarity tier -->
                   <path d="M12 8 C12 11, 20 11, 20 8" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" />
               </svg>`;
-    } else if (item.type === "boots") {
-      svg = `<svg viewBox="0 0 32 32" width="100%" height="100%">
+  } else if (item.type === "boots") {
+    svg = `<svg viewBox="0 0 32 32" width="100%" height="100%">
                   <defs>
                       <linearGradient id="gen_w_boots_${id}" x1="0" y1="0" x2="1" y2="1">
                           <stop offset="0%" stop-color="#f8fafc"/>
@@ -184,7 +257,7 @@ window.getEquipIconHtml = function (item, size = 32) {
                   <circle cx="6" cy="24" r="1.5" fill="${color}" stroke="#000" stroke-width="0.8" />
                   <circle cx="18" cy="24" r="1.5" fill="${color}" stroke="#000" stroke-width="0.8" />
               </svg>`;
-    } else {
+  } else {
     svg = `<svg width="100%" height="100%" viewBox="0 0 32 32">
                 <circle cx="16" cy="16" r="10" fill="${color}" stroke="#000000" stroke-width="1.5"/>
             </svg>`;
@@ -449,10 +522,10 @@ window.getUseIconHtml = function (key) {
   let svgContent = "";
 
   const getPotionSvg = (liquidColor) => {
-      let uid = Math.floor(Math.random() * 10000000);
-      let uniqueId = "liq_" + liquidColor.replace("#", "") + "_" + uid;
-      let glassId = "glass_base_" + uid;
-      return `
+    let uid = Math.floor(Math.random() * 10000000);
+    let uniqueId = "liq_" + liquidColor.replace("#", "") + "_" + uid;
+    let glassId = "glass_base_" + uid;
+    return `
           <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
               <defs>
                   <linearGradient id="${glassId}" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -480,7 +553,7 @@ window.getUseIconHtml = function (key) {
               <!-- Bottom Liquid Glow Highlight -->
               <path d="M9 22 C8 24, 9 26, 11 27" stroke="#fff" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.65"/>
           </svg>`;
-    };
+  };
 
   if (key === "SP Reset Scroll") {
     bg = "rgba(155, 89, 182, 0.25)";
@@ -499,9 +572,9 @@ window.getUseIconHtml = function (key) {
               <path d="M26 6 C26 6, 28 8, 26 10" stroke="#000" stroke-width="2" fill="none" />
           </svg>`;
   } else if (key === "Guild Reward Sack" || key === "Daily Reward Sack") {
-      bg = "rgba(241, 196, 15, 0.25)";
-      border = "#f1c40f";
-      svgContent = `
+    bg = "rgba(241, 196, 15, 0.25)";
+    border = "#f1c40f";
+    svgContent = `
             <svg width="24" height="24" viewBox="0 0 32 32" style="display:block;">
               <defs>
                   <linearGradient id="grad_RewardSack" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -1387,24 +1460,31 @@ window.updateUI = function () {
   let p = window.resolvePlayerStats(hasDraftChanges);
 
   // 1. Hud overlays (Dynamic Activities stage tracking)
-  let displayTitle = "🗺️ Stage";
+  let displayTitleHtml = "";
   let activeStageVal = window.playerStats.stage;
   let stageSubText = `(${window.playerStats.killCount}/${window.playerStats.targetsRequired}) • Peak ${window.playerStats.maxStage || 1}`;
 
   if (window.playerStats.isDungeonMode) {
     let dType = window.playerStats.currentDungeon || "gold";
     let dNames = { equip: "Equip Floor", gold: "Gold Floor", mat: "Mat Floor" };
-    displayTitle = `🏰 ${dNames[dType] || "Floor"}`;
+    let dIcons = {
+      equip: `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#3498db" stroke-width="2.5" style="display:inline-block; vertical-align:middle; margin-right:3px;"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l2 2M11 19l-2 2" /></svg>`,
+      gold: `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#f1c40f" stroke-width="2.5" style="display:inline-block; vertical-align:middle; margin-right:3px;"><circle cx="12" cy="12" r="10" fill="#f1c40f" fill-opacity="0.15" /><path d="M12 8v8M9 10h6M9 13h6" /></svg>`,
+      mat: `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2.5" style="display:inline-block; vertical-align:middle; margin-right:3px;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77" /></svg>`,
+    };
+    displayTitleHtml = `${dIcons[dType] || ""} ${dNames[dType] || "Floor"}`;
     activeStageVal = window.playerStats.currentDungeonStage[dType] || 1;
     stageSubText = `(${window.playerStats.killCount}/${window.playerStats.targetsRequired}) • Peak ${window.playerStats.dungeonPeaks[dType] || 1}`;
   } else if (window.playerStats.isCrucibleMode) {
-    displayTitle = "🔮 Wave";
+    displayTitleHtml = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#9b59b6" stroke-width="2.5" style="display:inline-block; vertical-align:middle; margin-right:3px;"><path d="M12 2L2 22h20L12 2z" fill="#9b59b6" fill-opacity="0.15" /></svg> Wave`;
     activeStageVal = window.playerStats.crucibleWave || 1;
     stageSubText = `(${window.playerStats.killCount}/${window.playerStats.targetsRequired}) • Peak ${window.playerStats.cruciblePeak || 1}`;
+  } else {
+    displayTitleHtml = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#3498db" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:3px;"><circle cx="12" cy="12" r="10" fill="#3498db" fill-opacity="0.15" /><polygon points="16.24,7.76 14.12,14.12 7.76,16.24 9.88,9.88" /></svg> Stage`;
   }
 
   let stageLabelEl = document.getElementById("hud-stage-label");
-  if (stageLabelEl) stageLabelEl.innerText = displayTitle;
+  if (stageLabelEl) stageLabelEl.innerHTML = displayTitleHtml;
 
   let stageSubEl = document.getElementById("hud-stage-sub");
   if (stageSubEl) stageSubEl.innerText = stageSubText;
@@ -1443,27 +1523,42 @@ window.updateUI = function () {
   }
 
   // Update Dungeon Peaks & Checkpoints in Activities Menu
-  if (window.playerStats.dungeonPeaks) {
-    let eqPeak = window.playerStats.dungeonPeaks.equip || 1;
-    let goPeak = window.playerStats.dungeonPeaks.gold || 1;
-    let maPeak = window.playerStats.dungeonPeaks.mat || 1;
+    if (window.playerStats.dungeonPeaks) {
+      let eqPeak = window.playerStats.dungeonPeaks.equip || 1;
+      let goPeak = window.playerStats.dungeonPeaks.gold || 1;
+      let maPeak = window.playerStats.dungeonPeaks.mat || 1;
 
-    window.setText("dp-equip", eqPeak);
-    window.setText("dp-gold", goPeak);
-    window.setText("dp-mat", maPeak);
+      window.setText("dp-equip", eqPeak);
+      window.setText("dp-gold", goPeak);
+      window.setText("dp-mat", maPeak);
 
-    window.setText("dc-equip", Math.max(1, Math.floor(eqPeak * 0.9)));
-    window.setText("dc-gold", Math.max(1, Math.floor(goPeak * 0.9)));
-    window.setText("dc-mat", Math.max(1, Math.floor(maPeak * 0.9)));
-  }
+      window.setText("tab-dp-equip", eqPeak);
+      window.setText("tab-dp-gold", goPeak);
+      window.setText("tab-dp-mat", maPeak);
 
-  // Update Crucible Peak & Checkpoint in Activities Menu
-  let cPeak = window.playerStats.cruciblePeak || 1;
-  window.setText("crucible-peak-wave", cPeak);
-  window.setText(
-    "crucible-checkpoint-wave",
-    Math.max(1, Math.floor(cPeak * 0.8)),
-  );
+      let eqCheck = Math.max(1, Math.floor(eqPeak * 0.9));
+      let goCheck = Math.max(1, Math.floor(goPeak * 0.9));
+      let maCheck = Math.max(1, Math.floor(maPeak * 0.9));
+
+      window.setText("dc-equip", eqCheck);
+      window.setText("dc-gold", goCheck);
+      window.setText("dc-mat", maCheck);
+
+      window.setText("tab-dc-equip", eqCheck);
+      window.setText("tab-dc-gold", goCheck);
+      window.setText("tab-dc-mat", maCheck);
+    }
+
+    // Update Crucible Peak & Checkpoint in Activities Menu
+    let cPeak = window.playerStats.cruciblePeak || 1;
+    window.setText("crucible-peak-wave", cPeak);
+    window.setText("tab-crucible-peak-wave", cPeak);
+
+    let cCheck = Math.max(1, Math.floor(cPeak * 0.8));
+      window.setText("crucible-checkpoint-wave", cCheck);
+      window.setText("tab-crucible-checkpoint-wave", cCheck);
+
+      window.setText("tab-etc-souls", (window.inventory.ETC["Monster Soul"] || 0).toLocaleString());
 
   let maxBag = window.getMaxBagSlots();
   let bagEl = document.getElementById("hud-bag");
@@ -1477,31 +1572,31 @@ window.updateUI = function () {
   }
 
   // 2. Stats panel headers (re-routed to unified selectors)
-    setText("char-level", window.playerStats.level);
+  setText("char-level", window.playerStats.level);
 
-    let titleEl = document.getElementById("equipped-title");
-              if (titleEl) {
-                let activeTitle = window.playerStats.equippedTitle;
-                if (activeTitle && window.TITLES_DATA[activeTitle]) {
-                  let tData = window.TITLES_DATA[activeTitle];
-                  let iconHtml = tData.icon || "";
+  let titleEl = document.getElementById("equipped-title");
+  if (titleEl) {
+    let activeTitle = window.playerStats.equippedTitle;
+    if (activeTitle && window.TITLES_DATA[activeTitle]) {
+      let tData = window.TITLES_DATA[activeTitle];
+      let iconHtml = tData.icon || "";
 
-                  // Ornate display tag that sits nicely right next to their level
-                  titleEl.innerHTML = ` <span style="display: inline-flex; align-items: center; gap: 4px; vertical-align: middle;">${iconHtml}<span style="color: ${tData.color || '#ff007f'}; font-weight:900;">[${tData.name}]</span></span>`;
-                } else {
-                  titleEl.innerHTML = "";
-                }
-              }
+      // Ornate display tag that sits nicely right next to their level
+      titleEl.innerHTML = ` <span style="display: inline-flex; align-items: center; gap: 4px; vertical-align: middle;">${iconHtml}<span style="color: ${tData.color || "#ff007f"}; font-weight:900;">[${tData.name}]</span></span>`;
+    } else {
+      titleEl.innerHTML = "";
+    }
+  }
 
-        let nameLabel = document.getElementById("current-name-label");
-        if (nameLabel) {
-          nameLabel.innerText = `(Current: ${window.playerStats.playerName || "Guest"})`;
-        }
+  let nameLabel = document.getElementById("current-name-label");
+  if (nameLabel) {
+    nameLabel.innerText = `(Current: ${window.playerStats.playerName || "Guest"})`;
+  }
 
-        setText(
-          "char-sp",
-          window.draftAllocations !== null ? window.draftSP : window.playerStats.sp,
-        );
+  setText(
+    "char-sp",
+    window.draftAllocations !== null ? window.draftSP : window.playerStats.sp,
+  );
 
   let xpPct = (window.playerStats.xp / window.playerStats.xpReq) * 100;
   setText(
@@ -1566,65 +1661,8 @@ window.updateUI = function () {
     draftBar.style.display = hasDraftChanges ? "block" : "none";
   }
 
-  // Dynamic Top Missions Pulsing Alert Trigger
-  let missionsBtn = document.getElementById("btn-missions-top");
-  if (missionsBtn) {
-    let dailies = window.playerStats.dailyMissions || [];
-    let weeklies = window.playerStats.weeklyMissions || [];
-    let dailyClaimable = dailies.some((m) => m.completed && !m.claimed);
-    let weeklyClaimable = weeklies.some((m) => m.completed && !m.claimed);
-    let dailyMasterClaimable =
-      !window.playerStats.dailyRewardClaimed &&
-      dailies.filter((m) => m.completed).length >= 5;
-    let weeklyMasterClaimable =
-      window.playerStats.prestigeCount > 0 &&
-      !window.playerStats.weeklyRewardClaimed &&
-      weeklies.filter((m) => m.completed).length === 3;
-
-    if (
-      dailyClaimable ||
-      weeklyClaimable ||
-      dailyMasterClaimable ||
-      weeklyMasterClaimable
-    ) {
-      missionsBtn.style.animation = "glowGreen 1.8s infinite";
-      missionsBtn.style.borderColor = "#2ecc71";
-      if (!missionsBtn.querySelector(".badge-exclamation")) {
-        missionsBtn.insertAdjacentHTML(
-          "beforeend",
-          ' <span class="badge-exclamation" style="color:#2ecc71; font-weight:bold; margin-left:3px;">!</span>',
-        );
-      }
-    } else {
-      missionsBtn.style.animation = "";
-      missionsBtn.style.borderColor = "";
-      let b = missionsBtn.querySelector(".badge-exclamation");
-      if (b) b.remove();
-    }
-  }
-
-  // Dynamic Top Trophies Pulsing Alert Trigger
-  let trophiesBtn = document.getElementById("btn-achievements-top");
-  if (trophiesBtn) {
-    let hasUnviewed =
-      window.playerStats.unviewedAchievements &&
-      window.playerStats.unviewedAchievements.length > 0;
-    if (hasUnviewed) {
-      trophiesBtn.style.animation = "glowGold 1.8s infinite";
-      trophiesBtn.style.borderColor = "#f1c40f";
-      if (!trophiesBtn.querySelector(".badge-exclamation")) {
-        trophiesBtn.insertAdjacentHTML(
-          "beforeend",
-          ' <span class="badge-exclamation" style="color:#f1c40f; font-weight:bold; margin-left:3px;">!</span>',
-        );
-      }
-    } else {
-      trophiesBtn.style.animation = "";
-      trophiesBtn.style.borderColor = "";
-      let b = trophiesBtn.querySelector(".badge-exclamation");
-      if (b) b.remove();
-    }
-  }
+  // Run unified roll-up alerts check
+    window.updateHubAlerts();
 
   // Refresh core SP allocations button display
   const updateSPButtonStates = () => {
@@ -1757,11 +1795,11 @@ window.updateUI = function () {
     (window.inventory.ETC["Rare Scrap"] || 0);
   setText("live-qty-scraps", scrapsSum.toLocaleString());
 
-  // Update Altar UI Card dynamically if active
-  let altarSec = document.getElementById("market-sec-altar");
-  if (altarSec && altarSec.style.display !== "none") {
-    window.renderAltarTab();
-  }
+  // Update Altar UI Card dynamically if Runs tab is active
+    let runsTab = document.getElementById("tab-activities");
+    if (runsTab && runsTab.classList.contains("active")) {
+      window.renderAltarTab();
+    }
 
   // Update Vending Subtab variables if active
   let gachaSec = document.getElementById("market-sec-gacha");
@@ -1778,27 +1816,27 @@ window.updateUI = function () {
     window.renderGachaShowcaseMarquee();
 
     // Update live vending rates board (Fully live with your stats!)
-            let qly = p.qly;
-            let chance5 = 1.0 * qly;
-            let chance4 = 5.0 * qly;
-            let chance3 = 15.0 * qly;
-            let chance2 = 25.0 * qly;
-            let chance1 = Math.max(0, 100 - (chance5 + chance4 + chance3 + chance2));
+    let qly = p.qly;
+    let chance5 = 1.0 * qly;
+    let chance4 = 5.0 * qly;
+    let chance3 = 15.0 * qly;
+    let chance2 = 25.0 * qly;
+    let chance1 = Math.max(0, 100 - (chance5 + chance4 + chance3 + chance2));
 
-            window.setText("vending-rate-5", chance5.toFixed(2) + "%");
-            window.setText("vending-rate-4", chance4.toFixed(2) + "%");
-            window.setText("vending-rate-3", chance3.toFixed(2) + "%");
-            window.setText("vending-rate-2", chance2.toFixed(2) + "%");
-            window.setText("vending-rate-1", chance1.toFixed(2) + "%");
+    window.setText("vending-rate-5", chance5.toFixed(2) + "%");
+    window.setText("vending-rate-4", chance4.toFixed(2) + "%");
+    window.setText("vending-rate-3", chance3.toFixed(2) + "%");
+    window.setText("vending-rate-2", chance2.toFixed(2) + "%");
+    window.setText("vending-rate-1", chance1.toFixed(2) + "%");
   }
 
   // Refresh Gacha Pity Elements if present
-    let pityProgress = window.playerStats.vendingPity || 0;
-    let pityTextBadge = document.getElementById("vending-pity-text");
-    let pityBarFill = document.getElementById("vending-pity-fill");
-    if (pityTextBadge)
-      pityTextBadge.innerText = `Pity progress: ${pityProgress} / 50`;
-    if (pityBarFill) pityBarFill.style.width = `${(pityProgress / 50) * 100}%`;
+  let pityProgress = window.playerStats.vendingPity || 0;
+  let pityTextBadge = document.getElementById("vending-pity-text");
+  let pityBarFill = document.getElementById("vending-pity-fill");
+  if (pityTextBadge)
+    pityTextBadge.innerText = `Pity progress: ${pityProgress} / 50`;
+  if (pityBarFill) pityBarFill.style.width = `${(pityProgress / 50) * 100}%`;
 
   // Buff trackers HUD
   let activeBuffs = [];
@@ -1896,6 +1934,11 @@ window.updateUI = function () {
       );
 
     sumSummaryEl.innerHTML = lines.join("<br>");
+  }
+
+  // Real-time synchronization of custom Salvage Pad buttons
+  if (typeof window.updateSalvagePadUI === "function") {
+    window.updateSalvagePadUI();
   }
 
   // 5. Backpack details update
@@ -2672,85 +2715,85 @@ window.showStatBreakdown = function (e, statKey, isPct = false) {
 
   let map = {
     str: {
-      title: "💪 STR (Strength)",
+      title: window.getUiIconSvg("str", 14) + " STR (Strength)",
       base: window.playerStats.baseStr,
       lvl: (alloc.spStr || 0) * 3,
-      color: "#fff",
+      color: "#e74c3c",
     },
     dex: {
-      title: "🎯 DEX (Dexterity)",
+      title: window.getUiIconSvg("dex", 14) + " DEX (Dexterity)",
       base: window.playerStats.baseDex,
       lvl: (alloc.spDex || 0) * 3,
-      color: "#fff",
-    },
-    int: {
-      title: "🧠 INT (Intelligence)",
-      base: window.playerStats.baseInt,
-      lvl: (alloc.spInt || 0) * 3,
-      color: "#fff",
-    },
-    atk: {
-      title: "⚔️ Total Attack",
-      base: window.playerStats.baseAtk,
-      lvl: alloc.spAtk * 6,
-      color: "#fff",
-    },
-    maxHp: {
-      title: "❤️ Max Health",
-      base: window.playerStats.baseMaxHp,
-      lvl: alloc.spHp * 50,
-      color: "#fff",
-    },
-    def: {
-      title: "🛡️ Total Defense",
-      base: window.playerStats.baseDef,
-      lvl: alloc.spDef * 5,
-      color: "#fff",
-    },
-    moveSpeed: {
-      title: "👟 Move Speed",
-      base: window.playerStats.baseMoveSpeed,
-      lvl: alloc.spSpd * 1,
-      color: "#fff",
-    },
-    critChance: {
-      title: "✨ Crit Chance",
-      base: window.playerStats.baseCritChance,
-      lvl: alloc.spCrit * 0.005,
       color: "#e67e22",
     },
-    critDamage: {
-      title: "💥 Crit Multiplier",
-      base: window.playerStats.baseCritDamage,
-      lvl: alloc.spCritDmg * 0.02,
+    int: {
+      title: window.getUiIconSvg("int", 14) + " INT (Intelligence)",
+      base: window.playerStats.baseInt,
+      lvl: (alloc.spInt || 0) * 3,
+      color: "#9b59b6",
+    },
+    atk: {
+      title: window.getUiIconSvg("atk", 14) + " Total Attack",
+      base: window.playerStats.baseAtk,
+      lvl: alloc.spAtk * 6,
+      color: "#e74c3c",
+    },
+    maxHp: {
+      title: window.getUiIconSvg("maxHp", 14) + " Max Health",
+      base: window.playerStats.baseMaxHp,
+      lvl: alloc.spHp * 50,
+      color: "#e74c3c",
+    },
+    def: {
+      title: window.getUiIconSvg("def", 14) + " Total Defense",
+      base: window.playerStats.baseDef,
+      lvl: alloc.spDef * 5,
+      color: "#3498db",
+    },
+    moveSpeed: {
+      title: window.getUiIconSvg("moveSpeed", 14) + " Move Speed",
+      base: window.playerStats.baseMoveSpeed,
+      lvl: alloc.spSpd * 1,
+      color: "#3498db",
+    },
+    critChance: {
+      title: window.getUiIconSvg("critChance", 14) + " Crit Chance",
+      base: window.playerStats.baseCritChance,
+      lvl: alloc.spCrit * 0.005,
       color: "#f1c40f",
     },
+    critDamage: {
+      title: window.getUiIconSvg("critDamage", 14) + " Crit Multiplier",
+      base: window.playerStats.baseCritDamage,
+      lvl: alloc.spCritDmg * 0.02,
+      color: "#e67e22",
+    },
     block: {
-      title: "🛡️ Block Rate",
+      title: window.getUiIconSvg("block", 14) + " Block Rate",
       base: window.playerStats.baseBlock,
       lvl: alloc.spBlock * 0.005,
       color: "#3498db",
     },
     parry: {
-      title: "⚡ Parry Rate",
+      title: window.getUiIconSvg("parry", 14) + " Parry Rate",
       base: window.playerStats.baseParry,
       lvl: alloc.spParry * 0.005,
-      color: "#e74c3c",
+      color: "#9b59b6",
     },
     rareSpawn: {
-      title: "✨ Rare Enemy Spawn",
+      title: window.getUiIconSvg("rareSpawn", 14) + " Rare Enemy Spawn",
       base: window.playerStats.baseRareSpawn,
       lvl: 0,
-      color: "#ffb6c1",
+      color: "#e67e22",
     },
     fairySpawn: {
-      title: "🧚 Fairy Spawn Rate",
+      title: window.getUiIconSvg("fairySpawn", 14) + " Fairy Spawn Rate",
       base: window.playerStats.baseFairySpawn,
       lvl: 0,
       color: "#ffb6c1",
     },
     gold: {
-      title: "🟡 Gold Multiplier",
+      title: window.getUiIconSvg("goldMulti", 14) + " Gold Multiplier",
       base: window.playerStats.baseGold,
       lvl: 0,
       color: "#f1c40f",
@@ -2939,38 +2982,38 @@ window.showStatBreakdown = function (e, statKey, isPct = false) {
     setFlatBonus;
   if (statKey === "atk" && effectiveStr > 0) {
     let actualDmgAdded = Math.floor(totalVal * (effectiveStr * 0.003));
-    html += `<div class="tt-stat-line" style="color:#e67e22;">• Strength Scaling (STR): +${actualDmgAdded} Damage</div>`;
+    html += `<div class="tt-stat-line" style="color:#e67e22;">• ${window.getUiIconSvg("str", 11)} Strength Scaling (STR): +${actualDmgAdded} Damage</div>`;
     html += `<div class="tt-stat-line" style="color:#e67e22; font-style:italic;">  (+${(effectiveStr * 0.3).toFixed(1)}% Multiplier)</div>`;
   }
   if (statKey === "maxHp" && effectiveStr > 0) {
     let hpBonus = Math.floor(totalVal * (effectiveStr * 0.003));
-    html += `<div class="tt-stat-line" style="color:#e74c3c;">• Strength Scaling (STR): +${hpBonus.toLocaleString()} HP</div>`;
+    html += `<div class="tt-stat-line" style="color:#e74c3c;">• ${window.getUiIconSvg("str", 11)} Strength Scaling (STR): +${hpBonus.toLocaleString()} HP</div>`;
     html += `<div class="tt-stat-line" style="color:#e74c3c; font-style:italic;">  (+${(effectiveStr * 0.3).toFixed(1)}% Multiplier)</div>`;
   }
   if (statKey === "def" && effectiveInt > 0) {
     let logarithmicIntPct = Math.log10(effectiveInt + 1) * 0.15;
-    html += `<div class="tt-stat-line" style="color:#9b59b6;">• Intelligence Scaling (INT): +${Math.floor(totalVal * logarithmicIntPct)} Defense</div>`;
+    html += `<div class="tt-stat-line" style="color:#9b59b6;">• ${window.getUiIconSvg("int", 11)} Intelligence Scaling (INT): +${Math.floor(totalVal * logarithmicIntPct)} Defense</div>`;
     html += `<div class="tt-stat-line" style="color:#9b59b6; font-style:italic;">  (+${(logarithmicIntPct * 100).toFixed(1)}% Multiplier)</div>`;
   }
   if (statKey === "moveSpeed" && effectiveDex > 0) {
     let scaleVal = (effectiveDex * 20) / (effectiveDex + 150);
-    html += `<div class="tt-stat-line" style="color:#3498db;">• Dexterity Scaling (DEX): +${scaleVal.toFixed(1)} Speed</div>`;
+    html += `<div class="tt-stat-line" style="color:#3498db;">• ${window.getUiIconSvg("dex", 11)} Dexterity Scaling (DEX): +${scaleVal.toFixed(1)} Speed</div>`;
   }
   if (statKey === "critChance" && effectiveDex > 0) {
     let scaleVal = (effectiveDex * 0.3) / (effectiveDex + 250);
-    html += `<div class="tt-stat-line" style="color:#3498db;">• Dexterity Scaling (DEX): +${(scaleVal * 100).toFixed(1)}%</div>`;
+    html += `<div class="tt-stat-line" style="color:#3498db;">• ${window.getUiIconSvg("dex", 11)} Dexterity Scaling (DEX): +${(scaleVal * 100).toFixed(1)}%</div>`;
   }
   if (statKey === "critDamage" && effectiveDex > 0) {
     let scaleVal = effectiveDex * 0.003;
-    html += `<div class="tt-stat-line" style="color:#3498db;">• Dexterity Scaling (DEX): +${(scaleVal * 100).toFixed(1)}%</div>`;
+    html += `<div class="tt-stat-line" style="color:#3498db;">• ${window.getUiIconSvg("dex", 11)} Dexterity Scaling (DEX): +${(scaleVal * 100).toFixed(1)}%</div>`;
   }
   if (statKey === "block" && effectiveInt > 0) {
     let scaleVal = (effectiveInt * 0.12) / (effectiveInt + 150);
-    html += `<div class="tt-stat-line" style="color:#9b59b6;">• Intelligence Scaling (INT): +${(scaleVal * 100).toFixed(1)}%</div>`;
+    html += `<div class="tt-stat-line" style="color:#9b59b6;">• ${window.getUiIconSvg("int", 11)} Intelligence Scaling (INT): +${(scaleVal * 100).toFixed(1)}%</div>`;
   }
   if (statKey === "parry" && effectiveInt > 0) {
     let scaleVal = (effectiveInt * 0.12) / (effectiveInt + 150);
-    html += `<div class="tt-stat-line" style="color:#9b59b6;">• Intelligence Scaling (INT): +${(scaleVal * 100).toFixed(1)}%</div>`;
+    html += `<div class="tt-stat-line" style="color:#9b59b6;">• ${window.getUiIconSvg("int", 11)} Intelligence Scaling (INT): +${(scaleVal * 100).toFixed(1)}%</div>`;
   }
   if (statKey === "critChance" || statKey === "critDamage") {
     if (window.playerStats.frenzyTimer > 0)
@@ -3018,25 +3061,29 @@ window.renderMarketShop = function () {
   let el = document.getElementById("gold-shop-list");
   if (!el) return;
 
-  let iotdItem = window.playerStats.shopItems.find(item => item.isIOTD);
-  let standardItems = window.playerStats.shopItems.filter(item => !item.isIOTD);
+  let iotdItem = window.playerStats.shopItems.find((item) => item.isIOTD);
+  let standardItems = window.playerStats.shopItems.filter(
+    (item) => !item.isIOTD,
+  );
 
   let html = "";
 
   // Render Hero Card for Item of the Day
-    if (iotdItem) {
-      let nameColor = window.getTierColor(iotdItem.statsRolled);
-      let costColor = window.playerStats.coins >= iotdItem.cost ? "#2ecc71" : "#e74c3c";
-      let isSold = iotdItem.purchased;
-      let btnStyle = isSold || window.playerStats.coins < iotdItem.cost
+  if (iotdItem) {
+    let nameColor = window.getTierColor(iotdItem.statsRolled);
+    let costColor =
+      window.playerStats.coins >= iotdItem.cost ? "#2ecc71" : "#e74c3c";
+    let isSold = iotdItem.purchased;
+    let btnStyle =
+      isSold || window.playerStats.coins < iotdItem.cost
         ? "background: #333; color: #666; cursor: not-allowed; border-color: #444;"
         : "background: linear-gradient(180deg, #f1c40f 0%, #d4af37 100%); color: #000; font-weight: 900; border-color: #fff; box-shadow: 0 0 10px rgba(241, 196, 15, 0.4);";
 
-      let soldOverlay = isSold
-        ? `<div style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); backdrop-filter: blur(1.5px); display:flex; justify-content:center; align-items:center; border-radius:8px; z-index:5;"><span style="color:#e74c3c; font-size:18px; font-weight:900; border: 2.5px solid #e74c3c; padding: 6px 16px; border-radius:4px; transform: rotate(-8deg); font-family:'Arial Black',Impact,sans-serif; text-shadow: 0 2px 4px #000; letter-spacing:2px; box-shadow: 0 0 15px rgba(231,76,60,0.35);">CLAIMED</span></div>`
-        : "";
+    let soldOverlay = isSold
+      ? `<div style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); backdrop-filter: blur(1.5px); display:flex; justify-content:center; align-items:center; border-radius:8px; z-index:5;"><span style="color:#e74c3c; font-size:18px; font-weight:900; border: 2.5px solid #e74c3c; padding: 6px 16px; border-radius:4px; transform: rotate(-8deg); font-family:'Arial Black',Impact,sans-serif; text-shadow: 0 2px 4px #000; letter-spacing:2px; box-shadow: 0 0 15px rgba(231,76,60,0.35);">CLAIMED</span></div>`
+      : "";
 
-      html += `
+    html += `
         <div class="gold-shop-iotd-hero"
              style="position:relative; background: radial-gradient(circle at 50% 30%, rgba(241, 196, 15, 0.08) 0%, rgba(12, 14, 19, 0.95) 100%); border: 2px solid #f1c40f; border-radius:8px; padding:15px; margin-bottom:12px; box-shadow: 0 0 18px rgba(241, 196, 15, 0.15), inset 0 0 12px rgba(241, 196, 15, 0.08); display:flex; flex-direction:column; justify-content:space-between;"
              onmouseenter="window.showMarketTooltip(event, ${window.playerStats.shopItems.indexOf(iotdItem)})"
@@ -3067,29 +3114,31 @@ window.renderMarketShop = function () {
             </div>
         </div>
       `;
-    }
+  }
 
-    // Render Standard Items list
-    html += `
+  // Render Standard Items list
+  html += `
       <div style="font-size:9.5px; color:#888; font-weight:bold; letter-spacing:1px; text-transform:uppercase; text-align:left; margin-bottom:8px; border-bottom:1px solid #222; padding-bottom:4px;">🛒 Standard Stock</div>
       <div style="display:flex; flex-direction:column; gap:6px;">
     `;
 
-    standardItems.forEach((shopItem) => {
-      let idx = window.playerStats.shopItems.indexOf(shopItem);
-      let nameColor = window.getTierColor(shopItem.statsRolled);
-      let costColor = window.playerStats.coins >= shopItem.cost ? "#2ecc71" : "#e74c3c";
-      let isSold = shopItem.purchased;
+  standardItems.forEach((shopItem) => {
+    let idx = window.playerStats.shopItems.indexOf(shopItem);
+    let nameColor = window.getTierColor(shopItem.statsRolled);
+    let costColor =
+      window.playerStats.coins >= shopItem.cost ? "#2ecc71" : "#e74c3c";
+    let isSold = shopItem.purchased;
 
-      let soldOverlay = isSold
-        ? `<div style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.65); backdrop-filter: blur(1px); display:flex; justify-content:center; align-items:center; border-radius:6px; z-index:5;"><span style="color:#e74c3c; font-size:12px; font-weight:900; border: 1.5px solid #e74c3c; padding: 2px 10px; border-radius:3px; transform: rotate(-5deg); font-family:Impact,sans-serif; text-shadow: 0 1px 2px #000; letter-spacing:1px;">SOLD</span></div>`
-        : "";
+    let soldOverlay = isSold
+      ? `<div style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.65); backdrop-filter: blur(1px); display:flex; justify-content:center; align-items:center; border-radius:6px; z-index:5;"><span style="color:#e74c3c; font-size:12px; font-weight:900; border: 1.5px solid #e74c3c; padding: 2px 10px; border-radius:3px; transform: rotate(-5deg); font-family:Impact,sans-serif; text-shadow: 0 1px 2px #000; letter-spacing:1px;">SOLD</span></div>`
+      : "";
 
-      let btnStyle = isSold || window.playerStats.coins < shopItem.cost
+    let btnStyle =
+      isSold || window.playerStats.coins < shopItem.cost
         ? "background: #333; color: #666; cursor: not-allowed; border-color: #444;"
         : `background: transparent; color: #fff; border: 1.5px solid ${nameColor}; box-shadow: 0 0 6px rgba(${window.hexToRgbValues(nameColor)},0.15);`;
 
-      html += `
+    html += `
         <div class="shop-row"
              style="position:relative; display:flex; align-items:center; justify-content:space-between; background:rgba(15,17,26,0.5); border:1.5px solid #222; border-left:4px solid ${nameColor} !important; border-radius:6px; padding:8px 10px; gap:8px;"
              onmouseenter="window.showMarketTooltip(event, ${idx})"
@@ -3113,7 +3162,7 @@ window.renderMarketShop = function () {
             </div>
         </div>
       `;
-    });
+  });
 
   html += `</div>`;
   el.innerHTML = html;
@@ -3128,44 +3177,46 @@ window.renderMysticalShop = function () {
   el.style.flexDirection = "column";
   el.style.gap = "16px";
 
-  let stockHtml = `
+  let stockHtml =
+    `
     <div style="font-size:11px; color:#9b59b6; font-weight:bold; letter-spacing:1.5px; text-transform:uppercase; text-align:left; border-bottom:1px solid #333; padding-bottom:6px; width:100%; display:flex; align-items:center; gap:6px;">
         <span>🌌 Celestial Stock</span>
     </div>
     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:8px; width:100%;">
-  ` + window.MYSTICAL_STOCK.map((item, index) => {
-    let costColor = "#e74c3c";
-    let currencyLabel = "Gold";
-    let displayCost = item.cost;
+  ` +
+    window.MYSTICAL_STOCK.map((item, index) => {
+      let costColor = "#e74c3c";
+      let currencyLabel = "Gold";
+      let displayCost = item.cost;
 
-    if (item.currency === "Luminous Soul") {
-      let owned = window.inventory.ETC["Luminous Soul"] || 0;
-      costColor = owned >= item.cost ? "#ffb6c1" : "#e74c3c";
-      currencyLabel = "Souls";
-    } else if (item.currency === "Astral Shards") {
-      let owned = window.playerStats.astralShards || 0;
-      costColor = owned >= item.cost ? "#9b59b6" : "#e74c3c";
-      currencyLabel = "Shards";
-    } else {
-      displayCost = Math.ceil(
-        item.cost * Math.pow(1.08, window.playerStats.stage),
-      );
-      costColor =
-        window.playerStats.coins >= displayCost ? "#f1c40f" : "#e74c3c";
-    }
+      if (item.currency === "Luminous Soul") {
+        let owned = window.inventory.ETC["Luminous Soul"] || 0;
+        costColor = owned >= item.cost ? "#ffb6c1" : "#e74c3c";
+        currencyLabel = "Souls";
+      } else if (item.currency === "Astral Shards") {
+        let owned = window.playerStats.astralShards || 0;
+        costColor = owned >= item.cost ? "#9b59b6" : "#e74c3c";
+        currencyLabel = "Shards";
+      } else {
+        displayCost = Math.ceil(
+          item.cost * Math.pow(1.08, window.playerStats.stage),
+        );
+        costColor =
+          window.playerStats.coins >= displayCost ? "#f1c40f" : "#e74c3c";
+      }
 
-    let iconHtml =
-      item.name === "Gacha Key" ||
-      item.name === "Astral Essence" ||
-      item.name === "Catalyst Core"
-        ? getEtcIconHtml(item.name)
-        : getUseIconHtml(item.name);
-    iconHtml = iconHtml.replace("margin-right: 12px;", "margin-right: 6px;");
-    let bgStyle = window.hexToRgba(item.color, 0.04);
+      let iconHtml =
+        item.name === "Gacha Key" ||
+        item.name === "Astral Essence" ||
+        item.name === "Catalyst Core"
+          ? getEtcIconHtml(item.name)
+          : getUseIconHtml(item.name);
+      iconHtml = iconHtml.replace("margin-right: 12px;", "margin-right: 6px;");
+      let bgStyle = window.hexToRgba(item.color, 0.04);
 
-    let btnStyle = `background: ${item.color}; color: ${item.color === "#f1c40f" ? "#111" : "#fff"}; font-weight: bold;`;
+      let btnStyle = `background: ${item.color}; color: ${item.color === "#f1c40f" ? "#111" : "#fff"}; font-weight: bold;`;
 
-    return `
+      return `
       <div class="shop-row" style="border-color: ${item.color}; background: ${bgStyle}; flex-direction: column; align-items: stretch; text-align: left; gap: 4px; padding: 10px; cursor: help; height:100%; display:flex; justify-content:space-between; margin-bottom:0;" onmouseenter="window.showMysticalShopTooltip(event, ${index})" ontouchstart="window.showMysticalShopTooltip(event, ${index})" onmouseleave="window.hideTooltip()">
           <div>
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -3182,25 +3233,28 @@ window.renderMysticalShop = function () {
           </div>
       </div>
     `;
-  }).join("") + `</div>`;
+    }).join("") +
+    `</div>`;
 
-  let transHtml = `
+  let transHtml =
+    `
     <div style="font-size:9.5px; color:#2ecc71; font-weight:bold; letter-spacing:1.1px; text-transform:uppercase; text-align:left; margin-bottom:8px; border-bottom:1px solid #333; padding-bottom:4px; width:100%;">🧪 Alchemical Transmutations</div>
     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:6px; width:100%;">
-  ` + window.POTION_TRANSMUTATIONS.map((recipe, index) => {
-    let ownedCount = window.inventory.USE[recipe.req] || 0;
-    let canAfford = ownedCount >= recipe.amount;
-    let costColor = canAfford ? "#2ecc71" : "#e74c3c";
+  ` +
+    window.POTION_TRANSMUTATIONS.map((recipe, index) => {
+      let ownedCount = window.inventory.USE[recipe.req] || 0;
+      let canAfford = ownedCount >= recipe.amount;
+      let costColor = canAfford ? "#2ecc71" : "#e74c3c";
 
-    let iconHtml = getUseIconHtml(recipe.result);
-    iconHtml = iconHtml.replace("margin-right: 12px;", "margin-right: 6px;");
-    let bgStyle = window.hexToRgba(recipe.color, 0.03);
+      let iconHtml = getUseIconHtml(recipe.result);
+      iconHtml = iconHtml.replace("margin-right: 12px;", "margin-right: 6px;");
+      let bgStyle = window.hexToRgba(recipe.color, 0.03);
 
-    let btnStyle = canAfford
-      ? `background: ${recipe.color}; color: #fff; font-weight: bold;`
-      : "background: #333; color: #666; cursor: not-allowed; border-color: #444;";
+      let btnStyle = canAfford
+        ? `background: ${recipe.color}; color: #fff; font-weight: bold;`
+        : "background: #333; color: #666; cursor: not-allowed; border-color: #444;";
 
-    return `
+      return `
       <div class="shop-row" style="border-color: ${recipe.color}; background: ${bgStyle}; flex-direction: column; align-items: stretch; text-align: left; gap: 4px; padding: 10px; cursor: help; height:100%; display:flex; justify-content:space-between; margin-bottom:0;" onmouseenter="window.showTransmuteTooltip(event, ${index})" ontouchstart="window.showTransmuteTooltip(event, ${index})" onmouseleave="window.hideTooltip()">
            <div>
                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -3217,7 +3271,8 @@ window.renderMysticalShop = function () {
            </div>
        </div>
      `;
-  }).join("") + `</div>`;
+    }).join("") +
+    `</div>`;
 
   el.innerHTML = stockHtml + transHtml;
 };
@@ -3245,7 +3300,7 @@ window.renderGoldUpgrades = function () {
             <path d="M28 10 L30 12 L30 18 L28 20" fill="none" stroke="#f1c40f" stroke-width="2" stroke-linecap="round" />
             <circle cx="30" cy="12" r="2" fill="#e74c3c" />
         </svg>
-      `
+      `,
     },
     {
       id: "shop",
@@ -3261,7 +3316,7 @@ window.renderGoldUpgrades = function () {
             <circle cx="16" cy="20" r="4.5" fill="#f1c40f" stroke="#000" stroke-width="1" />
             <path d="M16 17 L16 23 M14 20 L18 20" stroke="#fff" stroke-width="1" />
         </svg>
-      `
+      `,
     },
     {
       id: "global",
@@ -3277,7 +3332,7 @@ window.renderGoldUpgrades = function () {
             <path d="M16 16 Q16 26, 13 28" fill="none" stroke="#27ae60" stroke-width="2" stroke-linecap="round" />
             <circle cx="16" cy="16" r="1.5" fill="#fff" />
         </svg>
-      `
+      `,
     },
   ];
 
@@ -3293,9 +3348,10 @@ window.renderGoldUpgrades = function () {
       let costColor = p.coins >= up.cost ? "#2ecc71" : "#e74c3c";
       let bgStyle = hexToRgba(up.color, 0.04);
       let bonusPct = up.level * (up.id === "global" ? 1.5 : 1);
-      let btnStyle = p.coins < up.cost
-        ? "background: #333; color: #666; cursor: not-allowed; border-color: #444;"
-        : `background: ${up.color}; color: #111; font-weight: bold; box-shadow: 0 0 8px ${up.color}33;`;
+      let btnStyle =
+        p.coins < up.cost
+          ? "background: #333; color: #666; cursor: not-allowed; border-color: #444;"
+          : `background: ${up.color}; color: #111; font-weight: bold; box-shadow: 0 0 8px ${up.color}33;`;
 
       return `
         <div class="shop-row" style="border-color: ${up.color}; background: ${bgStyle}; flex-direction: column; align-items: stretch; text-align: left; gap: 6px; padding: 10px; cursor: help; position: relative;" onmouseenter="window.showGoldUpgradeTooltip(event, '${up.id}')" onmouseleave="window.hideTooltip()" ontouchstart="window.showGoldUpgradeTooltip(event, '${up.id}')">
@@ -4056,28 +4112,28 @@ window.showStatHoverTooltip = function (e, key) {
   let html = "";
   let p = window.resolvePlayerStats();
   if (key === "ias") {
-    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#3498db;">⏱️ Idle Attack Speed</div><div style="color:#aaa; font-size:11px;">The number of engine frames between automatic attacks (60 frames = 1 second).<br><br><b>Lower is faster!</b><br>Currently attacking automatically every ${(p.idleAttackSpeed / 60).toFixed(2)}s.</div></div>`;
+    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#3498db; display:flex; align-items:center; gap:6px;">${window.getUiIconSvg("idleAttackSpeed", 14)} Idle Attack Speed</div><div style="color:#aaa; font-size:11px;">The number of engine frames between automatic attacks (60 frames = 1 second).<br><br><b>Lower is faster!</b><br>Currently attacking automatically every ${(p.idleAttackSpeed / 60).toFixed(2)}s.</div></div>`;
     tt.style.borderColor = "#3498db";
   } else if (key === "aas") {
-    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#e74c3c;">⚡ Active Attack Speed</div><div style="color:#aaa; font-size:11px;">The cooldown limit in frames between manual clicks or spacebar taps.<br><br><b>Lower is faster!</b><br>Currently capped at ${(60 / p.activeAttackSpeed).toFixed(1)} attacks per second.</div></div>`;
+    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#e74c3c; display:flex; align-items:center; gap:6px;">${window.getUiIconSvg("activeAttackSpeed", 14)} Active Attack Speed</div><div style="color:#aaa; font-size:11px;">The cooldown limit in frames between manual clicks or spacebar taps.<br><br><b>Lower is faster!</b><br>Currently capped at ${(60 / p.activeAttackSpeed).toFixed(1)} attacks per second.</div></div>`;
     tt.style.borderColor = "#e74c3c";
   } else if (key === "drp") {
     let eff = window.state.efficiency;
-    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#2ecc71;">🍀 Drop Rate Modifier</div><div style="color:#aaa; font-size:11px;">Current Multiplier: x${(p.drop * eff).toFixed(2)} ${eff > 1.0 ? "(Manual Play Bonus Active)" : ""}<br><br><b>Exact Chances:</b><br>• Standard Mob Drop: ${(4.5 * p.drop * eff).toFixed(2)}%<br>• Rare Mob Drop: ${(15.0 * p.drop * eff).toFixed(2)}%<br>• Boss Drop: ${(25.0 * p.drop * eff).toFixed(2)}%<br>• Dungeon Mob: ${(10.0 * p.drop * eff).toFixed(2)}%</div></div>`;
+    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#2ecc71; display:flex; align-items:center; gap:6px;">${window.getUiIconSvg("dropRate", 14)} Drop Rate Modifier</div><div style="color:#aaa; font-size:11px;">Current Multiplier: x${(p.drop * eff).toFixed(2)} ${eff > 1.0 ? "(Manual Play Bonus Active)" : ""}<br><br><b>Exact Chances:</b><br>• Standard Mob Drop: ${(4.5 * p.drop * eff).toFixed(2)}%<br>• Rare Mob Drop: ${(15.0 * p.drop * eff).toFixed(2)}%<br>• Boss Drop: ${(25.0 * p.drop * eff).toFixed(2)}%<br>• Dungeon Mob: ${(10.0 * p.drop * eff).toFixed(2)}%</div></div>`;
     tt.style.borderColor = "#2ecc71";
   } else if (key === "qly") {
-    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#9b59b6;">💎 Drop Quality Modifier</div><div style="color:#aaa; font-size:11px;">Current Multiplier: x${p.qly.toFixed(2)}<br><br>Increases the probability that an item drop will roll with more bonus modifier lines (higher star rating).</div></div>`;
+    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#9b59b6; display:flex; align-items:center; gap:6px;">${window.getUiIconSvg("quality", 14)} Drop Quality Modifier</div><div style="color:#aaa; font-size:11px;">Current Multiplier: x${p.qly.toFixed(2)}<br><br>Increases the probability that an item drop will roll with more bonus modifier lines (higher star rating).</div></div>`;
     tt.style.borderColor = "#9b59b6";
   } else if (key === "idps") {
     let effMultiplier = 1 + p.critChance * (p.critDamage - 1);
     let idps = p.atk * effMultiplier * (60 / p.idleAttackSpeed);
-    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#e67e22;">🔄 Idle DPS</div><div style="color:#aaa; font-size:11px;">Current Idle Damage/Sec: ${idps.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}<br><br>Represents your average damage output per second when idle (incorporates Attack, Attack Speed, Crit Chance, and Crit Multipliers).</div></div>`;
+    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#e67e22; display:flex; align-items:center; gap:6px;">${window.getUiIconSvg("atk", 14)} Idle DPS</div><div style="color:#aaa; font-size:11px;">Current Idle Damage/Sec: ${idps.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}<br><br>Represents your average damage output per second when idle (incorporates Attack, Attack Speed, Crit Chance, and Crit Multipliers).</div></div>`;
     tt.style.borderColor = "#e67e22";
   } else if (key === "xpr") {
-    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#a855f7;">🧠 XP Rate Multiplier</div><div style="color:#aaa; font-size:11px;">Current Multiplier: x${p.xpRate.toFixed(2)}<br><br>Multiplies all acquired experience from routing, bosses, and dungeons.<br><br><b>Boosted by:</b><br>• Prestige upgrades (+10% per level)<br>• Active XP potions / elixirs<br>• Chronicle of Past Lives Unique Tome<br>• Unlocked Achievements</div></div>`;
+    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#a855f7; display:flex; align-items:center; gap:6px;">${window.getUiIconSvg("xpRate", 14)} XP Rate Multiplier</div><div style="color:#aaa; font-size:11px;">Current Multiplier: x${p.xpRate.toFixed(2)}<br><br>Multiplies all acquired experience from routing, bosses, and dungeons.<br><br><b>Boosted by:</b><br>• Prestige upgrades (+10% per level)<br>• Active XP potions / elixirs<br>• Chronicle of Past Lives Unique Tome<br>• Unlocked Achievements</div></div>`;
     tt.style.borderColor = "#a855f7";
   } else if (key === "bar") {
-    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#9b59b6;">🔮 Arcane Barrier</div><div style="color:#aaa; font-size:11px;">Current Absorption: ${Math.floor(p.arcaneBarrier * 100)}%<br><br><b>Passive (Requires Tome):</b><br>Absorbs a percentage of all incoming damage before defense calculations.<br><br>Base 20%, scaling up to 35% based on your Intelligence (INT) stat. Currently absorbing ${Math.floor(p.arcaneBarrier * 100)}% of incoming damage.</div></div>`;
+    html = `<div style="padding: 10px; width: 220px; box-sizing: border-box;"><div class="tt-title" style="color:#9b59b6; display:flex; align-items:center; gap:6px;">${window.getUiIconSvg("barrier", 14)} Arcane Barrier</div><div style="color:#aaa; font-size:11px;">Current Absorption: ${Math.floor(p.arcaneBarrier * 100)}%<br><br><b>Passive (Requires Tome):</b><br>Absorbs a percentage of all incoming damage before defense calculations.<br><br>Base 20%, scaling up to 35% based on your Intelligence (INT) stat. Currently absorbing ${Math.floor(p.arcaneBarrier * 100)}% of incoming damage.</div></div>`;
     tt.style.borderColor = "#9b59b6";
   }
 
@@ -4172,19 +4228,59 @@ window.renderPaperDoll = function () {
         el.innerHTML = `${iconBox}<strong style="font-size:10px; color:#1abc9c;">${item.name}${lockTag}</strong><br><span style="font-size:8px;color:#aaa;line-height:1;">${item.desc}</span><button class="btn-action un" style="margin-top:2px;padding:1px 3px;" onclick="window.unequipItem('${slot}')">Remove</button>`;
       } else {
         let s = [];
-        if (item.atk > 0) s.push(`⚔️${item.atk}`);
-        if (item.maxHp > 0) s.push(`❤️${item.maxHp}`);
-        if (item.def > 0) s.push(`🛡️${item.def}`);
-        if (item.moveSpeed > 0) s.push(`👟${item.moveSpeed}`);
-        if (item.critChance > 0)
-          s.push(`✨${Math.floor(item.critChance * 100)}%`);
-        if (item.critDamage > 0)
-          s.push(`💥${Math.floor(item.critDamage * 100)}%`);
-        if (item.block > 0) s.push(`🛡️${Math.floor(item.block * 100)}%`);
-        if (item.parry > 0) s.push(`⚡${Math.floor(item.parry * 100)}%`);
-        if (item.str > 0) s.push(`💪S:${item.str}`);
-        if (item.dex > 0) s.push(`🎯D:${item.dex}`);
-        if (item.int > 0) s.push(`🧠I:${item.int}`);
+        let sPlain = [];
+        if (item.atk > 0) {
+          s.push(`${window.getUiIconSvg("atk", 9.5)}${item.atk}`);
+          sPlain.push(`Atk: ${item.atk}`);
+        }
+        if (item.maxHp > 0) {
+          s.push(`${window.getUiIconSvg("maxHp", 9.5)}${item.maxHp}`);
+          sPlain.push(`HP: ${item.maxHp}`);
+        }
+        if (item.def > 0) {
+          s.push(`${window.getUiIconSvg("def", 9.5)}${item.def}`);
+          sPlain.push(`Def: ${item.def}`);
+        }
+        if (item.moveSpeed > 0) {
+          s.push(`${window.getUiIconSvg("moveSpeed", 9.5)}${item.moveSpeed}`);
+          sPlain.push(`Speed: ${item.moveSpeed}`);
+        }
+        if (item.critChance > 0) {
+          s.push(
+            `${window.getUiIconSvg("critChance", 9.5)}${Math.floor(item.critChance * 100)}%`,
+          );
+          sPlain.push(`Crit: ${Math.floor(item.critChance * 100)}%`);
+        }
+        if (item.critDamage > 0) {
+          s.push(
+            `${window.getUiIconSvg("critDamage", 9.5)}${Math.floor(item.critDamage * 100)}%`,
+          );
+          sPlain.push(`CritDmg: ${Math.floor(item.critDamage * 100)}%`);
+        }
+        if (item.block > 0) {
+          s.push(
+            `${window.getUiIconSvg("block", 9.5)}${Math.floor(item.block * 100)}%`,
+          );
+          sPlain.push(`Block: ${Math.floor(item.block * 100)}%`);
+        }
+        if (item.parry > 0) {
+          s.push(
+            `${window.getUiIconSvg("parry", 9.5)}${Math.floor(item.parry * 100)}%`,
+          );
+          sPlain.push(`Parry: ${Math.floor(item.parry * 100)}%`);
+        }
+        if (item.str > 0) {
+          s.push(`${window.getUiIconSvg("str", 9.5)}S:${item.str}`);
+          sPlain.push(`STR: ${item.str}`);
+        }
+        if (item.dex > 0) {
+          s.push(`${window.getUiIconSvg("dex", 9.5)}D:${item.dex}`);
+          sPlain.push(`DEX: ${item.dex}`);
+        }
+        if (item.int > 0) {
+          s.push(`${window.getUiIconSvg("int", 9.5)}I:${item.int}`);
+          sPlain.push(`INT: ${item.int}`);
+        }
 
         let setLabelHtml = "";
         let setName = window.getItemSetName(item);
@@ -4212,7 +4308,7 @@ window.renderPaperDoll = function () {
             setLabelHtml = `<div style="font-size:8px; color:#2ecc71; font-weight:bold; margin-top:2px; text-transform:uppercase; letter-spacing:0.5px;">✨ ${setName} Set (${displayCount}/3)</div>`;
           }
         }
-        el.innerHTML = `${iconBox}<strong style="font-size:10px;">${item.name}${temperTag}${lockTag}</strong><div style="font-size:8px; color:${color}; font-weight:bold; margin:2px 0;">${tierLabel}</div>${setLabelHtml}<div style="font-size:9px;color:#bbb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${s.join(" ")}">${s.join(" ")}</div><button class="btn-action un" style="margin-top:2px;padding:1px 3px;" onclick="window.unequipItem('${slot}')">Remove</button>`;
+        el.innerHTML = `${iconBox}<strong style="font-size:10px;">${item.name}${temperTag}${lockTag}</strong><div style="font-size:8px; color:${color}; font-weight:bold; margin:2px 0;">${tierLabel}</div>${setLabelHtml}<div style="font-size:9px;color:#bbb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${sPlain.join(", ")}">${s.join(" ")}</div><button class="btn-action un" style="margin-top:2px;padding:1px 3px;" onclick="window.unequipItem('${slot}')">Remove</button>`;
       }
     } else {
       el.className = "slots-card";
@@ -4232,40 +4328,40 @@ window.renderInventory = function () {
   let maxBag = window.getMaxBagSlots();
 
   // 1. Equip Sack
-    let eqBox = document.getElementById("bag-equip");
-    if (eqBox) {
-      if (window.inventory.EQUIP.length === 0) {
-        eqBox.innerHTML =
-          "<div style='color:#666;text-align:center;padding-top:40px;'>No equipment in sack.</div>";
-      } else {
-        eqBox.innerHTML = window.inventory.EQUIP.map((item) => {
-          let nameColor = window.getTierColor(item.statsRolled);
-          let tierStr =
-            item.statsRolled === "UNIQUE"
-              ? "UNIQUE"
-              : `${item.statsRolled}★ ${window.getTierName(item.statsRolled)}`;
-          let temperTag =
-            item.temperLevel > 0
-              ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>`
-              : "";
-          let lockTag = item.locked ? " 🔒" : "";
-          let lockBg = item.locked ? "#e74c3c" : "#7f8c8d";
-          let lockIcon = item.locked ? "🔒" : "🔓";
-          let typeText = item.type.toUpperCase();
-          if (item.type === "subweapon" && item.subType) {
-            typeText = `${item.type.toUpperCase()} (${item.subType.toUpperCase()})`;
-          }
-          let comparisonBadge = window.getComparisonDeltaBadge(item);
+  let eqBox = document.getElementById("bag-equip");
+  if (eqBox) {
+    if (window.inventory.EQUIP.length === 0) {
+      eqBox.innerHTML =
+        "<div style='color:#666;text-align:center;padding-top:40px;'>No equipment in sack.</div>";
+    } else {
+      eqBox.innerHTML = window.inventory.EQUIP.map((item) => {
+        let nameColor = window.getTierColor(item.statsRolled);
+        let tierStr =
+          item.statsRolled === "UNIQUE"
+            ? "UNIQUE"
+            : `${item.statsRolled}★ ${window.getTierName(item.statsRolled)}`;
+        let temperTag =
+          item.temperLevel > 0
+            ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>`
+            : "";
+        let lockTag = item.locked ? " 🔒" : "";
+        let lockBg = item.locked ? "#e74c3c" : "#7f8c8d";
+        let lockIcon = item.locked ? "🔒" : "🔓";
+        let typeText = item.type.toUpperCase();
+        if (item.type === "subweapon" && item.subType) {
+          typeText = `${item.type.toUpperCase()} (${item.subType.toUpperCase()})`;
+        }
+        let comparisonBadge = window.getComparisonDeltaBadge(item);
 
-          let details = `<span style="font-size:10px;color:#aaa;">Slot: ${typeText} | <span style="color:${nameColor};font-weight:bold;">${tierStr}</span></span>`;
-                            let uniqueStyle = window.getUniqueItemStyle(item);
-                            let itemStyleStr = uniqueStyle
-                              ? `background: ${uniqueStyle.bg}; border: 1.5px solid ${uniqueStyle.border}; box-shadow: inset 0 0 6px ${uniqueStyle.shadow}, 0 0 8px ${uniqueStyle.glow};`
-                              : `border-left: 4.5px solid ${nameColor} !important; background: rgba(15, 17, 26, 0.65);`;
+        let details = `<span style="font-size:10px;color:#aaa;">Slot: ${typeText} | <span style="color:${nameColor};font-weight:bold;">${tierStr}</span></span>`;
+        let uniqueStyle = window.getUniqueItemStyle(item);
+        let itemStyleStr = uniqueStyle
+          ? `background: ${uniqueStyle.bg}; border: 1.5px solid ${uniqueStyle.border}; box-shadow: inset 0 0 6px ${uniqueStyle.shadow}, 0 0 8px ${uniqueStyle.glow};`
+          : `border-left: 4.5px solid ${nameColor} !important; background: rgba(15, 17, 26, 0.65);`;
 
-                            let iconBox = `<div style="margin-right:8px; display:inline-flex; align-items:center; flex-shrink:0;">${window.getEquipIconHtml(item, 28)}</div>`;
+        let iconBox = `<div style="margin-right:8px; display:inline-flex; align-items:center; flex-shrink:0;">${window.getEquipIconHtml(item, 28)}</div>`;
 
-                            return `<div class="bag-item" style="display:flex; align-items:center; ${itemStyleStr}">
+        return `<div class="bag-item" style="display:flex; align-items:center; ${itemStyleStr}">
                                                           <div style="flex:1; min-width:0; cursor:help; text-align:left; display:flex; align-items:center;" onmouseenter="window.showInventoryTooltip(event, ${item.id})" ontouchstart="window.showInventoryTooltip(event, ${item.id})" onmouseleave="window.hideTooltip()">
                                                               ${iconBox}
                                                               <div style="flex:1; min-width:0;">
@@ -4282,27 +4378,27 @@ window.renderInventory = function () {
                                               <button class="btn-action un" style="padding:4px 8px; font-size:10px;" onclick="window.salvageItem(${item.id})">Salvage</button>
                                           </div>
                                       </div>`;
-        }).join("");
-      }
+      }).join("");
     }
+  }
 
-    // 2. Artifact Sack
-    let artBox = document.getElementById("bag-art");
-    if (artBox) {
-      if (window.inventory.ARTIFACT.length === 0) {
-        artBox.innerHTML =
-          "<div style='color:#666;text-align:center;padding-top:40px;'>No artifacts in sack.</div>";
-      } else {
-        artBox.innerHTML = window.inventory.ARTIFACT.map((item) => {
-                  let nameColor = window.getTierColor(item.statsRolled);
-                  let lockTag = item.locked ? " 🔒" : "";
-                  let lockBg = item.locked ? "#e74c3c" : "#7f8c8d";
-                  let lockIcon = item.locked ? "🔒" : "🔓";
+  // 2. Artifact Sack
+  let artBox = document.getElementById("bag-art");
+  if (artBox) {
+    if (window.inventory.ARTIFACT.length === 0) {
+      artBox.innerHTML =
+        "<div style='color:#666;text-align:center;padding-top:40px;'>No artifacts in sack.</div>";
+    } else {
+      artBox.innerHTML = window.inventory.ARTIFACT.map((item) => {
+        let nameColor = window.getTierColor(item.statsRolled);
+        let lockTag = item.locked ? " 🔒" : "";
+        let lockBg = item.locked ? "#e74c3c" : "#7f8c8d";
+        let lockIcon = item.locked ? "🔒" : "🔓";
 
-                  let details = `<span style="font-size:10px;color:#d2b4de;font-weight:bold;">Trait: ${item.desc}</span>`;
-                  let iconBox = `<div style="margin-right:8px; display:inline-flex; align-items:center;">${window.getArtifactIconHtml(item.trait, 28)}</div>`;
+        let details = `<span style="font-size:10px;color:#d2b4de;font-weight:bold;">Trait: ${item.desc}</span>`;
+        let iconBox = `<div style="margin-right:8px; display:inline-flex; align-items:center;">${window.getArtifactIconHtml(item.trait, 28)}</div>`;
 
-                  return `<div class="bag-item">
+        return `<div class="bag-item">
                                           <div style="flex:1; cursor:help; text-align:left; display:flex; align-items:center;" onmouseenter="window.showInventoryTooltip(event, ${item.id})" ontouchstart="window.showInventoryTooltip(event, ${item.id})" onmouseleave="window.hideTooltip()">
                                               ${iconBox}
                                               <div style="flex:1;">
@@ -4315,9 +4411,9 @@ window.renderInventory = function () {
                                   <button class="btn-action un" style="margin-left:12px;" onclick="window.salvageItem(${item.id})">Salvage</button>
                               </div>
                           </div>`;
-                }).join("");
-      }
+      }).join("");
     }
+  }
 
   // 3. Materials Sacks
   const getEtcIconHtml = window.getEtcIconHtml;
@@ -4708,9 +4804,9 @@ window.generateItemCardHtml = function (
   }
 
   let subtitle =
-      item.type === "artifact"
-        ? "Unique Artifact"
-        : `${labelDisplay} | <span style="color:${tierColor}; font-weight:bold;">${tierStrDisplay(item)}</span>`;
+    item.type === "artifact"
+      ? "Unique Artifact"
+      : `${labelDisplay} | <span style="color:${tierColor}; font-weight:bold;">${tierStrDisplay(item)}</span>`;
 
   let temperTag =
     item.temperLevel > 0
@@ -4733,82 +4829,82 @@ window.generateItemCardHtml = function (
     }
   }
 
-  // --- DIABLO 4 STYLE BASE STATS SECTION ---
+  // --- BASE STATS SECTION ---
   if (item.id !== "dummy" && item.type !== "artifact") {
-    let baseStats = [];
+      let baseStats = [];
 
-    if (item.baseAtk > 0) {
-      baseStats.push({
-        label: "Weapon Damage",
-        val: Math.round(item.baseAtk),
-        icon: "⚔️",
-      });
-    }
-    if (item.baseDef > 0) {
-      baseStats.push({
-        label: "Armor",
-        val: Math.round(item.baseDef),
-        icon: "🛡️",
-      });
-    }
-    if (item.baseMaxHp > 0) {
-      baseStats.push({
-        label: "Max Life",
-        val: Math.round(item.baseMaxHp),
-        icon: "❤️",
-      });
-    }
-    if (item.baseMoveSpeed > 0) {
-      baseStats.push({
-        label: "Speed",
-        val: Math.round(item.baseMoveSpeed),
-        icon: "👟",
-      });
-    }
-    if (item.baseBlock > 0) {
-      baseStats.push({
-        label: "Block Rate",
-        val: Math.round(item.baseBlock * 100) + "%",
-        icon: "🛡️",
-      });
-    }
-    if (item.baseParry > 0) {
-      baseStats.push({
-        label: "Parry Rate",
-        val: Math.round(item.baseParry * 100) + "%",
-        icon: "⚡",
-      });
-    }
-    if (item.baseInt > 0) {
-      baseStats.push({
-        label: "Intelligence",
-        val: Math.round(item.baseInt),
-        icon: "🧠",
-      });
-    }
+      if (item.baseAtk > 0) {
+        baseStats.push({
+          label: "Weapon Damage",
+          val: Math.round(item.baseAtk),
+          icon: window.getUiIconSvg("atk", 14),
+        });
+      }
+      if (item.baseDef > 0) {
+        baseStats.push({
+          label: "Armor",
+          val: Math.round(item.baseDef),
+          icon: window.getUiIconSvg("def", 14),
+        });
+      }
+      if (item.baseMaxHp > 0) {
+        baseStats.push({
+          label: "Max Life",
+          val: Math.round(item.baseMaxHp),
+          icon: window.getUiIconSvg("maxHp", 14),
+        });
+      }
+      if (item.baseMoveSpeed > 0) {
+        baseStats.push({
+          label: "Speed",
+          val: Math.round(item.baseMoveSpeed),
+          icon: window.getUiIconSvg("moveSpeed", 14),
+        });
+      }
+      if (item.baseBlock > 0) {
+        baseStats.push({
+          label: "Block Rate",
+          val: Math.round(item.baseBlock * 100) + "%",
+          icon: window.getUiIconSvg("block", 14),
+        });
+      }
+      if (item.baseParry > 0) {
+        baseStats.push({
+          label: "Parry Rate",
+          val: Math.round(item.baseParry * 100) + "%",
+          icon: window.getUiIconSvg("parry", 14),
+        });
+      }
+      if (item.baseInt > 0) {
+        baseStats.push({
+          label: "Intelligence",
+          val: Math.round(item.baseInt),
+          icon: window.getUiIconSvg("int", 14),
+        });
+      }
 
     if (baseStats.length > 0) {
       html += `<div style="background: rgba(255, 255, 255, 0.02); border: 1px solid #222; border-radius: 4px; padding: 6px; margin: 8px 0; text-align: center;">`;
       html += `<div style="font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; font-weight: bold;">Base Stats</div>`;
       baseStats.forEach((b) => {
-        html += `<div style="font-size: 13px; font-weight: bold; color: #f5f6fa; margin: 1px 0;">${b.icon} ${b.val} ${b.label}</div>`;
+        html += `<div style="font-size: 13px; font-weight: bold; color: #f5f6fa; margin: 1px 0; display: flex; align-items: center; justify-content: center; gap: 4px;">${b.icon}<span>${b.val} ${b.label}</span></div>`;
       });
       html += `</div>`;
     }
   }
 
   if (item.type === "artifact") {
-      html += `<div class="tt-trait">${item.breakdown}</div>`;
+    html += `<div class="tt-trait">${item.breakdown}</div>`;
 
-      // Only display potential extra rolls on preview (dummy) items to prevent clutter on equipped items
-      if (item.id === "dummy") {
-        html += `<div style="margin-top:10px; border-top:1.5px dashed #1abc9c; padding-top:6px;">`;
-        html += `<div style="font-weight:bold; color:#1abc9c; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">🎰 Potential Extra Affixes (Rolls 3):</div>`;
-        html += `<div style="font-size:9.5px; color:#aaa; line-height:1.45; white-space:normal; font-family:monospace;">`;
-        html += `Can roll 3 extra random affixes: Drop Rate, Drop Quality, Gold Multiplier, Rare Spawn, Fairy Spawn, Strength, Dexterity, or Intelligence.`;
-        html += `</div></div>`;
-      }
-    } else {
+    // Only display potential extra rolls on preview (dummy) items to prevent clutter on equipped items
+    if (item.id === "dummy") {
+      html += `<div style="margin-top:10px; border-top:1.5px dashed #1abc9c; padding-top:6px;">`;
+      html += `<div style="font-weight:bold; color:#1abc9c; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">🎰 Potential Extra Affixes (Rolls 3):</div>`;
+      html += `<div style="font-size:9.5px; color:#aaa; line-height:1.45; white-space:normal; font-family:monospace;">`;
+      html += `Can roll 3 extra random affixes: Drop Rate, Drop Quality, Gold Multiplier, Rare Spawn, Fairy Spawn, Strength, Dexterity, or Intelligence.`;
+      html += `</div></div>`;
+    }
+  } else {
     if (isUnique && item.desc) {
       html += `<div class="tt-stat-line" style="color:#ffeaa7; margin-bottom: 10px; white-space:normal; line-height:1.4; padding:6px; border:1px dashed #1abc9c; background:rgba(0,0,0,0.4); border-radius:4px;"><strong>• Unique Effect:</strong> ${item.desc}</div>`;
     }
@@ -4819,104 +4915,99 @@ window.generateItemCardHtml = function (
   }
 
   // --- EXPLICIT AFFIXES SECTION ---
-    if (item.id !== "dummy") {
-      let affixes = [];
+  if (item.id !== "dummy") {
+    let affixes = [];
 
-      const statsKeys = [
-        { key: "atk", icon: "⚔️", label: "Attack", baseKey: "baseAtk" },
-        { key: "maxHp", icon: "❤️", label: "Max HP", baseKey: "baseMaxHp" },
-        { key: "def", icon: "🛡️", label: "Defense", baseKey: "baseDef" },
-        {
-          key: "moveSpeed",
-          icon: "👟",
-          label: "Move Speed",
-          baseKey: "baseMoveSpeed",
-        },
-        { key: "str", icon: "💪", label: "STR", baseKey: "baseStr" },
-        { key: "dex", icon: "🎯", label: "DEX", baseKey: "baseDex" },
-        { key: "int", icon: "🧠", label: "INT", baseKey: "baseInt" },
-        { key: "critChance", icon: "✨", label: "Crit Chance", isPct: true },
-        { key: "critDamage", icon: "💥", label: "Crit Multi", isPct: true },
-        {
-          key: "block",
-          icon: "🛡️",
-          label: "Block Rate",
-          isPct: true,
-          baseKey: "baseBlock",
-        },
-        {
-          key: "parry",
-          icon: "⚡",
-          label: "Parry Rate",
-          isPct: true,
-          baseKey: "baseParry",
-        },
-        {
-          key: "activeAttackSpeed",
-          icon: "⚡",
-          label: "Active Atk Spd",
-          isPct: true,
-          baseKey: "baseActiveSpeed",
-        },
-        {
-          key: "idleAttackSpeed",
-          icon: "⏱️",
-          label: "Idle Atk Spd",
-          isPct: true,
-          baseKey: "baseIdleSpeed",
-        },
-        { key: "dropRate", icon: "🍀", label: "Drop Rate", isPct: true },
-        { key: "quality", icon: "💎", label: "Drop Quality", isPct: true },
-        { key: "goldMulti", icon: "🟡", label: "Gold Multi", isPct: true },
-        {
-          key: "rareSpawn",
-          icon: "✨",
-          label: "Rare Spawn",
-          isPct: true,
-          isDoublePct: true,
-        },
-        { key: "fairySpawn", icon: "🧚", label: "Fairy Spawn", isPct: true },
-      ];
+    const statsKeys = [
+      { key: "atk", label: "Attack", baseKey: "baseAtk" },
+      { key: "maxHp", label: "Max HP", baseKey: "baseMaxHp" },
+      { key: "def", label: "Defense", baseKey: "baseDef" },
+      {
+        key: "moveSpeed",
+        label: "Move Speed",
+        baseKey: "baseMoveSpeed",
+      },
+      { key: "str", label: "STR", baseKey: "baseStr" },
+      { key: "dex", label: "DEX", baseKey: "baseDex" },
+      { key: "int", label: "INT", baseKey: "baseInt" },
+      { key: "critChance", label: "Crit Chance", isPct: true },
+      { key: "critDamage", label: "Crit Multi", isPct: true },
+      {
+        key: "block",
+        label: "Block Rate",
+        isPct: true,
+        baseKey: "baseBlock",
+      },
+      {
+        key: "parry",
+        label: "Parry Rate",
+        isPct: true,
+        baseKey: "baseParry",
+      },
+      {
+        key: "activeAttackSpeed",
+        label: "Active Atk Spd",
+        isPct: true,
+        baseKey: "baseActiveSpeed",
+      },
+      {
+        key: "idleAttackSpeed",
+        label: "Idle Atk Spd",
+        isPct: true,
+        baseKey: "baseIdleSpeed",
+      },
+      { key: "dropRate", label: "Drop Rate", isPct: true },
+      { key: "quality", label: "Drop Quality", isPct: true },
+      { key: "goldMulti", label: "Gold Multi", isPct: true },
+      {
+        key: "rareSpawn",
+        label: "Rare Spawn",
+        isPct: true,
+        isDoublePct: true,
+      },
+      { key: "fairySpawn", label: "Fairy Spawn", isPct: true },
+    ];
 
-      statsKeys.forEach((s) => {
-        let totalVal = item[s.key] || 0;
-        let baseVal =
-          item.type !== "artifact" && s.baseKey ? item[s.baseKey] || 0 : 0;
-        let affixVal = totalVal - baseVal;
+    statsKeys.forEach((s) => {
+      let totalVal = item[s.key] || 0;
+      let baseVal =
+        item.type !== "artifact" && s.baseKey ? item[s.baseKey] || 0 : 0;
+      let affixVal = totalVal - baseVal;
 
-        if (
-          affixVal > 0.0001 ||
-          ((s.key === "activeAttackSpeed" || s.key === "idleAttackSpeed") &&
-            affixVal > 0)
-        ) {
-          let displayVal = "";
-          if (s.isDoublePct) {
-            displayVal = `+${(affixVal * 100).toFixed(2)}%`;
-          } else if (s.isPct) {
-            displayVal = `+${Math.floor(affixVal * 100)}%`;
-          } else {
-            displayVal = `+${Math.round(affixVal).toLocaleString()}`;
-          }
-
-          let rangeStr = window.formatStatRangeStr
-            ? window.formatStatRangeStr(item, s.key, s.isPct || s.isDoublePct)
-            : "";
-          affixes.push(
-            `<div class="tt-stat-line" style="color:${s.key === "critChance" || s.key === "critDamage" ? "#e67e22" : "#ecf0f1"};">• ${s.icon} ${s.label}: ${displayVal}${window.getStatEnchantSuffix ? window.getStatEnchantSuffix(item, s.key) : ""}${rangeStr}</div>`,
-          );
+      if (
+        affixVal > 0.0001 ||
+        ((s.key === "activeAttackSpeed" || s.key === "idleAttackSpeed") &&
+          affixVal > 0)
+      ) {
+        let displayVal = "";
+        if (s.isDoublePct) {
+          displayVal = `+${(affixVal * 100).toFixed(2)}%`;
+        } else if (s.isPct) {
+          displayVal = `+${Math.floor(affixVal * 100)}%`;
+        } else {
+          displayVal = `+${Math.round(affixVal).toLocaleString()}`;
         }
-      });
 
-      if (affixes.length > 0) {
-        if (item.type === "artifact") {
-          html += `<div style="font-weight:bold; color:#aaa; margin-top:8px; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Bonus Parameters:</div>`;
-        }
-        html += affixes.join("");
-      } else {
-        if (item.type !== "artifact") {
-          html += `<div class="tt-stat-line" style="color:#7f8c8d; font-style:italic;">No extra affixes.</div>`;
-        }
+        let iconSvg = window.getUiIconSvg(s.key, 11);
+        let rangeStr = window.formatStatRangeStr
+          ? window.formatStatRangeStr(item, s.key, s.isPct || s.isDoublePct)
+          : "";
+        affixes.push(
+          `<div class="tt-stat-line" style="color:${s.key === "critChance" || s.key === "critDamage" ? "#e67e22" : "#ecf0f1"};">• ${iconSvg} ${s.label}: ${displayVal}${window.getStatEnchantSuffix ? window.getStatEnchantSuffix(item, s.key) : ""}${rangeStr}</div>`,
+        );
       }
+    });
+
+    if (affixes.length > 0) {
+      if (item.type === "artifact") {
+        html += `<div style="font-weight:bold; color:#aaa; margin-top:8px; margin-bottom:4px; border-bottom: 1px solid #333; padding-bottom: 2px;">Bonus Parameters:</div>`;
+      }
+      html += affixes.join("");
+    } else {
+      if (item.type !== "artifact") {
+        html += `<div class="tt-stat-line" style="color:#7f8c8d; font-style:italic;">No extra affixes.</div>`;
+      }
+    }
 
     let setName = window.getItemSetName ? window.getItemSetName(item) : null;
     if (setName && window.SET_DEFINITIONS[setName]) {
@@ -5277,24 +5368,26 @@ window.switchTab = function (tabId) {
     window.ensureDraftInitialized();
   }
   if (tabId === "forge") {
-    if (typeof window.renderForgeTab === "function") window.renderForgeTab();
-  }
-  if (tabId === "market") {
-    if (typeof window.refreshMarketShopIfNeeded === "function")
-      window.refreshMarketShopIfNeeded();
-    if (typeof window.renderMysticalShop === "function")
-      window.renderMysticalShop();
-    if (typeof window.renderGoldUpgrades === "function")
-      window.renderGoldUpgrades();
-    if (!document.querySelector("#tab-market .sub-tab-btn.active")) {
-      window.switchMarketSubTab("ALTAR");
-    } else {
-      let activeBtn = document.querySelector("#tab-market .sub-tab-btn.active");
-      if (activeBtn && activeBtn.id === "market-sub-tab-altar") {
-        window.renderAltarTab();
+              if (typeof window.renderForgeTab === "function") window.renderForgeTab();
+            }
+            if (tabId === "activities") {
+                let currentSub = window.state.currentActivitiesSubTab || "DUNGEONS";
+                window.switchActivitiesSubTab(currentSub);
+                if (typeof window.renderAltarTab === "function") {
+                  window.renderAltarTab();
+                }
+              }
+    if (tabId === "market") {
+      if (typeof window.refreshMarketShopIfNeeded === "function")
+        window.refreshMarketShopIfNeeded();
+      if (typeof window.renderMysticalShop === "function")
+        window.renderMysticalShop();
+      if (typeof window.renderGoldUpgrades === "function")
+        window.renderGoldUpgrades();
+      if (!document.querySelector("#tab-market .sub-tab-btn.active")) {
+        window.switchMarketSubTab("GACHA");
       }
     }
-  }
   if (tabId === "prestige") {
     if (typeof window.renderPrestigeTab === "function")
       window.renderPrestigeTab();
@@ -5356,16 +5449,38 @@ window.switchMarketSubTab = function (subTabId) {
   if (activeSec) activeSec.style.display = "block";
 
   if (subTabId === "ALTAR") {
-    window.renderAltarTab();
-  } else if (subTabId === "GACHA") {
-    window.updateGachaRecentList();
-    window.renderGachaShowcaseMarquee();
-  }
+      window.renderAltarTab();
+    } else if (subTabId === "GACHA") {
+      window.updateGachaRecentList();
+      window.renderGachaShowcaseMarquee();
+    }
 
-  if (typeof window.hideTooltip === "function") window.hideTooltip();
-};
+    if (typeof window.hideTooltip === "function") window.hideTooltip();
+  };
 
-window.toggleFullscreen = function () {
+  window.switchActivitiesSubTab = function (subTabId) {
+    window.state.currentActivitiesSubTab = subTabId;
+    document
+      .querySelectorAll("#tab-activities .sub-tabs .sub-tab-btn")
+      .forEach((btn) => btn.classList.remove("active"));
+    document
+      .querySelectorAll(".activities-section-content")
+      .forEach((sec) => (sec.style.display = "none"));
+
+    let btnSuffix = subTabId === "DUNGEONS" ? "dungeons" : subTabId === "CRUCIBLE" ? "crucible" : "altar";
+    let activeBtn = document.getElementById("activities-sub-tab-" + btnSuffix);
+    if (activeBtn) activeBtn.classList.add("active");
+
+    let activeSec = document.getElementById("activities-sec-" + btnSuffix);
+    if (activeSec) activeSec.style.display = "block";
+
+    if (subTabId === "ALTAR") {
+      window.renderAltarTab();
+    }
+    if (typeof window.hideTooltip === "function") window.hideTooltip();
+  };
+
+  window.toggleFullscreen = function () {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen().catch((err) => {
       console.log("Fullscreen activation failed", err);
@@ -5891,11 +6006,17 @@ window.showAchievementTooltip = function (e, achId) {
   let unlocked =
     window.playerStats.unlockedAchievements &&
     window.playerStats.unlockedAchievements.includes(achId);
-  let timestamp = window.playerStats.achievementTimestamps ? window.playerStats.achievementTimestamps[achId] : null;
+  let timestamp = window.playerStats.achievementTimestamps
+    ? window.playerStats.achievementTimestamps[achId]
+    : null;
   let timestampHtml = "";
   if (unlocked && timestamp) {
     let dateObj = new Date(timestamp);
-    let dateStr = dateObj.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    let dateStr = dateObj.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
     timestampHtml = `<div class="tt-stat-line" style="color:#7f8c8d; font-size:9.5px; margin-top:2px;">📅 Completed: ${date}</div>`;
   } else if (unlocked) {
     timestampHtml = `<div class="tt-stat-line" style="color:#7f8c8d; font-size:9.5px; margin-top:2px;">📅 Completed: Pre-Release Legacy</div>`;
@@ -6731,16 +6852,16 @@ window.openEquipSwapWindow = function (e, slotKey) {
   let contentHtml = "";
 
   if (eligibleItems.length === 0) {
-            contentHtml = `<div style="color:#666; text-align:center; padding: 25px 0; font-size:11px; font-style:italic;">No unequipped ${targetType}s found.</div>`;
-          } else {
-            contentHtml = eligibleItems
-              .map((item) => {
-                let color = window.getTierColor(item.statsRolled);
-                let rating =
-                  item.statsRolled === "UNIQUE" ? "UNIQUE" : `${item.statsRolled}★`;
-                let comparisonBadge = window.getComparisonDeltaBadge(item);
+    contentHtml = `<div style="color:#666; text-align:center; padding: 25px 0; font-size:11px; font-style:italic;">No unequipped ${targetType}s found.</div>`;
+  } else {
+    contentHtml = eligibleItems
+      .map((item) => {
+        let color = window.getTierColor(item.statsRolled);
+        let rating =
+          item.statsRolled === "UNIQUE" ? "UNIQUE" : `${item.statsRolled}★`;
+        let comparisonBadge = window.getComparisonDeltaBadge(item);
 
-                return `
+        return `
                                   <div class="bag-item" style="padding:6px; margin-bottom:5px; background:#181c22; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;"
                                        onmouseenter="window.showInventoryTooltip(event, ${item.id})"
                                        ontouchstart="window.showInventoryTooltip(event, ${item.id})"
@@ -6752,9 +6873,9 @@ window.openEquipSwapWindow = function (e, slotKey) {
                                       <button class="btn-action" style="padding:3px 8px; font-size:10px; font-weight:bold; background:var(--accent-green);" onclick="window.executeSwapItem('${slotKey}', ${item.id})">Equip</button>
                                   </div>
                               `;
-              })
-              .join("");
-          }
+      })
+      .join("");
+  }
 
   win.innerHTML = `
                         <div class="draggable-header" id="equip-win-handle" style="background: linear-gradient(180deg, #181d24 0%, #0d1117 100%);">
@@ -7311,7 +7432,7 @@ window.makeWindowDraggable = function (el, handle) {
 window.altarSlideIndex = 0;
 
 window.renderAltarTab = function () {
-  let sec = document.getElementById("market-sec-altar");
+  let sec = document.getElementById("runs-sec-altar");
   if (!sec) return;
 
   let isRiftActive = !!window.playerStats.activeRift;
@@ -8782,8 +8903,12 @@ window.updateGachaRecentList = function () {
   // Render local history template
   let renderItemRow = (item, playerName = "You") => {
     let col = window.getTierColor(item.statsRolled);
-    let starDisplay = item.statsRolled === "UNIQUE" ? "★" : `${item.statsRolled}★`;
-    let shortName = item.name.replace(/⭐ UNIQUE |(Common|Rare|Magic|Epic|Legendary|Mythic) /g, "");
+    let starDisplay =
+      item.statsRolled === "UNIQUE" ? "★" : `${item.statsRolled}★`;
+    let shortName = item.name.replace(
+      /⭐ UNIQUE |(Common|Rare|Magic|Epic|Legendary|Mythic) /g,
+      "",
+    );
     return `
         <div style="background:#07030b; border: 1px solid #222; border-left: 3.5px solid ${col}; border-radius:3px; padding:4px 6px; display:flex; justify-content:space-between; align-items:center; cursor:help; font-family:sans-serif; gap:6px;"
              onmouseenter="window.showInventoryTooltip(event, ${item.id})"
@@ -8800,7 +8925,11 @@ window.updateGachaRecentList = function () {
 
   // Throttled fetch implementation: Only hit network once every 10 seconds to eliminate infinite-loop flickering!
   let now = Date.now();
-  if (window.GAME_SERVER_URL && (!window.lastGachaRecentFetchTime || now - window.lastGachaRecentFetchTime >= 10000)) {
+  if (
+    window.GAME_SERVER_URL &&
+    (!window.lastGachaRecentFetchTime ||
+      now - window.lastGachaRecentFetchTime >= 10000)
+  ) {
     window.lastGachaRecentFetchTime = now;
     fetch(`${window.GAME_SERVER_URL}/api/gacha/global-pulls`)
       .then((r) => r.json())
@@ -8816,7 +8945,10 @@ window.updateGachaRecentList = function () {
         }
       })
       .catch((err) => {
-        console.log("Global pulls offline, falling back to local history:", err);
+        console.log(
+          "Global pulls offline, falling back to local history:",
+          err,
+        );
         renderList();
       });
   } else {
@@ -8824,7 +8956,10 @@ window.updateGachaRecentList = function () {
   }
 
   function renderList() {
-    if (window.lastGachaRecentPullsData && window.lastGachaRecentPullsData.length > 0) {
+    if (
+      window.lastGachaRecentPullsData &&
+      window.lastGachaRecentPullsData.length > 0
+    ) {
       let globalHtml = window.lastGachaRecentPullsData
         .map((pull) => renderItemRow(pull.item, pull.playerName || "Player"))
         .join("");
@@ -9508,24 +9643,24 @@ window.fetchMailboxData = function () {
 
   const claimedMailIds = window.playerStats.claimedMailIds || [];
   fetch(`${window.GAME_SERVER_URL}/api/mailbox`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, claimedMailIds })
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId, claimedMailIds }),
   })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success && data.mailbox) {
-      window.renderMailboxItems(data.mailbox);
-      const hasUnclaimed = data.mailbox.some(m => !m.claimed);
-      window.updateMailboxBadge(hasUnclaimed);
-    } else {
-      listEl.innerHTML = `<div style="color:#e74c3c; text-align:center; padding: 20px 0; font-size:11px;">Error loading mailbox data.</div>`;
-    }
-  })
-  .catch(err => {
-    console.error("Mailbox fetch failed:", err);
-    listEl.innerHTML = `<div style="color:#e74c3c; text-align:center; padding: 20px 0; font-size:11px;">Could not connect to the mail server.</div>`;
-  });
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success && data.mailbox) {
+        window.renderMailboxItems(data.mailbox);
+        const hasUnclaimed = data.mailbox.some((m) => !m.claimed);
+        window.updateMailboxBadge(hasUnclaimed);
+      } else {
+        listEl.innerHTML = `<div style="color:#e74c3c; text-align:center; padding: 20px 0; font-size:11px;">Error loading mailbox data.</div>`;
+      }
+    })
+    .catch((err) => {
+      console.error("Mailbox fetch failed:", err);
+      listEl.innerHTML = `<div style="color:#e74c3c; text-align:center; padding: 20px 0; font-size:11px;">Could not connect to the mail server.</div>`;
+    });
 };
 
 window.renderMailboxItems = function (mailbox) {
@@ -9537,73 +9672,94 @@ window.renderMailboxItems = function (mailbox) {
     return;
   }
 
-  listEl.innerHTML = mailbox.map(mail => {
-    let buttonHtml = "";
-    if (mail.claimed) {
-      buttonHtml = `<span style="color:#7f8c8d; font-weight:bold; font-size:11px;">Claimed ✓</span>`;
-    } else {
-      buttonHtml = `<button class="btn-action" style="background:#e74c3c; color:white; font-size:11px; padding:4px 10px;" onclick="window.claimMailReward('${mail.id}')">Claim</button>`;
-    }
+  listEl.innerHTML = mailbox
+    .map((mail) => {
+      let buttonHtml = "";
+      if (mail.claimed) {
+        buttonHtml = `<span style="color:#7f8c8d; font-weight:bold; font-size:11px;">Claimed ✓</span>`;
+      } else {
+        buttonHtml = `<button class="btn-action" style="background:#e74c3c; color:white; font-size:11px; padding:4px 10px;" onclick="window.claimMailReward('${mail.id}')">Claim</button>`;
+      }
 
-    // Build highly optimized, stylized HTML badges using native visual generators
-    let rewardsHtml = "";
+      // Build highly optimized, stylized HTML badges using native visual generators
+      let rewardsHtml = "";
 
-    if (mail.rewards.coins) {
-      rewardsHtml += `
+      if (mail.rewards.coins) {
+        rewardsHtml += `
         <div style="display:inline-flex; align-items:center; background:rgba(241,196,15,0.06); border:1px solid #f1c40f; padding:3px 8px; border-radius:4px; font-family:monospace; font-size:10px; color:#fff; font-weight:bold;">
             <span style="background:rgba(241,196,15,0.18); border-radius:4px; width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center; margin-right:6px; font-size:11px; border:1px solid #d4af37;">🟡</span>
             <span>+${mail.rewards.coins.toLocaleString()} Gold</span>
         </div>
       `;
-    }
+      }
 
-    if (mail.rewards.etc) {
-      Object.keys(mail.rewards.etc).forEach(k => {
-        let iconHtml = typeof window.getEtcIconHtml === "function" ? window.getEtcIconHtml(k) : "📦";
-        // Shrink the standard 32px inventory icon down to 22px to fit the compact mailbox layout cleanly
-        iconHtml = iconHtml.replace('width: 32px; height: 32px;', 'width: 22px; height: 22px; padding: 2px; margin-right: 6px;');
-        iconHtml = iconHtml.replace('margin-right: 12px;', 'margin-right: 6px;');
+      if (mail.rewards.etc) {
+        Object.keys(mail.rewards.etc).forEach((k) => {
+          let iconHtml =
+            typeof window.getEtcIconHtml === "function"
+              ? window.getEtcIconHtml(k)
+              : "📦";
+          // Shrink the standard 32px inventory icon down to 22px to fit the compact mailbox layout cleanly
+          iconHtml = iconHtml.replace(
+            "width: 32px; height: 32px;",
+            "width: 22px; height: 22px; padding: 2px; margin-right: 6px;",
+          );
+          iconHtml = iconHtml.replace(
+            "margin-right: 12px;",
+            "margin-right: 6px;",
+          );
 
-        rewardsHtml += `
+          rewardsHtml += `
           <div style="display:inline-flex; align-items:center; background:rgba(255,255,255,0.015); border:1px solid #374151; padding:3px 8px; border-radius:4px; font-family:monospace; font-size:10px; color:#fff; font-weight:bold;">
               ${iconHtml}
               <span>+${mail.rewards.etc[k]} ${k}</span>
           </div>
         `;
-      });
-    }
+        });
+      }
 
-    if (mail.rewards.use) {
-          Object.keys(mail.rewards.use).forEach(k => {
-            let iconHtml = typeof window.getUseIconHtml === "function" ? window.getUseIconHtml(k) : "🧪";
-            iconHtml = iconHtml.replace('width: 32px; height: 32px;', 'width: 22px; height: 22px; padding: 2px; margin-right: 6px;');
-            iconHtml = iconHtml.replace('margin-right: 12px;', 'margin-right: 6px;');
+      if (mail.rewards.use) {
+        Object.keys(mail.rewards.use).forEach((k) => {
+          let iconHtml =
+            typeof window.getUseIconHtml === "function"
+              ? window.getUseIconHtml(k)
+              : "🧪";
+          iconHtml = iconHtml.replace(
+            "width: 32px; height: 32px;",
+            "width: 22px; height: 22px; padding: 2px; margin-right: 6px;",
+          );
+          iconHtml = iconHtml.replace(
+            "margin-right: 12px;",
+            "margin-right: 6px;",
+          );
 
-            rewardsHtml += `
+          rewardsHtml += `
               <div style="display:inline-flex; align-items:center; background:rgba(255,255,255,0.015); border:1px solid #374151; padding:3px 8px; border-radius:4px; font-family:monospace; font-size:10px; color:#fff; font-weight:bold;">
                   ${iconHtml}
                   <span>+${mail.rewards.use[k]} ${k}</span>
               </div>
             `;
-          });
-        }
+        });
+      }
 
-        if (mail.rewards.title) {
-          let tKey = mail.rewards.title;
-          let tData = window.TITLES_DATA[tKey];
-          if (tData) {
-            let iconHtml = tData.icon || "";
-            let inlineIcon = iconHtml.replace('width="14" height="14"', 'width="12" height="12"').replace('margin-right: 3px;', 'margin-right: 4px;');
-            rewardsHtml += `
+      if (mail.rewards.title) {
+        let tKey = mail.rewards.title;
+        let tData = window.TITLES_DATA[tKey];
+        if (tData) {
+          let iconHtml = tData.icon || "";
+          let inlineIcon = iconHtml
+            .replace('width="14" height="14"', 'width="12" height="12"')
+            .replace("margin-right: 3px;", "margin-right: 4px;");
+          rewardsHtml += `
               <div style="display:inline-flex; align-items:center; background:rgba(255,0,127,0.06); border:1px solid #ff007f; padding:3px 8px; border-radius:4px; font-family:monospace; font-size:10px; color:#fff; font-weight:bold; box-shadow:0 0 6px rgba(255,0,127,0.15);">
                   ${inlineIcon}
                   <span style="color:#ffb6c1;">Title: [${tData.name}]</span>
               </div>
             `;
-          }
         }
+      }
 
-    return `
+      return `
       <div class="bag-item" style="border-left: 3px solid #e74c3c; background:#181c22; padding:8px 12px; margin-bottom:0; display:flex; flex-direction:column; gap:4px; text-align:left; cursor:default;">
           <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
               <strong style="color:#e74c3c; font-size:12.5px;">${mail.title}</strong>
@@ -9615,7 +9771,8 @@ window.renderMailboxItems = function (mailbox) {
           </div>
       </div>
     `;
-  }).join("");
+    })
+    .join("");
 };
 
 window.claimMailReward = function (mailId) {
@@ -9624,154 +9781,182 @@ window.claimMailReward = function (mailId) {
   const claimedMailIds = window.playerStats.claimedMailIds || [];
 
   fetch(`${window.GAME_SERVER_URL}/api/claim-mail`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, mailId, claimedMailIds })
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId, mailId, claimedMailIds }),
   })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success && data.rewards) {
-      const rewards = data.rewards;
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success && data.rewards) {
+        const rewards = data.rewards;
 
-      // 1. Claim Gold
-      if (rewards.coins) {
-        window.playerStats.coins += rewards.coins;
-        window.playerStats.totalGoldEarned = (window.playerStats.totalGoldEarned || 0) + rewards.coins;
-      }
+        // 1. Claim Gold
+        if (rewards.coins) {
+          window.playerStats.coins += rewards.coins;
+          window.playerStats.totalGoldEarned =
+            (window.playerStats.totalGoldEarned || 0) + rewards.coins;
+        }
 
-      // 2. Claim Materials
-      if (rewards.etc) {
-        Object.keys(rewards.etc).forEach(k => {
-          if (typeof window.addEtcDrop === "function") {
-            window.addEtcDrop(k, rewards.etc[k]);
+        // 2. Claim Materials
+        if (rewards.etc) {
+          Object.keys(rewards.etc).forEach((k) => {
+            if (typeof window.addEtcDrop === "function") {
+              window.addEtcDrop(k, rewards.etc[k]);
+            }
+          });
+        }
+
+        // 3. Claim Consumables
+        if (rewards.use) {
+          Object.keys(rewards.use).forEach((k) => {
+            if (typeof window.addUseDrop === "function") {
+              window.addUseDrop(k, rewards.use[k]);
+            }
+          });
+        }
+
+        // 4. Claim Custom Title
+        if (rewards.title) {
+          let tKey = rewards.title;
+          window.playerStats.unlockedTitles =
+            window.playerStats.unlockedTitles || [];
+          if (!window.playerStats.unlockedTitles.includes(tKey)) {
+            window.playerStats.unlockedTitles.push(tKey);
           }
-        });
+          window.playerStats.equippedTitle = tKey; // Auto-equip it!
+        }
+
+        // Register the claimed ID locally on success to prevent double claims if the server restarts
+        window.playerStats.claimedMailIds =
+          window.playerStats.claimedMailIds || [];
+        if (!window.playerStats.claimedMailIds.includes(mailId)) {
+          window.playerStats.claimedMailIds.push(mailId);
+        }
+
+        // Visual / Audio Feedback
+        if (typeof window.spawnPurchaseCelebration === "function") {
+          window.spawnPurchaseCelebration("gacha", "#e74c3c", 5); // Crimson celebration burst
+        }
+        if (window.SoundManager) window.SoundManager.play("revive");
+
+        window.pushHeaderToast("🎁 Mailbox Rewards Claimed!", "#2ecc71");
+
+        // Update UI & save the state immediately
+        window.updateUI();
+        window.renderInventory();
+        window.saveGame();
+
+        // Refresh current mailbox state
+        window.fetchMailboxData();
+      } else {
+        window.pushHeaderToast(
+          `❌ Error: ${data.error || "Could not claim."}`,
+          "#e74c3c",
+        );
       }
-
-      // 3. Claim Consumables
-            if (rewards.use) {
-              Object.keys(rewards.use).forEach(k => {
-                if (typeof window.addUseDrop === "function") {
-                  window.addUseDrop(k, rewards.use[k]);
-                }
-              });
-            }
-
-            // 4. Claim Custom Title
-            if (rewards.title) {
-              let tKey = rewards.title;
-              window.playerStats.unlockedTitles = window.playerStats.unlockedTitles || [];
-              if (!window.playerStats.unlockedTitles.includes(tKey)) {
-                window.playerStats.unlockedTitles.push(tKey);
-              }
-              window.playerStats.equippedTitle = tKey; // Auto-equip it!
-            }
-
-      // Register the claimed ID locally on success to prevent double claims if the server restarts
-            window.playerStats.claimedMailIds = window.playerStats.claimedMailIds || [];
-            if (!window.playerStats.claimedMailIds.includes(mailId)) {
-              window.playerStats.claimedMailIds.push(mailId);
-            }
-
-            // Visual / Audio Feedback
-            if (typeof window.spawnPurchaseCelebration === "function") {
-              window.spawnPurchaseCelebration("gacha", "#e74c3c", 5); // Crimson celebration burst
-            }
-            if (window.SoundManager) window.SoundManager.play("revive");
-
-            window.pushHeaderToast("🎁 Mailbox Rewards Claimed!", "#2ecc71");
-
-            // Update UI & save the state immediately
-            window.updateUI();
-            window.renderInventory();
-            window.saveGame();
-
-            // Refresh current mailbox state
-            window.fetchMailboxData();
-    } else {
-      window.pushHeaderToast(`❌ Error: ${data.error || 'Could not claim.'}`, "#e74c3c");
-    }
-  })
-  .catch(err => {
-    console.error("Mail claim failed:", err);
-    window.pushHeaderToast("❌ Connection error claiming reward.", "#e74c3c");
-  });
+    })
+    .catch((err) => {
+      console.error("Mail claim failed:", err);
+      window.pushHeaderToast("❌ Connection error claiming reward.", "#e74c3c");
+    });
 };
 
 window.updateMailboxBadge = function (hasUnclaimed) {
-    const btn = document.getElementById("btn-mailbox-top");
-    if (!btn) return;
+  const badge = document.getElementById("hub-card-mailbox-badge");
+  if (badge) {
+    badge.style.display = hasUnclaimed ? "inline-block" : "none";
+  }
+  // Immediately bubble up changes to trigger the main menu indicator
+  window.updateHubAlerts();
+};
 
-    if (hasUnclaimed) {
-      btn.style.animation = "glowRed 1.8s infinite";
-      btn.style.borderColor = "#e74c3c";
-      if (!btn.querySelector(".badge-exclamation")) {
-        btn.insertAdjacentHTML("beforeend", ' <span class="badge-exclamation" style="color:#e74c3c; font-weight:bold; margin-left:3px;">!</span>');
+window.updateHubAlerts = function () {
+  // 1. Evaluate Missions
+  let dailies = window.playerStats.dailyMissions || [];
+  let weeklies = window.playerStats.weeklyMissions || [];
+  let dailyClaimable = dailies.some((m) => m.completed && !m.claimed);
+  let weeklyClaimable = weeklies.some((m) => m.completed && !m.claimed);
+  let dailyMasterClaimable = !window.playerStats.dailyRewardClaimed && dailies.filter((m) => m.completed).length >= 5;
+  let weeklyMasterClaimable = window.playerStats.prestigeCount > 0 && !window.playerStats.weeklyRewardClaimed && weeklies.filter((m) => m.completed).length === 3;
+  let hasMissionsAlert = dailyClaimable || weeklyClaimable || dailyMasterClaimable || weeklyMasterClaimable;
+
+  let mBadge = document.getElementById("hub-card-missions-badge");
+  if (mBadge) mBadge.style.display = hasMissionsAlert ? "inline-block" : "none";
+
+  // 2. Evaluate Trophies
+  let hasTrophiesAlert = window.playerStats.unviewedAchievements && window.playerStats.unviewedAchievements.length > 0;
+  let tBadge = document.getElementById("hub-card-trophies-badge");
+  if (tBadge) tBadge.style.display = hasTrophiesAlert ? "inline-block" : "none";
+
+  // 3. Evaluate Mailbox
+  let mailBadge = document.getElementById("hub-card-mailbox-badge");
+  let hasMailAlert = mailBadge && mailBadge.style.display === "inline-block";
+
+  // 4. Update Main Top Bar Hub Button Dot
+  let mainDot = document.getElementById("hub-menu-alert-dot");
+  if (mainDot) {
+    mainDot.style.display = (hasMissionsAlert || hasTrophiesAlert || hasMailAlert) ? "inline-block" : "none";
+  }
+};
+
+window.checkUnreadMail = function () {
+  if (!window.GAME_SERVER_URL) return;
+  const userId = window.getGameUserId ? window.getGameUserId() : null;
+  if (!userId) return;
+
+  fetch(`${window.GAME_SERVER_URL}/api/mailbox`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success && data.mailbox) {
+        const hasUnclaimed = data.mailbox.some((m) => !m.claimed);
+        window.updateMailboxBadge(hasUnclaimed);
       }
-    } else {
-      btn.style.animation = "";
-      btn.style.borderColor = "";
-      const b = btn.querySelector(".badge-exclamation");
-      if (b) b.remove();
-    }
-  };
+    })
+    .catch(() => {});
+};
 
-  window.checkUnreadMail = function () {
-      if (!window.GAME_SERVER_URL) return;
-      const userId = window.getGameUserId ? window.getGameUserId() : null;
-      if (!userId) return;
+// --- DYNAMIC MEDAL BANNER PLATE RENDERER ---
+window.updateMedalBanner = function () {
+  let banner = document.getElementById("equipped-medal-banner");
+  if (!banner) return;
 
-      fetch(`${window.GAME_SERVER_URL}/api/mailbox`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success && data.mailbox) {
-          const hasUnclaimed = data.mailbox.some(m => !m.claimed);
-          window.updateMailboxBadge(hasUnclaimed);
-        }
-      })
-      .catch(() => {});
-    };
+  let activeTitle = window.playerStats.equippedTitle;
+  if (activeTitle && window.TITLES_DATA[activeTitle]) {
+    let tData = window.TITLES_DATA[activeTitle];
+    let color = tData.color || "#ff007f";
+    banner.style.display = "flex";
+    banner.style.borderColor = color;
+    banner.style.background = window.hexToRgba
+      ? window.hexToRgba(color, 0.05)
+      : "rgba(255, 0, 127, 0.05)";
+    banner.style.boxShadow = `inset 0 0 10px ${window.hexToRgba ? window.hexToRgba(color, 0.08) : "rgba(0,0,0,0.5)"}, 0 0 6px ${window.hexToRgba ? window.hexToRgba(color, 0.15) : "rgba(255,0,127,0.1)"}`;
 
-    // --- DYNAMIC MEDAL BANNER PLATE RENDERER ---
-    window.updateMedalBanner = function () {
-      let banner = document.getElementById("equipped-medal-banner");
-      if (!banner) return;
-
-      let activeTitle = window.playerStats.equippedTitle;
-      if (activeTitle && window.TITLES_DATA[activeTitle]) {
-        let tData = window.TITLES_DATA[activeTitle];
-        let color = tData.color || "#ff007f";
-        banner.style.display = "flex";
-        banner.style.borderColor = color;
-        banner.style.background = window.hexToRgba ? window.hexToRgba(color, 0.05) : "rgba(255, 0, 127, 0.05)";
-        banner.style.boxShadow = `inset 0 0 10px ${window.hexToRgba ? window.hexToRgba(color, 0.08) : 'rgba(0,0,0,0.5)'}, 0 0 6px ${window.hexToRgba ? window.hexToRgba(color, 0.15) : 'rgba(255,0,127,0.1)'}`;
-
-        banner.innerHTML = `
+    banner.innerHTML = `
           <div style="flex-shrink:0; font-size: 18px; display: flex; align-items: center; justify-content: center; width:28px; height:28px; background:#111; border:1px solid #444; border-radius:4px; box-shadow:inset 0 0 4px #000;">
               ${tData.icon || "🏅"}
             </div>
             <div style="flex:1; min-width:0; text-align:left; margin-left: 8px;">
                 <span style="font-size:9px; color:#888; text-transform:uppercase; letter-spacing:1px; display:block; line-height:1;">Active Medal</span>
-                <strong style="color:${color}; font-size:11.5px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow:0 0 8px ${window.hexToRgba ? window.hexToRgba(color, 0.25) : 'rgba(255,0,127,0.2)'}; margin-top:2px;">${tData.name}</strong>
+                <strong style="color:${color}; font-size:11.5px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow:0 0 8px ${window.hexToRgba ? window.hexToRgba(color, 0.25) : "rgba(255,0,127,0.2)"}; margin-top:2px;">${tData.name}</strong>
             </div>
             <div style="flex-shrink:0;">
                 <span style="font-size:9.5px; color:#cbd5e1; background:rgba(255,255,255,0.05); border:1px solid #333; padding:2px 6px; border-radius:3px; font-family:monospace; font-weight:bold;">SWAP</span>
             </div>
         `;
 
-        banner.onmouseenter = (e) => window.showTitleMedalTooltip(e, activeTitle);
-        banner.ontouchstart = (e) => window.showTitleMedalTooltip(e, activeTitle);
-        banner.onmouseleave = () => window.hideTooltip();
-      } else {
-        banner.style.display = "flex";
-        banner.style.borderColor = "#444";
-        banner.style.background = "#151515";
-        banner.style.boxShadow = "";
-        banner.innerHTML = `
+    banner.onmouseenter = (e) => window.showTitleMedalTooltip(e, activeTitle);
+    banner.ontouchstart = (e) => window.showTitleMedalTooltip(e, activeTitle);
+    banner.onmouseleave = () => window.hideTooltip();
+  } else {
+    banner.style.display = "flex";
+    banner.style.borderColor = "#444";
+    banner.style.background = "#151515";
+    banner.style.boxShadow = "";
+    banner.innerHTML = `
           <div style="flex-shrink:0; font-size: 18px; display: flex; align-items: center; justify-content: center; width:34px; height:34px; background:#111; border:1px dashed #444; border-radius:4px;">
               🏅
           </div>
@@ -9783,43 +9968,43 @@ window.updateMailboxBadge = function (hasUnclaimed) {
               <span style="font-size:9.5px; color:#888; background:rgba(255,255,255,0.02); border:1px dashed #444; padding:2px 6px; border-radius:3px; font-family:monospace;">EQUIP</span>
             </div>
         `;
-        banner.onmouseenter = null;
-        banner.ontouchstart = null;
-        banner.onmouseleave = null;
-      }
-    };
+    banner.onmouseenter = null;
+    banner.ontouchstart = null;
+    banner.onmouseleave = null;
+  }
+};
 
-    window.openMedalSwapWindow = function (e) {
-      if (e) {
-        e.stopPropagation();
-        e.preventDefault();
-      }
+window.openMedalSwapWindow = function (e) {
+  if (e) {
+    e.stopPropagation();
+    e.preventDefault();
+  }
 
-      let existingWin = document.getElementById("medal-swap-window");
-      let savedLeft = null;
-      let savedTop = null;
-      if (existingWin) {
-        savedLeft = existingWin.style.left;
-        savedTop = existingWin.style.top;
-        existingWin.remove();
-      }
+  let existingWin = document.getElementById("medal-swap-window");
+  let savedLeft = null;
+  let savedTop = null;
+  if (existingWin) {
+    savedLeft = existingWin.style.left;
+    savedTop = existingWin.style.top;
+    existingWin.remove();
+  }
 
-      let win = document.createElement("div");
-      win.id = "medal-swap-window";
-      win.className = "draggable-window";
+  let win = document.createElement("div");
+  win.id = "medal-swap-window";
+  win.className = "draggable-window";
 
-      if (savedLeft !== null && savedTop !== null) {
-        win.style.left = savedLeft;
-        win.style.top = savedTop;
-      } else {
-        win.style.left = "35px";
-        win.style.top = "100px";
-      }
+  if (savedLeft !== null && savedTop !== null) {
+    win.style.left = savedLeft;
+    win.style.top = savedTop;
+  } else {
+    win.style.left = "35px";
+    win.style.top = "100px";
+  }
 
-      let unlocked = window.playerStats.unlockedTitles || [];
-      let contentHtml = "";
+  let unlocked = window.playerStats.unlockedTitles || [];
+  let contentHtml = "";
 
-      contentHtml += `
+  contentHtml += `
         <div class="bag-item" style="padding:6px; margin-bottom:5px; background:#181c22; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;">
             <div style="text-align:left;">
                 <strong style="color:#aaa; font-size:11px;">No Medal</strong><br>
@@ -9829,25 +10014,40 @@ window.updateMailboxBadge = function (hasUnclaimed) {
         </div>
       `;
 
-      if (unlocked.length > 0) {
-        contentHtml += unlocked.map(tKey => {
-          let tData = window.TITLES_DATA[tKey];
-          if (!tData) return "";
-          let color = tData.color || "#ff007f";
-          let activeLabel = window.playerStats.equippedTitle === tKey ? " <span style='color:#2ecc71;'>(Equipped)</span>" : "";
+  if (unlocked.length > 0) {
+    contentHtml += unlocked
+      .map((tKey) => {
+        let tData = window.TITLES_DATA[tKey];
+        if (!tData) return "";
+        let color = tData.color || "#ff007f";
+        let activeLabel =
+          window.playerStats.equippedTitle === tKey
+            ? " <span style='color:#2ecc71;'>(Equipped)</span>"
+            : "";
 
-          let statText = [];
-          if (tData.stats) {
-            for (let sKey in tData.stats) {
-              let isPct = ["drop", "qly", "critChance", "critDamage", "block", "parry", "gold", "fairySpawn", "rareSpawn"].includes(sKey);
-              let val = tData.stats[sKey];
-              let valStr = isPct ? `+${(val * 100).toFixed(0)}%` : `+${val}`;
-              statText.push(`${window.getStatLabel(sKey)} ${valStr}`);
-            }
+        let statText = [];
+        if (tData.stats) {
+          for (let sKey in tData.stats) {
+            let isPct = [
+              "drop",
+              "qly",
+              "critChance",
+              "critDamage",
+              "block",
+              "parry",
+              "gold",
+              "fairySpawn",
+              "rareSpawn",
+            ].includes(sKey);
+            let val = tData.stats[sKey];
+            let valStr = isPct ? `+${(val * 100).toFixed(0)}%` : `+${val}`;
+            statText.push(`${window.getStatLabel(sKey)} ${valStr}`);
           }
-          let statsDisplay = statText.length > 0 ? statText.join(", ") : "Cosmetic Only";
+        }
+        let statsDisplay =
+          statText.length > 0 ? statText.join(", ") : "Cosmetic Only";
 
-          return `
+        return `
             <div class="bag-item" style="padding:6px; margin-bottom:5px; background:#181c22; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;"
                  onmouseenter="window.showTitleMedalTooltip(event, '${tKey}')"
                  ontouchstart="window.showTitleMedalTooltip(event, '${tKey}')"
@@ -9859,10 +10059,11 @@ window.updateMailboxBadge = function (hasUnclaimed) {
                 <button class="btn-action" style="padding:3px 8px; font-size:10px; font-weight:bold; background:var(--accent-green); flex-shrink:0; margin-left:6px;" onclick="window.executeSwapMedal('${tKey}')">Equip</button>
             </div>
           `;
-        }).join("");
-      }
+      })
+      .join("");
+  }
 
-      win.innerHTML = `
+  win.innerHTML = `
         <div class="draggable-header" id="medal-win-handle" style="background: linear-gradient(180deg, #181d24 0%, #0d1117 100%);">
             <span>🏅 Swap Medal / Title</span>
             <button onclick="document.getElementById('medal-swap-window').remove(); window.hideTooltip();" style="background:transparent; border:none; color:#e74c3c; font-weight:bold; cursor:pointer; font-size:11px; padding:2px;">[X]</button>
@@ -9872,52 +10073,67 @@ window.updateMailboxBadge = function (hasUnclaimed) {
           </div>
         `;
 
-      document.getElementById("game-container").appendChild(win);
-      window.makeWindowDraggable(win, document.getElementById("medal-win-handle"));
-    };
+  document.getElementById("game-container").appendChild(win);
+  window.makeWindowDraggable(win, document.getElementById("medal-win-handle"));
+};
 
-    window.executeSwapMedal = function (tKey) {
-      if (tKey === "") {
-        window.playerStats.equippedTitle = null;
-        if (typeof window.pushHeaderToast === "function") {
-          window.pushHeaderToast("Title Unequipped", "#7f8c8d");
-        }
-      } else {
-        window.playerStats.equippedTitle = tKey;
-        let tData = window.TITLES_DATA[tKey];
-        if (typeof window.pushHeaderToast === "function") {
-          window.pushHeaderToast(`Equipped Medal: [${tData.name}]`, tData.color || "#ff007f");
-        }
-      }
-      let win = document.getElementById("medal-swap-window");
-      if (win) win.remove();
-      window.hideTooltip();
-      window.updateUI();
-      window.saveGame();
-    };
+window.executeSwapMedal = function (tKey) {
+  if (tKey === "") {
+    window.playerStats.equippedTitle = null;
+    if (typeof window.pushHeaderToast === "function") {
+      window.pushHeaderToast("Title Unequipped", "#7f8c8d");
+    }
+  } else {
+    window.playerStats.equippedTitle = tKey;
+    let tData = window.TITLES_DATA[tKey];
+    if (typeof window.pushHeaderToast === "function") {
+      window.pushHeaderToast(
+        `Equipped Medal: [${tData.name}]`,
+        tData.color || "#ff007f",
+      );
+    }
+  }
+  let win = document.getElementById("medal-swap-window");
+  if (win) win.remove();
+  window.hideTooltip();
+  window.updateUI();
+  window.saveGame();
+};
 
-    window.showTitleMedalTooltip = function (e, tKey) {
-      e.stopPropagation();
-      let tt = document.getElementById("game-tooltip");
-      if (!tt) return;
+window.showTitleMedalTooltip = function (e, tKey) {
+  e.stopPropagation();
+  let tt = document.getElementById("game-tooltip");
+  if (!tt) return;
 
-      let tData = window.TITLES_DATA[tKey];
-      if (!tData) return;
+  let tData = window.TITLES_DATA[tKey];
+  if (!tData) return;
 
-      let statsHtml = [];
-      if (tData.stats) {
-        for (let sKey in tData.stats) {
-          let label = window.getStatLabel(sKey);
-          let val = tData.stats[sKey];
-          let isPct = ["drop", "qly", "critChance", "critDamage", "block", "parry", "gold", "fairySpawn", "rareSpawn"].includes(sKey);
-          let valStr = isPct ? `+${(val * 100).toFixed(0)}%` : `+${val}`;
-          statsHtml.push(`<div class="tt-stat-line" style="color:#2ecc71;">• ${label}: ${valStr}</div>`);
-        }
-      }
+  let statsHtml = [];
+  if (tData.stats) {
+    for (let sKey in tData.stats) {
+      let label = window.getStatLabel(sKey);
+      let val = tData.stats[sKey];
+      let isPct = [
+        "drop",
+        "qly",
+        "critChance",
+        "critDamage",
+        "block",
+        "parry",
+        "gold",
+        "fairySpawn",
+        "rareSpawn",
+      ].includes(sKey);
+      let valStr = isPct ? `+${(val * 100).toFixed(0)}%` : `+${val}`;
+      statsHtml.push(
+        `<div class="tt-stat-line" style="color:#2ecc71;">• ${label}: ${valStr}</div>`,
+      );
+    }
+  }
 
-      tt.innerHTML = `
+  tt.innerHTML = `
         <div style="padding: 10px; width: 230px; box-sizing: border-box;">
-            <div class="tt-title" style="color:${tData.color || '#ff007f'}; display:flex; align-items:center; gap:6px;">
+            <div class="tt-title" style="color:${tData.color || "#ff007f"}; display:flex; align-items:center; gap:6px;">
                 ${tData.icon || ""} <span>${tData.name}</span>
             </div>
             <div class="tt-subtitle">Unique Character Medal</div>
@@ -9935,46 +10151,48 @@ window.updateMailboxBadge = function (hasUnclaimed) {
             </div>
           </div>
       `;
-      tt.style.borderColor = tData.color || "#ff007f";
-      tt.style.display = "block";
-      window.positionTooltip(e, tt);
-    };
+  tt.style.borderColor = tData.color || "#ff007f";
+  tt.style.display = "block";
+  window.positionTooltip(e, tt);
+};
 
-  window.updateMedalBanner = function () {
-    let banner = document.getElementById("equipped-medal-banner");
-    if (!banner) return;
+window.updateMedalBanner = function () {
+  let banner = document.getElementById("equipped-medal-banner");
+  if (!banner) return;
 
-    let activeTitle = window.playerStats.equippedTitle;
-    if (activeTitle && window.TITLES_DATA[activeTitle]) {
-      let tData = window.TITLES_DATA[activeTitle];
-      let color = tData.color || "#ff007f";
-      banner.style.display = "flex";
-      banner.style.borderColor = color;
-      banner.style.background = window.hexToRgba ? window.hexToRgba(color, 0.05) : "rgba(255, 0, 127, 0.05)";
-      banner.style.boxShadow = `inset 0 0 10px ${window.hexToRgba ? window.hexToRgba(color, 0.08) : 'rgba(0,0,0,0.5)'}, 0 0 6px ${window.hexToRgba ? window.hexToRgba(color, 0.15) : 'rgba(255,0,127,0.1)'}`;
+  let activeTitle = window.playerStats.equippedTitle;
+  if (activeTitle && window.TITLES_DATA[activeTitle]) {
+    let tData = window.TITLES_DATA[activeTitle];
+    let color = tData.color || "#ff007f";
+    banner.style.display = "flex";
+    banner.style.borderColor = color;
+    banner.style.background = window.hexToRgba
+      ? window.hexToRgba(color, 0.05)
+      : "rgba(255, 0, 127, 0.05)";
+    banner.style.boxShadow = `inset 0 0 10px ${window.hexToRgba ? window.hexToRgba(color, 0.08) : "rgba(0,0,0,0.5)"}, 0 0 6px ${window.hexToRgba ? window.hexToRgba(color, 0.15) : "rgba(255,0,127,0.1)"}`;
 
-      banner.innerHTML = `
+    banner.innerHTML = `
         <div style="flex-shrink:0; font-size: 18px; display: flex; align-items: center; justify-content: center; width:28px; height:28px; background:#111; border:1px solid #444; border-radius:4px; box-shadow:inset 0 0 4px #000;">
             ${tData.icon || "🏅"}
           </div>
           <div style="flex:1; min-width:0; text-align:left;">
               <span style="font-size:9px; color:#888; text-transform:uppercase; letter-spacing:1px; display:block; line-height:1;">Active Medal</span>
-              <strong style="color:${color}; font-size:11.5px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow:0 0 8px ${window.hexToRgba ? window.hexToRgba(color, 0.25) : 'rgba(255,0,127,0.2)'}; margin-top:2px;">${tData.name}</strong>
+              <strong style="color:${color}; font-size:11.5px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow:0 0 8px ${window.hexToRgba ? window.hexToRgba(color, 0.25) : "rgba(255,0,127,0.2)"}; margin-top:2px;">${tData.name}</strong>
           </div>
           <div style="flex-shrink:0;">
               <span style="font-size:9.5px; color:#cbd5e1; background:rgba(255,255,255,0.05); border:1px solid #333; padding:2px 6px; border-radius:3px; font-family:monospace; font-weight:bold;">SWAP</span>
           </div>
       `;
 
-      banner.onmouseenter = (e) => window.showTitleMedalTooltip(e, activeTitle);
-      banner.ontouchstart = (e) => window.showTitleMedalTooltip(e, activeTitle);
-      banner.onmouseleave = () => window.hideTooltip();
-    } else {
-      banner.style.display = "flex";
-      banner.style.borderColor = "#444";
-      banner.style.background = "#151515";
-      banner.style.boxShadow = "";
-      banner.innerHTML = `
+    banner.onmouseenter = (e) => window.showTitleMedalTooltip(e, activeTitle);
+    banner.ontouchstart = (e) => window.showTitleMedalTooltip(e, activeTitle);
+    banner.onmouseleave = () => window.hideTooltip();
+  } else {
+    banner.style.display = "flex";
+    banner.style.borderColor = "#444";
+    banner.style.background = "#151515";
+    banner.style.boxShadow = "";
+    banner.innerHTML = `
         <div style="flex-shrink:0; font-size: 18px; display: flex; align-items: center; justify-content: center; width:34px; height:34px; background:#111; border:1px dashed #444; border-radius:4px;">
             🏅
         </div>
@@ -9986,43 +10204,43 @@ window.updateMailboxBadge = function (hasUnclaimed) {
             <span style="font-size:9.5px; color:#888; background:rgba(255,255,255,0.02); border:1px dashed #444; padding:2px 6px; border-radius:3px; font-family:monospace;">EQUIP</span>
           </div>
       `;
-      banner.onmouseenter = null;
-      banner.ontouchstart = null;
-      banner.onmouseleave = null;
-    }
-  };
+    banner.onmouseenter = null;
+    banner.ontouchstart = null;
+    banner.onmouseleave = null;
+  }
+};
 
-  window.openMedalSwapWindow = function (e) {
-    if (e) {
-      e.stopPropagation();
-      e.preventDefault();
-    }
+window.openMedalSwapWindow = function (e) {
+  if (e) {
+    e.stopPropagation();
+    e.preventDefault();
+  }
 
-    let existingWin = document.getElementById("medal-swap-window");
-    let savedLeft = null;
-    let savedTop = null;
-    if (existingWin) {
-      savedLeft = existingWin.style.left;
-      savedTop = existingWin.style.top;
-      existingWin.remove();
-    }
+  let existingWin = document.getElementById("medal-swap-window");
+  let savedLeft = null;
+  let savedTop = null;
+  if (existingWin) {
+    savedLeft = existingWin.style.left;
+    savedTop = existingWin.style.top;
+    existingWin.remove();
+  }
 
-    let win = document.createElement("div");
-    win.id = "medal-swap-window";
-    win.className = "draggable-window";
+  let win = document.createElement("div");
+  win.id = "medal-swap-window";
+  win.className = "draggable-window";
 
-    if (savedLeft !== null && savedTop !== null) {
-      win.style.left = savedLeft;
-      win.style.top = savedTop;
-    } else {
-      win.style.left = "35px";
-      win.style.top = "100px";
-    }
+  if (savedLeft !== null && savedTop !== null) {
+    win.style.left = savedLeft;
+    win.style.top = savedTop;
+  } else {
+    win.style.left = "35px";
+    win.style.top = "100px";
+  }
 
-    let unlocked = window.playerStats.unlockedTitles || [];
-    let contentHtml = "";
+  let unlocked = window.playerStats.unlockedTitles || [];
+  let contentHtml = "";
 
-    contentHtml += `
+  contentHtml += `
       <div class="bag-item" style="padding:6px; margin-bottom:5px; background:#181c22; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;">
           <div style="text-align:left;">
               <strong style="color:#aaa; font-size:11px;">No Medal</strong><br>
@@ -10032,23 +10250,38 @@ window.updateMailboxBadge = function (hasUnclaimed) {
       </div>
     `;
 
-    if (unlocked.length > 0) {
-      contentHtml += unlocked.map(tKey => {
+  if (unlocked.length > 0) {
+    contentHtml += unlocked
+      .map((tKey) => {
         let tData = window.TITLES_DATA[tKey];
         if (!tData) return "";
         let color = tData.color || "#ff007f";
-        let activeLabel = window.playerStats.equippedTitle === tKey ? " <span style='color:#2ecc71;'>(Equipped)</span>" : "";
+        let activeLabel =
+          window.playerStats.equippedTitle === tKey
+            ? " <span style='color:#2ecc71;'>(Equipped)</span>"
+            : "";
 
         let statText = [];
         if (tData.stats) {
           for (let sKey in tData.stats) {
-            let isPct = ["drop", "qly", "critChance", "critDamage", "block", "parry", "gold", "fairySpawn", "rareSpawn"].includes(sKey);
+            let isPct = [
+              "drop",
+              "qly",
+              "critChance",
+              "critDamage",
+              "block",
+              "parry",
+              "gold",
+              "fairySpawn",
+              "rareSpawn",
+            ].includes(sKey);
             let val = tData.stats[sKey];
             let valStr = isPct ? `+${(val * 100).toFixed(0)}%` : `+${val}`;
             statText.push(`${window.getStatLabel(sKey)} ${valStr}`);
           }
         }
-        let statsDisplay = statText.length > 0 ? statText.join(", ") : "Cosmetic Only";
+        let statsDisplay =
+          statText.length > 0 ? statText.join(", ") : "Cosmetic Only";
 
         return `
           <div class="bag-item" style="padding:6px; margin-bottom:5px; background:#181c22; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;"
@@ -10062,10 +10295,11 @@ window.updateMailboxBadge = function (hasUnclaimed) {
               <button class="btn-action" style="padding:3px 8px; font-size:10px; font-weight:bold; background:var(--accent-green); flex-shrink:0; margin-left:6px;" onclick="window.executeSwapMedal('${tKey}')">Equip</button>
           </div>
         `;
-      }).join("");
-    }
+      })
+      .join("");
+  }
 
-    win.innerHTML = `
+  win.innerHTML = `
       <div class="draggable-header" id="medal-win-handle" style="background: linear-gradient(180deg, #181d24 0%, #0d1117 100%);">
           <span>🏅 Swap Medal / Title</span>
           <button onclick="document.getElementById('medal-swap-window').remove(); window.hideTooltip();" style="background:transparent; border:none; color:#e74c3c; font-weight:bold; cursor:pointer; font-size:11px; padding:2px;">[X]</button>
@@ -10075,52 +10309,67 @@ window.updateMailboxBadge = function (hasUnclaimed) {
         </div>
       `;
 
-    document.getElementById("game-container").appendChild(win);
-    window.makeWindowDraggable(win, document.getElementById("medal-win-handle"));
-  };
+  document.getElementById("game-container").appendChild(win);
+  window.makeWindowDraggable(win, document.getElementById("medal-win-handle"));
+};
 
-  window.executeSwapMedal = function (tKey) {
-    if (tKey === "") {
-      window.playerStats.equippedTitle = null;
-      if (typeof window.pushHeaderToast === "function") {
-        window.pushHeaderToast("Title Unequipped", "#7f8c8d");
-      }
-    } else {
-      window.playerStats.equippedTitle = tKey;
-      let tData = window.TITLES_DATA[tKey];
-      if (typeof window.pushHeaderToast === "function") {
-        window.pushHeaderToast(`Equipped Medal: [${tData.name}]`, tData.color || "#ff007f");
-      }
+window.executeSwapMedal = function (tKey) {
+  if (tKey === "") {
+    window.playerStats.equippedTitle = null;
+    if (typeof window.pushHeaderToast === "function") {
+      window.pushHeaderToast("Title Unequipped", "#7f8c8d");
     }
-    let win = document.getElementById("medal-swap-window");
-    if (win) win.remove();
-    window.hideTooltip();
-    window.updateUI();
-    window.saveGame();
-  };
-
-  window.showTitleMedalTooltip = function (e, tKey) {
-    e.stopPropagation();
-    let tt = document.getElementById("game-tooltip");
-    if (!tt) return;
-
+  } else {
+    window.playerStats.equippedTitle = tKey;
     let tData = window.TITLES_DATA[tKey];
-    if (!tData) return;
-
-    let statsHtml = [];
-    if (tData.stats) {
-      for (let sKey in tData.stats) {
-        let label = window.getStatLabel(sKey);
-        let val = tData.stats[sKey];
-        let isPct = ["drop", "qly", "critChance", "critDamage", "block", "parry", "gold", "fairySpawn", "rareSpawn"].includes(sKey);
-        let valStr = isPct ? `+${(val * 100).toFixed(0)}%` : `+${val}`;
-        statsHtml.push(`<div class="tt-stat-line" style="color:#2ecc71;">• ${label}: ${valStr}</div>`);
-      }
+    if (typeof window.pushHeaderToast === "function") {
+      window.pushHeaderToast(
+        `Equipped Medal: [${tData.name}]`,
+        tData.color || "#ff007f",
+      );
     }
+  }
+  let win = document.getElementById("medal-swap-window");
+  if (win) win.remove();
+  window.hideTooltip();
+  window.updateUI();
+  window.saveGame();
+};
 
-    tt.innerHTML = `
+window.showTitleMedalTooltip = function (e, tKey) {
+  e.stopPropagation();
+  let tt = document.getElementById("game-tooltip");
+  if (!tt) return;
+
+  let tData = window.TITLES_DATA[tKey];
+  if (!tData) return;
+
+  let statsHtml = [];
+  if (tData.stats) {
+    for (let sKey in tData.stats) {
+      let label = window.getStatLabel(sKey);
+      let val = tData.stats[sKey];
+      let isPct = [
+        "drop",
+        "qly",
+        "critChance",
+        "critDamage",
+        "block",
+        "parry",
+        "gold",
+        "fairySpawn",
+        "rareSpawn",
+      ].includes(sKey);
+      let valStr = isPct ? `+${(val * 100).toFixed(0)}%` : `+${val}`;
+      statsHtml.push(
+        `<div class="tt-stat-line" style="color:#2ecc71;">• ${label}: ${valStr}</div>`,
+      );
+    }
+  }
+
+  tt.innerHTML = `
       <div style="padding: 10px; width: 230px; box-sizing: border-box;">
-          <div class="tt-title" style="color:${tData.color || '#ff007f'}; display:flex; align-items:center; gap:6px;">
+          <div class="tt-title" style="color:${tData.color || "#ff007f"}; display:flex; align-items:center; gap:6px;">
               ${tData.icon || ""} <span>${tData.name}</span>
           </div>
           <div class="tt-subtitle">Unique Character Medal</div>
@@ -10138,96 +10387,102 @@ window.updateMailboxBadge = function (hasUnclaimed) {
           </div>
         </div>
     `;
-    tt.style.borderColor = tData.color || "#ff007f";
-    tt.style.display = "block";
-    window.positionTooltip(e, tt);
-  };
+  tt.style.borderColor = tData.color || "#ff007f";
+  tt.style.display = "block";
+  window.positionTooltip(e, tt);
+};
 
-  window.showAchievementTooltip = function (e, achId) {
-    e.stopPropagation();
-    let ach = window.AchievementsData.find((a) => a.id === achId);
-    if (!ach) return;
+window.showAchievementTooltip = function (e, achId) {
+  e.stopPropagation();
+  let ach = window.AchievementsData.find((a) => a.id === achId);
+  if (!ach) return;
 
-    let unlocked =
-      window.playerStats.unlockedAchievements &&
-      window.playerStats.unlockedAchievements.includes(achId);
-    let tt = document.getElementById("game-tooltip");
+  let unlocked =
+    window.playerStats.unlockedAchievements &&
+    window.playerStats.unlockedAchievements.includes(achId);
+  let tt = document.getElementById("game-tooltip");
 
-    let statsDesc = Object.keys(ach.stats)
-      .map((k) => {
-        let val = ach.stats[k];
-        let isPct = [
-          "critChance",
-          "critDamage",
-          "block",
-          "parry",
-          "drop",
-          "qly",
-          "gold",
-          "fairySpawn",
-          "rareSpawn",
-          "atkPct",
-          "maxHpPct",
-          "defPct",
-          "moveSpeedPct",
-          "strPct",
-          "dexPct",
-          "intPct",
-          "expPct",
-          "potDurationPct",
-          "potStrengthPct",
-          "idleSpeedPct",
-          "activeSpeedPct",
-        ].includes(k);
-        let labelMap = {
-          atk: "⚔️ Attack",
-          maxHp: "❤️ Max HP",
-          def: "🛡️ Defense",
-          moveSpeed: "👟 Move Speed",
-          critChance: "✨ Crit Chance",
-          critDamage: "💥 Crit Multiplier",
-          block: "🛡️ Block Rate",
-          parry: "⚡ Parry Rate",
-          str: "💪 STR",
-          dex: "🎯 DEX",
-          int: "🧠 INT",
-          drop: "🍀 Drop Rate Mod",
-          qly: "💎 Drop Quality Mod",
-          gold: "🟡 Gold Multiplier",
-          fairySpawn: "🧚 Fairy Spawn Mod",
-          rareSpawn: "✨ Rare Spawn Rate",
-          atkPct: "⚔️ Attack Multiplier",
-          maxHpPct: "❤️ Max HP Multiplier",
-          defPct: "🛡️ Defense Multiplier",
-          moveSpeedPct: "👟 Move Speed Multiplier",
-          strPct: "💪 STR Multiplier",
-          dexPct: "🎯 DEX Multiplier",
-          intPct: "🧠 INT Multiplier",
-          expPct: "🧠 EXP Multiplier",
-          potDurationPct: "🧪 Potion Duration",
-          potStrengthPct: "🧪 Potion Potency",
-          idleSpeedPct: "⏱️ Idle Speed",
-          activeSpeedPct: "⚡ Active Speed",
-        };
-        let cleanLabel = labelMap[k] || k.toUpperCase();
-        let cleanVal = isPct ? `+${(val * 100).toFixed(0)}%` : `+${val}`;
-        return `<div class="tt-stat-line" style="color:#2ecc71;">• ${cleanLabel}: ${cleanVal}</div>`;
-      })
-      .join("");
-    let progressValue = window.getAchievementProgress(ach);
-    let targetValue = ach.isSingleTier ? 1 : ach.reqValue;
-    let percentDone = Math.min(100, (progressValue / targetValue) * 100);
+  let statsDesc = Object.keys(ach.stats)
+    .map((k) => {
+      let val = ach.stats[k];
+      let isPct = [
+        "critChance",
+        "critDamage",
+        "block",
+        "parry",
+        "drop",
+        "qly",
+        "gold",
+        "fairySpawn",
+        "rareSpawn",
+        "atkPct",
+        "maxHpPct",
+        "defPct",
+        "moveSpeedPct",
+        "strPct",
+        "dexPct",
+        "intPct",
+        "expPct",
+        "potDurationPct",
+        "potStrengthPct",
+        "idleSpeedPct",
+        "activeSpeedPct",
+      ].includes(k);
+      let labelMap = {
+        atk: "⚔️ Attack",
+        maxHp: "❤️ Max HP",
+        def: "🛡️ Defense",
+        moveSpeed: "👟 Move Speed",
+        critChance: "✨ Crit Chance",
+        critDamage: "💥 Crit Multiplier",
+        block: "🛡️ Block Rate",
+        parry: "⚡ Parry Rate",
+        str: "💪 STR",
+        dex: "🎯 DEX",
+        int: "🧠 INT",
+        drop: "🍀 Drop Rate Mod",
+        qly: "💎 Drop Quality Mod",
+        gold: "🟡 Gold Multiplier",
+        fairySpawn: "🧚 Fairy Spawn Mod",
+        rareSpawn: "✨ Rare Spawn Rate",
+        atkPct: "⚔️ Attack Multiplier",
+        maxHpPct: "❤️ Max HP Multiplier",
+        defPct: "🛡️ Defense Multiplier",
+        moveSpeedPct: "👟 Move Speed Multiplier",
+        strPct: "💪 STR Multiplier",
+        dexPct: "🎯 DEX Multiplier",
+        intPct: "🧠 INT Multiplier",
+        expPct: "🧠 EXP Multiplier",
+        potDurationPct: "🧪 Potion Duration",
+        potStrengthPct: "🧪 Potion Potency",
+        idleSpeedPct: "⏱️ Idle Speed",
+        activeSpeedPct: "⚡ Active Speed",
+      };
+      let cleanLabel = labelMap[k] || k.toUpperCase();
+      let cleanVal = isPct ? `+${(val * 100).toFixed(0)}%` : `+${val}`;
+      return `<div class="tt-stat-line" style="color:#2ecc71;">• ${cleanLabel}: ${cleanVal}</div>`;
+    })
+    .join("");
+  let progressValue = window.getAchievementProgress(ach);
+  let targetValue = ach.isSingleTier ? 1 : ach.reqValue;
+  let percentDone = Math.min(100, (progressValue / targetValue) * 100);
 
-    let timestamp = window.playerStats.achievementTimestamps ? window.playerStats.achievementTimestamps[achId] : null;
-    let timestampHtml = "";
-    if (unlocked && timestamp) {
-      let date = new Date(timestamp).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-      timestampHtml = `<div class="tt-stat-line" style="color:#7f8c8d; font-size:9.5px; margin-top:2px;">📅 Completed: ${date}</div>`;
-    } else if (unlocked) {
-      timestampHtml = `<div class="tt-stat-line" style="color:#7f8c8d; font-size:9.5px; margin-top:2px;">📅 Completed: Pre-Release Legacy</div>`;
-    }
+  let timestamp = window.playerStats.achievementTimestamps
+    ? window.playerStats.achievementTimestamps[achId]
+    : null;
+  let timestampHtml = "";
+  if (unlocked && timestamp) {
+    let date = new Date(timestamp).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    timestampHtml = `<div class="tt-stat-line" style="color:#7f8c8d; font-size:9.5px; margin-top:2px;">📅 Completed: ${date}</div>`;
+  } else if (unlocked) {
+    timestampHtml = `<div class="tt-stat-line" style="color:#7f8c8d; font-size:9.5px; margin-top:2px;">📅 Completed: Pre-Release Legacy</div>`;
+  }
 
-    let html = `<div style="padding: 10px; width: 230px; box-sizing: border-box;">
+  let html = `<div style="padding: 10px; width: 230px; box-sizing: border-box;">
           <div class="tt-title" style="color:${unlocked ? "#f1c40f" : "#aaa"};">${ach.icon} ${ach.name}</div>
           <div class="tt-subtitle" style="color:${unlocked ? "#2ecc71" : "#e74c3c"}; font-weight:bold;">${unlocked ? "🔓 UNLOCKED" : "🔒 LOCKED"}</div>
           <div style="color:#ddd; font-size:11px; margin-bottom:6px; white-space:normal; line-height:1.3;">${ach.desc}</div>
@@ -10237,100 +10492,115 @@ window.updateMailboxBadge = function (hasUnclaimed) {
           ${statsDesc}
       </div>`;
 
-    tt.style.borderColor = unlocked ? "#f1c40f" : "#444";
-    tt.innerHTML = html;
-    tt.style.display = "block";
-    window.positionTooltip(e, tt);
-  };
+  tt.style.borderColor = unlocked ? "#f1c40f" : "#444";
+  tt.innerHTML = html;
+  tt.style.display = "block";
+  window.positionTooltip(e, tt);
+};
 
-  window.equipTitle = function (titleKey) {
-          if (titleKey === "") {
-            window.playerStats.equippedTitle = null;
-            if (typeof window.pushHeaderToast === "function") {
-              window.pushHeaderToast("Title Unequipped", "#7f8c8d");
-            }
-          } else if (window.playerStats.unlockedTitles && window.playerStats.unlockedTitles.includes(titleKey)) {
-            window.playerStats.equippedTitle = titleKey;
-            let tData = window.TITLES_DATA[titleKey];
-            if (typeof window.pushHeaderToast === "function") {
-              window.pushHeaderToast(`Equipped Title: [${tData.name}]`, tData.color || "#ff007f");
-            }
-          }
-          window.updateUI();
-          window.saveGame();
-        };
-
-  // ==========================================================================
-  // --- HALL OF LEGENDS & PLAYER INSPECT ENGINE ---
-  // ==========================================================================
-
-  window.changeCosmeticSkin = function (skinKey) {
-    window.playerStats.cosmeticSkin = skinKey;
+window.equipTitle = function (titleKey) {
+  if (titleKey === "") {
+    window.playerStats.equippedTitle = null;
     if (typeof window.pushHeaderToast === "function") {
-      let colors = { default: "#7f8c8d", void: "#9b59b6", crimson: "#e74c3c", gilded: "#f1c40f" };
-      window.pushHeaderToast(`🎭 Applied Cosmetic Skin!`, colors[skinKey] || "#fff");
+      window.pushHeaderToast("Title Unequipped", "#7f8c8d");
     }
-    window.updateUI();
-    window.saveGame();
-  };
-
-  window.toggleLeaderboard = function () {
-    let modal = document.getElementById("leaderboard-modal");
-    if (!modal) return;
-
-    if (modal.style.display === "none" || modal.style.display === "") {
-      window.hideTooltip();
-      modal.style.display = "block";
-      window.fetchLeaderboardData();
-    } else {
-      modal.style.display = "none";
-      window.hideTooltip();
+  } else if (
+    window.playerStats.unlockedTitles &&
+    window.playerStats.unlockedTitles.includes(titleKey)
+  ) {
+    window.playerStats.equippedTitle = titleKey;
+    let tData = window.TITLES_DATA[titleKey];
+    if (typeof window.pushHeaderToast === "function") {
+      window.pushHeaderToast(
+        `Equipped Title: [${tData.name}]`,
+        tData.color || "#ff007f",
+      );
     }
-  };
+  }
+  window.updateUI();
+  window.saveGame();
+};
 
-  window.fetchLeaderboardData = function () {
-    const listEl = document.getElementById("leaderboard-list");
-    if (!listEl) return;
+// ==========================================================================
+// --- HALL OF LEGENDS & PLAYER INSPECT ENGINE ---
+// ==========================================================================
 
-    if (!window.GAME_SERVER_URL) {
-      listEl.innerHTML = `<div style="color:#666; text-align:center; padding: 20px 0; font-size:11px; font-style:italic;">Leaderboard unavailable in offline/GitHub mode.</div>`;
-      return;
-    }
+window.changeCosmeticSkin = function (skinKey) {
+  window.playerStats.cosmeticSkin = skinKey;
+  if (typeof window.pushHeaderToast === "function") {
+    let colors = {
+      default: "#7f8c8d",
+      void: "#9b59b6",
+      crimson: "#e74c3c",
+      gilded: "#f1c40f",
+    };
+    window.pushHeaderToast(
+      `🎭 Applied Cosmetic Skin!`,
+      colors[skinKey] || "#fff",
+    );
+  }
+  window.updateUI();
+  window.saveGame();
+};
 
-    if (!window.isCloudSynced) {
-      listEl.innerHTML = `<div style="color:#e74c3c; text-align:center; padding: 20px 0; font-size:11px; font-style:italic;">📡 Leaderboard is offline. Establishing secure connection...</div>`;
-      return;
-    }
+window.toggleLeaderboard = function () {
+  let modal = document.getElementById("leaderboard-modal");
+  if (!modal) return;
 
-    listEl.innerHTML = `<div style="color:#aaa; text-align:center; padding: 20px 0; font-size:11px;">Gathering historical records of the realm...</div>`;
+  if (modal.style.display === "none" || modal.style.display === "") {
+    window.hideTooltip();
+    modal.style.display = "block";
+    window.fetchLeaderboardData();
+  } else {
+    modal.style.display = "none";
+    window.hideTooltip();
+  }
+};
 
-    fetch(`${window.GAME_SERVER_URL}/api/leaderboard`)
-    .then(response => response.json())
-    .then(data => {
+window.fetchLeaderboardData = function () {
+  const listEl = document.getElementById("leaderboard-list");
+  if (!listEl) return;
+
+  if (!window.GAME_SERVER_URL) {
+    listEl.innerHTML = `<div style="color:#666; text-align:center; padding: 20px 0; font-size:11px; font-style:italic;">Leaderboard unavailable in offline/GitHub mode.</div>`;
+    return;
+  }
+
+  if (!window.isCloudSynced) {
+    listEl.innerHTML = `<div style="color:#e74c3c; text-align:center; padding: 20px 0; font-size:11px; font-style:italic;">📡 Leaderboard is offline. Establishing secure connection...</div>`;
+    return;
+  }
+
+  listEl.innerHTML = `<div style="color:#aaa; text-align:center; padding: 20px 0; font-size:11px;">Gathering historical records of the realm...</div>`;
+
+  fetch(`${window.GAME_SERVER_URL}/api/leaderboard`)
+    .then((response) => response.json())
+    .then((data) => {
       if (data.success && data.leaderboard) {
         window.renderLeaderboardItems(data.leaderboard);
       } else {
         listEl.innerHTML = `<div style="color:#e74c3c; text-align:center; padding: 20px 0; font-size:11px;">Error compiling rankings.</div>`;
       }
     })
-    .catch(err => {
+    .catch((err) => {
       console.error("Leaderboard fetch failed:", err);
       listEl.innerHTML = `<div style="color:#e74c3c; text-align:center; padding: 20px 0; font-size:11px;">Could not connect to the rankings server.</div>`;
     });
-  };
+};
 
-  window.renderLeaderboardItems = function (leaderboard) {
-    const listEl = document.getElementById("leaderboard-list");
-    if (!listEl) return;
+window.renderLeaderboardItems = function (leaderboard) {
+  const listEl = document.getElementById("leaderboard-list");
+  if (!listEl) return;
 
-    if (leaderboard.length === 0) {
-      listEl.innerHTML = `<div style="color:#666; text-align:center; padding: 20px 0; font-size:11px; font-style:italic;">No legends have risen yet. Be the first!</div>`;
-      return;
-    }
+  if (leaderboard.length === 0) {
+    listEl.innerHTML = `<div style="color:#666; text-align:center; padding: 20px 0; font-size:11px; font-style:italic;">No legends have risen yet. Be the first!</div>`;
+    return;
+  }
 
-    let localUserId = window.getGameUserId ? window.getGameUserId() : null;
+  let localUserId = window.getGameUserId ? window.getGameUserId() : null;
 
-    listEl.innerHTML = leaderboard.map((player, index) => {
+  listEl.innerHTML = leaderboard
+    .map((player, index) => {
       let rank = index + 1;
       let badgeColor = "#7f8c8d";
       let badgeGlow = "";
@@ -10338,14 +10608,17 @@ window.updateMailboxBadge = function (hasUnclaimed) {
 
       if (rank === 1) {
         badgeColor = "#f1c40f";
-        badgeGlow = "box-shadow: 0 0 10px #f1c40f; text-shadow: 0 0 6px #f1c40f;";
+        badgeGlow =
+          "box-shadow: 0 0 10px #f1c40f; text-shadow: 0 0 6px #f1c40f;";
         rankIcon = "👑";
       } else if (rank === 2) {
         badgeColor = "#bdc3c7";
-        badgeGlow = "box-shadow: 0 0 8px #bdc3c7; text-shadow: 0 0 4px #bdc3c7;";
+        badgeGlow =
+          "box-shadow: 0 0 8px #bdc3c7; text-shadow: 0 0 4px #bdc3c7;";
       } else if (rank === 3) {
         badgeColor = "#e67e22";
-        badgeGlow = "box-shadow: 0 0 8px #e67e22; text-shadow: 0 0 4px #e67e22;";
+        badgeGlow =
+          "box-shadow: 0 0 8px #e67e22; text-shadow: 0 0 4px #e67e22;";
       }
 
       let titleTextHtml = "";
@@ -10379,74 +10652,96 @@ window.updateMailboxBadge = function (hasUnclaimed) {
             <button class="btn-action" style="background:#3498db; color:white; font-size:11px; padding:4px 10px;" onclick="window.inspectPlayer('${player.userId}')">Inspect</button>
         </div>
       `;
-    }).join("");
-
-    // After writing rows to DOM, render each miniature hero on their respective canvases
-    leaderboard.forEach(player => {
-      let canvas = document.getElementById(`leaderboard-canvas-${player.userId}`);
-      if (canvas) {
-        let ctx = canvas.getContext("2d");
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.imageSmoothingEnabled = false;
-
-        // Draw the mini hero centered nicely
-                window.drawSingleHero(ctx, 20, 21, 0.7, player.equippedSlots, {
-                  ...player,
-                  frenzyTimer: 0 // leaderboard previews are not frenzied
-                }, 0, {
-                  slashFrame: false,
-                  deathAnimationTimer: 0,
-                  isMainHero: false
-                });
-      }
-    });
-  };
-
-  window.inspectPlayer = function (targetUserId) {
-    if (!window.GAME_SERVER_URL) return;
-
-    fetch(`${window.GAME_SERVER_URL}/api/inspect`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ targetUserId })
     })
-    .then(response => response.json())
-    .then(data => {
+    .join("");
+
+  // After writing rows to DOM, render each miniature hero on their respective canvases
+  leaderboard.forEach((player) => {
+    let canvas = document.getElementById(`leaderboard-canvas-${player.userId}`);
+    if (canvas) {
+      let ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.imageSmoothingEnabled = false;
+
+      // Draw the mini hero centered nicely
+      window.drawSingleHero(
+        ctx,
+        20,
+        21,
+        0.7,
+        player.equippedSlots,
+        {
+          ...player,
+          frenzyTimer: 0, // leaderboard previews are not frenzied
+        },
+        0,
+        {
+          slashFrame: false,
+          deathAnimationTimer: 0,
+          isMainHero: false,
+        },
+      );
+    }
+  });
+};
+
+window.inspectPlayer = function (targetUserId) {
+  if (!window.GAME_SERVER_URL) return;
+
+  fetch(`${window.GAME_SERVER_URL}/api/inspect`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ targetUserId }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
       if (data.success && data.profile) {
         window.renderInspectModal(data.profile);
       } else {
         window.pushHeaderToast("❌ Could not load player profile.", "#e74c3c");
       }
     })
-    .catch(err => {
+    .catch((err) => {
       console.error("Inspect failed:", err);
       window.pushHeaderToast("❌ Network error inspecting legend.", "#e74c3c");
     });
-  };
+};
 
-  window.renderInspectModal = function (profile) {
-    let modal = document.getElementById("inspect-modal");
-    let contentEl = document.getElementById("inspect-content");
-    let titleEl = document.getElementById("inspect-title");
-    if (!modal || !contentEl || !titleEl) return;
+window.renderInspectModal = function (profile) {
+  let modal = document.getElementById("inspect-modal");
+  let contentEl = document.getElementById("inspect-content");
+  let titleEl = document.getElementById("inspect-title");
+  if (!modal || !contentEl || !titleEl) return;
 
-    let stats = profile.playerStats;
-    let equipped = profile.equippedSlots;
+  let stats = profile.playerStats;
+  let equipped = profile.equippedSlots;
 
-    // Set the title of the Inspect Modal
-    let titleBadgeHtml = "";
-    if (stats.equippedTitle && window.TITLES_DATA[stats.equippedTitle]) {
-      let tData = window.TITLES_DATA[stats.equippedTitle];
-      titleBadgeHtml = ` <span style="color:${tData.color || '#ff007f'}; font-weight:bold;">[${tData.name}]</span>`;
-    }
-    titleEl.innerHTML = `🔍 Inspecting: ${stats.playerName || "Legend"}${titleBadgeHtml}`;
+  // Set the title of the Inspect Modal
+  let titleBadgeHtml = "";
+  if (stats.equippedTitle && window.TITLES_DATA[stats.equippedTitle]) {
+    let tData = window.TITLES_DATA[stats.equippedTitle];
+    titleBadgeHtml = ` <span style="color:${tData.color || "#ff007f"}; font-weight:bold;">[${tData.name}]</span>`;
+  }
+  titleEl.innerHTML = `🔍 Inspecting: ${stats.playerName || "Legend"}${titleBadgeHtml}`;
 
-    // Store inspected slots globally in window so hover tooltips can resolve comparison
-    window.inspectedSlots = equipped;
+  // Store inspected slots globally in window so hover tooltips can resolve comparison
+  window.inspectedSlots = equipped;
 
-    // Build the inspected paper doll layout
-    let slots = ["helmet", "weapon", "chest", "subweapon", "leggings", "overall", "boots", "art1", "art2", "art3"];
-    let paperDollHtml = slots.map(slot => {
+  // Build the inspected paper doll layout
+  let slots = [
+    "helmet",
+    "weapon",
+    "chest",
+    "subweapon",
+    "leggings",
+    "overall",
+    "boots",
+    "art1",
+    "art2",
+    "art3",
+  ];
+  let paperDollHtml = slots
+    .map((slot) => {
       let item = equipped[slot];
 
       // Check locked elements
@@ -10467,7 +10762,10 @@ window.updateMailboxBadge = function (hasUnclaimed) {
           : `border-color: ${color};`;
 
         let iconBox = `<div style="text-align:center; margin-bottom:4px;">${window.getEquipIconHtml(item, 28)}</div>`;
-        let temperTag = item.temperLevel > 0 ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>` : "";
+        let temperTag =
+          item.temperLevel > 0
+            ? ` <span style="color:#2ecc71;">[+${item.temperLevel}]</span>`
+            : "";
 
         let attrs = [];
         if (item.atk > 0) attrs.push(`⚔️${item.atk}`);
@@ -10488,12 +10786,13 @@ window.updateMailboxBadge = function (hasUnclaimed) {
       } else {
         return `<div class="slots-card" style="min-height:48px; font-size:9.5px;"><i>[Empty ${slot.toUpperCase()}]</i></div>`;
       }
-    }).join("");
+    })
+    .join("");
 
-    // Solve the inspected stats list
-    let resolvedStats = window.resolveInspectedPlayerStats(profile);
+  // Solve the inspected stats list
+  let resolvedStats = window.resolveInspectedPlayerStats(profile);
 
-    let statsHtml = `
+  let statsHtml = `
       <div style="background:#111; padding:10px; border-radius:6px; border:1px solid #333; font-size:11px; line-height:1.45; font-family:monospace; text-align:left;">
           <div style="font-weight:bold; color:#3498db; border-bottom:1px solid #222; padding-bottom:4px; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">📊 Inspected Parameters</div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:2px 8px;">
@@ -10513,23 +10812,23 @@ window.updateMailboxBadge = function (hasUnclaimed) {
       </div>
     `;
 
-    // Render the inspected player's equipped medal banner
-        let medalBannerHtml = "";
-        let activeTitle = stats.equippedTitle;
-        if (activeTitle && window.TITLES_DATA[activeTitle]) {
-          let tData = window.TITLES_DATA[activeTitle];
-          let color = tData.color || "#ff007f";
-          let hexRgba = function (hex, alpha) {
-            if (!hex || hex.charAt(0) !== "#") return `rgba(155, 89, 182, ${alpha})`;
-            let r = parseInt(hex.slice(1, 3), 16),
-              g = parseInt(hex.slice(3, 5), 16),
-              b = parseInt(hex.slice(5, 7), 16);
-            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-          };
-          let bgRgba = hexRgba(color, 0.05);
-          let borderGlow = `inset 0 0 10px ${hexRgba(color, 0.08)}, 0 0 6px ${hexRgba(color, 0.1)}`;
+  // Render the inspected player's equipped medal banner
+  let medalBannerHtml = "";
+  let activeTitle = stats.equippedTitle;
+  if (activeTitle && window.TITLES_DATA[activeTitle]) {
+    let tData = window.TITLES_DATA[activeTitle];
+    let color = tData.color || "#ff007f";
+    let hexRgba = function (hex, alpha) {
+      if (!hex || hex.charAt(0) !== "#") return `rgba(155, 89, 182, ${alpha})`;
+      let r = parseInt(hex.slice(1, 3), 16),
+        g = parseInt(hex.slice(3, 5), 16),
+        b = parseInt(hex.slice(5, 7), 16);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    };
+    let bgRgba = hexRgba(color, 0.05);
+    let borderGlow = `inset 0 0 10px ${hexRgba(color, 0.08)}, 0 0 6px ${hexRgba(color, 0.1)}`;
 
-          medalBannerHtml = `
+    medalBannerHtml = `
             <div id="inspected-medal-banner"
                  style="margin-top: 6px; border: 1.5px solid ${color}; background: ${bgRgba}; border-radius: 6px; padding: 10px; display: flex; align-items: center; gap: 10px; box-shadow: ${borderGlow}; cursor: help;"
                  onmouseenter="window.showTitleMedalTooltip(event, '${activeTitle}')"
@@ -10544,8 +10843,8 @@ window.updateMailboxBadge = function (hasUnclaimed) {
                 </div>
             </div>
           `;
-        } else {
-          medalBannerHtml = `
+  } else {
+    medalBannerHtml = `
             <div id="inspected-medal-banner"
                  style="margin-top: 6px; border: 1.5px dashed #444; background: #151515; border-radius: 6px; padding: 10px; display: flex; align-items: center; gap: 10px; cursor: default;">
                 <div style="flex-shrink:0; font-size: 18px; display: flex; align-items: center; justify-content: center; width:28px; height:28px; background:#111; border:1px dashed #444; border-radius:4px;">
@@ -10557,9 +10856,9 @@ window.updateMailboxBadge = function (hasUnclaimed) {
                 </div>
             </div>
           `;
-        }
+  }
 
-        contentEl.innerHTML = `
+  contentEl.innerHTML = `
           <div style="display:grid; grid-template-columns: 1.15fr 0.85fr; gap:12px;">
               <div style="display:flex; flex-direction:column; gap:8px;">
                   <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:4px;">
@@ -10582,172 +10881,299 @@ window.updateMailboxBadge = function (hasUnclaimed) {
       </div>
     `;
 
-    modal.style.display = "block";
+  modal.style.display = "block";
 
-    // Draw the miniature hero on the Inspect page
-        let canvas = document.getElementById("inspect-hero-canvas");
-        if (canvas) {
-          let ctx = canvas.getContext("2d");
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.imageSmoothingEnabled = false;
+  // Draw the miniature hero on the Inspect page
+  let canvas = document.getElementById("inspect-hero-canvas");
+  if (canvas) {
+    let ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingEnabled = false;
 
-          window.drawSingleHero(ctx, 40, 42, 1.4, equipped, {
-            ...stats,
-            frenzyTimer: 0
-          }, 0, {
-            slashFrame: false,
-            deathAnimationTimer: 0,
-            isMainHero: false
-          });
-        }
+    window.drawSingleHero(
+      ctx,
+      40,
+      42,
+      1.4,
+      equipped,
+      {
+        ...stats,
+        frenzyTimer: 0,
+      },
+      0,
+      {
+        slashFrame: false,
+        deathAnimationTimer: 0,
+        isMainHero: false,
+      },
+    );
+  }
+};
+
+window.showInspectSlotTooltip = function (e, slotKey) {
+  e.stopPropagation();
+  if (!window.inspectedSlots) return;
+  let item = window.inspectedSlots[slotKey];
+  if (!item) return;
+
+  let tt = document.getElementById("game-tooltip");
+  tt.innerHTML = window.buildGeneralTooltipHtml(item, false);
+  tt.style.borderColor = window.getTierColor(item.statsRolled);
+  tt.style.display = "block";
+  window.positionTooltip(e, tt);
+};
+
+// Procedural inspect stats solver
+window.resolveInspectedPlayerStats = function (profile) {
+  let stats = profile.playerStats;
+  let equipped = profile.equippedSlots || {};
+
+  let p = {
+    atk: stats.baseAtk || 10,
+    maxHp: stats.baseMaxHp || 100,
+    def: stats.baseDef || 0,
+    moveSpeed: stats.baseMoveSpeed || 10,
+    idleAttackSpeed: stats.baseIdleSpeed || 60,
+    activeAttackSpeed: stats.baseActiveSpeed || 15,
+    drop: stats.baseDrop || 1.0,
+    qly: stats.baseQuality || 1.0,
+    gold: stats.baseGold || 1.0,
+    critChance: stats.baseCritChance || 0.05,
+    critDamage: stats.baseCritDamage || 1.5,
+    block: stats.baseBlock || 0.0,
+    parry: stats.baseParry || 0.0,
+    rareSpawn: stats.baseRareSpawn || 0.01,
+    str: stats.baseStr || 5,
+    dex: stats.baseDex || 5,
+    int: stats.baseInt || 5,
+    fairySpawn: stats.baseFairySpawn || 1.0,
+    arcaneBarrier: 0.0,
+    xpRate: 1.0,
   };
 
-  window.showInspectSlotTooltip = function (e, slotKey) {
-    e.stopPropagation();
-    if (!window.inspectedSlots) return;
-    let item = window.inspectedSlots[slotKey];
-    if (!item) return;
-
-    let tt = document.getElementById("game-tooltip");
-    tt.innerHTML = window.buildGeneralTooltipHtml(item, false);
-    tt.style.borderColor = window.getTierColor(item.statsRolled);
-    tt.style.display = "block";
-    window.positionTooltip(e, tt);
-  };
-
-  // Procedural inspect stats solver
-  window.resolveInspectedPlayerStats = function (profile) {
-    let stats = profile.playerStats;
-    let equipped = profile.equippedSlots || {};
-
-    let p = {
-      atk: stats.baseAtk || 10,
-      maxHp: stats.baseMaxHp || 100,
-      def: stats.baseDef || 0,
-      moveSpeed: stats.baseMoveSpeed || 10,
-      idleAttackSpeed: stats.baseIdleSpeed || 60,
-      activeAttackSpeed: stats.baseActiveSpeed || 15,
-      drop: stats.baseDrop || 1.0,
-      qly: stats.baseQuality || 1.0,
-      gold: stats.baseGold || 1.0,
-      critChance: stats.baseCritChance || 0.05,
-      critDamage: stats.baseCritDamage || 1.5,
-      block: stats.baseBlock || 0.0,
-      parry: stats.baseParry || 0.0,
-      rareSpawn: stats.baseRareSpawn || 0.01,
-      str: stats.baseStr || 5,
-      dex: stats.baseDex || 5,
-      int: stats.baseInt || 5,
-      fairySpawn: stats.baseFairySpawn || 1.0,
-      arcaneBarrier: 0.0,
-      xpRate: 1.0,
-    };
-
-    // Titles passive mapping
-    if (stats.unlockedTitles) {
-      stats.unlockedTitles.forEach(tKey => {
-        let tData = window.TITLES_DATA[tKey];
-        if (tData && tData.stats) {
-          for (let sKey in tData.stats) {
-            if (p[sKey] !== undefined) p[sKey] += tData.stats[sKey];
-          }
-        }
-      });
-    }
-
-    // SP Allocations
-    let alloc = stats.spAllocations || {};
-    p.str += (alloc.spStr || 0) * 3;
-    p.dex += (alloc.spDex || 0) * 3;
-    p.int += (alloc.spInt || 0) * 3;
-
-    p.maxHp += (alloc.spHp || 0) * 50;
-    p.atk += (alloc.spAtk || 0) * 6;
-    p.def += (alloc.spDef || 0) * 5;
-    p.critChance += (alloc.spCrit || 0) * 0.005;
-    p.critDamage += (alloc.spCritDmg || 0) * 0.02;
-    p.block += (alloc.spBlock || 0) * 0.005;
-    p.parry += (alloc.spParry || 0) * 0.005;
-    p.moveSpeed += (alloc.spSpd || 0) * 1;
-
-    // Equipment sum
-    let itemAtkPct = 0;
-    let itemHpPct = 0;
-    let itemDefPct = 0;
-    let itemSpdPct = 0;
-
-    for (let key in equipped) {
-      let item = equipped[key];
-      if (item) {
-        p.atk += item.atk || 0;
-        p.maxHp += item.maxHp || 0;
-        p.moveSpeed += item.moveSpeed || 0;
-
-        p.drop += item.dropRate || 0;
-        p.qly += item.quality || 0;
-        p.gold += item.goldMulti || 0;
-        p.critChance += item.critChance || 0;
-        p.critDamage += item.critDamage || 0;
-        p.block += item.block || 0;
-        p.parry += item.parry || 0;
-        p.str += item.str || 0;
-        p.dex += item.dex || 0;
-        p.int += item.int || 0;
-        p.rareSpawn += item.rareSpawn || 0;
-        p.fairySpawn += item.fairySpawn || 0;
-
-        if (item.atkPct) itemAtkPct += item.atkPct;
-        if (item.maxHpPct) itemHpPct += item.maxHpPct;
-        if (item.defPct) itemDefPct += item.defPct;
-        if (item.moveSpeedPct) itemSpdPct += item.moveSpeedPct;
-      }
-    }
-
-    let effectiveStr = Math.max(0, p.str - 5);
-    let effectiveDex = Math.max(0, p.dex - 5);
-    let effectiveInt = Math.max(0, p.int - 5);
-
-    itemAtkPct += effectiveStr * 0.003;
-    itemHpPct += effectiveStr * 0.003;
-    itemDefPct += Math.log10(effectiveInt + 1) * 0.15;
-    p.critChance += parseFloat(((effectiveDex * 0.3) / (effectiveDex + 250)).toFixed(4));
-    p.critDamage += effectiveDex * 0.003;
-    p.moveSpeed += parseFloat(((effectiveDex * 20) / (effectiveDex + 150)).toFixed(1));
-    p.block += parseFloat(((effectiveInt * 0.12) / (effectiveInt + 150)).toFixed(4));
-    p.parry += parseFloat(((effectiveInt * 0.12) / (effectiveInt + 150)).toFixed(4));
-    p.fairySpawn += parseFloat((effectiveInt * 0.001).toFixed(4));
-
-    let flatDef = (stats.baseDef || 0) + (alloc.spDef || 0) * 4;
-    let defMultiplier = 1.0;
-
-    for (let key in equipped) {
-      let item = equipped[key];
-      if (item) {
-        flatDef += item.def || 0;
-        if (["chest", "leggings", "overall", "helmet"].includes(item.type)) {
-          let stars = item.statsRolled === "UNIQUE" ? 5 : item.statsRolled || 0;
-          defMultiplier += stars * 0.03 + item.temperLevel * 0.01;
+  // Titles passive mapping
+  if (stats.unlockedTitles) {
+    stats.unlockedTitles.forEach((tKey) => {
+      let tData = window.TITLES_DATA[tKey];
+      if (tData && tData.stats) {
+        for (let sKey in tData.stats) {
+          if (p[sKey] !== undefined) p[sKey] += tData.stats[sKey];
         }
       }
+    });
+  }
+
+  // SP Allocations
+  let alloc = stats.spAllocations || {};
+  p.str += (alloc.spStr || 0) * 3;
+  p.dex += (alloc.spDex || 0) * 3;
+  p.int += (alloc.spInt || 0) * 3;
+
+  p.maxHp += (alloc.spHp || 0) * 50;
+  p.atk += (alloc.spAtk || 0) * 6;
+  p.def += (alloc.spDef || 0) * 5;
+  p.critChance += (alloc.spCrit || 0) * 0.005;
+  p.critDamage += (alloc.spCritDmg || 0) * 0.02;
+  p.block += (alloc.spBlock || 0) * 0.005;
+  p.parry += (alloc.spParry || 0) * 0.005;
+  p.moveSpeed += (alloc.spSpd || 0) * 1;
+
+  // Equipment sum
+  let itemAtkPct = 0;
+  let itemHpPct = 0;
+  let itemDefPct = 0;
+  let itemSpdPct = 0;
+
+  for (let key in equipped) {
+    let item = equipped[key];
+    if (item) {
+      p.atk += item.atk || 0;
+      p.maxHp += item.maxHp || 0;
+      p.moveSpeed += item.moveSpeed || 0;
+
+      p.drop += item.dropRate || 0;
+      p.qly += item.quality || 0;
+      p.gold += item.goldMulti || 0;
+      p.critChance += item.critChance || 0;
+      p.critDamage += item.critDamage || 0;
+      p.block += item.block || 0;
+      p.parry += item.parry || 0;
+      p.str += item.str || 0;
+      p.dex += item.dex || 0;
+      p.int += item.int || 0;
+      p.rareSpawn += item.rareSpawn || 0;
+      p.fairySpawn += item.fairySpawn || 0;
+
+      if (item.atkPct) itemAtkPct += item.atkPct;
+      if (item.maxHpPct) itemHpPct += item.maxHpPct;
+      if (item.defPct) itemDefPct += item.defPct;
+      if (item.moveSpeedPct) itemSpdPct += item.moveSpeedPct;
     }
+  }
 
-    p.atk = Math.floor(p.atk * (1.0 + itemAtkPct));
-    p.maxHp = Math.floor(p.maxHp * (1.0 + itemHpPct));
-    p.def = Math.ceil(flatDef * (defMultiplier + itemDefPct));
-    p.moveSpeed = p.moveSpeed * (1.0 + itemSpdPct);
+  let effectiveStr = Math.max(0, p.str - 5);
+  let effectiveDex = Math.max(0, p.dex - 5);
+  let effectiveInt = Math.max(0, p.int - 5);
 
-    // Prestige multipliers
-    let prestigeAtkMult = Math.pow(1.12, stats.prestigeUpgrades?.atk || 0);
-    let prestigeHpMult = Math.pow(1.1, stats.prestigeUpgrades?.fort || 0);
-    let prestigeDefMult = Math.pow(1.05, stats.prestigeUpgrades?.fort || 0);
+  itemAtkPct += effectiveStr * 0.003;
+  itemHpPct += effectiveStr * 0.003;
+  itemDefPct += Math.log10(effectiveInt + 1) * 0.15;
+  p.critChance += parseFloat(
+    ((effectiveDex * 0.3) / (effectiveDex + 250)).toFixed(4),
+  );
+  p.critDamage += effectiveDex * 0.003;
+  p.moveSpeed += parseFloat(
+    ((effectiveDex * 20) / (effectiveDex + 150)).toFixed(1),
+  );
+  p.block += parseFloat(
+    ((effectiveInt * 0.12) / (effectiveInt + 150)).toFixed(4),
+  );
+  p.parry += parseFloat(
+    ((effectiveInt * 0.12) / (effectiveInt + 150)).toFixed(4),
+  );
+  p.fairySpawn += parseFloat((effectiveInt * 0.001).toFixed(4));
 
-    // Mission Upgrades
-    let missionAtkMult = 1.0 + (stats.missionUpgrades?.atk || 0) * 0.02;
-    let missionHpMult = 1.0 + (stats.missionUpgrades?.hp || 0) * 0.03;
+  let flatDef = (stats.baseDef || 0) + (alloc.spDef || 0) * 4;
+  let defMultiplier = 1.0;
 
-    p.atk = Math.floor(p.atk * prestigeAtkMult * missionAtkMult);
-    p.maxHp = Math.floor(p.maxHp * prestigeHpMult * missionHpMult);
-    p.def = Math.floor(p.def * prestigeDefMult);
+  for (let key in equipped) {
+    let item = equipped[key];
+    if (item) {
+      flatDef += item.def || 0;
+      if (["chest", "leggings", "overall", "helmet"].includes(item.type)) {
+        let stars = item.statsRolled === "UNIQUE" ? 5 : item.statsRolled || 0;
+        defMultiplier += stars * 0.03 + item.temperLevel * 0.01;
+      }
+    }
+  }
 
-    return p;
+  p.atk = Math.floor(p.atk * (1.0 + itemAtkPct));
+  p.maxHp = Math.floor(p.maxHp * (1.0 + itemHpPct));
+  p.def = Math.ceil(flatDef * (defMultiplier + itemDefPct));
+  p.moveSpeed = p.moveSpeed * (1.0 + itemSpdPct);
+
+  // Prestige multipliers
+  let prestigeAtkMult = Math.pow(1.12, stats.prestigeUpgrades?.atk || 0);
+  let prestigeHpMult = Math.pow(1.1, stats.prestigeUpgrades?.fort || 0);
+  let prestigeDefMult = Math.pow(1.05, stats.prestigeUpgrades?.fort || 0);
+
+  // Mission Upgrades
+  let missionAtkMult = 1.0 + (stats.missionUpgrades?.atk || 0) * 0.02;
+  let missionHpMult = 1.0 + (stats.missionUpgrades?.hp || 0) * 0.03;
+
+  p.atk = Math.floor(p.atk * prestigeAtkMult * missionAtkMult);
+  p.maxHp = Math.floor(p.maxHp * prestigeHpMult * missionHpMult);
+  p.def = Math.floor(p.def * prestigeDefMult);
+
+  return p;
+};
+
+window.updateSalvagePadUI = function () {
+  let threshold =
+    window.playerStats.autoSalvageThreshold !== undefined
+      ? window.playerStats.autoSalvageThreshold
+      : -1;
+  let bulkTarget =
+    window.state.bulkSalvageTarget !== undefined
+      ? window.state.bulkSalvageTarget
+      : 0;
+
+  // Configuration matrix of colors, active styles, and fallback states
+  let configs = {
+    "-1": {
+      bg: "#e74c3c",
+      color: "#ffffff",
+      border: "#ff6b6b",
+      shadow: "rgba(231, 76, 60, 0.65)",
+    },
+    0: {
+      bg: "#bdc3c7",
+      color: "#111111",
+      border: "#ffffff",
+      shadow: "rgba(255, 255, 255, 0.5)",
+    },
+    1: {
+      bg: "#3498db",
+      color: "#ffffff",
+      border: "#74b9ff",
+      shadow: "rgba(52, 152, 219, 0.65)",
+    },
+    2: {
+      bg: "#9b59b6",
+      color: "#ffffff",
+      border: "#a29bfe",
+      shadow: "rgba(155, 89, 182, 0.65)",
+    },
+    3: {
+      bg: "#e67e22",
+      color: "#ffffff",
+      border: "#ffbe76",
+      shadow: "rgba(230, 126, 34, 0.65)",
+    },
   };
+
+  // 1. Auto-Salvage Buttons Styling
+  let autoButtons = {
+    "-1": "btn-auto-salvage-off",
+    0: "btn-auto-salvage-0",
+    1: "btn-auto-salvage-1",
+    2: "btn-auto-salvage-2",
+    3: "btn-auto-salvage-3",
+  };
+
+  for (let k in autoButtons) {
+    let el = document.getElementById(autoButtons[k]);
+    if (el) {
+      if (parseInt(k, 10) === threshold) {
+        el.classList.add("active");
+        let cfg = configs[k];
+        el.style.background = cfg.bg;
+        el.style.color = cfg.color;
+        el.style.borderColor = cfg.border;
+        el.style.boxShadow = `0 0 12px ${cfg.shadow}`;
+        el.style.opacity = "1";
+        el.style.fontWeight = "bold";
+      } else {
+        el.classList.remove("active");
+        el.style.background = "rgba(0,0,0,0.4)";
+        el.style.color = "#7f8c8d";
+        el.style.borderColor = "#2d3748";
+        el.style.boxShadow = "";
+        el.style.opacity = "0.45";
+        el.style.fontWeight = "normal";
+      }
+    }
+  }
+
+  // 2. Bulk-Salvage Buttons Styling
+  let bulkButtons = {
+    0: "btn-bulk-salvage-0",
+    1: "btn-bulk-salvage-1",
+    2: "btn-bulk-salvage-2",
+    3: "btn-bulk-salvage-3",
+  };
+
+  for (let k in bulkButtons) {
+    let el = document.getElementById(bulkButtons[k]);
+    if (el) {
+      if (parseInt(k, 10) === bulkTarget) {
+        el.classList.add("active");
+        let cfg = configs[k];
+        el.style.background = cfg.bg;
+        el.style.color = cfg.color;
+        el.style.borderColor = cfg.border;
+        el.style.boxShadow = `0 0 12px ${cfg.shadow}`;
+        el.style.opacity = "1";
+        el.style.fontWeight = "bold";
+      } else {
+        el.classList.remove("active");
+        el.style.background = "rgba(0,0,0,0.4)";
+        el.style.color = "#7f8c8d";
+        el.style.borderColor = "#2d3748";
+        el.style.boxShadow = "";
+        el.style.opacity = "0.45";
+        el.style.fontWeight = "normal";
+      }
+    }
+  }
+};
