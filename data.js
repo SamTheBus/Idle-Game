@@ -74,10 +74,10 @@ window.MYSTICAL_STOCK = [
   },
   {
     name: "Gacha Key",
-    cost: 5,
+    cost: 15,
     currency: "Luminous Soul",
     color: "#f1c40f",
-    desc: "Trade 5 rare Luminous Souls for 1 Vending Gacha Key.",
+    desc: "Trade 15 rare Luminous Souls for 1 Vending Gacha Key.",
   },
   {
     name: "Astral Essence",
@@ -3248,6 +3248,8 @@ window.recalculateAchievementTotals = function () {
 window.checkAchievements = function () {
   if (!window.playerStats.unlockedAchievements)
     window.playerStats.unlockedAchievements = [];
+  if (!window.playerStats.achievementTimestamps)
+    window.playerStats.achievementTimestamps = {};
 
   let activeBuffs = 0;
   if (window.playerStats.atkPotionTimer > 0) activeBuffs++;
@@ -3262,20 +3264,22 @@ window.checkAchievements = function () {
   );
 
   let unlockedAny = false;
-  window.AchievementsData.forEach((ach) => {
-    if (window.playerStats.unlockedAchievements.includes(ach.id)) return;
-    let progress = window.getAchievementProgress(ach);
-    let targetValue = ach.isSingleTier ? 1 : ach.reqValue;
-    if (progress >= targetValue) {
-      window.playerStats.unlockedAchievements.push(ach.id);
-      if (!window.playerStats.unviewedAchievements)
-        window.playerStats.unviewedAchievements = [];
-      if (!window.playerStats.unviewedAchievements.includes(ach.id)) {
-        window.playerStats.unviewedAchievements.push(ach.id);
-      }
-      unlockedAny = true;
+    window.AchievementsData.forEach((ach) => {
+      if (window.playerStats.unlockedAchievements.includes(ach.id)) return;
+      let progress = window.getAchievementProgress(ach);
+      let targetValue = ach.isSingleTier ? 1 : ach.reqValue;
+      if (progress >= targetValue) {
+        window.playerStats.unlockedAchievements.push(ach.id);
+        window.playerStats.achievementTimestamps = window.playerStats.achievementTimestamps || {};
+        window.playerStats.achievementTimestamps[ach.id] = Date.now();
+        if (!window.playerStats.unviewedAchievements)
+          window.playerStats.unviewedAchievements = [];
+        if (!window.playerStats.unviewedAchievements.includes(ach.id)) {
+          window.playerStats.unviewedAchievements.push(ach.id);
+        }
+        unlockedAny = true;
 
-      let currentAchId = ach.id;
+        let currentAchId = ach.id;
       if (typeof window.pushLog === "function")
         window.pushLog(
           `<strong style="color:#f1c40f;">🏆 CHALLENGE ACHIEVED: [${ach.name}]!</strong> - ${ach.desc}`,
@@ -3736,15 +3740,22 @@ window.resolvePlayerStats = function (useDraft = false) {
   }
 
   p.rawBlock = p.block;
-  p.rawParry = p.parry;
+    p.rawParry = p.parry;
 
-  if (p.block > maxBlockCap) p.block = maxBlockCap;
-  if (p.parry > maxParryCap) p.parry = maxParryCap;
+    if (p.block > maxBlockCap) p.block = maxBlockCap;
+    if (p.parry > maxParryCap) p.parry = maxParryCap;
 
-  p.atk = Math.floor(p.atk);
-  p.maxHp = Math.floor(p.maxHp);
-  p.def = Math.floor(p.def);
-  p.moveSpeed = parseFloat(p.moveSpeed.toFixed(1));
+    // Apply diminishing returns to raw accumulated Rare Spawn rates to prevent key hyper-inflation
+    let rawRare = p.rareSpawn;
+    let limit = window.checkArtifactTrait("void_pull") ? 0.10 : 0.075; // 7.5% base cap, 10.0% elevated with Void Core
+    let excessRare = Math.max(0, rawRare - 0.01);
+    let scale = limit - 0.01;
+    p.rareSpawn = 0.01 + (excessRare * scale) / (excessRare + scale);
+
+    p.atk = Math.floor(p.atk);
+    p.maxHp = Math.floor(p.maxHp);
+    p.def = Math.floor(p.def);
+    p.moveSpeed = parseFloat(p.moveSpeed.toFixed(1));
 
   if (
     window.equippedSlots.boots &&
@@ -4051,28 +4062,30 @@ window.playerStats = {
   dailyMissions: [],
   weeklyMissions: [],
   dailyRerollsDone: 0, // Reset daily at 12:00 AM PST/PDT
-  lastDailyResetTime: 0,
-  lastWeeklyResetTime: 0,
-  dailyRewardClaimed: false,
-  weeklyRewardClaimed: false,
-  unviewedAchievements: [],
-    selectedPrestigeStage: 80,
-    unlockedTitles: [],
-    equippedTitle: null,
-    claimedMailIds: [],
-    playerName: "Guest",
-  };
+    lastDailyResetTime: 0,
+    lastWeeklyResetTime: 0,
+    dailyRewardClaimed: false,
+    weeklyRewardClaimed: false,
+    unviewedAchievements: [],
+      selectedPrestigeStage: 80,
+      unlockedTitles: [],
+      equippedTitle: null,
+      achievementTimestamps: {},
+      claimedMailIds: [],
+      playerName: "Guest",
+    };
 
   // --- CLIENT-SIDE TITLE DATABASE ---
   window.TITLES_DATA = {
-    "hoors_beta_boi": {
-      name: "Hoor's Beta Boi",
-      desc: "A prestigious badge of honor for Hoor's elite close-circle testers.",
-      color: "#ff007f", // Hot Neon Pink
-      stats: { drop: 0.50, qly: 0.50 },
-      icon: `<svg width="14" height="14" viewBox="0 0 16 16" style="vertical-align: middle; margin-right: 3px; filter: drop-shadow(0 0 4px #ff007f);"><polygon points="5,0 11,0 11,6 8,4 5,6" fill="#ff007f" /><polygon points="6,0 10,0 10,6 8,4.5 6,6" fill="#d946ef" /><circle cx="8" cy="9" r="4.5" fill="#f1c40f" stroke="#000" stroke-width="0.8" /><polygon points="8,7 8.5,8.5 10,8.7 8.8,9.7 9.2,11 8,10.2 6.8,11 7.2,9.7 6,8.7 7.5,8.5" fill="#fff" /></svg>`
-    }
-  };
+      "hoors_beta_boi": {
+        name: "Hoor's Beta Boi",
+        desc: "A prestigious badge of honor for Hoor's elite close-circle testers.",
+        received: "Participating in the Closed Beta Phase (June 2026)",
+        color: "#ff007f", // Hot Neon Pink
+        stats: { drop: 0.50, qly: 0.50 },
+        icon: `<svg width="14" height="14" viewBox="0 0 16 16" style="vertical-align: middle; margin-right: 3px; filter: drop-shadow(0 0 4px #ff007f);"><polygon points="5,0 11,0 11,6 8,4 5,6" fill="#ff007f" /><polygon points="6,0 10,0 10,6 8,4.5 6,6" fill="#d946ef" /><circle cx="8" cy="9" r="4.5" fill="#f1c40f" stroke="#000" stroke-width="0.8" /><polygon points="8,7 8.5,8.5 10,8.7 8.8,9.7 9.2,11 8,10.2 6.8,11 7.2,9.7 6,8.7 7.5,8.5" fill="#fff" /></svg>`
+      }
+    };
 
 // --- PROCEDURAL MISSION & QUEST SYSTEM ---
 
@@ -4351,6 +4364,7 @@ window.logicClock = 0;
 window.spacePressed = false;
 window.state = { autoAttack: true, efficiency: 1.0, currentSubTab: "EQUIP" };
 window.isGamePaused = false;
+window.isCloudSynced = false;
 window.reviveTimer = 0;
 window.deathAnimationTimer = 0;
 window.deathMaxFrames = 90;

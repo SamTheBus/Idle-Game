@@ -1778,25 +1778,7 @@ window.equipItem = function (id) {
     ? window.inventory.ARTIFACT[index]
     : window.inventory.EQUIP[index];
 
-  let reqLvl = 1;
-  if ((item.stageLevel || 1) >= 3) {
-    reqLvl = Math.max(
-      1,
-      ((item.stageLevel || 1) - 2) * 5 -
-        (window.playerStats.prestigeCount || 0) * 5,
-    );
-  }
-  if (
-    window.playerStats.level < reqLvl &&
-    !window.playerStats.bypassGearLockActive
-  ) {
-    if (typeof window.pushHeaderToast === "function")
-      window.pushHeaderToast(
-        `🔒 Requires Level ${reqLvl} to equip!`,
-        "#e74c3c",
-      );
-    return;
-  }
+  // Level requirements removed
 
   let oldMaxHp = 100;
   if (typeof window.resolvePlayerStats === "function")
@@ -2794,6 +2776,14 @@ window.getStatLabel = function (propKey) {
     str: "Strength",
     dex: "Dexterity",
     int: "Intelligence",
+
+    // Medal/Title stats mapping
+    drop: "Drop Rate",
+    qly: "Drop Quality",
+    gold: "Gold Multiplier",
+    xpRate: "XP Rate",
+    fairySpawn: "Fairy Spawn Rate",
+    rareSpawn: "Rare Spawn Rate",
   };
   return labels[propKey] || propKey;
 };
@@ -3045,32 +3035,38 @@ window.rollGachaCrateItem = function () {
     delete window.inventory.ETC["Gacha Key"];
 
   // --- PITY COUNTER ENGINE ---
-    window.playerStats.vendingPity = (window.playerStats.vendingPity || 0) + 1;
-    let isPityTriggered = false;
+      window.playerStats.vendingPity = (window.playerStats.vendingPity || 0) + 1;
+      let isPityTriggered = false;
 
-    if (window.playerStats.vendingPity >= 50) {
-      // Keeping pity threshold at 50 as desired
-      isPityTriggered = true;
-      window.playerStats.vendingPity = 0; // Reset pity
-    }
+      if (window.playerStats.vendingPity >= 50) {
+        isPityTriggered = true;
+        window.playerStats.vendingPity = 0; // Reset pity
+      }
 
-    let statLinesCount = 1;
-    if (isPityTriggered) {
-      statLinesCount = 5; // Guaranteed Mythic
-    } else {
-      // Decoupled from active equip qly (re-balanced at flat +2.5% per level of Gacha Calibration)
-      let luckMultiplier = 1.0 + (window.playerStats.vendingQLevel || 0) * 0.025;
-      let roll = Math.random() * 100;
+      let statLinesCount = 1;
+      if (isPityTriggered) {
+        statLinesCount = 5; // Guaranteed Mythic
+      } else {
+        let qly = p.qly; // Fully live with your stats!
+        let roll = Math.random() * 100;
+        let mythic = 1.0 * qly;
+        let leg = 5.0 * qly;
+        let epic = 15.0 * qly;
+        let magic = 25.0 * qly;
 
-      // Upgraded rates: 1.0% Mythic (5★), 5.0% Legendary (4★), 15.0% Epic (3★), 25.0% Magic (2★)
-      if (roll < 1.0 * luckMultiplier) {
-        statLinesCount = 5;
-        window.playerStats.vendingPity = 0; // Natural pull resets pity
-      } else if (roll < 6.0 * luckMultiplier) statLinesCount = 4;
-      else if (roll < 21.0 * luckMultiplier) statLinesCount = 3;
-      else if (roll < 46.0 * luckMultiplier) statLinesCount = 2;
-      else statLinesCount = 1;
-    }
+        if (roll < mythic) {
+          statLinesCount = 5;
+          window.playerStats.vendingPity = 0; // Natural pull resets pity
+        } else if (roll < mythic + leg) {
+          statLinesCount = 4;
+        } else if (roll < mythic + leg + epic) {
+          statLinesCount = 3;
+        } else if (roll < mythic + leg + epic + magic) {
+          statLinesCount = 2;
+        } else {
+          statLinesCount = 1;
+        }
+      }
 
   let peakRunStage = window.playerStats.lifetimePeakStage || 1;
   let stageScale = Math.floor((peakRunStage - 1) / 10) + 1;

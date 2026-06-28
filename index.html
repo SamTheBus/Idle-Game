@@ -358,6 +358,27 @@
                 Mailbox
             </button>
             <button
+                    id="btn-leaderboard-top"
+                    class="nav-btn"
+                    onclick="window.toggleLeaderboard()"
+            >
+                <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#f1c40f"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        style="vertical-align: middle"
+                >
+                    <polygon
+                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+                Legends
+            </button>
+            <button
                     id="btn-settings-top"
                     class="nav-btn"
                     onclick="window.toggleSettings()"
@@ -464,6 +485,28 @@
                     Rename
                 </button>
             </div>
+        </div>
+
+        <!-- Cosmetic Skin Selection -->
+        <div
+                style="
+                    background: #151515;
+                    border: 1px solid #333;
+                    padding: 10px;
+                    border-radius: 6px;
+                    margin-bottom: 10px;
+                  "
+        >
+            <label for="settings-cosmetic-skin"
+                   style="font-size: 11.5px; font-weight: bold; color: #fff; display: block; margin-bottom: 6px;">🎭
+                Avatar Cosmetic Skin:</label>
+            <select id="settings-cosmetic-skin" onchange="window.changeCosmeticSkin(this.value)"
+                    style="width: 100%; background: #222; color: #fff; border: 1px solid #444; padding: 6px; border-radius: 4px; font-size: 11px;">
+                <option value="default">Default Steel Armor</option>
+                <option value="void">Void Sovereign (Cosmic Purple)</option>
+                <option value="crimson">Sanguine Dreadnought (Crimson Red)</option>
+                <option value="gilded">Gilded Emperor (Gold)</option>
+            </select>
         </div>
 
         <!-- Fullscreen -->
@@ -798,6 +841,123 @@
                 onscroll="window.hideTooltip()"
                 ontouchmove="window.hideTooltip()"
         ></div>
+    </div>
+
+    <!-- Legends Leaderboard Portal Modal -->
+    <div
+            id="leaderboard-modal"
+            style="
+          display: none;
+          position: fixed;
+          top: 10%;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 90%;
+          max-width: 520px;
+          background: #111;
+          border: 2px solid #f1c40f;
+          border-radius: 8px;
+          z-index: 20000;
+          padding: 15px;
+          box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+          max-height: 80vh;
+          overflow-y: auto;
+          overscroll-behavior: contain;
+        "
+    >
+        <div
+                style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+          "
+        >
+            <h3 style="margin: 0; color: #f1c40f; display: flex; align-items: center; gap: 6px;">🏆
+                Hall of Legends</h3>
+            <button
+                    onclick="window.toggleLeaderboard()"
+                    style="
+              background: #e74c3c;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              padding: 6px 12px;
+              font-weight: bold;
+              cursor: pointer;
+              font-size: 11px;
+            "
+            >
+                Close
+            </button>
+        </div>
+        <div style="color: #aaa; font-size: 11.5px; margin-bottom: 12px;">
+            The top heroes who have broken limits and etched their names into the cosmos. Slay Stage
+            Warden bosses to secure your rank!
+        </div>
+        <div
+                id="leaderboard-list"
+                style="display: flex; flex-direction: column; gap: 8px;"
+                onscroll="window.hideTooltip()"
+                ontouchmove="window.hideTooltip()"
+        ></div>
+    </div>
+
+    <!-- Hero Inspect Portal Modal -->
+    <div
+            id="inspect-modal"
+            style="
+          display: none;
+          position: fixed;
+          top: 8%;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 95%;
+          max-width: 580px;
+          background: #0d0e12;
+          border: 2px solid #3498db;
+          border-radius: 10px;
+          z-index: 25000;
+          padding: 15px;
+          box-shadow: 0 0 40px rgba(0, 0, 0, 0.95);
+          max-height: 84vh;
+          overflow-y: auto;
+          overscroll-behavior: contain;
+        "
+    >
+        <div
+                style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+          "
+        >
+            <h3 id="inspect-title"
+                style="margin: 0; color: #3498db; display: flex; align-items: center; gap: 6px;">🔍
+                Inspecting Legend</h3>
+            <button
+                    onclick="document.getElementById('inspect-modal').style.display='none'; window.hideTooltip();"
+                    style="
+              background: #e74c3c;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              padding: 6px 12px;
+              font-weight: bold;
+              cursor: pointer;
+              font-size: 11px;
+            "
+            >
+                Close
+            </button>
+        </div>
+        <div id="inspect-content" onscroll="window.hideTooltip()"
+             ontouchmove="window.hideTooltip()"></div>
     </div>
 
     <!-- Developer Console Panel -->
@@ -2604,116 +2764,125 @@
                 ⚔️ RECHALLENGE STAGE
             </button>
             <div class="hero-tab-layout">
-                <!-- Left Side: Equipment Grid (Click slots to open the draggable Swap Window) -->
-                <div class="paper-doll">
-                    <!-- Row 1: Helmet & Weapon -->
-                    <div
-                            id="slot-helmet"
-                            class="slots-card"
-                            onclick="window.openEquipSwapWindow(event, 'helmet')"
-                            onmouseenter="window.showSlotTooltip(event, 'helmet')"
-                            onmouseleave="window.hideTooltip()"
-                            ontouchstart="window.showSlotTooltip(event, 'helmet')"
-                    >
-                        <i>[Empty Helmet]</i>
-                    </div>
-                    <div
-                            id="slot-weapon"
-                            class="slots-card"
-                            onclick="window.openEquipSwapWindow(event, 'weapon')"
-                            onmouseenter="window.showSlotTooltip(event, 'weapon')"
-                            onmouseleave="window.hideTooltip()"
-                            ontouchstart="window.showSlotTooltip(event, 'weapon')"
-                    >
-                        <i>[Empty Weapon]</i>
+                <!-- Left Side: Equipment Grid & Medal Display in clean vertical flow -->
+                <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+                    <div class="paper-doll">
+                        <!-- Row 1: Helmet & Weapon -->
+                        <div
+                                id="slot-helmet"
+                                class="slots-card"
+                                onclick="window.openEquipSwapWindow(event, 'helmet')"
+                                onmouseenter="window.showSlotTooltip(event, 'helmet')"
+                                onmouseleave="window.hideTooltip()"
+                                ontouchstart="window.showSlotTooltip(event, 'helmet')"
+                        >
+                            <i>[Empty Helmet]</i>
+                        </div>
+                        <div
+                                id="slot-weapon"
+                                class="slots-card"
+                                onclick="window.openEquipSwapWindow(event, 'weapon')"
+                                onmouseenter="window.showSlotTooltip(event, 'weapon')"
+                                onmouseleave="window.hideTooltip()"
+                                ontouchstart="window.showSlotTooltip(event, 'weapon')"
+                        >
+                            <i>[Empty Weapon]</i>
+                        </div>
+
+                        <!-- Row 2: Chest Armor & Sub-weapon -->
+                        <div
+                                id="slot-chest"
+                                class="slots-card"
+                                onclick="window.openEquipSwapWindow(event, 'chest')"
+                                onmouseenter="window.showSlotTooltip(event, 'chest')"
+                                onmouseleave="window.hideTooltip()"
+                                ontouchstart="window.showSlotTooltip(event, 'chest')"
+                        >
+                            <i>[Empty Chest Armor]</i>
+                        </div>
+                        <div
+                                id="slot-subweapon"
+                                class="slots-card"
+                                onclick="window.openEquipSwapWindow(event, 'subweapon')"
+                                onmouseenter="window.showSlotTooltip(event, 'subweapon')"
+                                onmouseleave="window.hideTooltip()"
+                                ontouchstart="window.showSlotTooltip(event, 'subweapon')"
+                        >
+                            <i>[Empty Sub-weapon]</i>
+                        </div>
+
+                        <!-- Row 3: Leggings & Overall Suit (Clustered adjacent to torso components to keep locked items close!) -->
+                        <div
+                                id="slot-leggings"
+                                class="slots-card"
+                                onclick="window.openEquipSwapWindow(event, 'leggings')"
+                                onmouseenter="window.showSlotTooltip(event, 'leggings')"
+                                onmouseleave="window.hideTooltip()"
+                                ontouchstart="window.showSlotTooltip(event, 'leggings')"
+                        >
+                            <i>[Empty Leggings]</i>
+                        </div>
+                        <div
+                                id="slot-overall"
+                                class="slots-card"
+                                onclick="window.openEquipSwapWindow(event, 'overall')"
+                                onmouseenter="window.showSlotTooltip(event, 'overall')"
+                                onmouseleave="window.hideTooltip()"
+                                ontouchstart="window.showSlotTooltip(event, 'overall')"
+                        >
+                            <i>[Empty Overall Suit]</i>
+                        </div>
+
+                        <!-- Row 4: Boots & Artifact 1 -->
+                        <div
+                                id="slot-boots"
+                                class="slots-card"
+                                onclick="window.openEquipSwapWindow(event, 'boots')"
+                                onmouseenter="window.showSlotTooltip(event, 'boots')"
+                                onmouseleave="window.hideTooltip()"
+                                ontouchstart="window.showSlotTooltip(event, 'boots')"
+                        >
+                            <i>[Empty Boots]</i>
+                        </div>
+                        <div
+                                id="slot-art1"
+                                class="slots-card artifact-slot"
+                                onclick="window.openEquipSwapWindow(event, 'art1')"
+                                onmouseenter="window.showSlotTooltip(event, 'art1')"
+                                onmouseleave="window.hideTooltip()"
+                                ontouchstart="window.showSlotTooltip(event, 'art1')"
+                        >
+                            <i>[Artifact Slot 1]</i>
+                        </div>
+
+                        <!-- Row 5: Artifact 2 & Artifact 3 -->
+                        <div
+                                id="slot-art2"
+                                class="slots-card artifact-slot"
+                                onclick="window.openEquipSwapWindow(event, 'art2')"
+                                onmouseenter="window.showSlotTooltip(event, 'art2')"
+                                onmouseleave="window.hideTooltip()"
+                                ontouchstart="window.showSlotTooltip(event, 'art2')"
+                        >
+                            <i>[Artifact Slot 2]</i>
+                        </div>
+                        <div
+                                id="slot-art3"
+                                class="slots-card artifact-slot"
+                                onclick="window.openEquipSwapWindow(event, 'art3')"
+                                onmouseenter="window.showSlotTooltip(event, 'art3')"
+                                onmouseleave="window.hideTooltip()"
+                                ontouchstart="window.showSlotTooltip(event, 'art3')"
+                        >
+                            <i>[Artifact Slot 3]</i>
+                        </div>
                     </div>
 
-                    <!-- Row 2: Chest Armor & Sub-weapon -->
-                    <div
-                            id="slot-chest"
-                            class="slots-card"
-                            onclick="window.openEquipSwapWindow(event, 'chest')"
-                            onmouseenter="window.showSlotTooltip(event, 'chest')"
-                            onmouseleave="window.hideTooltip()"
-                            ontouchstart="window.showSlotTooltip(event, 'chest')"
-                    >
-                        <i>[Empty Chest Armor]</i>
-                    </div>
-                    <div
-                            id="slot-subweapon"
-                            class="slots-card"
-                            onclick="window.openEquipSwapWindow(event, 'subweapon')"
-                            onmouseenter="window.showSlotTooltip(event, 'subweapon')"
-                            onmouseleave="window.hideTooltip()"
-                            ontouchstart="window.showSlotTooltip(event, 'subweapon')"
-                    >
-                        <i>[Empty Sub-weapon]</i>
-                    </div>
-
-                    <!-- Row 3: Leggings & Overall Suit (Clustered adjacent to torso components to keep locked items close!) -->
-                    <div
-                            id="slot-leggings"
-                            class="slots-card"
-                            onclick="window.openEquipSwapWindow(event, 'leggings')"
-                            onmouseenter="window.showSlotTooltip(event, 'leggings')"
-                            onmouseleave="window.hideTooltip()"
-                            ontouchstart="window.showSlotTooltip(event, 'leggings')"
-                    >
-                        <i>[Empty Leggings]</i>
-                    </div>
-                    <div
-                            id="slot-overall"
-                            class="slots-card"
-                            onclick="window.openEquipSwapWindow(event, 'overall')"
-                            onmouseenter="window.showSlotTooltip(event, 'overall')"
-                            onmouseleave="window.hideTooltip()"
-                            ontouchstart="window.showSlotTooltip(event, 'overall')"
-                    >
-                        <i>[Empty Overall Suit]</i>
-                    </div>
-
-                    <!-- Row 4: Boots & Artifact 1 -->
-                    <div
-                            id="slot-boots"
-                            class="slots-card"
-                            onclick="window.openEquipSwapWindow(event, 'boots')"
-                            onmouseenter="window.showSlotTooltip(event, 'boots')"
-                            onmouseleave="window.hideTooltip()"
-                            ontouchstart="window.showSlotTooltip(event, 'boots')"
-                    >
-                        <i>[Empty Boots]</i>
-                    </div>
-                    <div
-                            id="slot-art1"
-                            class="slots-card artifact-slot"
-                            onclick="window.openEquipSwapWindow(event, 'art1')"
-                            onmouseenter="window.showSlotTooltip(event, 'art1')"
-                            onmouseleave="window.hideTooltip()"
-                            ontouchstart="window.showSlotTooltip(event, 'art1')"
-                    >
-                        <i>[Artifact Slot 1]</i>
-                    </div>
-
-                    <!-- Row 5: Artifact 2 & Artifact 3 -->
-                    <div
-                            id="slot-art2"
-                            class="slots-card artifact-slot"
-                            onclick="window.openEquipSwapWindow(event, 'art2')"
-                            onmouseenter="window.showSlotTooltip(event, 'art2')"
-                            onmouseleave="window.hideTooltip()"
-                            ontouchstart="window.showSlotTooltip(event, 'art2')"
-                    >
-                        <i>[Artifact Slot 2]</i>
-                    </div>
-                    <div
-                            id="slot-art3"
-                            class="slots-card artifact-slot"
-                            onclick="window.openEquipSwapWindow(event, 'art3')"
-                            onmouseenter="window.showSlotTooltip(event, 'art3')"
-                            onmouseleave="window.hideTooltip()"
-                            ontouchstart="window.showSlotTooltip(event, 'art3')"
-                    >
-                        <i>[Artifact Slot 3]</i>
+                    <!-- Medal Display Banner Plate -->
+                    <div id="equipped-medal-banner"
+                         style="margin-top: 4px; border: 1.5px solid #ff007f; background: rgba(255, 0, 127, 0.05); border-radius: 6px; padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 10px;"
+                         onclick="window.openMedalSwapWindow(event)">
+                        <!-- Populated dynamically via ui.js -->
                     </div>
                 </div>
 

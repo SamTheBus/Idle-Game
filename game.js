@@ -788,6 +788,10 @@ window.applySaveStatePayload = function (parsed) {
       window.playerStats.sp = 0;
     }
 
+    if (window.playerStats.achievementTimestamps === undefined) {
+      window.playerStats.achievementTimestamps = {};
+    }
+
     if (window.playerStats.spAllocations) {
       let legacyAllocKeys = [
         "spHp",
@@ -818,8 +822,18 @@ window.applySaveStatePayload = function (parsed) {
     }
 
     window.playerStats.xpReq = Math.floor(
-      250 * Math.pow(1.2, window.playerStats.level - 1),
-    );
+        250 * Math.pow(1.2, window.playerStats.level - 1),
+      );
+
+      // Re-map legacy completed trophies back onto live timestamp index
+      if (window.playerStats.unlockedAchievements) {
+        window.playerStats.achievementTimestamps = window.playerStats.achievementTimestamps || {};
+        window.playerStats.unlockedAchievements.forEach(id => {
+          if (!window.playerStats.achievementTimestamps[id]) {
+            window.playerStats.achievementTimestamps[id] = Date.now();
+          }
+        });
+      }
     if (!window.playerStats.spAllocations) {
       window.playerStats.spAllocations = {
         spHp: 0,
@@ -1002,14 +1016,17 @@ window.applySaveStatePayload = function (parsed) {
       window.playerStats.activeRiftLevel = 1;
 
     if (window.playerStats.selectedPrestigeStage === undefined)
-          window.playerStats.selectedPrestigeStage = Math.max(
-            80,
-            window.playerStats.maxStage || 80,
-          );
+              window.playerStats.selectedPrestigeStage = Math.max(
+                80,
+                window.playerStats.maxStage || 80,
+              );
 
-        if (window.playerStats.unlockedTitles === undefined) {
-                      window.playerStats.unlockedTitles = [];
-                    }
+            if (window.playerStats.unlockedTitles === undefined) {
+                          window.playerStats.unlockedTitles = [];
+                        }
+                        if (window.playerStats.cosmeticSkin === undefined) {
+                          window.playerStats.cosmeticSkin = "default";
+                        }
                     if (window.playerStats.equippedTitle === undefined) {
                       window.playerStats.equippedTitle = null;
                     }
@@ -1149,6 +1166,7 @@ window.loadGame = function () {
 };
 
 window.loadGameAndSyncCloud = function () {
+  window.isCloudSynced = false;
   let localDataRaw = localStorage.getItem("idle_game_v11");
   let localParsed = null;
 
@@ -1181,18 +1199,19 @@ window.loadGameAndSyncCloud = function () {
           let localTime = (localParsed && localParsed.lastSaveTime) || 0;
 
           if (cloudTime > localTime) {
-            console.log("☁️ Newer Cloud Save found! Syncing state...");
-            window.applySaveStatePayload(data.saveData);
-            if (typeof window.updateUI === "function") window.updateUI();
-            if (typeof window.renderInventory === "function")
-              window.renderInventory();
-            localStorage.setItem("idle_game_v11", JSON.stringify(data.saveData));
-          } else {
-            console.log("📱 Local progress is up to date.");
-          }
-          if (typeof window.updateSyncStatus === "function") {
-            window.updateSyncStatus("connected");
-          }
+                              console.log("☁️ Newer Cloud Save found! Syncing state...");
+                              window.applySaveStatePayload(data.saveData);
+                              if (typeof window.updateUI === "function") window.updateUI();
+                              if (typeof window.renderInventory === "function")
+                                window.renderInventory();
+                              localStorage.setItem("idle_game_v11", JSON.stringify(data.saveData));
+                            } else {
+                              console.log("📱 Local progress is up to date.");
+                            }
+                            window.isCloudSynced = true;
+                            if (typeof window.updateSyncStatus === "function") {
+                              window.updateSyncStatus("connected");
+                            }
         } else {
           if (typeof window.updateSyncStatus === "function") {
             window.updateSyncStatus("offline");
@@ -1209,18 +1228,22 @@ window.loadGameAndSyncCloud = function () {
       });
 
   let autoSalvageSelect = document.getElementById("auto-salvage-setting");
-  if (
-    autoSalvageSelect &&
-    window.playerStats.autoSalvageThreshold !== undefined
-  ) {
-    autoSalvageSelect.value = window.playerStats.autoSalvageThreshold;
-  }
-  if (typeof window.refreshMarketShopIfNeeded === "function")
-      window.refreshMarketShopIfNeeded();
+    if (
+      autoSalvageSelect &&
+      window.playerStats.autoSalvageThreshold !== undefined
+    ) {
+      autoSalvageSelect.value = window.playerStats.autoSalvageThreshold;
+    }
+    let skinSelect = document.getElementById("settings-cosmetic-skin");
+    if (skinSelect && window.playerStats.cosmeticSkin !== undefined) {
+      skinSelect.value = window.playerStats.cosmeticSkin;
+    }
+    if (typeof window.refreshMarketShopIfNeeded === "function")
+        window.refreshMarketShopIfNeeded();
 
-    if (typeof window.checkUnreadMail === "function")
-      window.checkUnreadMail();
-  };
+      if (typeof window.checkUnreadMail === "function")
+        window.checkUnreadMail();
+    };
 
 window.adjustCanvasDimensions = function () {
   let cvs = window.canvas || document.getElementById("gameCanvas");
