@@ -160,12 +160,8 @@ window.requestRename = function () {
   if (!input) return;
   let newName = input.value.trim();
 
-  if (!newName) {
-    window.pushHeaderToast("❌ Name cannot be empty!", "#e74c3c");
-    return;
-  }
-  if (newName.length > 14) {
-    window.pushHeaderToast("❌ Name is too long (Max 14 chars)!", "#e74c3c");
+  if (!window.validateNameInput(newName)) {
+    window.pushHeaderToast("❌ Invalid Name! 3-14 characters, letters/numbers and single spaces only.", "#e74c3c");
     return;
   }
 
@@ -283,15 +279,17 @@ window.gainXp = function (amount, silent = false) {
   else window.playerStats.runXp = amount;
 
   let leveledUp = false;
-  while (window.playerStats.xp >= window.playerStats.xpReq) {
-    window.playerStats.xp -= window.playerStats.xpReq;
-    window.playerStats.level++;
-    window.playerStats.sp += 3;
-    if (window.draftAllocations !== null) window.draftSP += 3;
-    window.playerStats.xpReq = Math.floor(window.playerStats.xpReq * 1.2);
-    leveledUp = true;
-  }
-  if (leveledUp && !silent) {
+    while (window.playerStats.xp >= window.playerStats.xpReq) {
+      window.playerStats.xp -= window.playerStats.xpReq;
+      window.playerStats.level++;
+      window.playerStats.sp += 3;
+      if (window.draftAllocations !== null) window.draftSP += 3;
+      window.playerStats.xpReq = Math.floor(window.playerStats.xpReq * 1.2);
+      leveledUp = true;
+    }
+    if (leveledUp) {
+      window.invalidatePlayerStats();
+      if (!silent) {
     if (typeof window.pushLog === "function")
       window.pushLog(
         `<span style='color:#f1c40f; font-weight:bold;'>⭐ LEVEL UP! You are now Level ${window.playerStats.level}! +3 SP</span>`,
@@ -307,6 +305,7 @@ window.gainXp = function (amount, silent = false) {
       window.checkAchievements();
   }
   if (typeof window.updateUI === "function") window.updateUI();
+  }
 };
 
 window.applyOfflineGains = function (offlineMs) {
@@ -377,19 +376,29 @@ window.applyOfflineGains = function (offlineMs) {
   ];
 
   let originalBuffs = {
-    atk: window.playerStats.atkPotionTimer,
-    hp: window.playerStats.hpPotionTimer,
-    def: window.playerStats.defPotionTimer,
-    haste: window.playerStats.hastePotionTimer,
-    frenzy: window.playerStats.frenzyTimer,
-    adrenaline: window.playerStats.adrenalineTimer,
-  };
+      atk: window.playerStats.atkPotionTimer,
+      hp: window.playerStats.hpPotionTimer,
+      def: window.playerStats.defPotionTimer,
+      haste: window.playerStats.hastePotionTimer,
+      frenzy: window.playerStats.frenzyTimer,
+      adrenaline: window.playerStats.adrenalineTimer,
+    };
 
-  let maxStagesToAdvance = 100;
-  let stagesAdvancedCount = 0;
+    let maxStagesToAdvance = 100;
+    let stagesAdvancedCount = 0;
 
-  while (remainingSeconds > 0) {
-    let elapsedFrames = elapsedSeconds * 60;
+    while (remainingSeconds > 0) {
+      let stateBefore = (window.playerStats.frenzyTimer > 0) |
+                        ((window.playerStats.adrenalineTimer > 0) << 1) |
+                        ((window.playerStats.atkPotionTimer > 0) << 2) |
+                        ((window.playerStats.hpPotionTimer > 0) << 3) |
+                        ((window.playerStats.defPotionTimer > 0) << 4) |
+                        ((window.playerStats.hastePotionTimer > 0) << 5) |
+                        ((window.playerStats.xpPotionTimer > 0) << 6) |
+                        ((window.playerStats.dropPotionTimer > 0) << 7) |
+                        ((window.playerStats.qlyPotionTimer > 0) << 8);
+
+      let elapsedFrames = elapsedSeconds * 60;
     window.playerStats.atkPotionTimer = Math.max(
       0,
       originalBuffs.atk - elapsedFrames,
@@ -552,11 +561,25 @@ window.applyOfflineGains = function (offlineMs) {
           }
         }
       }
-      remainingSeconds = 0;
-    }
-  }
+            remainingSeconds = 0;
+          }
 
-  let totalElapsedFrames = offlineSeconds * 60;
+          let stateAfter = (window.playerStats.frenzyTimer > 0) |
+                           ((window.playerStats.adrenalineTimer > 0) << 1) |
+                           ((window.playerStats.atkPotionTimer > 0) << 2) |
+                           ((window.playerStats.hpPotionTimer > 0) << 3) |
+                           ((window.playerStats.defPotionTimer > 0) << 4) |
+                           ((window.playerStats.hastePotionTimer > 0) << 5) |
+                           ((window.playerStats.xpPotionTimer > 0) << 6) |
+                           ((window.playerStats.dropPotionTimer > 0) << 7) |
+                           ((window.playerStats.qlyPotionTimer > 0) << 8);
+
+          if (stateBefore !== stateAfter) {
+            window.invalidatePlayerStats();
+          }
+        }
+
+        let totalElapsedFrames = offlineSeconds * 60;
   window.playerStats.atkPotionTimer = Math.max(
     0,
     originalBuffs.atk - totalElapsedFrames,
@@ -742,22 +765,23 @@ window.applyOfflineGains = function (offlineMs) {
   }
 
   window.playerStats.coins += totalGold;
-  window.playerStats.totalGoldEarned =
-    (window.playerStats.totalGoldEarned || 0) + totalGold;
-  window.playerStats.totalLifetimeKills =
-    (window.playerStats.totalLifetimeKills || 0) + totalKills;
-  window.playerStats.stage = currentStage;
-  window.playerStats.maxStage = Math.max(
-    window.playerStats.maxStage || 1,
-    window.playerStats.stage,
-  );
-  window.playerStats.lifetimePeakStage = Math.max(
-    window.playerStats.lifetimePeakStage || 1,
-    window.playerStats.maxStage,
-  );
-  window.gainXp(totalXp, true);
+    window.playerStats.totalGoldEarned =
+      (window.playerStats.totalGoldEarned || 0) + totalGold;
+    window.playerStats.totalLifetimeKills =
+      (window.playerStats.totalLifetimeKills || 0) + totalKills;
+    window.playerStats.stage = currentStage;
+    window.playerStats.maxStage = Math.max(
+      window.playerStats.maxStage || 1,
+      window.playerStats.stage,
+    );
+    window.playerStats.lifetimePeakStage = Math.max(
+      window.playerStats.lifetimePeakStage || 1,
+      window.playerStats.maxStage,
+    );
+    window.gainXp(totalXp, true);
+    window.invalidatePlayerStats();
 
-  if (typeof window.showOfflineSummaryModal === "function") {
+    if (typeof window.showOfflineSummaryModal === "function") {
     window.showOfflineSummaryModal(
       offlineSeconds,
       originalStage,
@@ -1320,26 +1344,43 @@ window.loadGameAndSyncCloud = function () {
       let resolvedOfflineMs = offlineMsToApply;
 
       if (data.success && data.saveData) {
-        let cloudTime = data.timestamp || 0;
-        let localTime = (localParsed && localParsed.lastSaveTime) || 0;
+              let cloudTime = data.timestamp || 0;
+              let localTime = (localParsed && localParsed.lastSaveTime) || 0;
 
-        if (cloudTime > localTime) {
-          console.log("☁️ Newer Cloud Save found! Syncing state...");
-          window.applySaveStatePayload(data.saveData, true);
-          resolvedOfflineMs = now - cloudTime;
-          localStorage.setItem("idle_saq_save", JSON.stringify(data.saveData));
-        } else {
-          console.log("📱 Local progress is up to date.");
-        }
-        window.isCloudSynced = true;
-        if (typeof window.updateSyncStatus === "function") {
-          window.updateSyncStatus("connected");
-        }
-      } else {
-        if (typeof window.updateSyncStatus === "function") {
-          window.updateSyncStatus("offline");
-        }
-      }
+              if (cloudTime > localTime) {
+                console.log("☁️ Newer Cloud Save found! Syncing state...");
+                window.applySaveStatePayload(data.saveData, true);
+                resolvedOfflineMs = now - cloudTime;
+                localStorage.setItem("idle_saq_save", JSON.stringify(data.saveData));
+              } else {
+                console.log("📱 Local progress is up to date.");
+              }
+
+              // Sync and cache current Guild attributes
+              if (data.guild) {
+                window.playerStats.guildId = data.guild.id;
+                window.playerStats.guildName = data.guild.name;
+                window.playerStats.guildEmblem = data.guild.leader_id.charCodeAt(0) || 0;
+                window.playerStats.guildSkills = {
+                  steel_phalanx: data.guild.skill_steel_phalanx,
+                  vitality_well: data.guild.skill_vitality_well,
+                  prosperity_accord: data.guild.skill_prosperity_accord,
+                  voyagers_guidance: data.guild.skill_voyagers_guidance
+                };
+              } else {
+                window.playerStats.guildId = null;
+                window.playerStats.guildName = null;
+              }
+
+              window.isCloudSynced = true;
+              if (typeof window.updateSyncStatus === "function") {
+                window.updateSyncStatus("connected");
+              }
+            } else {
+              if (typeof window.updateSyncStatus === "function") {
+                window.updateSyncStatus("offline");
+              }
+            }
 
       // Apply offline progress EXACTLY once after final source resolution
       if (resolvedOfflineMs > 0) {
@@ -1748,6 +1789,16 @@ function update() {
   let now = Date.now();
   let gapMs = now - window.lastUpdateTime;
 
+  let stateBefore = (window.playerStats.frenzyTimer > 0) |
+                    ((window.playerStats.adrenalineTimer > 0) << 1) |
+                    ((window.playerStats.atkPotionTimer > 0) << 2) |
+                    ((window.playerStats.hpPotionTimer > 0) << 3) |
+                    ((window.playerStats.defPotionTimer > 0) << 4) |
+                    ((window.playerStats.hastePotionTimer > 0) << 5) |
+                    ((window.playerStats.xpPotionTimer > 0) << 6) |
+                    ((window.playerStats.dropPotionTimer > 0) << 7) |
+                    ((window.playerStats.qlyPotionTimer > 0) << 8);
+
   if (
     window.equippedSlots.subweapon &&
     window.equippedSlots.subweapon.isUniqueWatch &&
@@ -1888,28 +1939,29 @@ function update() {
   }
 
   let keyTypes = ["equip", "gold", "mat"];
-  keyTypes.forEach((k) => {
-    let count = k + "Keys";
-    let time = "next" + k.charAt(0).toUpperCase() + k.slice(1) + "KeyTime";
-    if (window.playerStats[count] < 3) {
-      if (!window.playerStats[time]) {
-        window.playerStats[time] = now + 21600000; // 6 Hours
-      } else if (now >= window.playerStats[time]) {
-        let msOver = now - window.playerStats[time];
-        let keysEarned = 1 + Math.floor(msOver / 21600000);
-        window.playerStats[count] = Math.min(
-          3,
-          window.playerStats[count] + keysEarned,
-        );
-        window.playerStats[time] =
-          window.playerStats[count] < 3
-            ? now + (21600000 - (msOver % 21600000))
-            : 0;
+    keyTypes.forEach((k) => {
+      let count = k + "Keys";
+      let time = "next" + k.charAt(0).toUpperCase() + k.slice(1) + "KeyTime";
+      if (window.playerStats[count] < 3) {
+        if (!window.playerStats[time]) {
+          window.playerStats[time] = now + 21600000; // 6 Hours
+        } else if (now >= window.playerStats[time]) {
+          let msOver = now - window.playerStats[time];
+          let keysEarned = 1 + Math.floor(msOver / 21600000);
+          window.playerStats[count] = Math.min(
+            3,
+            window.playerStats[count] + keysEarned,
+          );
+          window.playerStats[time] =
+            window.playerStats[count] < 3
+              ? now + (21600000 - (msOver % 21600000))
+              : 0;
+        }
       }
-    }
-  });
+    });
 
-  // Synchronize dynamic keys and timers to both popups and native tabs
+    // Synchronize dynamic keys, timers, and shop refreshes at a throttled interval (twice a second) to prevent layout thrashing
+    if (window.logicClock % 30 === 0) {
       keyTypes.forEach((k) => {
         let count = k + "Keys";
         let time = "next" + k.charAt(0).toUpperCase() + k.slice(1) + "KeyTime";
@@ -1924,37 +1976,38 @@ function update() {
           timerText = hours > 0 ? `(${hours}h ${mins}m)` : `(${mins}m ${secs}s)`;
         }
 
-      // Set popup elements
-      let pTimer = document.getElementById("dt-" + k);
-      let pKeys = document.getElementById("dk-" + k);
-      if (pTimer) pTimer.innerText = timerText;
-      if (pKeys) pKeys.innerText = textKeys;
+        // Set popup elements
+        let pTimer = document.getElementById("dt-" + k);
+        let pKeys = document.getElementById("dk-" + k);
+        if (pTimer) pTimer.innerText = timerText;
+        if (pKeys) pKeys.innerText = textKeys;
 
-      // Set native tab elements
-      let tTimer = document.getElementById("tab-dt-" + k);
-      let tKeys = document.getElementById("tab-dk-" + k);
-      if (tTimer) tTimer.innerText = timerText;
-      if (tKeys) tKeys.innerText = textKeys;
-    });
+        // Set native tab elements
+        let tTimer = document.getElementById("tab-dt-" + k);
+        let tKeys = document.getElementById("tab-dk-" + k);
+        if (tTimer) tTimer.innerText = timerText;
+        if (tKeys) tKeys.innerText = textKeys;
+      });
 
-  if (
-    document.getElementById("tab-market") &&
-    document.getElementById("tab-market").classList.contains("active")
-  ) {
-    if (now >= window.playerStats.shopRefreshTime) {
-      window.refreshMarketShopIfNeeded();
-    } else {
-      let msLeft = window.playerStats.shopRefreshTime - now;
-      let mins = Math.floor((msLeft % 3600000) / 60000)
-        .toString()
-        .padStart(2, "0");
-      let secs = Math.floor((msLeft % 60000) / 1000)
-        .toString()
-        .padStart(2, "0");
-      let timerEl = document.getElementById("market-timer");
-      if (timerEl) timerEl.innerText = `Refreshes in: ${mins}:${secs}`;
+      if (
+        document.getElementById("tab-market") &&
+        document.getElementById("tab-market").classList.contains("active")
+      ) {
+        if (now >= window.playerStats.shopRefreshTime) {
+          window.refreshMarketShopIfNeeded();
+        } else {
+          let msLeft = window.playerStats.shopRefreshTime - now;
+          let mins = Math.floor((msLeft % 3600000) / 60000)
+            .toString()
+            .padStart(2, "0");
+          let secs = Math.floor((msLeft % 60000) / 1000)
+            .toString()
+            .padStart(2, "0");
+          let timerEl = document.getElementById("market-timer");
+          if (timerEl) timerEl.innerText = `Refreshes in: ${mins}:${secs}`;
+        }
+      }
     }
-  }
 
   let p = window.resolvePlayerStats();
   let scrollSpeed = 2 + p.moveSpeed * 0.05;
@@ -2749,23 +2802,37 @@ function update() {
                   : "Standard Monster";
 
               window.playerStats.killedByMob = JSON.parse(
-                JSON.stringify(window.mob),
-              );
-              window.playerStats.currentHp = 0;
-              window.deathAnimationTimer = window.deathMaxFrames;
-              return;
-            }
-          }
-        }
-        window.updateUI();
-      }
-    }
-  }
-}
+                              JSON.stringify(window.mob),
+                            );
+                            window.playerStats.currentHp = 0;
+                            window.deathAnimationTimer = window.deathMaxFrames;
+                            return;
+                          }
+                        }
+                      }
+                      window.updateUI();
+                    }
+                  }
+                }
 
-// --- GAMEPLAY TRIGGERS & HOOKS ---
+                let stateAfter = (window.playerStats.frenzyTimer > 0) |
+                                 ((window.playerStats.adrenalineTimer > 0) << 1) |
+                                 ((window.playerStats.atkPotionTimer > 0) << 2) |
+                                 ((window.playerStats.hpPotionTimer > 0) << 3) |
+                                 ((window.playerStats.defPotionTimer > 0) << 4) |
+                                 ((window.playerStats.hastePotionTimer > 0) << 5) |
+                                 ((window.playerStats.xpPotionTimer > 0) << 6) |
+                                 ((window.playerStats.dropPotionTimer > 0) << 7) |
+                                 ((window.playerStats.qlyPotionTimer > 0) << 8);
 
-window.triggerPlayerSlash = function () {
+                if (stateBefore !== stateAfter) {
+                  window.invalidatePlayerStats();
+                }
+              }
+
+              // --- GAMEPLAY TRIGGERS & HOOKS ---
+
+              window.triggerPlayerSlash = function () {
   if (window.isGamePaused) return;
   let p = window.resolvePlayerStats();
   let cooldownCap =

@@ -1,10 +1,59 @@
-/* ==========================================================================
-   PRIMARY PURPOSE: High-Fidelity Cel-Shaded Entity Rendering,
-   Advanced Combat Resolution Visuals, and Particle Spawners.
-   ========================================================================= */
+(function () {
+  // Scoped Date wrapper referencing window.Date to bypass local temporal dead zone checks
+  const ScopedDate = class extends window.Date {
+    static now() {
+      return window.Date.now();
+    }
+  };
+  const Date = ScopedDate;
 
-// --- RENDERING CONSTANTS (DEPTH HIERARCHY) ---
-window.penSky = 1.0;
+  // Static particle themes to avoid runtime array allocations on entity death
+  window.PARTICLE_THEMES = {
+    gold_dungeon: ["#ffd700", "#f1c40f", "#b7950b", "#ffffff"],
+    coin_elemental: ["#ffd700", "#f1c40f", "#b7950b", "#ffffff"],
+    hoard_mimic: ["#ffd700", "#f1c40f", "#b7950b", "#ffffff"],
+    gilded_scuttler: ["#ffd700", "#f1c40f", "#b7950b", "#ffffff"],
+    mat_dungeon: ["#2ecc71", "#27ae60", "#9b59b6", "#1abc9c"],
+    swamp_basilisk: ["#2ecc71", "#27ae60", "#9b59b6", "#1abc9c"],
+    toxic_fly: ["#2ecc71", "#27ae60", "#9b59b6", "#1abc9c"],
+    marsh_ghost: ["#2ecc71", "#27ae60", "#9b59b6", "#1abc9c"],
+    equip_dungeon: ["#34495e", "#5d6d7e", "#7f8c8d", "#1a252f"],
+    golem: ["#34495e", "#5d6d7e", "#7f8c8d", "#1a252f"],
+    gargoyle: ["#34495e", "#5d6d7e", "#7f8c8d", "#1a252f"],
+    wyrmling: ["#34495e", "#5d6d7e", "#7f8c8d", "#1a252f"],
+    magma_elemental: ["#ff5500", "#d35400", "#e74c3c", "#2c0e08"],
+    lava_serpent: ["#ff5500", "#d35400", "#e74c3c", "#2c0e08"],
+    hell_bat: ["#ff5500", "#d35400", "#e74c3c", "#2c0e08"],
+    void_orb: ["#9b59b6", "#8e44ad", "#e84393", "#110221"],
+    void_crawler: ["#9b59b6", "#8e44ad", "#e84393", "#110221"],
+    void_spectre: ["#9b59b6", "#8e44ad", "#e84393", "#110221"],
+    void_wraith: ["#9b59b6", "#8e44ad", "#e84393", "#110221"],
+    rift_drifter: ["#9b59b6", "#8e44ad", "#e84393", "#110221"],
+    clockwork_scarab: ["#dca04c", "#f1c40f", "#b7950b", "#7f8c8d"],
+    temporal_watcher: ["#dca04c", "#f1c40f", "#b7950b", "#7f8c8d"],
+    clockwork_drone: ["#dca04c", "#f1c40f", "#b7950b", "#7f8c8d"],
+    star_weaver: ["#dca04c", "#f1c40f", "#b7950b", "#7f8c8d"],
+    neon_spider: ["#00d2ff", "#ff007f", "#3498db", "#ffffff"],
+    cyber_wraith: ["#00d2ff", "#ff007f", "#3498db", "#ffffff"],
+    wireframe_orb: ["#00d2ff", "#ff007f", "#3498db", "#ffffff"],
+    prestige_boss: ["#d35400", "#ff3300", "#111116", "#ffeaa7"],
+    aegis_goliath: ["#3498db", "#2980b9", "#7f8c8d", "#ffffff"],
+    chronos_arbitrator: ["#f1c40f", "#dca04c", "#7f8c8d", "#111116"],
+    nexus_overseer: ["#ff007f", "#e84393", "#00b894", "#111111"],
+    default_slime: ["#2ecc71", "#27ae60", "#a3fd83"],
+    tier1: ["#3498db", "#ecf0f1", "#bdc3c7"],
+    tier2: ["#e74c3c", "#e67e22", "#2c0e08"],
+    tier3: ["#27ae60", "#1b4f30", "#9b59b6"],
+    tier4: ["#8e44ad", "#e84393", "#0d011a"]
+  };
+
+  /* ==========================================================================
+     PRIMARY PURPOSE: High-Fidelity Cel-Shaded Entity Rendering,
+     Advanced Combat Resolution Visuals, and Particle Spawners.
+     ========================================================================= */
+
+  // --- RENDERING CONSTANTS (DEPTH HIERARCHY) ---
+  window.penSky = 1.0;
 window.penFar = 1.3;
 window.penBgScenery = 1.3;
 window.penFgScenery = 1.5;
@@ -43,60 +92,16 @@ window.spawnDeathParticles = function (x, y, mobType) {
       window.playerStats.currentDungeon === "equip" &&
       window.playerStats.isDungeonMode;
 
-    if (
-      isGoldDungeon ||
-      ["coin_elemental", "hoard_mimic", "gilded_scuttler"].includes(vType)
-    ) {
-      colors = ["#ffd700", "#f1c40f", "#b7950b", "#ffffff"];
-    } else if (
-      isMatDungeon ||
-      ["swamp_basilisk", "toxic_fly", "marsh_ghost"].includes(vType)
-    ) {
-      colors = ["#2ecc71", "#27ae60", "#9b59b6", "#1abc9c"];
-    } else if (
-      isEquipDungeon ||
-      ["golem", "gargoyle", "wyrmling"].includes(vType)
-    ) {
-      colors = ["#34495e", "#5d6d7e", "#7f8c8d", "#1a252f"];
-    } else if (
-      vType &&
-      ["magma_elemental", "lava_serpent", "hell_bat"].includes(vType)
-    ) {
-      colors = ["#ff5500", "#d35400", "#e74c3c", "#2c0e08"];
-    } else if (
-      vType &&
-      [
-        "void_orb",
-        "void_crawler",
-        "void_spectre",
-        "void_wraith",
-        "rift_drifter",
-      ].includes(vType)
-    ) {
-      colors = ["#9b59b6", "#8e44ad", "#e84393", "#110221"];
-    } else if (
-      vType &&
-      [
-        "clockwork_scarab",
-        "temporal_watcher",
-        "clockwork_drone",
-        "star_weaver",
-      ].includes(vType)
-    ) {
-      colors = ["#dca04c", "#f1c40f", "#b7950b", "#7f8c8d"];
-    } else if (
-      vType &&
-      ["neon_spider", "cyber_wraith", "wireframe_orb"].includes(vType)
-    ) {
-      colors = ["#00d2ff", "#ff007f", "#3498db", "#ffffff"];
-    } else if (window.mob.type === "prestige_boss") {
-      colors = ["#d35400", "#ff3300", "#111116", "#ffeaa7"];
-    } else if (window.mob.type === "aegis_goliath") {
-      colors = ["#3498db", "#2980b9", "#7f8c8d", "#ffffff"];
-    } else if (window.mob.type === "chronos_arbitrator") {
-      colors = ["#f1c40f", "#dca04c", "#7f8c8d", "#111116"];
-    } else if (window.mob.type === "nexus_overseer") {
-      colors = ["#ff007f", "#e84393", "#00b894", "#111111"];
+    if (isGoldDungeon) {
+      colors = window.PARTICLE_THEMES.gold_dungeon;
+    } else if (isMatDungeon) {
+      colors = window.PARTICLE_THEMES.mat_dungeon;
+    } else if (isEquipDungeon) {
+      colors = window.PARTICLE_THEMES.equip_dungeon;
+    } else if (vType && window.PARTICLE_THEMES[vType]) {
+      colors = window.PARTICLE_THEMES[vType];
+    } else if (window.mob.type && window.PARTICLE_THEMES[window.mob.type]) {
+      colors = window.PARTICLE_THEMES[window.mob.type];
     } else if (
       mobType === "rift_guardian" ||
       mobType === "void_spectre" ||
@@ -104,7 +109,7 @@ window.spawnDeathParticles = function (x, y, mobType) {
       mobType === "void_orb"
     ) {
       count = 45;
-      colors = ["#9b59b6", "#8e44ad", "#e84393", "#110221"];
+      colors = window.PARTICLE_THEMES.void_orb;
       speed = 6;
     } else if (mobType === "boss" || mobType === "dungeon_boss") {
       count = 40;
@@ -112,7 +117,7 @@ window.spawnDeathParticles = function (x, y, mobType) {
       speed = 7;
     } else if (mobType === "prestige_boss") {
       count = 60;
-      colors = ["#d35400", "#ff3300", "#111116", "#ffeaa7"];
+      colors = window.PARTICLE_THEMES.prestige_boss;
       speed = 8;
     } else if (mobType === "dungeon_miniboss") {
       count = 25;
@@ -120,10 +125,10 @@ window.spawnDeathParticles = function (x, y, mobType) {
       speed = 5;
     } else {
       let tier = window.getStageTier();
-      if (tier === 1) colors = ["#3498db", "#ecf0f1", "#bdc3c7"];
-      else if (tier === 2) colors = ["#e74c3c", "#e67e22", "#2c0e08"];
-      else if (tier === 3) colors = ["#27ae60", "#1b4f30", "#9b59b6"];
-      else if (tier === 4) colors = ["#8e44ad", "#e84393", "#0d011a"];
+      if (tier === 1) colors = window.PARTICLE_THEMES.tier1;
+      else if (tier === 2) colors = window.PARTICLE_THEMES.tier2;
+      else if (tier === 3) colors = window.PARTICLE_THEMES.tier3;
+      else if (tier === 4) colors = window.PARTICLE_THEMES.tier4;
     }
   }
 
@@ -3767,12 +3772,20 @@ window.drawSingleMob = function (c, m) {
 };
 // --- MISSING DPS CALCULATOR ---
 window.calculateActiveDps = function () {
-  let now = Date.now();
-  window.damageHistory = window.damageHistory.filter(
-    (d) => now - d.time <= 3000,
-  );
+  const now = window.nowMs || Date.now();
+  let startIdx = 0;
+  // Scan forward in-place to calculate expired record counts
+  while (startIdx < window.damageHistory.length && now - window.damageHistory[startIdx].time > 3000) {
+    startIdx++;
+  }
+  if (startIdx > 0) {
+    window.damageHistory.splice(0, startIdx);
+  }
   if (window.damageHistory.length === 0) return "0.0";
-  let totalDamage = window.damageHistory.reduce((sum, d) => sum + d.amount, 0);
+  let totalDamage = 0;
+  for (let i = 0; i < window.damageHistory.length; i++) {
+    totalDamage += window.damageHistory[i].amount;
+  }
   let avgDps = totalDamage / 3;
   return avgDps.toLocaleString(undefined, {
     minimumFractionDigits: 1,
@@ -4306,598 +4319,44 @@ window.drawSingleHero = function (
   ctx.restore();
 
   if (
-    equipped.weapon &&
-    equipped.weapon.isUniqueSingularity &&
-    stats.singularityState === "pulsing" &&
-    (!options.deathAnimationTimer || options.deathAnimationTimer === 0)
-  ) {
-    ctx.save();
-    ctx.translate(0, -35 + bounce);
-    ctx.rotate(Date.now() / 300);
-    ctx.strokeStyle = "#e84393";
-    ctx.lineWidth = 1.8;
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = "#e84393";
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-      let angle = (i * Math.PI) / 3;
-      ctx.lineTo(Math.cos(angle) * 9, Math.sin(angle) * 9);
-    }
-    ctx.closePath();
-    ctx.stroke();
-    ctx.fillStyle = "#ffffff";
-    ctx.beginPath();
-    ctx.arc(0, 0, 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  ctx.restore();
-};
-
-window.drawSingleHero = function (
-  ctx,
-  x,
-  y,
-  scale,
-  equippedSlots,
-  playerStats,
-  bounce,
-  options = {},
-) {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(scale, scale);
-
-  const penHero = 1.8;
-  ctx.strokeStyle = "#000000";
-  ctx.lineWidth = penHero;
-  ctx.lineJoin = "round";
-
-  let equipped = equippedSlots || {};
-  let stats = playerStats || {};
-
-  // Custom visual skin color profiles for future cosmetic extensibility
-  let skin = stats.cosmeticSkin || "default";
-  let bodyColor = "#95a5a6";
-  let armorColor = "#bdc3c7";
-  let capeColor = "#c0392b";
-  let eyeColor = stats.frenzyTimer > 0 ? "#f1c40f" : "#e74c3c";
-
-  if (skin === "void") {
-    bodyColor = "#2c1130";
-    armorColor = "#510a74";
-    capeColor = "#8e44ad";
-  } else if (skin === "crimson") {
-    bodyColor = "#1a0202";
-    armorColor = "#960018";
-    capeColor = "#111116";
-  } else if (skin === "gilded") {
-    bodyColor = "#ffd700";
-    armorColor = "#b7950b";
-    capeColor = "#111111";
-  }
-
-  // Draw Subweapon
-  if (equipped.subweapon) {
-    const subType = equipped.subweapon.subType;
-    let isAegis = equipped.subweapon.isUniqueAegis;
-    let isWatch = equipped.subweapon.isUniqueWatch;
-    let isChronicle = equipped.subweapon.isUniqueChronicle;
-
-    if (subType === "shield") {
+      equipped.weapon &&
+      equipped.weapon.isUniqueSingularity &&
+      stats.singularityState === "pulsing" &&
+      (!options.deathAnimationTimer || options.deathAnimationTimer === 0)
+    ) {
       ctx.save();
-      ctx.translate(8, 4 + bounce);
-      ctx.fillStyle = isAegis ? "#25033c" : "#7f8c8d";
+      ctx.translate(0, -35 + bounce);
+      ctx.rotate(Date.now() / 300);
+      ctx.strokeStyle = "#e84393";
+      ctx.lineWidth = 1.8;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = "#e84393";
       ctx.beginPath();
-      ctx.moveTo(-6, -8);
-      ctx.lineTo(6, -8);
-      ctx.lineTo(8, 0);
-      ctx.lineTo(0, 10);
-      ctx.lineTo(-8, 0);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = isAegis ? "#8e44ad" : "#000000";
-      ctx.lineWidth = penHero + 0.5;
-      ctx.stroke();
-      if (isAegis) {
-        ctx.strokeStyle = "#e84393";
-        ctx.lineWidth = 1.8;
-        ctx.beginPath();
-        ctx.moveTo(0, -6);
-        ctx.lineTo(0, 6);
-        ctx.moveTo(-5, 0);
-        ctx.lineTo(5, 0);
-        ctx.stroke();
-      } else {
-        ctx.strokeStyle = "#f1c40f";
-        ctx.lineWidth = 1.2;
-        ctx.stroke();
+      for (let i = 0; i < 6; i++) {
+        let angle = (i * Math.PI) / 3;
+        ctx.lineTo(Math.cos(angle) * 9, Math.sin(angle) * 9);
       }
-      ctx.restore();
-      if (
-        isAegis &&
-        (!options.deathAnimationTimer || options.deathAnimationTimer === 0)
-      ) {
-        ctx.save();
-        ctx.translate(8, 4 + bounce);
-        let orbitTime = Date.now() / 250;
-        ctx.fillStyle = "#110221";
-        ctx.strokeStyle = "#8e44ad";
-        ctx.lineWidth = 1.0;
-        for (let i = 0; i < 2; i++) {
-          let angle = orbitTime + i * Math.PI;
-          let ox = Math.cos(angle) * 14;
-          let oy = Math.sin(angle) * 6;
-          ctx.beginPath();
-          ctx.arc(ox, oy, 2.5, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
-        }
-        ctx.restore();
-      }
-    } else if (subType === "tome") {
-      ctx.save();
-      let tomeFloat = Math.sin(Date.now() / 200) * 5;
-      ctx.translate(24, -6 + bounce + tomeFloat);
-      ctx.rotate(-Math.PI / 12);
-      if (isWatch) {
-        ctx.fillStyle = "#d4af37";
-        ctx.strokeStyle = "#000000";
-        ctx.lineWidth = 1.8;
-        ctx.beginPath();
-        ctx.arc(0, 0, 8, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        ctx.fillStyle = "#fdf6e2";
-        ctx.beginPath();
-        ctx.arc(0, 0, 5.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        ctx.strokeStyle = "#111";
-        ctx.lineWidth = 1.2;
-        let clockTime = Date.now() / 300;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(Math.cos(clockTime) * 4.5, Math.sin(clockTime) * 4.5);
-        ctx.stroke();
-      } else if (isChronicle) {
-        ctx.fillStyle = "#111116";
-        ctx.strokeStyle = "#f1c40f";
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.roundRect(-5, -7, 10, 14, [1.5]);
-        ctx.fill();
-        ctx.stroke();
-        ctx.fillStyle = "#fff";
-        ctx.fillRect(3.5, -6, 1.5, 12);
-        let pulseRad = 12 + Math.sin(Date.now() / 150) * 2;
-        ctx.strokeStyle = "rgba(241, 196, 15, 0.25)";
-        ctx.lineWidth = 1.0;
-        ctx.beginPath();
-        ctx.arc(0, 0, pulseRad, 0, Math.PI * 2);
-        ctx.stroke();
-      } else {
-        let auraRadius = 14 + Math.sin(Date.now() / 150) * 4;
-        let auraGrad = ctx.createRadialGradient(0, -1, 1, 0, -1, auraRadius);
-        auraGrad.addColorStop(0, "rgba(155, 89, 182, 0.65)");
-        auraGrad.addColorStop(0.5, "rgba(52, 152, 219, 0.25)");
-        auraGrad.addColorStop(1, "rgba(155, 89, 182, 0)");
-        ctx.fillStyle = auraGrad;
-        ctx.beginPath();
-        ctx.arc(0, -1, auraRadius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "#8e44ad";
-        ctx.beginPath();
-        ctx.roundRect(-6, -8, 12, 14, [1.5]);
-        ctx.fill();
-        ctx.strokeStyle = "#000000";
-        ctx.lineWidth = penHero;
-        ctx.stroke();
-        ctx.fillStyle = "#f5f5dc";
-        ctx.beginPath();
-        ctx.rect(4, -7, 1.5, 12);
-        ctx.fill();
-        ctx.stroke();
-        ctx.fillStyle = "#f1c40f";
-        ctx.beginPath();
-        ctx.arc(0, -1, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-      }
-      ctx.restore();
-    } else if (subType === "dagger") {
-      ctx.save();
-      ctx.translate(8, 8 + bounce);
-      ctx.rotate(Math.PI / 4);
-      ctx.fillStyle = "#1c1c1f";
-      ctx.beginPath();
-      ctx.arc(0, 10, 2.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#000000";
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-      ctx.fillStyle = "#342240";
-      ctx.beginPath();
-      ctx.rect(-1.5, 3, 3, 7);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = "#2c3e50";
-      ctx.beginPath();
-      ctx.moveTo(-8, 3);
-      ctx.quadraticCurveTo(0, -2, 8, 3);
-      ctx.quadraticCurveTo(0, 2, -8, 3);
       ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = "#7f8c8d";
-      ctx.beginPath();
-      ctx.moveTo(-2.5, 2.5);
-      ctx.lineTo(0, -12);
-      ctx.lineTo(2.5, 2.5);
-      ctx.closePath();
-      ctx.fill();
       ctx.stroke();
       ctx.fillStyle = "#ffffff";
       ctx.beginPath();
-      ctx.moveTo(0, 2.5);
-      ctx.lineTo(0, -12);
-      ctx.lineTo(2.5, 2.5);
-      ctx.closePath();
+      ctx.arc(0, 0, 2, 0, Math.PI * 2);
       ctx.fill();
-      if (Math.random() < 0.2 && !window.isGamePaused && options.isMainHero) {
-        window.particles.push({
-          x: window.hero.x + 20,
-          y: window.hero.y + 18 + bounce,
-          vx: -window.randFloat(0.3, 0.8),
-          vy: -window.randFloat(0.5, 1.2),
-          radius: window.randFloat(1, 2.2),
-          color: "rgba(142, 68, 173, 0.25)",
-          alpha: 0.8,
-          life: window.randInt(15, 30),
-        });
-      }
       ctx.restore();
-      let mistCycle = (Date.now() / 150) % 6;
-      ctx.fillStyle = "rgba(46, 204, 113, " + (0.55 - mistCycle / 12) + ")";
-      ctx.beginPath();
-      ctx.arc(0, -16 - mistCycle, 1.2 + mistCycle / 3, 0, Math.PI * 2);
-      ctx.fill();
     }
-  }
 
-  // Draw Cape & Body Armor
-  ctx.strokeStyle = "#000000";
-  ctx.lineWidth = penHero;
-  ctx.fillStyle = capeColor;
-  ctx.beginPath();
-  ctx.moveTo(-6, bounce);
-  ctx.lineTo(-18, 15);
-  ctx.lineTo(-2, 18);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.fillStyle = bodyColor;
-  ctx.beginPath();
-  ctx.rect(-8, bounce, 14, 16);
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.fillStyle = armorColor;
-  ctx.beginPath();
-  ctx.rect(-10, -14 + bounce, 18, 16);
-  ctx.fill();
-  ctx.stroke();
-
-  // Crown of Tempests Aura
-  if (
-    equipped.helmet &&
-    equipped.helmet.isUniqueTempest &&
-    (!options.deathAnimationTimer || options.deathAnimationTimer === 0)
-  ) {
-    ctx.save();
-    ctx.translate(0, -14 + bounce);
-    ctx.strokeStyle = "#00d2ff";
-    ctx.lineWidth = 2.0;
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = "#00d2ff";
-    ctx.beginPath();
-    ctx.moveTo(-6, -2);
-    ctx.quadraticCurveTo(-14, -12, -18, -8);
-    ctx.quadraticCurveTo(-10, -5, -4, 0);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(6, -2);
-    ctx.quadraticCurveTo(14, -12, 18, -8);
-    ctx.quadraticCurveTo(10, -5, 4, 0);
-    ctx.stroke();
     ctx.restore();
-  }
+  };
 
-  // Helmet Visor / Eyes
-  ctx.fillStyle = "#2c3e50";
-  ctx.beginPath();
-  ctx.rect(0, -8 + bounce, 6, 4);
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = eyeColor;
-  ctx.beginPath();
-  ctx.rect(-5, -20 + bounce, 4, 6);
-  ctx.fill();
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.rect(-9, -16 + bounce, 8, 4);
-  ctx.fill();
-  ctx.stroke();
+  // --- MISSING MAIN RENDER LOOP ---
+    window.draw = function () {
+      window.nowMs = window.Date.now();
+      const ctx = window.ctx;
+      const canvas = window.canvas;
+    if (!ctx || !canvas) return;
 
-  // Weapon
-  ctx.save();
-  ctx.translate(2, 6 + bounce);
-  let isStaff = equipped.weapon && equipped.weapon.isUniqueStaff;
-  let isUniqueSword = equipped.weapon && equipped.weapon.isUniqueSword;
-  let isSingularity = equipped.weapon && equipped.weapon.isUniqueSingularity;
-  let isMaelstrom = equipped.weapon && equipped.weapon.isUniqueMaelstrom;
-
-  if (isSingularity) {
-    ctx.rotate(-Math.PI / 8);
-    if (options.slashFrame) {
-      ctx.translate(15, -10);
-      ctx.rotate(-Math.PI / 2.3);
-    }
-    ctx.fillStyle = "#1e1e24";
-    ctx.beginPath();
-    ctx.rect(-2, -2, 4, 10);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#110221";
-    ctx.strokeStyle = "#8e44ad";
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(-9, 8);
-    ctx.lineTo(9, 8);
-    ctx.lineTo(12, 12);
-    ctx.lineTo(-12, 12);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    let singPulse = Math.sin(Date.now() / 120) * 0.15 + 0.85;
-    ctx.fillStyle = `rgba(37, 3, 60, ${singPulse})`;
-    ctx.strokeStyle = "#e84393";
-    ctx.beginPath();
-    ctx.moveTo(-3, 12);
-    ctx.lineTo(-1.5, 42);
-    ctx.lineTo(1.5, 42);
-    ctx.lineTo(3, 12);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    if (options.slashFrame) {
-      ctx.fillStyle = "rgba(142, 68, 173, 0.35)";
-      ctx.beginPath();
-      ctx.arc(0, 20, 35, 0, Math.PI / 2);
-      ctx.lineTo(0, 0);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = "rgba(232, 67, 147, 0.6)";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-  } else if (isMaelstrom) {
-    ctx.rotate(-Math.PI / 8);
-    if (options.slashFrame) {
-      ctx.translate(15, -10);
-      ctx.rotate(-Math.PI / 2.3);
-    }
-    ctx.fillStyle = "#5c503b";
-    ctx.beginPath();
-    ctx.rect(-1, -6, 2, 44);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#2ecc71";
-    ctx.beginPath();
-    ctx.moveTo(-4, 30);
-    ctx.lineTo(0, 48);
-    ctx.lineTo(4, 30);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#27ae60";
-    ctx.beginPath();
-    ctx.moveTo(-3, -2);
-    ctx.lineTo(0, -12);
-    ctx.lineTo(3, -2);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    if (options.slashFrame) {
-      ctx.fillStyle = "rgba(46, 204, 113, 0.35)";
-      ctx.beginPath();
-      ctx.arc(0, 20, 35, 0, Math.PI / 2);
-      ctx.lineTo(0, 0);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = "rgba(39, 174, 96, 0.6)";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-  } else if (isStaff) {
-    ctx.rotate(-Math.PI / 8);
-    if (options.slashFrame) {
-      ctx.translate(15, -10);
-      ctx.rotate(-Math.PI / 2.3);
-    }
-    ctx.fillStyle = "#1e1e24";
-    ctx.beginPath();
-    ctx.rect(-1.5, -4, 3, 34);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#f1c40f";
-    ctx.beginPath();
-    ctx.moveTo(-7, 30);
-    ctx.quadraticCurveTo(0, 26, 7, 30);
-    ctx.lineTo(9, 36);
-    ctx.quadraticCurveTo(0, 32, -9, 36);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    let gemPulse = 3.5 + Math.sin(Date.now() / 150) * 1.2;
-    ctx.fillStyle = "#e74c3c";
-    ctx.beginPath();
-    ctx.arc(0, 34, gemPulse, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#ffffff";
-    ctx.beginPath();
-    ctx.arc(-1, 33, 1, 0, Math.PI * 2);
-    ctx.fill();
-    if (options.slashFrame) {
-      ctx.fillStyle = "rgba(230, 126, 34, 0.35)";
-      ctx.beginPath();
-      ctx.arc(0, 20, 35, 0, Math.PI / 2);
-      ctx.lineTo(0, 0);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = "rgba(231, 76, 60, 0.6)";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-  } else if (isUniqueSword) {
-    ctx.rotate(-Math.PI / 8);
-    if (options.slashFrame) {
-      ctx.translate(15, -10);
-      ctx.rotate(-Math.PI / 2.3);
-    }
-    ctx.fillStyle = "#1e1e24";
-    ctx.beginPath();
-    ctx.rect(-2, -2, 4, 10);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#d4af37";
-    ctx.beginPath();
-    ctx.arc(0, -3, 3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.rect(-7, 8, 14, 4);
-    ctx.fill();
-    ctx.stroke();
-    let bleedPulse = Math.sin(Date.now() / 100) * 0.15 + 0.85;
-    let bladeColor = `rgba(192, 57, 43, ${bleedPulse})`;
-    ctx.fillStyle =
-      window.mob && window.mob.flashTimer > 0 ? "#ffffff" : bladeColor;
-    ctx.strokeStyle = "#960018";
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(-3.5, 12);
-    ctx.lineTo(-2, 37);
-    ctx.lineTo(2, 37);
-    ctx.lineTo(3.5, 12);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#ff7f7f";
-    ctx.beginPath();
-    ctx.rect(-0.8, 14, 1.6, 18);
-    ctx.fill();
-    if (options.slashFrame) {
-      ctx.fillStyle = "rgba(192, 57, 43, 0.35)";
-      ctx.beginPath();
-      ctx.arc(0, 20, 35, 0, Math.PI / 2);
-      ctx.lineTo(0, 0);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = "rgba(150, 0, 24, 0.6)";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-  } else {
-    if (options.slashFrame) {
-      ctx.translate(15, -10);
-      ctx.rotate(-Math.PI / 2.3);
-      ctx.fillStyle = "#7f8c8d";
-      ctx.beginPath();
-      ctx.rect(-2, -2, 4, 10);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = "#8e44ad";
-      ctx.beginPath();
-      ctx.rect(-5, 8, 10, 4);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = "#ecf0f1";
-      ctx.beginPath();
-      ctx.rect(-2, 12, 4, 25);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = "rgba(236, 240, 241, 0.4)";
-      ctx.beginPath();
-      ctx.arc(0, 20, 35, 0, Math.PI / 2);
-      ctx.lineTo(0, 0);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = "rgba(0, 0, 0, 0.55)";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    } else {
-      ctx.rotate(-Math.PI / 8);
-      ctx.fillStyle = "#7f8c8d";
-      ctx.beginPath();
-      ctx.rect(-2, -2, 4, 10);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = "#8e44ad";
-      ctx.beginPath();
-      ctx.rect(-5, 8, 10, 4);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = "#ecf0f1";
-      ctx.beginPath();
-      ctx.rect(-2, 12, 4, 25);
-      ctx.fill();
-      ctx.stroke();
-    }
-  }
-  ctx.restore();
-
-  if (
-    equipped.weapon &&
-    equipped.weapon.isUniqueSingularity &&
-    stats.singularityState === "pulsing" &&
-    (!options.deathAnimationTimer || options.deathAnimationTimer === 0)
-  ) {
-    ctx.save();
-    ctx.translate(0, -35 + bounce);
-    ctx.rotate(Date.now() / 300);
-    ctx.strokeStyle = "#e84393";
-    ctx.lineWidth = 1.8;
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = "#e84393";
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-      let angle = (i * Math.PI) / 3;
-      ctx.lineTo(Math.cos(angle) * 9, Math.sin(angle) * 9);
-    }
-    ctx.closePath();
-    ctx.stroke();
-    ctx.fillStyle = "#ffffff";
-    ctx.beginPath();
-    ctx.arc(0, 0, 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  ctx.restore();
-};
-
-// --- MISSING MAIN RENDER LOOP ---
-window.draw = function () {
-  const ctx = window.ctx;
-  const canvas = window.canvas;
-  if (!ctx || !canvas) return;
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  let tier = window.getStageTier();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let tier = window.getStageTier();
 
   const penSky = 1.0;
   const penFar = 1.3;
@@ -7272,19 +6731,15 @@ window.draw = function () {
   });
 
   if (
-    window.isGamePaused &&
-    document.getElementById("death-overlay") &&
-    document.getElementById("death-overlay").style.display === "flex"
-  ) {
-    window.renderNemesisPreview(window.playerStats.killedByMob);
-  }
-
-  if (typeof window.updateMedalBanner === "function") {
-      window.updateMedalBanner();
+      window.isGamePaused &&
+      document.getElementById("death-overlay") &&
+      document.getElementById("death-overlay").style.display === "flex"
+    ) {
+      window.renderNemesisPreview(window.playerStats.killedByMob);
     }
-  };
+    };
 
-  window.toggleMenuHub = function () {
+    window.toggleMenuHub = function () {
       let overlay = document.getElementById("menu-hub-overlay");
       let card = document.getElementById("menu-hub-card");
       if (!overlay || !card) return;
@@ -7374,36 +6829,38 @@ window.updateTitleSelector = function () {
   });
 
   let descEl = document.getElementById("selected-title-desc");
-  if (descEl) {
-    let activeTitle = window.playerStats.equippedTitle;
-    if (activeTitle && window.TITLES_DATA[activeTitle]) {
-      let tData = window.TITLES_DATA[activeTitle];
-      let statBonusText = [];
-      if (tData.stats) {
-        for (let sKey in tData.stats) {
-          let label = window.getStatLabel(sKey);
-          let val = tData.stats[sKey];
-          let isPct = [
-            "drop",
-            "qly",
-            "critChance",
-            "critDamage",
-            "block",
-            "parry",
-            "gold",
-            "fairySpawn",
-            "rareSpawn",
-          ].includes(sKey);
-          let valStr = isPct ? `+${(val * 100).toFixed(0)}%` : `+${val}`;
-          statBonusText.push(`${label} ${valStr}`);
+    if (descEl) {
+      let activeTitle = window.playerStats.equippedTitle;
+      if (activeTitle && window.TITLES_DATA[activeTitle]) {
+        let tData = window.TITLES_DATA[activeTitle];
+        let statBonusText = [];
+        if (tData.stats) {
+          for (let sKey in tData.stats) {
+            let label = window.getStatLabel(sKey);
+            let val = tData.stats[sKey];
+            let isPct = [
+              "drop",
+              "qly",
+              "critChance",
+              "critDamage",
+              "block",
+              "parry",
+              "gold",
+              "fairySpawn",
+              "rareSpawn",
+            ].includes(sKey);
+            let valStr = isPct ? `+${(val * 100).toFixed(0)}%` : `+${val}`;
+            statBonusText.push(`${label} ${valStr}`);
+          }
         }
+        let bonusStr =
+          statBonusText.length > 0 ? ` (${statBonusText.join(", ")})` : "";
+        descEl.innerHTML = `${tData.desc}<br><span style="color:${tData.color || "#ff007f"}; font-weight:bold;">Active Bonus: ${bonusStr || "Cosmetic Only"}</span>`;
+      } else {
+        descEl.innerText =
+          "Select an unlocked title from the drop-down to equip it.";
       }
-      let bonusStr =
-        statBonusText.length > 0 ? ` (${statBonusText.join(", ")})` : "";
-      descEl.innerHTML = `${tData.desc}<br><span style="color:${tData.color || "#ff007f"}; font-weight:bold;">Active Bonus: ${bonusStr || "Cosmetic Only"}</span>`;
-    } else {
-      descEl.innerText =
-        "Select an unlocked title from the drop-down to equip it.";
     }
-  }
-};
+  };
+
+  })();
