@@ -922,6 +922,7 @@ window.getClanEmblemHtml = function (emblemSeed, size = 18) {
     ${symPath}
   </svg>`;
 };
+window.getGuildEmblemHtml = window.getClanEmblemHtml; // Fallback alias for legacy/leaderboard compatibility
 window.draftHoldTimeout = null;
 window.didFastDump = false;
 
@@ -10411,14 +10412,14 @@ window.renderLeaderboardItems = function (leaderboard) {
       let canvasId = `leaderboard-canvas-${player.userId}`;
 
       let guildBadgeHtml = "";
-      if (player.guildName) {
-        let emblem = window.getGuildEmblemHtml(player.guildEmblem || 0, 12);
-        guildBadgeHtml = `
-                <div style="display: inline-flex; align-items: center; gap: 3px; background: rgba(142, 68, 173, 0.1); border: 1px solid #8e44ad; padding: 1px 4px; border-radius: 3px; font-size: 8.5px; color: #df9ffb; font-weight: bold; margin-left: 6px;">
-                  ${emblem} <span>${window.escapeHTML(player.guildName)}</span>
-                </div>
-              `;
-      }
+            if (player.guildName) {
+              let emblem = window.getClanEmblemHtml(player.guildEmblem || 0, 12);
+              guildBadgeHtml = `
+                      <div style="display: inline-flex; align-items: center; gap: 3px; background: rgba(142, 68, 173, 0.1); border: 1px solid #8e44ad; padding: 1px 4px; border-radius: 3px; font-size: 8.5px; color: #df9ffb; font-weight: bold; margin-left: 6px;">
+                        ${emblem} <span>${window.escapeHTML(player.guildName)}</span>
+                      </div>
+                    `;
+            }
 
       return `
               <div class="bag-item" style="display:flex; justify-content:space-between; align-items:center; padding:6px 12px; gap:8px; cursor:default; ${cardStyle}">
@@ -10619,9 +10620,9 @@ window.renderInspectModal = function (profile) {
                     ${tData.icon || "🏅"}
                 </div>
                 <div style="flex:1; min-width:0; text-align:left; margin-left: 8px;">
-                    <span style="font-size:9px; color:#888; text-transform:uppercase; letter-spacing:1px; display:block; line-height:1;">Equipped Medal</span>
-                    <strong style="color:${color}; font-size:11.5px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow:0 0 8px ${hexRgba(color, 0.25)}; margin-top:2px;">${tData.name}</strong>
-                </div>
+                                    <span style="font-size:9px; color:#888; text-transform:uppercase; letter-spacing:1px; display:block; line-height:1;">Equipped Medal</span>
+                                    <strong style="color:${color}; font-size:11.5px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow:0 0 8px ${window.hexToRgba(color, 0.25)}; margin-top:2px;">${tData.name}</strong>
+                                </div>
             </div>
           `;
   } else {
