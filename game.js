@@ -4023,25 +4023,25 @@ window.processEnemySpawn = function () {
   } else {
     let tier = window.getStageTier();
     if (window.playerStats.isBossMode) {
-      if (window.playerStats.isUberBoss) {
-        let bossType = window.playerStats.currentUberBoss || "guardian";
-        let hpMult = 10.0;
-        let dmgMult = 10.0;
-        let speedMult = 100;
-        let mType = "aegis_goliath";
-        let logText =
-          "**Aegis Goliath, The Iron Sentinel** has materialized from the cracked Aether!";
+          if (window.playerStats.isUberBoss) {
+            let bossType = window.playerStats.currentUberBoss || "guardian";
+            let hpMult = 10.0;
+            let dmgMult = 10.0;
+            let speedMult = 100;
+            let mType = "aegis_goliath";
+            let logText =
+              "<strong style='color:#3498db;'>Aegis Goliath, The Iron Sentinel</strong> has materialized from the cracked Aether!";
 
-        if (bossType === "chronos") {
-          speedMult = 90;
-          mType = "chronos_arbitrator";
-          logText =
-            "**Chronos Arbitrator** has stepped from the temporal flow!";
-        } else if (bossType === "nexus") {
-          speedMult = 80;
-          mType = "nexus_overseer";
-          logText = "**Nexus Overseer** has infected the reality stream!";
-        }
+            if (bossType === "chronos") {
+              speedMult = 90;
+              mType = "chronos_arbitrator";
+              logText =
+                "<strong style='color:#f1c40f;'>Chronos Arbitrator</strong> has stepped from the temporal flow!";
+            } else if (bossType === "nexus") {
+              speedMult = 80;
+              mType = "nexus_overseer";
+              logText = "<strong style='color:#ff007f;'>Nexus Overseer</strong> has infected the reality stream!";
+            }
 
         let riftLvl = window.playerStats.activeRiftLevel || 1;
         let equivalentStage = 50 + riftLvl * 10;

@@ -11206,17 +11206,17 @@ window.renderClanDashboard = function (clan, members, invitations) {
     }
 
     tabContentHtml = `
-      <div style="text-align:left; background:rgba(0,0,0,0.3); border:1px solid #333; border-radius:6px; padding:10px; margin-bottom:12px; font-size:11px; line-height:1.4;">
-          <strong style="color:#df9ffb; display:inline-flex; align-items:center; gap:4px; margin-bottom:4px;">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2c-.5 5-4 8-8 8 4 0 7.5 3 8 8 .5-5 4-8 8-8-4 0-7.5-3-8-8z"/></svg>
-              Weekly Guild Objectives
-          </strong>
-          Cooperate with your Clan to achieve these weekly active goals. Completing quests is the **only way** to gain Clan XP and level up!
-      </div>
-      <div style="max-height: 280px; overflow-y:auto; padding-right:4px;">
-          ${listHtml}
-      </div>
-    `;
+          <div style="text-align:left; background:rgba(0,0,0,0.3); border:1px solid #333; border-radius:6px; padding:10px; margin-bottom:12px; font-size:11px; line-height:1.4;">
+              <strong style="color:#df9ffb; display:inline-flex; align-items:center; gap:4px; margin-bottom:4px;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2c-.5 5-4 8-8 8 4 0 7.5 3 8 8 .5-5 4-8 8-8-4 0-7.5-3-8-8z"/></svg>
+                  Weekly Guild Objectives
+              </strong>
+              Cooperate with your Clan to achieve these weekly active goals. Completing quests is the <strong style="color:#df9ffb;">only way</strong> to gain Clan XP and level up!
+          </div>
+          <div style="max-height: 280px; overflow-y:auto; padding-right:4px;">
+              ${listHtml}
+          </div>
+        `;
   } else if (currentTab === "SETTINGS") {
     let isJoinOpen = clan.join_policy === "open";
     tabContentHtml = `

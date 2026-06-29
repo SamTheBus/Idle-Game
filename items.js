@@ -343,27 +343,27 @@ window.renderForgeTab = function () {
   }
 
   if (
-    !window.forgeSelectedItem ||
-    ((window.forgeMode === "reforge" ||
-      window.forgeMode === "tier" ||
-      window.forgeMode === "enchant" ||
-      window.forgeMode === "reset_enchant" ||
-      window.forgeMode === "set") &&
-      window.forgeSelectedItem.type === "artifact")
-  ) {
-    detailEl.innerHTML = `<div style='color:#aaa; text-align:center; padding-top:10px;'>
-                <div style='color:#e67e22; font-weight:bold; font-size:14px; margin-bottom:10px;'>🔨 Mystical Anvil</div>
-                <div style='font-size:11px; line-height:1.8; background:#111; padding:10px; border-radius:4px; border:1px solid #333; text-align:left;'>
-                    Select an eligible item from your list.<br><br>
-                    <b>TEMPER:</b> Refines stats with tier-appropriate material scraps. Failure consumes raw items.<br><br>
-                    <b>REFORGE STAT:</b> Spend **Catalyst Cores** to lock and roll a modifier line of your choice. All other slots lock permanently once selection is active!<br><br>
-                    <b>TIER UP:</b> Infuses Eridium Shards to permanently elevate stars and unlock 1 additional random stat modifier!<br><br>
-                    <b>ENCHANT:</b> Infuse powerful magic using salvaged <b>Astral Essence</b>. Boosts 1 random stat line by 25%. Slots scale with rarity.<br><br>
-                    <b>RE-ROLL SET:</b> Infuse **Monster Souls** and gold to alter set resonances. Handy for completing Vanguard/Colossus layout chains!
-                </div>
-            </div>`;
-    return;
-  }
+      !window.forgeSelectedItem ||
+      ((window.forgeMode === "reforge" ||
+        window.forgeMode === "tier" ||
+        window.forgeMode === "enchant" ||
+        window.forgeMode === "reset_enchant" ||
+        window.forgeMode === "set") &&
+        window.forgeSelectedItem.type === "artifact")
+    ) {
+      detailEl.innerHTML = `<div style='color:#aaa; text-align:center; padding-top:10px;'>
+                  <div style='color:#e67e22; font-weight:bold; font-size:14px; margin-bottom:10px;'>🔨 Mystical Anvil</div>
+                  <div style='font-size:11px; line-height:1.8; background:#111; padding:10px; border-radius:4px; border:1px solid #333; text-align:left;'>
+                      Select an eligible item from your list.<br><br>
+                      <b>TEMPER:</b> Refines stats with tier-appropriate material scraps. Failure consumes raw items.<br><br>
+                      <b>REFORGE STAT:</b> Spend <strong style="color:#2ecc71;">Catalyst Cores</strong> to lock and roll a modifier line of your choice. All other slots lock permanently once selection is active!<br><br>
+                      <b>TIER UP:</b> Infuses Eridium Shards to permanently elevate stars and unlock 1 additional random stat modifier!<br><br>
+                      <b>ENCHANT:</b> Infuse powerful magic using salvaged <b>Astral Essence</b>. Boosts 1 random stat line by 25%. Slots scale with rarity.<br><br>
+                      <b>RE-ROLL SET:</b> Infuse <strong style="color:#bdc3c7;">Monster Souls</strong> and gold to alter set resonances. Handy for completing Vanguard/Colossus layout chains!
+                  </div>
+              </div>`;
+      return;
+    }
 
   let item = window.forgeSelectedItem;
   let titleColor = window.getTierColor(item.statsRolled);
