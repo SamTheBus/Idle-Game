@@ -5891,6 +5891,9 @@ window.viewAchievement = function (achId) {
     if (card) {
       card.style.animation = "";
       card.style.boxShadow = "";
+      // Immediately strip away the "NEW" ribbon badge element
+      let ribbon = card.querySelector(".badge-exclamation");
+      if (ribbon) ribbon.remove();
     }
   }
 };
@@ -5952,7 +5955,7 @@ window.showAchievementTooltip = function (e, achId) {
       month: "long",
       day: "numeric",
     });
-    timestampHtml = `<div class="tt-stat-line" style="color:#7f8c8d; font-size:9.5px; margin-top:2px;">📅 Completed: ${date}</div>`;
+    timestampHtml = `<div class="tt-stat-line" style="color:#7f8c8d; font-size:9.5px; margin-top:2px;">📅 Completed: ${dateStr}</div>`;
   } else if (unlocked) {
     timestampHtml = `<div class="tt-stat-line" style="color:#7f8c8d; font-size:9.5px; margin-top:2px;">📅 Completed: Pre-Release Legacy</div>`;
   }
