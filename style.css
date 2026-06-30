@@ -207,10 +207,6 @@ canvas {
   cursor: pointer;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
   touch-action: none; /* Prevents canvas touch drag gestures from locking the viewport scroll */
-  image-rendering: -moz-crisp-edges;
-  image-rendering: -webkit-crisp-edges;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
 }
 
 /* --- STATS HUD OVERLAY --- */

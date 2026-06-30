@@ -792,11 +792,16 @@ window.createItemObject = function (
   }
 
   let prestigeMult = 1.0; // Disabled automatic scaling to prevent Stage 80 spam exploits
-  // Re-balanced from polynomial to exponential curves to match exponential enemy scaling
-  let expScale = Math.pow(1.18, stageScale) * Math.pow(stageScale, 3.5);
-  let hpDefExpScale = Math.pow(1.16, stageScale) * Math.pow(stageScale, 3.5);
 
-  // Apply baseline attribute values matching slot configurations (Slot-Specific Base Stats)
+    // Direct-Alignment Scaling Model: Maps item creation baselines exactly to enemy exponential scale curves
+    let repStage = stageScale * 10;
+    let repGrowth = 1.045 + (repStage * 0.04) / (repStage + 200);
+    let repScale = Math.pow(repGrowth, repStage);
+
+    let expScale = repScale;
+    let hpDefExpScale = repScale;
+
+    // Apply baseline attribute values matching slot configurations (Slot-Specific Base Stats)
   if (!isArt) {
     let baseRarityMult = 1.0 + statLinesCount * 0.3; // Apply same base rarity multiplier immediately on drop
     if (chosenType === "weapon") {
@@ -1188,9 +1193,14 @@ window.getStatBaseRange = function (item, statKey) {
   let stageLevel = item.stageLevel || 1;
   let isArt = item.type === "artifact";
   let rarityMult = isArt ? 1.45 : 1 + (item.statsRolled || 0) * 0.15;
-  // Aligned with the 3.5 exponent progression scale of createItemObject
-  let expScale = Math.pow(1.18, stageLevel) * Math.pow(stageLevel, 3.5);
-  let hpDefExpScale = Math.pow(1.16, stageLevel) * Math.pow(stageLevel, 3.5);
+
+  // Direct-Alignment Scaling Model: Maps base card ranges exactly to enemy exponential scale curves
+  let repStage = stageLevel * 10;
+  let repGrowth = 1.045 + (repStage * 0.04) / (repStage + 200);
+  let repScale = Math.pow(repGrowth, repStage);
+
+  let expScale = repScale;
+  let hpDefExpScale = repScale;
 
   let min = 0;
   let max = 0;
@@ -1467,14 +1477,15 @@ window.recalculateItemStats = function (item) {
   item.bonusDex = item.bonusDex || 0;
   item.bonusInt = item.bonusInt || 0;
 
-  // Re-balanced from polynomial to exponential curves to match exponential enemy scaling
-  // Aligned with the 3.5 exponent progression scale of createItemObject
-  let expScale =
-    Math.pow(1.18, item.stageLevel || 1) * Math.pow(item.stageLevel || 1, 3.5);
-  let hpDefExpScale =
-    Math.pow(1.16, item.stageLevel || 1) * Math.pow(item.stageLevel || 1, 3.5);
+  // Direct-Alignment Scaling Model: Maps recalculations exactly to enemy exponential scale curves
+    let repStage = (item.stageLevel || 1) * 10;
+    let repGrowth = 1.045 + (repStage * 0.04) / (repStage + 200);
+    let repScale = Math.pow(repGrowth, repStage);
 
-  let prestigeCount = window.playerStats.prestigeCount || 0;
+    let expScale = repScale;
+    let hpDefExpScale = repScale;
+
+    let prestigeCount = window.playerStats.prestigeCount || 0;
   let prestigeMult = 1.0; // Disabled automatic scaling to prevent Stage 80 spam exploits
 
   // Dynamic base scaling transitions for standard slot configurations
