@@ -1413,6 +1413,11 @@ canvas {
 
 /* --- DASHBOARD MOBILE RESPONSIVENESS --- */
 @media (max-width: 580px) {
+  .gacha-dashboard {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    padding: 10px !important;
+  }
   #control-bar {
     grid-template-columns: 1fr !important;
     gap: 8px !important;
@@ -1864,11 +1869,13 @@ canvas {
   animation: pulseGlow 1.2s infinite;
 }
 
-/* ==========================================================================
-           17. RETRO GACHA ARCADE SHOWCASE & CAPSULE PHYSICS
-           ========================================================================= */
+/* --- RETRO GACHA ARCADE SHOWCASE & CAPSULE PHYSICS --- */
 .gacha-dashboard {
   align-items: stretch;
+}
+/* Suppress default scrollbar inside the custom-gutter Gacha container */
+#gacha-recent-list::-webkit-scrollbar {
+  display: none !important;
 }
 
 @keyframes scrollMarquee {

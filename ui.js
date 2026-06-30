@@ -8965,17 +8965,46 @@ window.renderGachaShowcaseMarquee = function (forceRefresh = false) {
           /⭐ UNIQUE |(Common|Rare|Magic|Epic|Legendary|Mythic) /g,
           "",
         );
+        let iconHtml = window.getEquipIconHtml(item, 18);
         return `
-                                                <span style="color:${col}; font-weight:bold; font-size:10px; cursor:help; text-decoration: underline; text-decoration-style: dotted; margin: 0 4px;"
-                                                      onmouseenter="window.showInventoryTooltip(event, ${item.id})"
-                                                      ontouchstart="window.showInventoryTooltip(event, ${item.id})"
-                                                      onmouseleave="window.hideTooltip()">
-                                                    ${shortName}
-                                                </span>
-                                            `;
+            <span style="display:inline-flex; align-items:center; gap:4px; color:${col}; font-weight:bold; font-size:10px; cursor:help; margin: 0 8px; vertical-align:middle;"
+                  onmouseenter="window.showInventoryTooltip(event, ${item.id})"
+                  ontouchstart="window.showInventoryTooltip(event, ${item.id})"
+                  onmouseleave="window.hideTooltip()">
+                ${iconHtml}
+                <span>${shortName}</span>
+            </span>
+        `;
       })
       .join("");
   }
+};
+
+window.updateGachaCustomScrollbar = function () {
+  let list = document.getElementById("gacha-recent-list");
+  let thumb = document.getElementById("gacha-custom-scrollbar-thumb");
+  let track = document.getElementById("gacha-custom-scrollbar-track");
+  if (!list || !thumb || !track) return;
+
+  let scrollHeight = list.scrollHeight;
+  let clientHeight = list.clientHeight;
+  let scrollTop = list.scrollTop;
+
+  if (scrollHeight <= clientHeight) {
+    track.style.display = "none";
+    return;
+  } else {
+    track.style.display = "block";
+  }
+
+  let trackHeight = track.clientHeight;
+  let thumbHeight = Math.max(24, (clientHeight / scrollHeight) * trackHeight);
+  thumb.style.height = thumbHeight + "px";
+
+  let maxScrollTop = scrollHeight - clientHeight;
+  let maxThumbTop = trackHeight - thumbHeight;
+  let thumbTop = (scrollTop / maxScrollTop) * maxThumbTop;
+  thumb.style.top = thumbTop + "px";
 };
 
 window.updateGachaRecentList = function () {
@@ -8986,21 +9015,33 @@ window.updateGachaRecentList = function () {
   let renderItemRow = (item, playerName = "You") => {
     let col = window.getTierColor(item.statsRolled);
     let starDisplay =
-      item.statsRolled === "UNIQUE" ? "★" : `${item.statsRolled}★`;
+      item.statsRolled === "UNIQUE" ? "UNIQUE" : `${item.statsRolled}★`;
     let shortName = item.name.replace(
       /⭐ UNIQUE |(Common|Rare|Magic|Epic|Legendary|Mythic) /g,
       "",
     );
+
+    // Distinguish players with dedicated name tag styling
+    let isSelf = playerName === "You" || playerName === (window.playerStats.playerName || "Guest");
+    let nameCol = isSelf ? "#ffd700" : "#00d2ff"; // Gold for self, Bright Cyber Cyan for other players
+    let displayName = isSelf ? "You" : window.escapeHTML(playerName);
+
+    // Draw micro icon inside rows
+    let iconHtml = window.getEquipIconHtml(item, 24);
+
     return `
-        <div style="background:#07030b; border: 1px solid #222; border-left: 3.5px solid ${col}; border-radius:3px; padding:4px 6px; display:flex; justify-content:space-between; align-items:center; cursor:help; font-family:sans-serif; gap:6px;"
+        <div style="background:#07030b; border: 1px solid #222; border-left: 3.5px solid ${col} !important; border-radius:6px; padding:6px 8px; display:flex; justify-content:space-between; align-items:center; cursor:help; font-family:sans-serif; gap:8px; position:relative; box-shadow: 0 2px 4px rgba(0,0,0,0.5);"
              onmouseenter="window.showInventoryTooltip(event, ${item.id})"
              ontouchstart="window.showInventoryTooltip(event, ${item.id})"
              onmouseleave="window.hideTooltip()">
-            <div style="text-align:left; min-width:0; flex:1;">
-                <span style="color:#888; font-size:8.5px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">[${window.escapeHTML(playerName)}] rolled:</span>
-                <span style="color:${col}; font-weight:bold; font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block;">${shortName}</span>
+            <div style="display:flex; align-items:center; gap:6px; min-width:0; flex:1;">
+                <div style="flex-shrink:0;">${iconHtml}</div>
+                <div style="min-width:0; flex:1; text-align:left;">
+                    <span style="color:#888; font-size:8px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">[<span style="color:${nameCol}; font-weight:bold;">${displayName}</span>] rolled:</span>
+                    <span style="color:${col}; font-weight:bold; font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block;">${shortName}</span>
+                </div>
             </div>
-            <span style="color:#666; font-size:9px; font-family:monospace; align-self:flex-end;">${starDisplay}</span>
+            <span style="color:#666; font-size:9px; font-family:monospace; font-weight:bold; flex-shrink:0;">${starDisplay}</span>
         </div>
     `;
   };
@@ -9057,6 +9098,12 @@ window.updateGachaRecentList = function () {
         listEl.innerHTML = `<div style="color:#666; text-align:center; padding-top:40px; font-size:10px; font-style:italic; line-height: 1.4; white-space:normal;">No recent pulls.<br>Crank the handle inside the dispensary!</div>`;
       }
     }
+    // Update custom scrollbar immediately
+    setTimeout(() => {
+      if (typeof window.updateGachaCustomScrollbar === "function") {
+        window.updateGachaCustomScrollbar();
+      }
+    }, 50);
   }
 };
 
