@@ -3812,10 +3812,79 @@ window.resolvePlayerStats = function (useDraft = false) {
     p.block = 0.0;
   }
 
-  p.atk = Math.floor(p.atk * (achAtkPct + itemAtkPct));
-  p.maxHp = Math.floor(p.maxHp * (achMaxHpPct + itemHpPct));
+  p.atk = Math.floor(p.atk * (1.0 + itemAtkPct));
+  p.maxHp = Math.floor(p.maxHp * (1.0 + itemHpPct));
   p.def = Math.ceil(flatDef * (defMultiplier + itemDefPct) * achDefPct);
   p.moveSpeed = p.moveSpeed * (achMoveSpeedPct + itemSpdPct);
+
+  // Apply Cavern Sigil Active Modifiers (Dungeon Mode)
+  if (
+    window.playerStats.isDungeonMode &&
+    window.playerStats.activeDungeonSigil
+  ) {
+    let activeSig = window.playerStats.activeDungeonSigil;
+    p.qly += activeSig.qualityBoost || 0;
+
+    // Loop and apply the sigil's buffs and debuffs
+    activeSig.buffs.forEach((b) => {
+      if (b.id === "swift_strikes") {
+        p.idleAttackSpeed = Math.max(10, Math.round(p.idleAttackSpeed / 1.25));
+        p.activeAttackSpeed = Math.max(
+          4,
+          Math.round(p.activeAttackSpeed / 1.25),
+        );
+      } else if (b.id === "giant_might") {
+        p.atk = Math.floor(p.atk * 1.3);
+      } else if (b.id === "iron_aegis") {
+        p.def = Math.floor(p.def * 1.35);
+      } else if (b.id === "vital_fountain") {
+        p.maxHp = Math.floor(p.maxHp * 1.4);
+      } else if (b.id === "unstable_surge") {
+        p.critChance += 0.15;
+      } else if (b.id === "shatter_frenzy") {
+        p.critDamage += 0.5;
+      } else if (b.id === "deflection_vortex") {
+        p.block += 0.1;
+        p.parry += 0.1;
+      } else if (b.id === "arcane_infusion") {
+        p.arcaneBarrier = Math.min(0.5, p.arcaneBarrier + 0.15);
+      } else if (b.id === "treasure_finder") {
+        p.gold += 0.5;
+      } else if (b.id === "lucky_winds") {
+        p.fairySpawn += 0.4;
+      } else if (b.id === "void_call") {
+        p.rareSpawn += 0.5;
+      } else if (b.id === "scavenger_insight") {
+        p.drop += 0.5;
+      } else if (b.id === "artisan_luck") {
+        p.qly += 0.25;
+      }
+    });
+
+    activeSig.debuffs.forEach((d) => {
+      if (d.id === "iron_gaze") {
+        p.idleAttackSpeed = Math.round(p.idleAttackSpeed * 1.2);
+        p.activeAttackSpeed = Math.round(p.activeAttackSpeed * 1.2);
+      } else if (d.id === "shattered_armour") {
+        p.def = Math.floor(p.def * 0.75);
+      } else if (d.id === "frail_vessel") {
+        p.maxHp = Math.floor(p.maxHp * 0.8);
+      } else if (d.id === "dull_blades") {
+        p.atk = Math.floor(p.atk * 0.8);
+      } else if (d.id === "heavy_mist") {
+        p.moveSpeed = Math.max(1.0, p.moveSpeed * 0.7);
+      } else if (d.id === "blind_spot") {
+        p.critChance = Math.max(0.0, p.critChance - 0.1);
+      } else if (d.id === "feeble_mind") {
+        p.arcaneBarrier = 0.0;
+      } else if (d.id === "curse_greed") {
+        p.gold = Math.max(0.1, p.gold - 0.4);
+      } else if (d.id === "lead_boots") {
+        p.block = Math.max(0.0, p.block - 0.08);
+        p.parry = Math.max(0.0, p.parry - 0.08);
+      }
+    });
+  }
 
   let potStrengthMultiplier = 1.0;
   if (window.playerStats.unlockedAchievements && window.AchievementsData) {
@@ -4076,6 +4145,87 @@ window.resolvePlayerStats = function (useDraft = false) {
   p.maxHp = Math.floor(p.maxHp * prestigeHpMult * missionHpMult);
   p.def = Math.floor(p.def * prestigeDefMult);
 
+  // Apply Crucible Active Run Modifiers
+  if (
+    window.playerStats.isCrucibleMode &&
+    window.playerStats.crucibleActiveBuff
+  ) {
+    let b = window.playerStats.crucibleActiveBuff;
+    let d = window.playerStats.crucibleActiveDebuff;
+    let isBuffInfused = window.playerStats.crucibleInfusedType === "buff";
+    let isDebuffInfused = window.playerStats.crucibleInfusedType === "debuff";
+
+    let buffStrength = isBuffInfused ? 1.5 : 1.0;
+    let debuffStrength = isDebuffInfused ? 1.5 : 1.0;
+
+    // 1. Apply Buffs
+    if (b.id === "swift_strikes") {
+      p.idleAttackSpeed = Math.max(
+        10,
+        Math.round(p.idleAttackSpeed / (1.0 + 0.25 * buffStrength)),
+      );
+      p.activeAttackSpeed = Math.max(
+        4,
+        Math.round(p.activeAttackSpeed / (1.0 + 0.25 * buffStrength)),
+      );
+    } else if (b.id === "giant_might") {
+      p.atk = Math.floor(p.atk * (1.0 + 0.3 * buffStrength));
+    } else if (b.id === "iron_aegis") {
+      p.def = Math.floor(p.def * (1.0 + 0.35 * buffStrength));
+    } else if (b.id === "vital_fountain") {
+      p.maxHp = Math.floor(p.maxHp * (1.0 + 0.4 * buffStrength));
+    } else if (b.id === "unstable_surge") {
+      p.critChance += 0.15 * buffStrength;
+    } else if (b.id === "shatter_frenzy") {
+      p.critDamage += 0.5 * buffStrength;
+    } else if (b.id === "deflection_vortex") {
+      p.block += 0.1 * buffStrength;
+      p.parry += 0.1 * buffStrength;
+    } else if (b.id === "arcane_infusion") {
+      p.arcaneBarrier = Math.min(0.5, p.arcaneBarrier + 0.15 * buffStrength);
+    } else if (b.id === "treasure_finder") {
+      p.gold += 0.5 * buffStrength;
+    } else if (b.id === "lucky_winds") {
+      p.fairySpawn += 0.4 * buffStrength;
+    } else if (b.id === "void_call") {
+      p.rareSpawn += 0.5 * buffStrength;
+    } else if (b.id === "scavenger_insight") {
+      p.drop += 0.5 * buffStrength;
+    } else if (b.id === "artisan_luck") {
+      p.qly += 0.25 * buffStrength;
+    }
+
+    // 2. Apply Debuffs
+    if (d.id === "iron_gaze") {
+      p.idleAttackSpeed = Math.round(
+        p.idleAttackSpeed * (1.0 + 0.2 * debuffStrength),
+      );
+      p.activeAttackSpeed = Math.round(
+        p.activeAttackSpeed * (1.0 + 0.2 * debuffStrength),
+      );
+    } else if (d.id === "shattered_armour") {
+      p.def = Math.floor(p.def * Math.max(0.1, 1.0 - 0.25 * debuffStrength));
+    } else if (d.id === "frail_vessel") {
+      p.maxHp = Math.floor(p.maxHp * Math.max(0.1, 1.0 - 0.2 * debuffStrength));
+    } else if (d.id === "dull_blades") {
+      p.atk = Math.floor(p.atk * Math.max(0.1, 1.0 - 0.2 * debuffStrength));
+    } else if (d.id === "heavy_mist") {
+      p.moveSpeed = Math.max(
+        1.0,
+        p.moveSpeed * Math.max(0.1, 1.0 - 0.3 * debuffStrength),
+      );
+    } else if (d.id === "blind_spot") {
+      p.critChance = Math.max(0.0, p.critChance - 0.1 * debuffStrength);
+    } else if (d.id === "feeble_mind") {
+      p.arcaneBarrier = 0.0;
+    } else if (d.id === "curse_greed") {
+      p.gold = Math.max(0.1, p.gold - 0.4 * debuffStrength);
+    } else if (d.id === "lead_boots") {
+      p.block = Math.max(0.0, p.block - 0.08 * debuffStrength);
+      p.parry = Math.max(0.0, p.parry - 0.08 * debuffStrength);
+    }
+  }
+
   // Apply Shared Cooperative Clan Skill Multipliers
   let phalanx = Math.min(50, window.playerStats.clanSkills?.steel_phalanx || 0);
   let well = Math.min(50, window.playerStats.clanSkills?.vitality_well || 0);
@@ -4179,12 +4329,8 @@ window.playerStats = {
   isDungeonMode: false,
   currentDungeon: null,
   dungeonWave: 1,
-  equipKeys: 3,
-  goldKeys: 3,
-  matKeys: 3,
-  nextEquipKeyTime: 0,
-  nextGoldKeyTime: 0,
-  nextMatKeyTime: 0,
+  dungeonKeys: 5,
+  nextDungeonKeyTime: 0,
   shopRefreshTime: 0,
   shopItems: [],
   atkPotionTimer: 0,
@@ -4212,6 +4358,13 @@ window.playerStats = {
   astralShards: 0,
   crucibleWave: 1,
   cruciblePeak: 1,
+  crucibleRunActive: false,
+  crucibleAccumulatedShards: 0,
+  crucibleAccumulatedCores: 0,
+  crucibleActiveBuff: null,
+  crucibleActiveDebuff: null,
+  crucibleInfusedType: "none",
+  crucibleLootMult: 1.0,
   crucibleStartWave: 1,
   isCrucibleMode: false,
   crucibleKills: 0,
@@ -4330,7 +4483,7 @@ window.COSMETIC_SKINS = {
     name: "Void Sovereign",
     desc: "Plate mail corrupted by the deep pressure of the Event Horizon. Emits a dark purple aura.",
     color: "#8e44ad",
-    cost: 100,
+    cost: 500,
     currency: "Luminous Soul",
   },
   crimson: {
@@ -4338,7 +4491,7 @@ window.COSMETIC_SKINS = {
     name: "Sanguine Dreadnought",
     desc: "Drenched in the blood of ancient drakes. Its steel has stained a permanent crimson.",
     color: "#e74c3c",
-    cost: 100,
+    cost: 500,
     currency: "Luminous Soul",
   },
   gilded: {
@@ -4346,7 +4499,7 @@ window.COSMETIC_SKINS = {
     name: "Gilded Emperor",
     desc: "Pure aurum plate armor forged for high-ranking monarchs. Blindingly brilliant.",
     color: "#f1c40f",
-    cost: 150,
+    cost: 750,
     currency: "Luminous Soul",
   },
   celestial: {
@@ -4354,10 +4507,191 @@ window.COSMETIC_SKINS = {
     name: "Celestial Arbiter",
     desc: "Forged in the stellar nurseries of the Aether. Pulsates with clean cosmic starlight.",
     color: "#00d2ff",
-    cost: 200,
+    cost: 1000,
     currency: "Luminous Soul",
   },
 };
+
+// --- ROGUE-LITE CAVERN SIGIL MODIFIER AFFIXES ---
+window.CAVERN_BUFFS = [
+  {
+    id: "swift_strikes",
+    name: "Swift Strikes",
+    desc: "Active & Idle Attack Speed increased by +25%",
+  },
+  {
+    id: "giant_might",
+    name: "Giant Might",
+    desc: "Attack power increased by +30%",
+  },
+  { id: "iron_aegis", name: "Iron Aegis", desc: "Defense increased by +35%" },
+  {
+    id: "vital_fountain",
+    name: "Vital Fountain",
+    desc: "Max HP increased by +40%",
+  },
+  {
+    id: "unstable_surge",
+    name: "Unstable Surge",
+    desc: "Critical Strike Chance increased by +15%",
+  },
+  {
+    id: "shatter_frenzy",
+    name: "Shatter Frenzy",
+    desc: "Critical Strike Damage increased by +50%",
+  },
+  {
+    id: "deflection_vortex",
+    name: "Deflection Vortex",
+    desc: "Block Rate and Parry Rate increased by +10%",
+  },
+  {
+    id: "arcane_infusion",
+    name: "Arcane Infusion",
+    desc: "Spell & Tome absorption increased by +15%",
+  },
+  {
+    id: "sanguine_feast",
+    name: "Sanguine Feast",
+    desc: "Restores 2% Max HP on every Critical Strike",
+  },
+  {
+    id: "treasure_finder",
+    name: "Treasure Finder",
+    desc: "Gold Multiplier increased by +50%",
+  },
+  {
+    id: "lucky_winds",
+    name: "Lucky Winds",
+    desc: "Fairy Spawn Rate increased by +40%",
+  },
+  {
+    id: "void_call",
+    name: "Void Call",
+    desc: "Rare Spawn Rate increased by +50%",
+  },
+  {
+    id: "scavenger_insight",
+    name: "Scavenger Insight",
+    desc: "Equipment Drop Rate increased by +50%",
+  },
+  {
+    id: "artisan_luck",
+    name: "Artisan Luck",
+    desc: "Equipment Drop Quality increased by +25%",
+  },
+  {
+    id: "echoing_step",
+    name: "Echoing Step",
+    desc: "Parry triggers a 100% Attack damage counter-attack",
+  },
+];
+
+window.CAVERN_DEBUFFS = [
+  {
+    id: "withering_decay",
+    name: "Withering Decay",
+    desc: "Lose 1.5% of current HP every second in combat",
+  },
+  {
+    id: "iron_gaze",
+    name: "Iron Gaze",
+    desc: "Active & Idle Attack Speed decreased by -20%",
+  },
+  {
+    id: "shattered_armour",
+    name: "Shattered Armour",
+    desc: "Defense decreased by -25%",
+  },
+  {
+    id: "frail_vessel",
+    name: "Frail Vessel",
+    desc: "Max HP decreased by -20%",
+  },
+  {
+    id: "dull_blades",
+    name: "Dull Blades",
+    desc: "Attack power decreased by -20%",
+  },
+  {
+    id: "volatile_sparks",
+    name: "Volatile Sparks",
+    desc: "Mobs explode on death dealing 18% player Max HP (Evadable via Block/Parry)",
+  },
+  {
+    id: "obsidian_skin",
+    name: "Obsidian Skin",
+    desc: "Enemies have +35% Defense",
+  },
+  {
+    id: "blood_tax",
+    name: "Blood Tax",
+    desc: "Critical Strikes deal 5% player Max HP as recoil damage to self",
+  },
+  {
+    id: "static_feedback",
+    name: "Static Feedback",
+    desc: "Every active click deals 2% player Max HP as damage to self",
+  },
+  {
+    id: "feeble_mind",
+    name: "Feeble Mind",
+    desc: "Spell & Tome absorption completely disabled (0%)",
+  },
+  {
+    id: "curse_greed",
+    name: "Curse of Greed",
+    desc: "Gold Multiplier decreased by -40%",
+  },
+  {
+    id: "heavy_mist",
+    name: "Heavy Mist",
+    desc: "Movement Speed decreased by -30%",
+  },
+  {
+    id: "blind_spot",
+    name: "Blind Spot",
+    desc: "Critical Strike Chance decreased by -10%",
+  },
+  {
+    id: "kinetic_recoil",
+    name: "Kinetic Recoil",
+    desc: "Receive 15% of all damage dealt as reflection damage",
+  },
+  {
+    id: "lead_boots",
+    name: "Lead Boots",
+    desc: "Dodge, Block, and Parry rates decreased by -8%",
+  },
+];
+
+// --- ASTRAL REAGENT SHOP STOCK ---
+window.ASTRAL_SHOP_STOCK = [
+  {
+    name: "Catalyst Core",
+    cost: 120,
+    color: "#2ecc71",
+    desc: "Spent at the Forge to lock and re-roll equipment modifiers.",
+  },
+  {
+    name: "Ancient Core",
+    cost: 80,
+    color: "#e74c3c",
+    desc: "Sacrifice at the Altar to summon a Guardian.",
+  },
+  {
+    name: "Overlord's Sigil",
+    cost: 180,
+    color: "#1abc9c",
+    desc: "Material required for unique artifact tempering.",
+  },
+  {
+    name: "Luminous Soul",
+    cost: 150,
+    color: "#ffb6c1",
+    desc: "A radiant, pure soul used for advanced mystical trades.",
+  },
+];
 
 // --- CLIENT-SIDE TITLE DATABASE ---
 window.TITLES_DATA = {

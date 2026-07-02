@@ -3506,3 +3506,119 @@ window.rerollItemSet = function () {
   window.renderForgeTab();
   window.saveGame();
 };
+
+window.buyAstralShopItem = function (index) {
+  let item = window.ASTRAL_SHOP_STOCK[index];
+  if (!item) return;
+
+  let ownedShards = window.playerStats.astralShards || 0;
+  if (ownedShards < item.cost) {
+    window.pushHeaderToast("❌ Insufficient Astral Shards!", "#e74c3c");
+    return;
+  }
+
+  window.playerStats.astralShards -= item.cost;
+  window.addEtcDrop(item.name, 1);
+
+  window.pushHeaderToast(`🛒 Purchased ${item.name}!`, "#2ecc71");
+  if (window.SoundManager) window.SoundManager.play("fairy");
+
+  if (window.spawnPurchaseCelebration) {
+    window.spawnPurchaseCelebration("alchemy", item.color, 3);
+  }
+
+  window.updateUI();
+  window.renderInventory();
+  window.renderAstralShop();
+  window.saveGame();
+};
+
+// --- PROC-GEN CAVERN SIGIL APPLICATION SLOTTER ---
+window.executeSlotCavernSigil = function (id) {
+  let sigil = window.inventory.EQUIP.find((item) => item.id === id);
+  if (!sigil) return;
+
+  window.state.slottedCavernSigil = sigil;
+  let win = document.getElementById("sigil-swap-window");
+  if (win) win.remove();
+
+  if (typeof window.hideTooltip === "function") window.hideTooltip();
+  if (typeof window.updateUI === "function") window.updateUI();
+};
+
+// --- ENDGAME PARAGON INFUSION MATRIX SYSTEM ---
+window.executeParagonUpgrade = function () {
+  let p = window.playerStats;
+  let parLevel = p.paragonLevel || 0;
+
+  // Exponential scaling requirements matching endgame curves
+  let costGold = Math.floor(1000000 * Math.pow(1.5, parLevel));
+  let costMythic = Math.floor(50 * Math.pow(1.3, parLevel));
+  let costLegendary = Math.floor(150 * Math.pow(1.3, parLevel));
+  let costEpic = Math.floor(350 * Math.pow(1.3, parLevel));
+  let costCores = Math.floor(10 * Math.pow(1.15, parLevel));
+
+  let goldOwned = p.coins || 0;
+  let mythicScrapsOwned = window.inventory.ETC["Mythic Scrap"] || 0;
+  let legendaryScrapsOwned = window.inventory.ETC["Legendary Scrap"] || 0;
+  let epicScrapsOwned = window.inventory.ETC["Epic Scrap"] || 0;
+  let coresOwned = window.inventory.ETC["Catalyst Core"] || 0;
+
+  if (
+    goldOwned < costGold ||
+    mythicScrapsOwned < costMythic ||
+    legendaryScrapsOwned < costLegendary ||
+    epicScrapsOwned < costEpic ||
+    coresOwned < costCores
+  ) {
+    window.pushHeaderToast(
+      "❌ Insufficient resources for Paragon Infusion!",
+      "#e74c3c",
+    );
+    return;
+  }
+
+  window.showCustomConfirm(
+    "🧬 Paragon Infusion Matrix",
+    `Are you sure you want to sacrifice these resources to fuse Paragon Level ${parLevel + 1}?`,
+    "Infuse Matrix",
+    "Cancel",
+    "#ff007f",
+    function () {
+      p.coins -= costGold;
+
+      window.inventory.ETC["Mythic Scrap"] -= costMythic;
+      if (window.inventory.ETC["Mythic Scrap"] === 0)
+        delete window.inventory.ETC["Mythic Scrap"];
+
+      window.inventory.ETC["Legendary Scrap"] -= costLegendary;
+      if (window.inventory.ETC["Legendary Scrap"] === 0)
+        delete window.inventory.ETC["Legendary Scrap"];
+
+      window.inventory.ETC["Epic Scrap"] -= costEpic;
+      if (window.inventory.ETC["Epic Scrap"] === 0)
+        delete window.inventory.ETC["Epic Scrap"];
+
+      window.inventory.ETC["Catalyst Core"] -= costCores;
+      if (window.inventory.ETC["Catalyst Core"] === 0)
+        delete window.inventory.ETC["Catalyst Core"];
+
+      p.paragonLevel = parLevel + 1;
+
+      window.pushHeaderToast(
+        `🧬 Paragon Infused to Level ${p.paragonLevel}!`,
+        "#ff007f",
+      );
+      if (window.SoundManager) window.SoundManager.play("revive");
+      if (window.spawnPurchaseCelebration) {
+        window.spawnPurchaseCelebration("alchemy", "#ff007f", 5);
+      }
+
+      window.invalidatePlayerStats();
+      window.updateUI();
+      window.renderPrestigeTab();
+      window.renderInventory();
+      window.saveGame();
+    },
+  );
+};

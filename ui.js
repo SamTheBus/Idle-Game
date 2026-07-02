@@ -1767,6 +1767,10 @@ window.updateUI = function () {
   // Run unified roll-up alerts check
   window.updateHubAlerts();
 
+  if (typeof window.renderCavernSigilConsole === "function") {
+    window.renderCavernSigilConsole();
+  }
+
   // Refresh core SP allocations button display
   const updateSPButtonStates = () => {
     let statsKeys = ["spStr", "spDex", "spInt"];
@@ -2711,39 +2715,23 @@ window.leaveActivity = function () {
           finalWave,
         );
 
-        let startW = window.playerStats.crucibleStartWave || 1;
-        let gainedShards = 0;
-        let gainedCores = 0;
+        let shards = window.playerStats.crucibleAccumulatedShards || 0;
+        let cores = window.playerStats.crucibleAccumulatedCores || 0;
 
-        for (let w = startW; w < finalWave; w++) {
-          gainedShards += Math.ceil(1.5 * (1 + w * 0.03));
-
-          // Mirrored progression gates for Catalyst Core retreat payouts
-          if (w > 20) {
-            if (w <= 50) {
-              if (w % 10 === 0 && Math.random() < 0.2) gainedCores++;
-            } else if (w <= 150) {
-              if (w % 10 === 0) gainedCores++;
-            } else if (w <= 350) {
-              if (w % 10 === 0) gainedCores++;
-              else if (Math.random() < 0.01) gainedCores++;
-            } else if (w <= 700) {
-              if (w % 10 === 0) gainedCores++;
-              else if (Math.random() < 0.025) gainedCores++;
-            } else {
-              if (w % 10 === 0) gainedCores++;
-              else if (Math.random() < 0.05) gainedCores++;
-            }
-          }
+        // Keep 100% of rewards on safe retreat
+        window.playerStats.astralShards =
+          (window.playerStats.astralShards || 0) + shards;
+        if (cores > 0) {
+          window.addEtcDrop("Catalyst Core", cores);
         }
 
-        window.playerStats.astralShards =
-          (window.playerStats.astralShards || 0) + gainedShards;
-        if (gainedCores > 0) window.addEtcDrop("Catalyst Core", gainedCores);
+        window.playerStats.crucibleAccumulatedShards = 0;
+        window.playerStats.crucibleAccumulatedCores = 0;
+        window.playerStats.crucibleRunActive = false;
 
         if (typeof window.pushLog === "function")
           window.pushLog(
-            `<span style='color:#9b59b6; font-weight:bold;'>[CRUCIBLE RETREAT] Safely left the Crucible at Wave ${finalWave}. Earned ${gainedShards} Shards and ${gainedCores} Catalyst Cores!</span>`,
+            `<span style='color:#9b59b6; font-weight:bold;'>[CRUCIBLE RETREAT] Safely left the Crucible at Wave ${finalWave}. Earned 100% rewards: ${shards} Shards and ${cores} Catalyst Cores!</span>`,
           );
         if (typeof window.pushHeaderToast === "function")
           window.pushHeaderToast(
@@ -2752,7 +2740,7 @@ window.leaveActivity = function () {
           );
 
         if (typeof window.showCrucibleSummaryModal === "function")
-          window.showCrucibleSummaryModal(finalWave, gainedShards, gainedCores);
+          window.showCrucibleSummaryModal(finalWave, shards, cores, false); // Retreated
       } else if (window.playerStats.isDungeonMode) {
         let dType = window.playerStats.currentDungeon;
         let dStage = window.playerStats.currentDungeonStage[dType] || 1;
@@ -2772,6 +2760,7 @@ window.leaveActivity = function () {
       window.playerStats.isDungeonMode = false;
       window.playerStats.isCrucibleMode = false;
       window.playerStats.currentDungeon = null;
+      window.playerStats.activeDungeonSigil = null; // Clear active sigil
       window.mob = null;
       window.playerStats.usedSecondWind = false;
       window.hero.x = 40;
@@ -3272,6 +3261,76 @@ window.renderMarketShop = function () {
 
   html += `</div>`;
   el.innerHTML = html;
+};
+
+window.renderAstralShop = function () {
+  let el = document.getElementById("astral-shop-list");
+  if (!el) return;
+
+  let ownedShards = window.playerStats.astralShards || 0;
+  let html = "";
+
+  window.ASTRAL_SHOP_STOCK.forEach((item, index) => {
+    let canAfford = ownedShards >= item.cost;
+    let costColor = canAfford ? "#2ecc71" : "#e74c3c";
+    let iconHtml = window
+      .getEtcIconHtml(item.name)
+      .replace("margin-right: 12px;", "margin-right: 6px;");
+    let bgStyle = window.hexToRgba(item.color, 0.04);
+    let btnStyle = canAfford
+      ? `background: ${item.color}; color: ${item.color === "#f1c40f" ? "#111" : "#fff"}; font-weight: bold;`
+      : "background: #333; color: #666; cursor: not-allowed; border-color: #444;";
+
+    html += `
+      <div class="shop-row" style="border-color: ${item.color}; background: ${bgStyle}; flex-direction: column; align-items: stretch; text-align: left; gap: 4px; padding: 10px; cursor: help; height:100%; display:flex; justify-content:space-between; margin-bottom:0;" onmouseenter="window.showAstralShopItemTooltip(event, ${index})" onmouseleave="window.hideTooltip()" ontouchstart="window.showAstralShopItemTooltip(event, ${index})">
+          <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <div style="display:flex; align-items:center; gap:6px; min-width:0; flex:1;">
+                      ${iconHtml}
+                      <strong style="font-size:11.5px; color:#fff; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.name}</strong>
+                  </div>
+              </div>
+              <p style="font-size:10px; color:#aaa; margin-bottom:8px; line-height:1.35; white-space:normal;">${item.desc}</p>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px dashed #333; padding-top:6px; margin-top:6px;">
+              <span style="font-size:10.5px; font-family:monospace; font-weight:bold; color:${costColor};">${item.cost} Shards</span>
+              <button class="btn-action" style="${btnStyle} font-size:10.5px; padding:4px 10px;" ${canAfford ? "" : "disabled"} onclick="window.buyAstralShopItem(${index})">Purchase</button>
+          </div>
+      </div>
+    `;
+  });
+
+  el.innerHTML = html;
+};
+
+window.showAstralShopItemTooltip = function (e, index) {
+  e.stopPropagation();
+  let item = window.ASTRAL_SHOP_STOCK[index];
+  if (!item) return;
+
+  let ownedShards = window.playerStats.astralShards || 0;
+  let ownedReagent = window.inventory.ETC[item.name] || 0;
+  let canAfford = ownedShards >= item.cost;
+  let costTextColor = canAfford ? "#2ecc71" : "#e74c3c";
+
+  let iconHtml = window
+    .getEtcIconHtml(item.name)
+    .replace("margin-right: 12px;", "margin-right: 8px;");
+  let tt = document.getElementById("game-tooltip");
+
+  tt.innerHTML = `
+    <div style="padding: 10px; width: 220px; box-sizing: border-box;">
+        <div class="tt-title" style="color:${item.color}; display:flex; align-items:center; gap:8px;">${iconHtml}<span>${item.name}</span></div>
+        <div style="color:#aaa; font-size:11px; white-space:normal; line-height:1.4; margin-top:8px;">
+            ${item.desc}<br><br>
+            • Cost: <strong style="color:${costTextColor};">${item.cost} Shards (Owned: ${ownedShards})</strong><br>
+            • Owned Reagent: <strong style="color:#fff;">${ownedReagent.toLocaleString()}</strong>
+        </div>
+    </div>
+  `;
+  tt.style.borderColor = item.color;
+  tt.style.display = "block";
+  window.positionTooltip(e, tt);
 };
 
 window.renderMysticalShop = function () {
@@ -5615,7 +5674,9 @@ window.switchMarketSubTab = function (subTabId) {
             ? "alchemy"
             : subTabId === "BOUTIQUE"
               ? "boutique"
-              : "shop";
+              : subTabId === "ASTRAL"
+                ? "astral"
+                : "shop";
   let activeBtn = document.getElementById("market-sub-tab-" + btnSuffix);
   if (activeBtn) activeBtn.classList.add("active");
 
@@ -5630,7 +5691,9 @@ window.switchMarketSubTab = function (subTabId) {
             ? "alchemy"
             : subTabId === "BOUTIQUE"
               ? "boutique"
-              : "shop";
+              : subTabId === "ASTRAL"
+                ? "astral"
+                : "shop";
   let activeSec = document.getElementById("market-sec-" + secSuffix);
   if (activeSec) activeSec.style.display = "block";
 
@@ -5641,6 +5704,8 @@ window.switchMarketSubTab = function (subTabId) {
     window.renderGachaShowcaseMarquee();
   } else if (subTabId === "BOUTIQUE") {
     window.renderBoutiqueSkins();
+  } else if (subTabId === "ASTRAL") {
+    window.renderAstralShop();
   }
 
   if (typeof window.hideTooltip === "function") window.hideTooltip();
@@ -12587,6 +12652,490 @@ window.executeUpgradeClanSkill = function (skillKey) {
     });
 };
 
+window.openCrucibleDraftModal = function () {
+  if (
+    window.playerStats.isDungeonMode ||
+    window.playerStats.isCrucibleMode ||
+    window.playerStats.isPrestigeBossMode
+  ) {
+    window.pushHeaderToast(
+      "Cannot enter: already in another activity!",
+      "#e74c3c",
+    );
+    return;
+  }
+  let souls = window.inventory.ETC["Monster Soul"] || 0;
+  if (souls < 100) {
+    window.pushHeaderToast("Requires 100 Monster Souls!", "#e74c3c");
+    return;
+  }
+
+  let checkpoint = Math.max(
+    1,
+    Math.floor((window.playerStats.cruciblePeak || 1) * 0.8),
+  );
+
+  // Create drafting state
+  let draftState = {
+    checkpoint: checkpoint,
+    buffs: [],
+    debuffs: [],
+    selectedBuff: null,
+    selectedDebuff: null,
+    infusedType: "none", // "buff", "debuff", "none"
+    rerollsSpent: 0,
+  };
+
+  let rollDraftCards = () => {
+    // Draw 3 unique random buffs
+    let bPool = [...window.CAVERN_BUFFS].sort(() => Math.random() - 0.5);
+    draftState.buffs = bPool.slice(0, 3);
+    // Draw 3 unique random debuffs
+    let dPool = [...window.CAVERN_DEBUFFS].sort(() => Math.random() - 0.5);
+    draftState.debuffs = dPool.slice(0, 3);
+
+    draftState.selectedBuff = null;
+    draftState.selectedDebuff = null;
+    draftState.infusedType = "none";
+  };
+
+  rollDraftCards();
+
+  // Modal container creation
+  let overlay = document.createElement("div");
+  overlay.id = "crucible-draft-overlay";
+  overlay.style.position = "fixed";
+  overlay.style.top = "0";
+  overlay.style.left = "0";
+  overlay.style.width = "100%";
+  overlay.style.height = "100%";
+  overlay.style.backgroundColor = "rgba(0,0,0,0.92)";
+  overlay.style.display = "flex";
+  overlay.style.justifyContent = "center";
+  overlay.style.alignItems = "center";
+  overlay.style.zIndex = "40000";
+  overlay.style.backdropFilter = "blur(6px)";
+  document.body.appendChild(overlay);
+
+  let renderDraftUI = () => {
+    let rerollCost = 15 + Math.floor(checkpoint * 0.5);
+    let ownedSouls = window.inventory.ETC["Monster Soul"] || 0;
+    let ownedLuminous = window.inventory.ETC["Luminous Soul"] || 0;
+
+    let buffCardsHtml = draftState.buffs
+      .map((b, idx) => {
+        let isSel = draftState.selectedBuff?.id === b.id;
+        let isInfused = isSel && draftState.infusedType === "buff";
+        let borderCol = isSel ? "#2ecc71" : "#333";
+        let shadowStyle = isSel ? `box-shadow: 0 0 10px #2ecc71;` : "";
+        let bgStyle = isSel
+          ? `background: rgba(46, 204, 113, 0.1);`
+          : `background: #111;`;
+        let displayDesc = isInfused
+          ? `${b.desc} <strong style="color:#f1c40f;">(+50% Potency!)</strong>`
+          : b.desc;
+
+        return `
+        <div style="border: 2px solid ${borderCol}; border-radius: 6px; padding: 10px; margin-bottom: 6px; ${shadowStyle} ${bgStyle} cursor:pointer; text-align:left;" onclick="window.selectDraftCard('buff', ${idx})">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:#2ecc71; font-size:11px;">☀️ ${b.name}</strong>
+            ${isSel ? `<span style="font-size:10px; color:#2ecc71;">Selected ✓</span>` : ""}
+          </div>
+          <div style="font-size:10px; color:#aaa; margin-top:4px;">${displayDesc}</div>
+        </div>
+      `;
+      })
+      .join("");
+
+    let debuffCardsHtml = draftState.debuffs
+      .map((d, idx) => {
+        let isSel = draftState.selectedDebuff?.id === d.id;
+        let isInfused = isSel && draftState.infusedType === "debuff";
+        let borderCol = isSel ? "#e74c3c" : "#333";
+        let shadowStyle = isSel ? `box-shadow: 0 0 10px #e74c3c;` : "";
+        let bgStyle = isSel
+          ? `background: rgba(231, 76, 60, 0.1);`
+          : `background: #111;`;
+        let displayDesc = isInfused
+          ? `${d.desc} <strong style="color:#f1c40f;">(+50% Penalty!)</strong>`
+          : d.desc;
+
+        return `
+        <div style="border: 2px solid ${borderCol}; border-radius: 6px; padding: 10px; margin-bottom: 6px; ${shadowStyle} ${bgStyle} cursor:pointer; text-align:left;" onclick="window.selectDraftCard('debuff', ${idx})">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:#e74c3c; font-size:11px;">🌑 ${d.name}</strong>
+            ${isSel ? `<span style="font-size:10px; color:#e74c3c;">Selected ✓</span>` : ""}
+          </div>
+          <div style="font-size:10px; color:#aaa; margin-top:4px;">${displayDesc}</div>
+        </div>
+      `;
+      })
+      .join("");
+
+    let canReroll = ownedSouls >= rerollCost;
+    let canInfuse =
+      ownedLuminous >= 1 &&
+      (draftState.selectedBuff || draftState.selectedDebuff);
+    let canStart = draftState.selectedBuff && draftState.selectedDebuff;
+
+    let infusionControlHtml = "";
+    if (draftState.selectedBuff || draftState.selectedDebuff) {
+      infusionControlHtml = `
+        <div style="background:#15121b; border: 1.5px dashed #9b59b6; border-radius: 8px; padding: 12px; margin-bottom: 12px; text-align:center;">
+          <strong style="color:#df9ffb; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:4px;">🔮 INFUSE SELECTION (1x Limit)</strong>
+          <span style="font-size:9.5px; color:#aaa; display:block; margin-bottom:8px;">Spend 1 Luminous Soul to empower a card's baseline properties.</span>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+            <button class="btn-action" style="background:#2980b9; font-size:10px; padding:6px;" ${canInfuse && draftState.selectedBuff && draftState.infusedType !== "buff" ? "" : 'disabled style="opacity:0.5; cursor:not-allowed;"'} onclick="window.infuseDraftCard('buff')">Infuse Buff (+50% strength)</button>
+            <button class="btn-action" style="background:#c0392b; font-size:10px; padding:6px;" ${canInfuse && draftState.selectedDebuff && draftState.infusedType !== "debuff" ? "" : 'disabled style="opacity:0.5; cursor:not-allowed;"'} onclick="window.infuseDraftCard('debuff')">Infuse Debuff (+Loot Mult)</button>
+          </div>
+          ${draftState.infusedType !== "none" ? `<span style="display:block; margin-top:6px; font-size:10px; color:#2ecc71; font-weight:bold;">Active Infusion: ${draftState.infusedType.toUpperCase()} (+1 Luminous Soul spent)</span>` : ""}
+        </div>
+      `;
+    }
+
+    overlay.innerHTML = `
+      <div style="background:#1a1a1a; border:3px solid #9b59b6; border-radius:12px; width:95%; max-width:440px; box-shadow:0 15px 45px rgba(0,0,0,0.95); text-align:center; padding:15px; animation: toastFadeIn 0.3s;">
+        <div style="display:flex; justify-content:space-between; align-items:center; width:100%; border-bottom:1px solid #9b59b6; padding-bottom:6px; margin-bottom:10px;">
+          <h3 style="margin:0; color:#df9ffb; font-size:13px; letter-spacing:1px; display:flex; align-items:center; gap:6px;">🔮 CRUCIBLE DRAFT DECK</h3>
+          <button onclick="document.getElementById('crucible-draft-overlay').remove(); window.setPauseState(false); window.hideTooltip();" style="background:#222; border:1px solid #444; color:#aaa; font-weight:bold; cursor:pointer; font-size:10px; padding:3px 8px; border-radius:4px;">Close</button>
+        </div>
+
+        <div style="font-size:10.5px; color:#aaa; line-height:1.45; text-align:center; margin-bottom:12px;">
+          Select exactly <strong>1 Buff</strong> to protect yourself and <strong>1 Debuff</strong> to challenge your resolve. Starting checkpoint Wave <strong>${checkpoint}</strong>.
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:12px;">
+          <div>
+            <strong style="color:#2ecc71; font-size:11px; display:block; margin-bottom:6px; border-bottom:1px solid #222; padding-bottom:4px;">☀️ SELECT A BUFF</strong>
+            ${buffCardsHtml}
+          </div>
+          <div>
+            <strong style="color:#e74c3c; font-size:11px; display:block; margin-bottom:6px; border-bottom:1px solid #222; padding-bottom:4px;">🌑 SELECT A DEBUFF</strong>
+            ${debuffCardsHtml}
+          </div>
+        </div>
+
+        ${infusionControlHtml}
+
+        <!-- Costs bar -->
+        <div style="background:#111; border:1px solid #222; border-radius:6px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; font-family:monospace; font-size:10px; margin-bottom:12px;">
+          <span>Souls Owned: <strong style="color:#ffb6c1;">${ownedSouls} / ${rerollCost}</strong></span>
+          <span>Luminous: <strong style="color:#ffb6c1;">${ownedLuminous}</strong></span>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <button class="btn-action" style="background:#555; border-color:#666;" ${canReroll ? "" : 'disabled style="opacity:0.5; cursor:not-allowed;"'} onclick="window.rerollDraftDeck()">🔄 Reroll Deck (${rerollCost})</button>
+          <button class="btn-action btn-pulse" style="background:linear-gradient(135deg, #9b59b6, #8e44ad); border-color:#fff;" ${canStart ? "" : 'disabled style="opacity:0.5; cursor:not-allowed; background:#333; color:#666;"'} onclick="window.executeCrucibleStart()">Commence Purge</button>
+        </div>
+      </div>
+    `;
+  };
+
+  // Expose state mutator triggers directly under window for click bindings
+  window.selectDraftCard = (type, idx) => {
+    if (type === "buff") {
+      draftState.selectedBuff = draftState.buffs[idx];
+    } else {
+      draftState.selectedDebuff = draftState.debuffs[idx];
+    }
+    renderDraftUI();
+  };
+
+  window.infuseDraftCard = (type) => {
+    let ownedLuminous = window.inventory.ETC["Luminous Soul"] || 0;
+    if (ownedLuminous < 1) return;
+    draftState.infusedType = type;
+    renderDraftUI();
+  };
+
+  window.rerollDraftDeck = () => {
+    let rerollCost = 15 + Math.floor(checkpoint * 0.5);
+    let ownedSouls = window.inventory.ETC["Monster Soul"] || 0;
+    if (ownedSouls < rerollCost) return;
+
+    window.inventory.ETC["Monster Soul"] -= rerollCost;
+    if (window.inventory.ETC["Monster Soul"] === 0)
+      delete window.inventory.ETC["Monster Soul"];
+
+    draftState.rerollsSpent++;
+    rollDraftCards();
+    renderDraftUI();
+  };
+
+  window.executeCrucibleStart = () => {
+    if (!draftState.selectedBuff || !draftState.selectedDebuff) return;
+
+    // Perform final deduction
+    window.inventory.ETC["Monster Soul"] -= 100;
+    if (window.inventory.ETC["Monster Soul"] === 0)
+      delete window.inventory.ETC["Monster Soul"];
+
+    let lootMult = 1.0;
+    if (draftState.infusedType === "buff") {
+      window.inventory.ETC["Luminous Soul"]--;
+      if (window.inventory.ETC["Luminous Soul"] === 0)
+        delete window.inventory.ETC["Luminous Soul"];
+    } else if (draftState.infusedType === "debuff") {
+      window.inventory.ETC["Luminous Soul"]--;
+      if (window.inventory.ETC["Luminous Soul"] === 0)
+        delete window.inventory.ETC["Luminous Soul"];
+      // Infusing a debuff awards a +25% to +50% Shards & Core drop multiplier
+      lootMult = 1.0 + (Math.random() * 0.25 + 0.25);
+    }
+
+    // Commit active draft onto live running stats
+    window.playerStats.isCrucibleMode = true;
+    window.playerStats.isDungeonMode = false;
+    window.playerStats.crucibleWave = checkpoint;
+    window.playerStats.crucibleStartWave = checkpoint;
+    window.playerStats.killCount = 0;
+    window.playerStats.targetsRequired = 5;
+    window.playerStats.isBossMode = false;
+    window.playerStats.isUberBoss = false;
+    window.mob = null;
+
+    // Active modifiers state mapping
+    window.playerStats.crucibleActiveBuff = draftState.selectedBuff;
+    window.playerStats.crucibleActiveDebuff = draftState.selectedDebuff;
+    window.playerStats.crucibleInfusedType = draftState.infusedType;
+    window.playerStats.crucibleLootMult = lootMult;
+
+    // Secure state flags
+    window.playerStats.crucibleRunActive = true;
+    window.playerStats.crucibleAccumulatedShards = 0;
+    window.playerStats.crucibleAccumulatedCores = 0;
+
+    let p = window.resolvePlayerStats();
+    window.playerStats.currentHp = p.maxHp;
+
+    window.pushLog(
+      `<span style='color:#9b59b6; font-weight:bold;'>[CRUCIBLE] Commenced Astral Crucible run! Active Modifiers: ${draftState.selectedBuff.name} (Buff) & ${draftState.selectedDebuff.name} (Debuff).</span>`,
+    );
+
+    document.getElementById("crucible-draft-overlay").remove();
+    let menu = document.getElementById("dungeon-menu");
+    if (menu) menu.style.display = "none";
+
+    window.updateUI();
+    window.saveGame();
+  };
+
+  renderDraftUI();
+};
+
+window.renderCavernSigilConsole = function () {
+  let container = document.getElementById("cavern-sigil-slot-container");
+  if (!container) return;
+
+  let activeSig = window.playerStats.activeDungeonSigil;
+  let slottedSig = window.state.slottedCavernSigil;
+
+  if (window.playerStats.isDungeonMode && activeSig) {
+    let col = window.getTierColor(activeSig.statsRolled);
+    let buffDescs = activeSig.buffs
+      .map(
+        (b) =>
+          `<span style="color:#2ecc71; display:block; font-size:9.5px;">• ☀️ ${b.name}: ${b.desc}</span>`,
+      )
+      .join("");
+    let debuffDescs = activeSig.debuffs
+      .map(
+        (d) =>
+          `<span style="color:#e74c3c; display:block; font-size:9.5px;">• 🌑 ${d.name}: ${d.desc}</span>`,
+      )
+      .join("");
+    container.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:9px; color:#aaa; text-transform:uppercase; font-weight:bold;">Active Cavern Sigil</span>
+          <span style="color:${col}; font-weight:bold; font-size:10px;">${activeSig.statsRolled}★ Quality</span>
+        </div>
+        <strong style="color:${col}; font-size:12px; text-shadow:0 0 6px ${col}33;">${activeSig.name}</strong>
+        <div style="background:#090b0e; border:1px solid #222; border-radius:4px; padding:6px; font-size:10px; line-height:1.4;">
+          <strong style="color:#f1c40f; font-family:monospace; display:block; margin-bottom:3px; text-transform:uppercase; font-size:9.5px;">⚡ ACTIVE MODIFIERS:</strong>
+          ${buffDescs}${debuffDescs}
+          <span style="color:#3498db; font-weight:bold; display:block; margin-top:3px; font-size:9.5px;">💎 Focus Rewards: +${(activeSig.rewardMultiplier * 100).toFixed(0)}% Loot Multiplier</span>
+          ${activeSig.qualityBoost > 0 ? `<span style="color:#ff007f; font-weight:bold; font-size:9.5px;">✨ Quality Boost: +${(activeSig.qualityBoost * 100).toFixed(0)}% Drop Quality</span>` : ""}
+        </div>
+        <div style="font-size:9px; color:#e74c3c; font-weight:bold; text-align:center; margin-top:1px;">⚠️ Sigil is consumed and locked to this active Dungeon run!</div>
+      </div>
+    `;
+    return;
+  }
+
+  if (slottedSig) {
+    let col = window.getTierColor(slottedSig.statsRolled);
+    let buffDescs = slottedSig.buffs
+      .map(
+        (b) =>
+          `<span style="color:#2ecc71; display:block; font-size:9.5px;">• ☀️ ${b.name}: ${b.desc}</span>`,
+      )
+      .join("");
+    let debuffDescs = slottedSig.debuffs
+      .map(
+        (d) =>
+          `<span style="color:#e74c3c; display:block; font-size:9.5px;">• 🌑 ${d.name}: ${d.desc}</span>`,
+      )
+      .join("");
+    container.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:9px; color:#aaa; text-transform:uppercase; font-weight:bold;">Slotted Cavern Sigil (Ready)</span>
+          <button class="btn-action un" style="padding:1px 6px; font-size:9px;" onclick="window.unslotCavernSigil()">Remove</button>
+        </div>
+        <strong style="color:${col}; font-size:12px;">${slottedSig.name}</strong>
+        <div style="background:#090b0e; border:1px solid #222; border-radius:4px; padding:6px; font-size:10px; line-height:1.4;">
+          <strong style="color:#f1c40f; font-family:monospace; display:block; margin-bottom:3px; text-transform:uppercase; font-size:9.5px;">⚡ TARGET MODIFIERS:</strong>
+          ${buffDescs}${debuffDescs}
+          <span style="color:#3498db; font-weight:bold; display:block; margin-top:3px; font-size:9.5px;">💎 Focus Rewards: +${(slottedSig.rewardMultiplier * 100).toFixed(0)}% Loot Multiplier</span>
+          ${slottedSig.qualityBoost > 0 ? `<span style="color:#ff007f; font-weight:bold; font-size:9.5px;">✨ Quality Boost: +${(slottedSig.qualityBoost * 100).toFixed(0)}% Drop Quality</span>` : ""}
+        </div>
+        <span style="font-size:8.5px; color:#888; text-align:center;">(Will be spent immediately upon launching any Infinite Dungeon)</span>
+      </div>
+    `;
+    return;
+  }
+
+  // Search if any sigils exist
+  let sigils = window.inventory.EQUIP.filter(
+    (item) => item && item.type === "sigil",
+  );
+
+  if (sigils.length === 0) {
+    container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+          <div>
+            <strong style="color:#9b59b6; font-size:11.5px; display:flex; align-items:center; gap:4px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; filter: drop-shadow(0 0 2px rgba(155, 89, 182, 0.4));"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l1.5 1.5M17 6l2 2"/></svg>
+              Optional Cavern Sigils
+            </strong>
+            <span style="font-size:9.5px; color:#aaa;">No Cavern Sigils owned. Slay Dungeon/Stage Bosses, or Guardians to drop Sacks!</span>
+          </div>
+          <span style="font-size:9.5px; color:#666; font-style:italic;">0 owned</span>
+        </div>
+      `;
+  } else {
+    container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+          <div>
+            <strong style="color:#9b59b6; font-size:11.5px; display:flex; align-items:center; gap:4px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; filter: drop-shadow(0 0 2px rgba(155, 89, 182, 0.4));"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l1.5 1.5M17 6l2 2"/></svg>
+              Slot Cavern Sigil Modifier
+            </strong>
+            <span style="font-size:9.5px; color:#aaa;">Equip a sigil to procedurally scale loot, shards, and quality!</span>
+          </div>
+          <button class="btn-action" style="background:#9b59b6; font-size:10px; padding:4px 10px;" onclick="window.openCavernSigilSelectorModal(event)">[ + ] Slot Sigil</button>
+        </div>
+      `;
+  }
+};
+
+window.openCavernSigilSelectorModal = function (e) {
+  if (e) e.stopPropagation();
+  let existingWin = document.getElementById("sigil-swap-window");
+  if (existingWin) existingWin.remove();
+
+  let win = document.createElement("div");
+  win.id = "sigil-swap-window";
+  win.className = "draggable-window";
+  win.style.left = "40px";
+  win.style.top = "110px";
+
+  let sigils = window.inventory.EQUIP.filter(
+    (item) => item && item.type === "sigil",
+  );
+
+  let contentHtml = sigils
+    .map((item) => {
+      let col = window.getTierColor(item.statsRolled);
+      let bNames = item.buffs.map((b) => b.name).join(", ");
+      let dNames = item.debuffs.map((d) => d.name).join(", ");
+
+      return `
+      <div class="bag-item" style="padding:6px; margin-bottom:5px; background:#181c22; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;"
+           onmouseenter="window.showInventoryTooltip(event, ${item.id})"
+           ontouchstart="window.showInventoryTooltip(event, ${item.id})"
+           onmouseleave="window.hideTooltip()">
+          <div style="text-align:left; max-width: 170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">
+              <strong style="color:${col}; font-size:11px;">${item.name}</strong><br>
+              <span style="font-size:9.5px; color:#2ecc71;">☀️ ${bNames}</span> • <span style="font-size:9.5px; color:#e74c3c;">🌑 ${dNames}</span>
+          </div>
+          <button class="btn-action" style="padding:3px 8px; font-size:10px; font-weight:bold; background:var(--accent-green); flex-shrink:0; margin-left:6px;" onclick="window.executeSlotCavernSigil(${item.id})">Slot</button>
+      </div>
+    `;
+    })
+    .join("");
+
+  win.innerHTML = `
+      <div class="draggable-header" id="sigil-win-handle" style="background: linear-gradient(180deg, #181d24 0%, #0d1117 100%);">
+          <span style="display:flex; align-items:center; gap:4px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; filter: drop-shadow(0 0 2px rgba(241, 196, 15, 0.4));"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l1.5 1.5M17 6l2 2"/></svg>
+              Slot Cavern Sigil
+          </span>
+          <button onclick="document.getElementById('sigil-swap-window').remove(); window.hideTooltip();" style="background:transparent; border:none; color:#e74c3c; font-weight:bold; cursor:pointer; font-size:11px; padding:2px;">[X]</button>
+        </div>
+      <div class="draggable-content">
+          ${contentHtml}
+      </div>
+    `;
+
+  document.getElementById("game-container").appendChild(win);
+  window.makeWindowDraggable(win, document.getElementById("sigil-win-handle"));
+};
+
+window.unslotCavernSigil = function () {
+  window.state.slottedCavernSigil = null;
+  window.updateUI();
+};
+
+window.selectDraftCard = function (type, idx) {
+  // Bound mutator placeholder mapping for card selectors
+};
+
+window.infuseDraftCard = function (type) {
+  // Bound mutator placeholder
+};
+
+window.executeUpgradeClanSkill = function (skillKey) {
+  if (!window.GAME_SERVER_URL) {
+    let currentL = window.playerStats.clanSkills[skillKey] || 0;
+    window.playerStats.clanSkills[skillKey] = currentL + 1;
+    window.pushHeaderToast(`✓ Research upgraded! (Offline)`, "#2ecc71");
+    window.updateUI();
+    window.saveGame();
+    return;
+  }
+
+  const userId = window.getGameUserId();
+  fetch(`${window.GAME_SERVER_URL}/api/clan/upgrade-skill`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId, skillKey }),
+  })
+    .then((r) => r.json())
+    .then((data) => {
+      if (data.success) {
+        window.pushHeaderToast(`✓ Research upgraded!`, "#2ecc71");
+        if (window.playerStats.clanSkills) {
+          window.playerStats.clanSkills[skillKey] =
+            (window.playerStats.clanSkills[skillKey] || 0) + 1;
+        }
+        window.fetchClanData();
+        window.updateUI();
+        window.saveGame();
+      } else {
+        window.pushHeaderToast(`❌ ${data.error}`, "#e74c3c");
+      }
+    })
+    .catch(() => {
+      let currentL = window.playerStats.clanSkills[skillKey] || 0;
+      window.playerStats.clanSkills[skillKey] = currentL + 1;
+      window.pushHeaderToast(`✓ Research upgraded! (Offline)`, "#2ecc71");
+      window.updateUI();
+      window.saveGame();
+    });
+};
+
 window.executeDisbandClan = function () {
   let modal = document.getElementById("clan-draggable-window");
   let label = window.playerStats.clanName || "Clan";
@@ -12852,4 +13401,270 @@ window.executeDisbandClan = function () {
         });
     },
   );
+};
+
+// --- CAVERNS DESCENT PREPARATION PORTAL ---
+window.openCavernsPreparationModal = function () {
+  window.setPauseState(true);
+
+  if (!window.state.selectedCavernsMode) {
+    window.state.selectedCavernsMode = "equip";
+  }
+
+  let overlay = document.getElementById("caverns-prep-overlay");
+  if (overlay) overlay.remove();
+
+  overlay = document.createElement("div");
+  overlay.id = "caverns-prep-overlay";
+  overlay.style.position = "fixed";
+  overlay.style.top = "0";
+  overlay.style.left = "0";
+  overlay.style.width = "100%";
+  overlay.style.height = "100%";
+  overlay.style.backgroundColor = "rgba(0,0,0,0.92)";
+  overlay.style.display = "flex";
+  overlay.style.justifyContent = "center";
+  overlay.style.alignItems = "center";
+  overlay.style.zIndex = "40000";
+  overlay.style.backdropFilter = "blur(6px)";
+  document.body.appendChild(overlay);
+
+  window.renderCavernsPrepUI();
+};
+
+window.renderCavernsPrepUI = function () {
+  let overlay = document.getElementById("caverns-prep-overlay");
+  if (!overlay) return;
+
+  let p = window.playerStats;
+  let mode = window.state.selectedCavernsMode;
+  let keys = p.dungeonKeys || 0;
+  let slottedSig = window.state.slottedCavernSigil;
+
+  let dNames = {
+    equip: "Equipment Vault",
+    gold: "Gold Mine Caverns",
+    mat: "Toxic Material Pit",
+  };
+  let dColors = { equip: "#3498db", gold: "#f1c40f", mat: "#2ecc71" };
+
+  let peak = p.dungeonPeaks[mode] || 1;
+  let checkpoint = Math.max(1, Math.floor(peak * 0.9));
+
+  let modeDescs = {
+    equip:
+      "Ascend floor by floor to claim high-quality gear! Checkpoint resets keep you within striking range of high-rarity drops.",
+    gold: "Amass massive piles of gold coins! Drops inside the caverns are multiplied heavily, bypassing regular routing curves.",
+    mat: "Dredge the toxic sludges for crafting resources. Higher depths yield rare Epic, Legendary, and Mythic scraps.",
+  };
+
+  // Build Mode Select Tab Buttons
+  let modeTabs = ["equip", "gold", "mat"]
+    .map((mKey) => {
+      let isActive = mode === mKey;
+      let btnCol = dColors[mKey];
+      let activeStyle = isActive
+        ? `background: ${window.hexToRgba(btnCol, 0.15)}; border-color: ${btnCol}; color: #fff; box-shadow: 0 0 8px ${btnCol}55;`
+        : `background: #090b0e; color: #7f8c8d; border-color: #1e293b;`;
+      return `<button class="sub-tab-btn" style="padding: 8px 10px; font-size:10px; flex: 1; ${activeStyle}" onclick="window.selectCavernsMode('${mKey}')">${mKey === "equip" ? "Equipment" : mKey === "gold" ? "Gold" : "Materials"}</button>`;
+    })
+    .join("");
+
+  // Build Cavern Sigil slot details
+  let sigilSlotHtml = "";
+  if (slottedSig) {
+    let col = window.getTierColor(slottedSig.statsRolled);
+    let buffDescs = slottedSig.buffs
+      .map(
+        (b) =>
+          `<span style="color:#2ecc71; display:block; font-size:9.5px;">• ☀️ ${b.name}: ${b.desc}</span>`,
+      )
+      .join("");
+    let debuffDescs = slottedSig.debuffs
+      .map(
+        (d) =>
+          `<span style="color:#e74c3c; display:block; font-size:9.5px;">• 🌑 ${d.name}: ${d.desc}</span>`,
+      )
+      .join("");
+    sigilSlotHtml = `
+            <div style="background:#111; border: 1.5px solid ${col}; border-radius: 6px; padding: 10px; margin-bottom: 12px; text-align:left; position:relative;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <strong style="color:${col}; font-size:11.5px;">${slottedSig.name}</strong>
+                <button class="btn-action un" style="padding:2px 8px; font-size:9px;" onclick="window.unslotCavernSigilInline(event)">Unslot</button>
+              </div>
+              <div style="font-size:9.5px; color:#aaa; line-height:1.4;">
+                ${buffDescs}${debuffDescs}
+                <span style="color:#3498db; font-weight:bold; display:block; margin-top:3px; font-size:9.5px;">💎 Focus Rewards: +${(slottedSig.rewardMultiplier * 100).toFixed(0)}% Loot Multiplier</span>
+                ${slottedSig.qualityBoost > 0 ? `<span style="color:#ff007f; font-weight:bold; font-size:9.5px;">✨ Quality Boost: +${(slottedSig.qualityBoost * 100).toFixed(0)}% Drop Quality</span>` : ""}
+              </div>
+            </div>
+          `;
+  } else {
+    // Find owned sigils
+    let ownedSigils = window.inventory.EQUIP.filter(
+      (item) => item && item.type === "sigil",
+    );
+    if (ownedSigils.length === 0) {
+      sigilSlotHtml = `
+              <div style="background:#111; border: 1px dashed #444; border-radius: 6px; padding: 10px; margin-bottom: 12px; text-align:center; font-size:10px; color:#666;">
+                No Cavern Sigils owned. Slay Dungeon/Stage Bosses or Guardians to drop Modifiers Sacks!
+              </div>
+            `;
+    } else {
+      sigilSlotHtml = `
+              <div style="background:#111; border: 1px dashed #444; border-radius: 6px; padding: 10px; margin-bottom: 12px; text-align:center;">
+                <span style="font-size:10px; color:#aaa; display:block; margin-bottom:6px;">Enhance your descent with an optional Cavern Sigil:</span>
+                <select id="caverns-sigil-selector" onchange="window.slotCavernSigilInline(this.value)" style="width:100%; max-width:260px; background:#07030b; color:#fff; border:1px solid #444; border-radius:4px; padding:6px; font-size:10.5px; cursor:pointer;">
+                  <option value="">-- Apply Cavern Sigil --</option>
+                  ${ownedSigils
+                    .map((sig) => {
+                      return `<option value="${sig.id}">${sig.name}</option>`;
+                    })
+                    .join("")}
+                </select>
+              </div>
+            `;
+    }
+  }
+
+  let canStart = keys >= 1;
+  let launchColor = dColors[mode];
+
+  overlay.innerHTML = `
+                  <div style="background:#1a1a1a; border:3px solid #9b59b6; border-radius:12px; width:95%; max-width:440px; box-shadow:0 15px 45px rgba(0,0,0,0.95); text-align:center; padding:15px; animation: toastFadeIn 0.3s; color:#f1f5f9; max-height:92vh; overflow-y:auto; overscroll-behavior:contain;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; width:100%; border-bottom:1px solid #9b59b6; padding-bottom:6px; margin-bottom:12px;">
+                      <h3 style="margin:0; color:#df9ffb; font-size:13px; letter-spacing:1px; display:flex; align-items:center; gap:6px; text-transform:uppercase;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#df9ffb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; filter: drop-shadow(0 0 4px #df9ffb);"><circle cx="12" cy="12" r="10" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="5" stroke="#9b59b6" fill="#ff007f" fill-opacity="0.15"/><circle cx="12" cy="12" r="1.5" fill="#fff"/></svg>
+                        Caverns Preparation Portal
+                      </h3>
+                      <button onclick="document.getElementById('caverns-prep-overlay').remove(); window.setPauseState(false); window.hideTooltip();" style="background:#222; border:1px solid #444; color:#aaa; font-weight:bold; cursor:pointer; font-size:10px; padding:3px 8px; border-radius:4px;">Close</button>
+                    </div>
+
+                    <!-- Step 1: Mode Select -->
+                    <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px;">
+                      <strong style="color:${launchColor}; font-size:11px; display:block; text-align:left; text-transform:uppercase; letter-spacing:0.5px;">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; transform: translateY(-1px); margin-right: 4px;"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+                        CHOOSE DESCENT OBJECTIVE:
+                      </strong>
+                      <div style="display:flex; gap:6px; width:100%;">${modeTabs}</div>
+                    </div>
+
+                    <!-- Mode details card -->
+                    <div style="background:#111; border:1px solid #222; border-radius:6px; padding:10px; margin-bottom:12px; text-align:left;">
+                      <strong style="color:${launchColor}; font-size:12.5px; display:block; margin-bottom:4px;">${dNames[mode]}</strong>
+                      <p style="font-size:10.5px; color:#aaa; line-height:1.45; margin:0 0 8px 0; white-space:normal;">${modeDescs[mode]}</p>
+                      <div style="display:flex; gap:12px; font-size:10px; color:#cbd5e1; border-top:1px dashed #333; padding-top:6px; font-family:monospace;">
+                        <span>Peak Reached: <strong style="color:${launchColor};">Floor ${peak}</strong></span>
+                        <span>Checkpoint Start: <strong style="color:#2ecc71;">Floor ${checkpoint}</strong></span>
+                      </div>
+                    </div>
+
+                    <!-- Step 2: Apply Cavern Sigil -->
+                    <strong style="color:#df9ffb; font-size:11px; display:block; text-align:left; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.5px;">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; transform: translateY(-1.5px); margin-right: 4px;"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l1.5 1.5M17 6l2 2"/></svg>
+                      APPLY CAVERN SIGIL MODIFIER:
+                    </strong>
+                    ${sigilSlotHtml}
+
+            <!-- Entry Cost & Launch -->
+            <div style="background:#090a0f; border:1px solid #2d3748; border-radius:6px; padding:10px; display:flex; justify-content:space-between; align-items:center; font-family:monospace; font-size:10px; margin-bottom:12px;">
+              <span>Keys Held: <strong style="color:${canStart ? "#2ecc71" : "#e74c3c"};">${keys} / 5</strong></span>
+              <span>Descent Cost: <strong style="color:#f1c40f;">1 Key</strong></span>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+              <button class="btn-action" style="background:#334155; border-color:#475569;" onclick="document.getElementById('caverns-prep-overlay').remove(); window.setPauseState(false); window.hideTooltip();">Cancel</button>
+              <button class="btn-action btn-pulse" style="background:${launchColor}; color:${launchColor === "#f1c40f" ? "#111" : "#fff"}; border-color:#fff; box-shadow:0 0 10px ${launchColor}55;" ${canStart ? "" : 'disabled style="opacity:0.5; cursor:not-allowed;"'} onclick="window.executeCavernsDescent()">Descend into the Deep</button>
+            </div>
+          </div>
+        `;
+};
+
+window.selectCavernsMode = function (mode) {
+  window.state.selectedCavernsMode = mode;
+  window.renderCavernsPrepUI();
+};
+
+window.slotCavernSigilInline = function (sigilId) {
+  if (!sigilId) return;
+  let id = parseInt(sigilId, 10);
+  let sigil = window.inventory.EQUIP.find((item) => item.id === id);
+  if (sigil) {
+    window.state.slottedCavernSigil = sigil;
+  }
+  window.renderCavernsPrepUI();
+};
+
+window.unslotCavernSigilInline = function (event) {
+  if (event) event.stopPropagation();
+  window.state.slottedCavernSigil = null;
+  window.renderCavernsPrepUI();
+};
+
+window.executeCavernsDescent = function () {
+  let mode = window.state.selectedCavernsMode || "equip";
+  let keys = window.playerStats.dungeonKeys || 0;
+
+  if (keys < 1) {
+    window.pushHeaderToast("❌ Insufficient Dungeon Keys!", "#e74c3c");
+    return;
+  }
+
+  // Consume key and launch!
+  window.playerStats.dungeonKeys--;
+  if (window.playerStats.dungeonKeys === 4) {
+    window.playerStats.nextDungeonKeyTime = Date.now() + 21600000; // 6 Hours
+  }
+
+  // Consume and Lock Slotted Cavern Sigil if applied
+  if (window.state.slottedCavernSigil) {
+    let activeSig = window.state.slottedCavernSigil;
+    window.playerStats.activeDungeonSigil = activeSig;
+    window.state.slottedCavernSigil = null;
+
+    // Remove sigil from EQUIP bag
+    let sIdx = window.inventory.EQUIP.findIndex((i) => i.id === activeSig.id);
+    if (sIdx !== -1) {
+      window.inventory.EQUIP.splice(sIdx, 1);
+    }
+  } else {
+    window.playerStats.activeDungeonSigil = null;
+  }
+
+  let checkpoint = Math.max(
+    1,
+    Math.floor((window.playerStats.dungeonPeaks[mode] || 1) * 0.9),
+  );
+
+  window.playerStats.isDungeonMode = true;
+  window.playerStats.isCrucibleMode = false;
+  window.playerStats.currentDungeon = mode;
+  window.playerStats.currentDungeonStage[mode] = checkpoint;
+  window.playerStats.dungeonWave = 1;
+  window.playerStats.killCount = 0;
+  window.playerStats.targetsRequired = 5;
+  window.playerStats.isBossMode = false;
+  window.playerStats.isUberBoss = false;
+  window.mob = null;
+
+  let p = window.resolvePlayerStats();
+  window.playerStats.currentHp = p.maxHp;
+
+  let dNames = {
+    equip: "Equipment Vault",
+    gold: "Gold Mine Caverns",
+    mat: "Toxic Material Pit",
+  };
+  window.pushLog(
+    `<span style='color:#9b59b6; font-weight:bold;'>[DUNGEON] Descended into ${dNames[mode]} at Floor ${checkpoint}!</span>`,
+  );
+
+  // Close preparation modal
+  let prepOverlay = document.getElementById("caverns-prep-overlay");
+  if (prepOverlay) prepOverlay.remove();
+
+  window.setPauseState(false);
+  window.updateUI();
+  window.renderInventory();
+  window.saveGame();
 };

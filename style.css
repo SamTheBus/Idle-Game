@@ -635,10 +635,7 @@ canvas {
 }
 
 #tab-market .sub-tabs {
-  grid-template-columns: repeat(
-    5,
-    1fr
-  ); /* Enforces 5 equal columns for Market tabs on desktop */
+  grid-template-columns: repeat(6, 1fr);
 }
 
 .sub-tab-btn {
